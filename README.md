@@ -1,4 +1,4 @@
-![Morpho](https://github.com/morpho-matters/morpholib/blob/main/logo/logo-white-small.png)
+<img src="https://github.com/morpho-matters/morpholib/blob/main/logo/logo-white.png" width=600>
 
 # Features
 - Animate basic figures like Points, Paths, Polygons, Splines, Images, and Text
