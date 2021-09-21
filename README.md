@@ -16,6 +16,7 @@ For a gallery of animations made with Morpho, (click here). Most of the animatio
 - Some primitive 3D animation capability
 - Preview animations along with the ability to locate positions on screen with a click
 - Export animations as MP4, GIF, and PNG sequences at arbitrary framerates and resolutions
+  - (**Note:** [FFmpeg](https://ffmpeg.org/) required to create MP4s, and [Gifsicle](https://www.lcdf.org/gifsicle/) required to make small size GIFs)
 
 ## Installation
 
