@@ -28,7 +28,15 @@ pip install morpholib
 
 However, [FFmpeg](https://ffmpeg.org/) is required if you want to export animations in MP4 format, and [Gifsicle](https://www.lcdf.org/gifsicle/) is required to create small size GIF animations. But if neither of those matter to you (or if you just want to try out Morpho), you can still preview animations and export them as PNG sequences and large-sized GIFs just using the base installation of Morpho.
 
-To see if it installed correctly, try running the script (sample.py). You should see an animation of a morphing grid appear on your screen.
+To see if it installed correctly, try running the following:
+
+```python
+import morpholib as morpho
+morpho.importAll()
+morpho.sample.play()
+```
+
+You should see an animation of a morphing grid appear on your screen.
 
 ## License
 
