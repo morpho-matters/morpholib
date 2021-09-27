@@ -1,4 +1,4 @@
-<img src="https://github.com/morpho-matters/morpholib/blob/main/logo/logo-white.png" width=600>
+<img src="https://github.com/morpho-matters/morpholib/blob/master/logo/logo-white.png" width=600>
 
 **A general-purpose programmatic animation tool**
 
