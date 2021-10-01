@@ -172,17 +172,13 @@ movie = morpho.Animation(mygrid)
 movie.play()
 ```
 
-The colors of the horizontal and vertical lines can be altered by supplying the optional arguments
+The colors of the horizontal and vertical lines can be altered by supplying the optional arguments ``hcolor=[R,G,B]`` and ``vcolor=[R,G,B]`` to the ``mathgrid()`` function.
 
-``hcolor=[R,G,B] and ``vcolor=[R,G,B]``
-
-to the ``mathgrid()`` function. By default it also includes minor grid lines exactly halfway between every two major grid lines, but these can be disabled by including the arguments
-
-``hmidlines=0`` and ``vmidlines=0``
+By default it also includes minor grid lines exactly halfway between every two major grid lines, but these can be disabled by including the arguments ``hmidlines=0`` and ``vmidlines=0``.
 
 The colors of the minor grid lines can also be changed with the arguments ``hmidColor`` and ``vmidColor``.
 
-> **Note:** Technically the figure ``mathgrid()`` returns is not a path, but a collection of paths packaged together into a type of figure called a \emph{Frame}. But don't worry about that now.
+> **Note:** Technically the figure ``mathgrid()`` returns is not a path, but a collection of paths packaged together into a type of figure called a *Frame*. But don't worry about that now.
 
 ### Polygons
 
@@ -204,7 +200,7 @@ movie.play()
 
 So far we've just been dealing with static figures. How do we animate them?
 
-Animation in morpho primarily takes the form of smooth interpolation between a starting figure and an ending figure over a certain duration. This process is called *tweening*. To set this up, we need to add a timeline to a figure. Once this is done, the figure is called an \emph{actor} (based on a loose analogy with a stage play). To see how this is done, let's take our old Point figure from before and turn it into an actor:
+Animation in Morpho primarily takes the form of smooth interpolation between a starting figure and an ending figure over a certain duration. This process is called *tweening*. To set this up, we need to add a timeline to a figure. Once this is done, the figure is called an *actor* (based on a loose analogy with a stage play). To see how this is done, let's take our old *Point* figure from before and turn it into an actor:
 
 ```python
 mypoint = morpho.grid.Point()
@@ -266,7 +262,7 @@ We can add more keyfigures along the timeline, as many as we please! Let's add a
 ```python
 mypoint.newkey(120)
 mypoint.time(120).size = 75        # Inflate size of point
-mypoint.time(120).pos = -3 + 3*1j  # Move point to (-3+3i)
+mypoint.time(120).pos = -3 + 3*1j  # Move point to (-3+3j)
 mypoint.time(120).alpha = 0        # Fade point to invisibility
 
 movie = morpho.Animation(mypoint)
@@ -278,7 +274,7 @@ We can even insert a key between two previous keys. For instance, instead of hav
 ```python
 mypoint.newkey(120)
 mypoint.time(120).size = 75        # Inflate size of point
-mypoint.time(120).pos = -3 + 3*1j  # Move point to (-3+3i)
+mypoint.time(120).pos = -3 + 3*1j  # Move point to (-3+3j)
 mypoint.time(120).alpha = 0        # Fade point to invisibility
 
 mypoint.newkey(90)
@@ -315,7 +311,7 @@ mypoint.pos = 4 + 3*1j
 mypoint.transition = morpho.transitions.quadease  # New transition
 ```
 
-> ***Tip:*** If you expect to use a certain transition function for almost all tweens, you can change the default transition function morpho uses on all actors by including the line
+> ***Tip:*** If you expect to use a certain transition function for almost all tweens, you can change the default transition function Morpho uses on all actors by including the line
 ```python
 morpho.transition.default = my_transition
 ```
@@ -323,7 +319,7 @@ at the top of your code. The normal default transition is ``morpho.transitions.u
 
 ### Working with relative time coordinates
 
-When in the middle of making an animation, it can sometimes be cumbersome to always be working in absolute units of time, where you specify the exact time coordinates for each keyframe. This can be especially difficult if you want to change the duration between just two keyframes in the middle but you don't want to modify the duration of any others.
+When in the middle of making an animation, it can be cumbersome to always work in absolute units of time, where you specify the exact time coordinates for each keyframe. This can be especially difficult if you want to change the duration between just two keyframes in the middle but you don't want to modify the duration of any others.
 
 For example, say we change our mind and want to make the transition from the frame 0 point to the frame 60 point happen faster. We could rewrite our code so that instead of making a new key at 60, we make it at 30:
 
@@ -341,7 +337,7 @@ Instead, let's rewrite our code using methods that make use of *relative* time c
 
 ``newendkey()`` is like ``newkey()`` except instead of specifying the absolute time coordinates of where to create a new keyfigure, we specify it in terms of how many frames it should be *after* the latest keyframe (i.e. number of frames after the keyfigure with the highest index). You can even specify negative values to make a new keyfigure some number of frames *before* the latest keyframe.
 
-*last()* is a helpful method that always returns whatever the latest keyfigure currently is. There is also a complementary method called *first()* which returns the earliest keyfigure (the one with the lowest index).
+``last()`` is a helpful method that always returns whatever the latest keyfigure currently is. There is also a complementary method called ``first()`` which returns the earliest keyfigure (the one with the lowest index).
 
 ```python
 mypoint = morpho.grid.Point()
@@ -374,7 +370,7 @@ movie.play()
 
 Now if we want to modify the second keyfigure's timing, we just need to change the first instance of ``mypoint.newendkey(60)`` to ``mypoint.newendkey(30)`` and all future keyfigure times will adjust accordingly.
 
-One last thing to note about the above code. In it, we made use of the ``key()`` method. Typing ``mypoint.key(n)`` returns the ``n``th keyfigure in the actor where ``n = 0`` is the first keyfigure. ``n`` is interpreted cyclically, so ``mypoint.key(-1)`` is equivalent to ``mypoint.last()`` and so ``mypoint.key(-2)`` returns the second-to-last keyfigure.
+One last thing to note about the above code. In it, we made use of the ``key()`` method. Typing ``mypoint.key(n)`` returns the ``n``th keyfigure in the actor where ``n = 0`` is the first keyfigure. Negative ``n`` values are interpreted cyclically, so ``mypoint.key(-1)`` is equivalent to ``mypoint.last()`` and so ``mypoint.key(-2)`` returns the second-to-last keyfigure.
 
 ### An example with grids
 
@@ -498,7 +494,7 @@ So far our animations have always taken place within the 10 by 10 square region 
 layer = morpho.Layer([mypoint, grid], view=[-10,10, -10,10])
 ```
 
-But this can also be changed after layer construction by modifying the layer's \texttt{camera} attribute:
+But this can also be changed after layer construction by modifying the layer's ``camera`` attribute:
 
 ```python
 # Change the view after layer construction
@@ -575,7 +571,7 @@ movie.background = [0.5, 0.5, 0.5]  # Make a gray background
 
 #### Window shape
 
-By default, the shape of the morpho animation window is 600 x 600 pixels. This can be changed to whatever you like:
+By default, the shape of the Morpho animation window is 600 x 600 pixels. This can be changed to whatever you like:
 
 ```python
 movie.windowShape = (400, 400)  # Horizontal pixels by Vertical pixels
@@ -618,7 +614,7 @@ movie.delays[60] = 30  # Pause at frame 60 for a duration of 30 frames
 movie.delays[150] = float("inf")  # Pause at frame 150 until screen is clicked
 ```
 
-> ***Tip:*** Infinity comes up from time to time when using morpho. I find it helpful to assign double lowercase letter *o*'s to infinity: ``oo = float("inf")``. You can automatically import this constant (among others) by including the line ``from morpholib.tools.basics import *`` at the top of your code.
+> ***Tip:*** Infinity comes up from time to time when using Morpho. I find it helpful to assign double lowercase letter *o*'s to infinity: ``oo = float("inf")``. You can automatically import this constant (among others) by including the line ``from morpholib.tools.basics import *`` at the top of your code.
 
 > **Note:** Morpho treats delays like automated pauses during playback, so setting delays will NOT modify the time coordinates of any keyfigures.
 
@@ -626,7 +622,7 @@ movie.delays[150] = float("inf")  # Pause at frame 150 until screen is clicked
 
 Once you have an animation you like, you can export it as a file in three different formats.
 
-To export an animation as an mp4 video file in the same folder as the script you're running, just type
+To export an animation as an MP4 video file in the same folder as the script you're running, just type
 
 ```python
 movie.export("./movie.mp4")
@@ -643,21 +639,21 @@ movie.export("./movie.png")
 ```
 which will result in PNG images with names like ``movie_000.png``, ``movie_001.png``, etc. There will be one PNG image per frame of animation (excluding delays).
 
-> **Note:** You cannot export an animation as mp4 if the animation contains infinitely-long delays. You will have to finitize them. One way to do so is to call the method ``movie.finitizeDelays(numFrames)`` which will convert all infinite delays to the finite number of frames you specify.
+> **Note:** You cannot export an animation as MP4 if the animation contains infinitely-long delays. You will have to finitize them. One way to do so is to call the method ``movie.finitizeDelays(numFrames)`` which will convert all infinite delays to the finite number of frames you specify.
 
-> ***Tip:*** If you have a complicated animation that runs slowly when previewing it with ``play()``, I sometimes find it helpful to export a segment of the animation as an mp4 to view it at full speed. If exporting at full quality takes too long, you can also reduce the framerate before exporting and/or reduce the export resolution by typing, for example,
+> ***Tip:*** If you have a complicated animation that runs slowly when previewing it with ``play()``, I sometimes find it helpful to export a segment of the animation as an MP4 to view it at full speed. If exporting at full quality takes too long, you can also reduce the framerate before exporting and/or reduce the export resolution by typing, for example,
 > ```python
 > movie.newFrameRate(10)
 > movie.export("./movie.mp4", scale=0.5)
 > ```
 
-You can also only export a portion of the animation between a starting frame and an ending frame. You can do this with the \texttt{start} and \texttt{end} attributes:
+You can also only export a portion of the animation between a starting frame and an ending frame. You can do this with the ``start`` and ``end`` attributes:
 ```python
 movie.start = 30  # Start the animation at frame 30
 movie.end = 120   # End the animation at frame 120
 ```
 
-By default, \texttt{start} and \texttt{end} are set to the Python null value ``None``, which means the animation will start and end at the earliest and latest keyframes it contains.
+By default, ``start`` and ``end`` are set to the Python null value ``None``, which means the animation will start and end at the earliest and latest keyframes it contains.
 
 While constructing an animation, I sometimes want to just view its final frame without playing through the entire animation first. You can accomplish this by setting
 ```python
@@ -666,4 +662,3 @@ movie.start = movie.lastID()
 where ``movie.lastID()`` returns the frame number of the final frame of the animation.
 
 > **Note:** In Morpho, frame number is usually referred to as "index" or "ID" in the code. So methods like ``lastID()``, ``firstID()``, and ``keyID()`` all return the frame numbers of important moments in an actor, layer, or animation.
-
