@@ -664,7 +664,7 @@ class Pendulum(morpho.Skit):
 
 > **Note:** The formula ``1.5*cmath.exp(1j*mean([arc.theta0, arc.theta1]))`` computes the point that is 1.5 units away from the origin at an angle that is halfway between the two angle endpoints of the arc we produced. If you know Euler's Formula, hopefully it will be clearer to you how it works.
 
-It looks fine, but it kind of overlaps with the string when the angle is close to zero. Let's have it shrink when it gets below a certain theta value:
+It looks fine, but it kind of overlaps with the string when the angle is close to zero. Let's have it shrink when it gets below a certain ``theta`` value:
 
 ```python
 # Create theta label
@@ -702,7 +702,7 @@ If you'd like some additional practice working with Skits, you can try using the
   1. Animate some text moving in a circular path, but have the text's orientation rotate likewise so that you're always reading it along a tangent line to the circular path. Bonus points if you make the text a tracker which maybe reports the current angle of rotation.
   2. Animate a square which grows and shrinks, but put a tracker inside the square that constantly reports the current area of the square at any moment.
   3. Use a multi-parameter Skit to animate a rectangle with variable width and height which also displays an area tracker inside its borders.
-  4. Animate a point moving along the spiral path described (parametrically with complex numbers) by *s*(*t*) = (*t*/4)e^<sup>*tj*</sup> where *j* is the imaginary unit &#x221a;-1. But also attach an arrow to the point that indicates the *velocity* of the point at any given moment. The velocity of the point (as a complex number) at any time *t* is given by *v*(*t*) = (1+*tj*)/4 &#x00b7; e<sup>*tj*</sup>
+  4. Animate a point moving along the spiral path described (parametrically with complex numbers) by *s*(*t*) = (*t*/4)e<sup>*tj*</sup> where *j* is the imaginary unit &#x221a;-1. But also attach an arrow to the point that indicates the *velocity* of the point at any given moment. The velocity of the point (as a complex number) at any time *t* is given by *v*(*t*) = (1+*tj*)/4 &#x00b7; e<sup>*tj*</sup>
 
   > **Note:** To raise e to a complex power in Python, import the ``cmath`` module and use ``cmath.exp()``.
 
