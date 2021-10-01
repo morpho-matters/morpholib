@@ -43,7 +43,7 @@ movie = morpho.Animation(morpho.Layer([gridBG, mypoint]))
 movie.play()
 ```
 
-The code reveals how you set a tween method. You assign it to a figure's ``tweenMethod`` attribute. So in the above code, we're setting the tween method of ``mypoint`` to be the ``tweenSpiral()`` method associated with the ``Point`` class.
+The code reveals how you set a tween method. You assign it to a figure's ``tweenMethod`` attribute. So in the above code, we're setting the tween method of ``mypoint`` to be the ``tweenSpiral`` method associated with the ``Point`` class.
 
 > ***CAUTION!*** There are two important things to remember about setting tween methods that are easy to get wrong if you're new to how they work. The first is that tween methods are assigned to a *Figure* object, NOT an *Actor* object. In the above code, ``mypoint`` was reassigned a tween method BEFORE converting it into an actor. To assign a tween method after converting a figure to an actor, you will have to remember to reference a keyfigure using a method like ``first()``, ``last()``, or ``key()``. Something like this: ``mypoint.first().tweenMethod = etc``.
 >
@@ -114,7 +114,7 @@ The important difference to note is that instead of just typing the tween method
 > # with parentheses: tweenPivot(myangle) or tweenPivot()
 > mypoint.tweenMethod = type(mypoint).tweenPivot
 > ```
-> This is one of the major differences in syntax between ``tweenPivot()`` and all the other built-in tween methods (like ``tweenLinear()`` and ``tweenSpiral()``).
+> This is one of the major differences in syntax between ``tweenPivot`` and all the other built-in tween methods (like ``tweenLinear`` and ``tweenSpiral``).
 
 [^1]: For the more technically inclined, what this means is that the built-in function ``tweenPivot()`` associated with most figures is not *strictly speaking* a tween method, but rather a tween method *generator*: it takes as input an angle value, and it returns a bona fide tween method that performs the intended pivot tween behavior determined by the angle.
 
@@ -157,7 +157,7 @@ mypoint.last().tweenMethod = mypoint.figureType.tweenLinear
 
 # Create a new keyfigure returning the point to its
 # starting location. The tween method is governed by
-# the previous keyfigure's tween method: tweenLinear()
+# the previous keyfigure's tween method: tweenLinear
 mypoint.newendkey(30, mypoint.first().copy())
 
 movie = morpho.Animation(morpho.Layer([gridBG, mypoint]))
@@ -168,11 +168,11 @@ As you can see, the point first follows a spiral path getting to the point (-1,0
 
 The key idea is that the tween method used for a tween between two keyfigures is controlled by the *earlier* keyfigure's ``tweenMethod`` setting. If we call the two keyfigures we're tweening *A* and *B*, where *A* is the earlier keyfigure, then *A*'s tween method determines the tween method used for the interpolation between *A* and *B*. Likewise, if keyfigure *B* is followed by keyfigure *C*, then *B*'s tween method controls the interpolation between *B* and *C*.
 
-So in the above code, we initialized ``mypoint`` with the spiral tween method ``tweenSpiral()``, but after we set up the second keyfigure (after calling ``newendkey()``), we then edited its tween method by stating
+So in the above code, we initialized ``mypoint`` with the spiral tween method ``tweenSpiral``, but after we set up the second keyfigure (after calling ``newendkey()``), we then edited its tween method by stating
 ```python
 mypoint.last().tweenMethod = mypoint.figureType.tweenLinear
 ```
-which means that when we set up the third keyfigure with the second ``newendkey()`` declaration, the interpolation between the second and third keyfigures is controlled by ``tweenLinear()``.
+which means that when we set up the third keyfigure with the second ``newendkey()`` declaration, the interpolation between the second and third keyfigures is controlled by ``tweenLinear``.
 
 ```python
 # Reassign the tween method at this point to the linear
@@ -181,7 +181,7 @@ mypoint.last().tweenMethod = mypoint.figureType.tweenLinear
 
 # Create a new keyfigure returning the point to its
 # starting location. The tween method is governed by
-# the previous keyfigure's tween method: tweenLinear()
+# the previous keyfigure's tween method: tweenLinear
 mypoint.newendkey(30, mypoint.first().copy())
 ```
 
@@ -222,7 +222,7 @@ mypoint.last().transition = morpho.transitions.uniform
 
 # Create a new keyfigure returning the point to its
 # starting location. The tween method is governed by
-# the previous keyfigure's tween method: tweenLinear()
+# the previous keyfigure's tween method: tweenLinear
 mypoint.newendkey(30, mypoint.first().copy())
 
 movie = morpho.Animation(morpho.Layer([gridBG, mypoint]))
@@ -370,3 +370,4 @@ This imports a number of useful constants and functions including
   corners = boxCorners([-3,2,-1,0])  # outputs list of 4 complex numbers
   altcorners = boxCorners([-3,2,-1,0], initCorner="SE", CCW=False)
   ```
+  
