@@ -97,7 +97,7 @@ mypic.width = 5   # These are now independent
 mypic.height = 2  # of each other
 ```
 
-Similar to ``Text`` figures, you can't properly tween two image figures with different sources, or at least not using the vanilla ``Image`` class. To do it, you'll have to use the ``MultiImage`` class.
+Similar to ``Text`` figures, you can't properly tween two image figures with different source files, or at least not using the vanilla ``Image`` class. To do it, you'll have to use the ``MultiImage`` class.
 
 ## Multifigures
 
@@ -165,10 +165,15 @@ Depending on how you interpret the phrase "scale by", the naming convention used
 > mypic.last().newSource("./oo.png").scaleByWidth()
 > ```
 > This is possible because the ``newSource()`` method actually returns the figure which called it (in this case, ``mypic.last()``), and so you can immediately string a second method call after it.
+>
+> If you want to be *really* concise, you can also make use of the fact that the ``newkey()`` and ``newendkey()`` methods return the newly created keyfigure, so you can condense even that part into a single line:
+> ```python
+> mypic.newendkey(30).newSource("./oo.png").scaleByWidth()
+> ```
 
 ## Arrows
 
-An arrow is just a line segment whose ends can be made pointy (amazing, right?). This figure can be accessed from the ``grid`` submodule. The basic syntax to create one is as follows:
+An arrow is just a line segment whose ends can be made pointy (mindblowing, I know). This figure can be accessed from the ``grid`` submodule. The basic syntax to create one is as follows:
 
 ```python
 arrow = morpho.grid.Arrow(tail, head)
@@ -271,7 +276,7 @@ The three functions ``line()``, ``rect()``, ``ellipse()``, and ``arc()`` can all
 
 We actually already covered ``line()`` in the previous guide. So I won't repeat it here.
 
-``rect()`` can be used to create a generic rectangle polygon. It takes exactly one input: a 4-tuple or list describing a box in the complex plane: ``[xmin,xmax,ymin,ymax]``. It will return a *generic* polygon figure its four vertices set to describe the specified box. However, please remember that ``rect()`` returns a *generic* polygon (that is, all its other attributes beyond ``vertices`` will all be their default values), so you will need to modify its other attributes afterward to make it look a particular way.
+``rect()`` can be used to create a generic rectangle polygon. It takes exactly one input: a 4-tuple or list describing a box in the complex plane: ``[xmin,xmax,ymin,ymax]``. It will return a *generic* polygon figure with its four vertices set to describe the specified box. However, please remember that ``rect()`` returns a *generic* polygon (that is, all its other attributes beyond ``vertices`` will all be their default values), so you will need to modify its other attributes afterward to make it look a particular way.
 
 Example:
 ```python
@@ -353,14 +358,14 @@ myarc = morpho.grid.arc(-2-1j, 3+2j, pi/2)
 myarc.width = 8
 myarc.color = [0,1,0]
 ```
-To get a better understanding of exactly what ``arc()`` does, experiment around with a few other points and angle values and see what happens.
+To get a better intuition of exactly what ``arc()`` does, experiment around with a few other points and angle values and see what happens.
 
 ### More about ``mathgrid()``
 
 We've already encountered the ``mathgrid()`` function in the previous guide, but now we'll explore it in more detail. As a reminder, the ``mathgrid()`` function can be found in the ``grid`` submodule and is the main tool to use to construct morphable grids. The function can actually take a large number of input parameters, giving you fine control over the look and behavior of the grid. Here are most of them:
 - ``view``: Bounding box of the grid (``[xmin,xmax,ymin,ymax]``). Default: ``[-5,5, -5,5]``
-- ``dx,dy``: Horizontal or vertical spacing in physical units. Default: 1
-- ``hsteps, vsteps``: Number of internal steps to take in a single grid line. This is analogous to the ``steps`` parameter in the ``morpho.grid.line()`` function. Higher values mean a higher resolution grid, but possibly slower render time. Default: 50 steps
+- ``dx,dy``: Horizontal or vertical spacing in physical units. Default: ``1``
+- ``hsteps``, ``vsteps``: Number of internal steps to take in a single grid line. This is analogous to the ``steps`` parameter in the ``morpho.grid.line()`` function. Higher values mean a higher resolution grid, but possibly slower render time. Default: 50 steps
 - ``hcolor``, ``vcolor``: Color of the major horizontal and vertical grid lines. Default: ``[0,0,1]`` (blue)
 - ``hmidColor``, ``vmidColor``: Color of minor grid lines. Default: ``None`` (meaning it will brighten the major color by 50%.
 - ``hwidth``, ``vwidth``: Thickness of major grid lines in pixels. Default: ``3``
@@ -397,8 +402,8 @@ There is a special gadget that is designed specifically for creating the graph o
 ``morpho.graph.realgraph()``
 
 It takes three required inputs:
-	- ``f``: A real-to-real function whose graph you want.
-  - ``a``, ``b``: The left- and right-endpoints of the interval on which to graph.
+- ``f``: A real-to-real function whose graph you want.
+- ``a``, ``b``: The left- and right-endpoints of the interval on which to graph.
 
 Try it out:
 ```python
@@ -408,7 +413,7 @@ fgraph = morpho.graph.realgraph(f, -2, 2)
 movie = morpho.Animation(fgraph)
 movie.play()
 ```
-> **Note:** I used Python's ``lambda`` syntax to define the function *f*(*x*) = *x*<sup>2</sup>, but this is by no means required. You can input a python function defined in any way into ``realgraph()} as long as it takes real number inputs in the interval you specify and outputs real numbers.
+> **Note:** I used Python's ``lambda`` syntax to define the function *f*(*x*) = *x*<sup>2</sup>, but this is by no means required. You can input a python function defined in any way into ``realgraph()`` as long as it takes real number inputs in the interval you specify and outputs real numbers.
 
 Depending on the function you're graphing, the path's resolution may need to be higher than the default. So just like with ``line()``, you can change the number of steps within the path by setting the optional argument ``steps``:
 ```python
@@ -450,7 +455,7 @@ myoval = morpho.grid.ellipse(2+1j, 3, 1)
 movie = morpho.Animation(myoval)
 movie.play()
 ```
-The ``ellipse()`` function is only capable of creating ellipses in one of two basic orientations: either having its long size parallel to the *x*-axis, or having its long side parallel to the *y*-axis. But what if you want to have the major and minor axes of the ellipse oriented at an oblique angle? You can modify the ``rotation`` tweenable that all polygons possess to change it:
+The ``ellipse()`` function is only capable of creating ellipses in one of two basic orientations: either having its long side parallel to the *x*-axis, or having its long side parallel to the *y*-axis. But what if you want to have the major and minor axes of the ellipse oriented at an oblique angle? You can modify the ``rotation`` tweenable that all polygons possess to change it:
 ```python
 myoval = morpho.grid.ellipse(2+1j, 3, 1)
 myoval.rotation = 2*pi/3
@@ -501,9 +506,7 @@ movie.play()
 
 You can also apply the ``origin`` and ``rotation`` tweenables in addition to the ``transform`` tweenable to get other composite effects. However, you will need to be mindful of the order of operations here, which is worth summarizing now.
 
-The transformation tweenables are always applied in the following order:
-
-<p align="center">``rotation``, ``transform``, ``origin``</p>
+The transformation tweenables are always applied in the following order: ``rotation``, ``transform``, ``origin``
 
 meaning the transformation effects are performed in the following order:
 
@@ -558,7 +561,7 @@ myoval.last().commitTransforms()
 movie = morpho.Animation(myoval)
 movie.play()
 ```
-That looks off! The ellipse kind of shrinks to a point before rebounding back to how it looked before. What's going on? What's happening is that by committing the rotation, every vertex of the final ellipse was moved to its antipodal point, and Morpho, knowing no better than to tween the two ellipses in the most direct way possible, tweened each starting vertex along a linear path to its final vertex.
+That looks off! The ellipse kind of shrinks to a point before rebounding back to how it looked before. What's going on? What's happening is that by committing the rotation, every vertex of the final ellipse was moved to its antipodal point, and Morpho, knowing no better than to tween the two ellipses in the most direct way possible, tweened each starting vertex along a linear path to its final vertex, and the intersection of all these linear paths was at the origin.
 
 Now in this case committing the rotation produced an undesirable effect, but there may be other times where you would like to animate something like a rotation of a figure, but you would like to conceal the rotation and instead have the animation play more like a morphing between the two. In such a case, committing the rotation might do the trick, as it sort of has the effect of "hiding" the rotation from Morpho's default tween methods.
 
@@ -666,7 +669,7 @@ movie.play()
 
 ### Encirclings
 
-And finally, similar to enboxings, you can also encircle a target with an elliptical curve using the ``encircle()`` gadget. It behaves pretty similar to the others:
+And finally, similar to enboxings, you can also encircle a target with an elliptical curve using the ``encircle()`` gadget. It behaves pretty similarly to the others:
 
 ```python
 # Something worth encircling
@@ -716,7 +719,7 @@ movie.play()
 
 ### Auto generating boxes
 
-All three of the gadgets we just saw require you to input a box region of the complex plane as a standard 4-tuple/list ``(xmin,xmax,ymin,ymax)``, so you might be wondering how you determine the dimensions of this box. Honestly, sometimes it's just a matter of eyeballing it and pure trial and error, though you can also make use of a feature called a ``locator layer`` to help you identify the coordinates of particular points on screen (more on that in the next guide). However, since needing a bounding box for a ``Text`` or ``Image`` figure is pretty common, there is a function to facilitate finding it. It's called, simply enough, ``box()`` and it's a method of both the ``Text`` and ``Image`` classes, although it's easiest to use for the ``Image`` class.
+All three of the gadgets we just saw require you to input a box region of the complex plane as a standard 4-tuple/list ``(xmin,xmax,ymin,ymax)``, so you might be wondering how you determine the dimensions of this box. Honestly, sometimes it's just a matter of eyeballing it and pure trial and error, though you can also make use of a feature called a "locator layer" to help you identify the coordinates of particular points on screen (more on that in the next guide). However, since needing a bounding box for a ``Text`` or ``Image`` figure is pretty common, there is a function to facilitate finding it. It's called, simply enough, ``box()`` and it's a method of both the ``Text`` and ``Image`` classes, although it's easiest to use for the ``Image`` class.
 
 The ``box()`` method just returns the 4-element list describing the bounding box of the image (before any transformations are applied). Here's an example usage:
 
@@ -739,7 +742,7 @@ movie = morpho.Animation(morpho.Layer([ball, boxer]))
 movie.play()
 ```
 
-Something similar can be done with a ``Text`` figure, but it's a little more complicated owing to the fact that ``Text`` figures are not *physical* in the same way images are. What I mean is that the size of a ``Text`` figure is not in physical units, but a unit system derived from pixel coordinates. That means ``Text`` figures look the same even after a camera zoom. That means the physical bounding box of a ``Text`` figure will depend on the current view of the complex plane you're looking at. So you'll have to pass in the current viewbox of the scene as well as the dimensions of the display window in order to compute its physical bounding box.
+Something similar can be done with a ``Text`` figure, but it's a little more complicated owing to the fact that ``Text`` figures are not *physical* in the same way images are. What I mean is that the size of a ``Text`` figure is not in physical units, but a unit system derived from pixel coordinates. That means ``Text`` figures look the same even after a camera zoom. So the physical bounding box of a ``Text`` figure will depend on the current view of the complex plane you're looking at, and so you'll have to pass in the current viewbox of the scene as well as the dimensions of the display window in order to compute its physical bounding box.
 
 Here's one way to do it:
 
