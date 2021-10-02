@@ -1,3 +1,8 @@
+---
+layout: default
+title: Morpho Guide: Useful Figures and Gadgets
+---
+
 # Morpho Guide: Useful Figures and Gadgets
 
 Last guide, we explored some basic figures like points, paths, and polygons. Now we'll look at some other useful figures like text, images, and arrows along with some handy gadgets which help to generate some of these figures in commonly used configurations.
