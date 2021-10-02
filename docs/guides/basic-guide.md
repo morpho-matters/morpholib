@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Morpho Guide: Basics
+title: Morpho Guide -- Basics
 ---
 
 # Morpho Guide: Basics
