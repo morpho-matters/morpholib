@@ -337,6 +337,49 @@ class TangentLine(morpho.Skit):
         return morpho.Frame([line, dlabel])
 ```
 
+## A Warning About Images
+
+There is no restriction on what figures you can construct within the ``makeFrame()`` method of a Skit class, so you can even include ``Image`` and ``MultiImage`` figures. However, I recommend treating these a little differently than all other figures within a Skit.
+
+Let's consider our point follower skit again, and let's say we substitute our ``Point`` figure for an ``Image`` figure. Our code might look something like this:
+
+```python
+class Follower(morpho.Skit):
+    def makeFrame(self):
+        t = self.t
+
+        # Create an Image figure from "ball.png"
+        ball = morpho.graphics.Image("./ball.png")
+        ball.height = 0.75
+        # Set the position of the image to be the path's
+        # position at parameter t.
+        ball.pos = path.positionAt(t)
+
+        return ball
+```
+
+However, I don't think this is the best practice for using images within Skits. The reason is the method ``makeFrame()`` is actually called on every single frame draw of an animation. And right now, it calls for the construction of a new ``Image`` figure on each an every single frame draw, which could result in it having to read the image file in from disk *every single frame draw*, which is not efficient.
+
+To get around this, I usually define a generic base Image figure *outside* of ``makeFrame()``, and use it as the source when constructing an Image figure *within* ``makeFrame()``. Something like this:
+
+```python
+ballimage = morpho.graphics.Image("./ball.png")
+class Follower(morpho.Skit):
+    def makeFrame(self):
+        t = self.t
+
+        # Create an Image figure from "ball.png"
+        ball = morpho.graphics.Image(ballimage)
+        ball.height = 0.75
+        # Set the position of the image to be the path's
+        # position at parameter t.
+        ball.pos = path.positionAt(t)
+
+        return ball
+```
+
+Notice that at the top, I define a generic Image figure called ``ballimage`` whose source is the actual ``ball.png`` file on disk. But within ``makeFrame``, the Image figure ``ball`` is constructed using ``ballimage`` as its source. This causes Morpho to make a copy of the internal source image from ``ballimage`` and use it for the new Image figure ``ball``. All of this should be happening in memory only, without having to access the disk.
+
 ## Multi-Parameter Skits
 
 So far I've explained Skits as being like parametric figures: They take an input ``t`` and output a figure (or a ``Frame`` of figures), but actually, Skits can support multiple parameters---as many as you want, in fact, and with any name and default value. This can be used to make even fancier Skits, or indeed, even allow you to create brand new figure types with custom tweenables.
