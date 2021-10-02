@@ -1,4 +1,4 @@
-# Morpho: Basic Guide
+# Morpho Guide: Basics
 
 ## Importing Morpho
 
