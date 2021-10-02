@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Morpho Guide: Animation In-depth
+title: Morpho Guide -- Animation In-depth
 ---
 
 # Morpho Guide: Animation In-depth
