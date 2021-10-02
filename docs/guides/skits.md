@@ -358,7 +358,7 @@ class Follower(morpho.Skit):
         return ball
 ```
 
-However, I don't think this is the best practice for using images within Skits. The reason is the method ``makeFrame()`` is actually called on every single frame draw of an animation. And right now, it calls for the construction of a new ``Image`` figure on each an every single frame draw, which could result in it having to read the image file in from disk *every single frame draw*, which is not efficient.
+However, I don't think this is the best practice for using images within Skits. The reason is the method ``makeFrame()`` is actually called on every single frame draw of an animation. And right now, it calls for the construction of a new ``Image`` figure on every single frame draw, which could result in it having to read the image file in from disk *every single frame draw*, which is not efficient.
 
 To get around this, I usually define a generic base Image figure *outside* of ``makeFrame()``, and use it as the source when constructing an Image figure *within* ``makeFrame()``. Something like this:
 
@@ -378,7 +378,7 @@ class Follower(morpho.Skit):
         return ball
 ```
 
-Notice that at the top, I define a generic Image figure called ``ballimage`` whose source is the actual ``ball.png`` file on disk. But within ``makeFrame``, the Image figure ``ball`` is constructed using ``ballimage`` as its source. This causes Morpho to make a copy of the internal source image from ``ballimage`` and use it for the new Image figure ``ball``. All of this should be happening in memory only, without having to access the disk.
+Notice that at the top, I define a generic Image figure called ``ballimage`` whose source is the actual ``ball.png`` file on disk. But within ``makeFrame()``, the Image figure ``ball`` is constructed using the figure ``ballimage`` as its source. This causes Morpho to reuse the internal source image from ``ballimage`` for the new Image figure ``ball``. All of this should happen only in memory, so the disk is accessed only once here: when the original ``ballimage`` base figure was constructed, and not every single frame draw within ``makeFrame()``.
 
 ## Multi-Parameter Skits
 
