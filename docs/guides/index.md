@@ -1,3 +1,8 @@
+---
+layout: default
+title: Morpho Guides
+---
+
 # Morpho Guides
 
 Below you can find a collection of guides to help you get familiar with how Morpho works and how to use it. I recommend following them pretty much in the following order:
