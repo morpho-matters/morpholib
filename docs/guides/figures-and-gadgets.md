@@ -1,4 +1,4 @@
-# Morpho: Useful Figures and Gadgets
+# Morpho Guide: Useful Figures and Gadgets
 
 Last guide, we explored some basic figures like points, paths, and polygons. Now we'll look at some other useful figures like text, images, and arrows along with some handy gadgets which help to generate some of these figures in commonly used configurations.
 
@@ -7,7 +7,7 @@ Last guide, we explored some basic figures like points, paths, and polygons. Now
 > import morpholib as morpho
 > morpho.importAll()
 > ```
-> You will also need to place the two image files ``ball.png`` and ``oo.png`` into the same directory as your Python scripts. These image files can be downloaded from ``<insert here>``.
+> You will also need to place the two image files ``ball.png`` and ``oo.png`` into the same directory as your Python scripts. These image files can be downloaded [from here](https://github.com/morpho-matters/morpholib/tree/master/examples).
 
 ## Text
 
