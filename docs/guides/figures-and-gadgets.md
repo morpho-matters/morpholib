@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Morpho Guide: Useful Figures and Gadgets
+title: Morpho Guide -- Useful Figures and Gadgets
 ---
 
 # Morpho Guide: Useful Figures and Gadgets
