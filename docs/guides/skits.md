@@ -1,3 +1,8 @@
+---
+layout: default
+title: Morpho Guide -- Skits
+---
+
 # Morpho Guide: Skits
 
 > **Note:** To properly run the example code snippets in this guide, you should include the following lines at the top of your code:
