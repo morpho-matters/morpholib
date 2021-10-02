@@ -1,4 +1,4 @@
-# Morpho: Animation In-depth
+# Morpho Guide: Animation In-depth
 
 In the previous guide, we mostly dealt with static figures and went over their properties in great detail, but we didn't spend much time thinking about animation. So in this guide, we'll discuss Morpho's animation model in a bit more detail than we did in the first guide.
 
