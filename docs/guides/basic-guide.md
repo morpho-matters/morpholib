@@ -1,3 +1,8 @@
+---
+layout: default
+title: Morpho Guide: Basics
+---
+
 # Morpho Guide: Basics
 
 ## Importing Morpho
