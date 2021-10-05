@@ -5,9 +5,9 @@ title: Morpho Guide -- Animation In-depth
 
 # Morpho Guide: Animation In-depth
 
-In the previous guide, we mostly dealt with static figures and went over their properties in great detail, but we didn't spend much time thinking about animation. So in this guide, we'll discuss Morpho's animation model in a bit more detail than we did in the first guide.
+In [the previous guide](https://morpho-matters.github.io/morpholib/guides/figures-and-gadgets), we mostly dealt with static figures and went over their properties in great detail, but we didn't spend much time thinking about animation. So in this guide, we'll discuss Morpho's animation model in a bit more detail than we did in the first guide.
 
-Since we already covered the basics of Morpho's animation model in the first guide, I won't repeat the basics here. So if you're rusty on how Actors work, I'd encourage you to re-read some of that part of the first guide.
+Since we already covered the basics of Morpho's animation model in the first guide, I won't repeat the basics here. So if you're rusty on how Actors work, I'd encourage you to [re-read](https://morpho-matters.github.io/morpholib/guides/basic-guide#actors) some of that part of the first guide.
 
 > **Note:** To properly run the example code snippets in this guide, you should include the following lines at the top of your code:
 > ```python
