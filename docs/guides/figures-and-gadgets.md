@@ -88,7 +88,7 @@ You can then modify the following attributes (all of which are tweenable):
 - ``rotation``: Rotation in radians. Default: ``0``
 - ``alpha``: Opacity. Default: ``1`` (opaque)
 
-An important thing to note here is that ``width`` and ``height`` are specified in so-called "physical" units, which means relative to distances and lengths in the current view of the complex plane as opposed to pixels<sup>[</sup>[^1]<sup>]</sup>].
+An important thing to note here is that ``width`` and ``height`` are specified in so-called "physical" units, which means relative to distances and lengths in the current view of the complex plane as opposed to pixels<sup>[</sup>[^1]<sup>]</sup>.
 
 [^1]: Might be a good time for some more terminology: In Morpho, a "physical" quantity pretty much always means *relative to the local coordinate system of the layer's camera*. e.g. *physical width* or *physical coordinates*. This is in contrast to "pixel" or "screen" coordinates or quantities, which mean *relative to the pixels on the user's actual screen*. Morpho has tools to convert between the two. See the documentation for the methods ``morpho.physicalCoords()``, ``morpho.pixelCoords()``, ``morpho.physicalWidth()``, etc. for more info.
 
