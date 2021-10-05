@@ -113,7 +113,7 @@ movie.play()
 
 The important difference to note is that instead of just typing the tween method's *name*, like ``tweenPivot``, you actually have to *call* it with an input value (the angle): ``tweenPivot(pi)``. This tells Morpho that the trajectory of the tween should be along an arc of &pi; radians (180 degrees) traveling counter-clockwise from the starting figure to the ending figure.
 
-> ***CAUTION!*** Please be careful to remember to call the ``tweenPivot()`` function either with a supplied angle value (like ``tweenPivot(pi/2)``), or else with no parameters (like ``tweenPivot()``), but NEVER set it without calling it at all[^1]:
+> ***CAUTION!*** Please be careful to remember to call the ``tweenPivot()`` function either with a supplied angle value (like ``tweenPivot(pi/2)``), or else with no parameters (like ``tweenPivot()``), but NEVER set it without calling it at all<sup>[</sup>[^1]<sup>]</sup>:
 > ```python
 > # This is WRONG! Never do this! You need to always call it
 > # with parentheses: tweenPivot(myangle) or tweenPivot()
@@ -194,7 +194,7 @@ This actually reflects a general convention about interpolation in Morpho: Whene
 
 For example, all figures possess a visibility attribute called ``visible`` which indicates whether the figure should be drawn at all. It's just a boolean, so it's not tweenable. So if we have two keyfigures *A* and *B* in a row in an actor, where *A* is the earlier keyfigure, if *A*'s visibility is set to ``False``, then all tweened figures interpolated between *A* and *B* will inherit the visibility of *A*, which has the effect of making the actor disappear for the interval of time between the keyfigures *A* and *B*.
 
-This convention also has the nice effect that if you want to set a tween method (or other such property) that applies to the entire actor, this can usually be accomplished by setting the first keyfigure's tween method to the desired value, and then it will propagate to all future keyfigures until you modify it again[^2].
+This convention also has the nice effect that if you want to set a tween method (or other such property) that applies to the entire actor, this can usually be accomplished by setting the first keyfigure's tween method to the desired value, and then it will propagate to all future keyfigures until you modify it again<sup>[</sup>[^2]<sup>]</sup>.
 
 [^2]: The only exception to this is if you use the second argument of ``newendkey()`` to explicitly set a keyfigure to be an externally constructed figure. e.g. ``mypoint.newendkey(30, myotherpoint)``. In this case, the tween method (or other property) of the new keyfigure will be that of whatever the externally supplied figure is.
 
@@ -375,4 +375,4 @@ This imports a number of useful constants and functions including
   corners = boxCorners([-3,2,-1,0])  # outputs list of 4 complex numbers
   altcorners = boxCorners([-3,2,-1,0], initCorner="SE", CCW=False)
   ```
-  
+

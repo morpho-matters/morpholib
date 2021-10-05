@@ -88,7 +88,7 @@ You can then modify the following attributes (all of which are tweenable):
 - ``rotation``: Rotation in radians. Default: ``0``
 - ``alpha``: Opacity. Default: ``1`` (opaque)
 
-An important thing to note here is that ``width`` and ``height`` are specified in so-called "physical" units, which means relative to distances and lengths in the current view of the complex plane as opposed to pixels[^1].
+An important thing to note here is that ``width`` and ``height`` are specified in so-called "physical" units, which means relative to distances and lengths in the current view of the complex plane as opposed to pixels<sup>[</sup>[^1]<sup>]</sup>].
 
 [^1]: Might be a good time for some more terminology: In Morpho, a "physical" quantity pretty much always means *relative to the local coordinate system of the layer's camera*. e.g. *physical width* or *physical coordinates*. This is in contrast to "pixel" or "screen" coordinates or quantities, which mean *relative to the pixels on the user's actual screen*. Morpho has tools to convert between the two. See the documentation for the methods ``morpho.physicalCoords()``, ``morpho.pixelCoords()``, ``morpho.physicalWidth()``, etc. for more info.
 
@@ -465,7 +465,7 @@ The ``ellipse()`` function is only capable of creating ellipses in one of two ba
 myoval = morpho.grid.ellipse(2+1j, 3, 1)
 myoval.rotation = 2*pi/3
 ```
-Success! The ellipse has been rotated by ``2*pi/3`` radians[^2]. However, you'll have noticed that our ellipse has moved to a significantly different position on the screen. This is because the ``rotation`` attribute applies the rotation with respect to the origin point, which is (0,0) here. But we can change that using the ``origin`` tweenable!
+Success! The ellipse has been rotated by ``2*pi/3`` radians<sup>[</sup>[^2]<sup>]</sup>. However, you'll have noticed that our ellipse has moved to a significantly different position on the screen. This is because the ``rotation`` attribute applies the rotation with respect to the origin point, which is (0,0) here. But we can change that using the ``origin`` tweenable!
 
 [^2]: ***Tip:*** Morpho has some convenience constants that facilitate converting between radians and degrees if you need to. They can be accessed by including the following line at the top of your code: ``from morpholib.tools.basics import *``. You can then convert degrees to radians like this: ``45*deg``, which can make it easier to specify a rotation angle when you have a value in degrees in mind, but the function or object expects radians: ``myoval.rotation = 120*deg``. You can similarly convert a radian value to degrees: ``dTheta=pi/12*rad``, or 120 degrees.
 
