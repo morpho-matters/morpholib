@@ -16,9 +16,13 @@
 - Export animations as MP4, GIF, and PNG sequences at arbitrary framerates and resolutions
   - (**Note:** [FFmpeg](https://ffmpeg.org/) required to create MP4s, and [Gifsicle](https://www.lcdf.org/gifsicle/) required to make small size GIFs)
 
+A gallery of animations made with Morpho [is available here](https://morpho-matters.github.io/morpholib/gallery/). Most of the animations found in the YouTube channels [Morphocular](https://www.youtube.com/channel/UCu7Zwf4X_OQ-TEnou0zdyRA) and [Serpentine Integral](https://www.youtube.com/channel/UCo-H6EyTbD-7inMwW70QdtA) were made with Morpho, so you can also look there for a more robust demonstration of Morpho's capabilities.
+
+Documentation is currently limited, but there are [a few guides](https://morpho-matters.github.io/morpholib/guides/) you can look thru which will help you learn how to use Morpho and get you started making your own animations.
+
 ## Installation
 
-Morpho works on Python 3.6 or higher and requires [Pycairo](https://www.cairographics.org/pycairo/) to run. For Windows users, Morpho and all its basic dependencies, including Pycairo, should be installable via a simple pip command:
+Morpho is a library for Python and works on Python 3.6 or higher and requires [Pycairo](https://www.cairographics.org/pycairo/) to run. For Windows users, Morpho and all its basic dependencies, including Pycairo, should be installable via a simple pip command:
 
 ```sh
 pip3 install morpholib
