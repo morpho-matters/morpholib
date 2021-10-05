@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Morphing grids
+title: Sliding Tangent Line
 ---
 
 <video controls loop style="max-width:450px">
