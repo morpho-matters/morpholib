@@ -376,3 +376,4 @@ This imports a number of useful constants and functions including
   altcorners = boxCorners([-3,2,-1,0], initCorner="SE", CCW=False)
   ```
 
+#### Footnotes
