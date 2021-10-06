@@ -767,3 +767,5 @@ movie.play()
 > **Note:** Depending on the actual text string you're using, sometimes the bounding box does does not totally enclose the text (in particular if your text includes a lowercase "y"). This is a known issue which may be addressed at some point, but just be aware that it happens. If it bothers you, you can always increase the padding on the box until it truly encloses it, or just determine the box dimensions manually.
 
 There's actually a slightly cleaner way to do this which doesn't require hard-coding the actual viewbox and window dimensions or knowing them in advance, but that's best discussed after we've talked about layer merging and the typical workflow I use to create more complex animations. But that's a story for another guide.
+
+#### Footnotes
