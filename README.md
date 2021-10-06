@@ -36,7 +36,7 @@ Installation on other platforms has not been well-tested, unfortunately, and doe
 
 If you want to export animations as MP4s or small-sized GIFs, you will need to install [FFmpeg](https://ffmpeg.org/) for MP4 and/or [Gifsicle](https://www.lcdf.org/gifsicle/) for GIF. But if that doesn't matter to you (or if you just want to try out Morpho), you can still preview animations and export them as PNG sequences and large-sized GIFs just using the base installation of Morpho.
 
-Please note that FFmpeg and Gifsicle will need to be added to your PATH environmental variable for Morpho to be able to access them by default.
+Please note that FFmpeg and Gifsicle will need to be added to your PATH environment variable for Morpho to be able to access them by default.
 
 ### Testing the installation
 
