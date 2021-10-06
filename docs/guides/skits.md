@@ -9,6 +9,8 @@ title: Morpho Guide -- Skits
 > ```python
 > import morpholib as morpho
 > morpho.importAll()
+> 
+> from morpholib.tools.basics import *
 >
 > import math, cmath
 > ```
