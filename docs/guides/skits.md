@@ -751,9 +751,7 @@ If you'd like some additional practice working with Skits, you can try using the
   2. Animate a square which grows and shrinks, but put a tracker inside the square that constantly reports the current area of the square at any moment.
   3. Use a multi-parameter Skit to animate a rectangle with variable width and height which also displays an area tracker inside its borders.
   4. Animate a point moving along the spiral path described (parametrically with complex numbers) by *s*(*t*) = (*t*/4)e<sup>*tj*</sup> where *j* is the imaginary unit &#x221a;-1. But also attach an arrow to the point that indicates the *velocity* of the point at any given moment. The velocity of the point (as a complex number) at any time *t* is given by *v*(*t*) = (1+*tj*)/4 &#x00b7; e<sup>*tj*</sup>
-
   > **Note:** To raise e to a complex power in Python, import the ``cmath`` module and use ``cmath.exp()``.
-
   5. Create an epicycle! Animate two or more arrows connected tip to tail that are rotating about their tails at different frequencies. Bonus points if you can also trace out in real time the curve the final arrow draws as it moves.
   6. Consider an observer observing a plane flying horizontally overhead. Animate the line of sight connecting the observer to the plane as well as the angle the line of sight makes with the ground. For bonus points, include a tracker that reports the current angle of the line of sight.
   7. Animate two traveling waves that collide to form a standing wave.
