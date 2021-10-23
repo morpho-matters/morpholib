@@ -15,6 +15,11 @@ mation.setupContext()
 ctx0 = mation.context
 del mation
 
+# Default font. If set to a font's name, this font
+# will be used as the default font for the Text class
+# and its derivatives.
+defaultFont = "Times New Roman"
+
 ### CLASSES ###
 
 '''
@@ -52,7 +57,7 @@ origin for the text is. (0,0) corresponds to centered,
 # italic = Boolean indicating whether to use italics. Default: False
 class Text(morpho.Figure):
     def __init__(self, text="", pos=complex(0),
-        size=64, font="Times New Roman",
+        size=64, font=None,
         bold=False, italic=False,
         anchor_x=0, anchor_y=0,
         color=(1,1,1), alpha=1,
@@ -110,7 +115,7 @@ class Text(morpho.Figure):
 
         # Other attributes
         self.text = text
-        self.font = font
+        self.font = font if font is not None else defaultFont
         self.bold = bold
         self.italic = italic
 
@@ -715,7 +720,7 @@ class Text_old(morpho.Figure):
 #              or just behave like a label always facing the camera. Default: False
 class SpaceText(Text):
     def __init__(self, text=None, pos=None,
-        size=64, font="Times New Roman",
+        size=64, font=None,
         bold=False, italic=False,
         anchor_x=0, anchor_y=0,
         color=(1,1,1), alpha=1,
