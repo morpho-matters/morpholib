@@ -112,19 +112,22 @@ def setupSpace(t_rot=300, initOrient=np.identity(3), spin=-80*tau/360,
     zAxis.color = [0.7,0,0]
 
     xLabel = morpho.text.SpaceText(
-        text="x", pos=xAxis.head + [0, -0.25, 0.25],
+        text="x", font="Times New Roman",
+        pos=xAxis.head + [0, -0.25, 0.25],
         size=55, italic=True,
         anchor_x=0, anchor_y=0,
         color=[0,0,0]
         )
     yLabel = morpho.text.SpaceText(
-        text="y", pos=yAxis.head + [-0.25, 0, 0.25],
+        text="y", font="Times New Roman",
+        pos=yAxis.head + [-0.25, 0, 0.25],
         size=55, italic=True,
         anchor_x=0, anchor_y=0,
         color=[0,0,0]
         )
     zLabel = morpho.text.SpaceText(
-        text="z", pos=zAxis.head + [0,0,0.25],
+        text="z", font="Times New Roman",
+        pos=zAxis.head + [0,0,0.25],
         size=55, italic=True,
         anchor_x=0, anchor_y=0,
         color=[0,0,0]
@@ -206,13 +209,15 @@ def setupSpaceAlt(t_rot=300, initOrient=np.identity(3), spin=-80*tau/360,
     # zAxis.color = [0.7,0,0]
 
     xLabel = morpho.text.SpaceText(
-        text="x", pos=xAxis.head + [0.4,0-0.25,0],
+        text="x", font="Times New Roman",
+        pos=xAxis.head + [0.4,0-0.25,0],
         size=55, italic=True,
         anchor_x=0, anchor_y=0,
         color=[0,0,0]
         )
     yLabel = morpho.text.SpaceText(
-        text="y", pos=yAxis.head + [-0.25,0.4,0.1],
+        text="y", font="Times New Roman",
+        pos=yAxis.head + [-0.25,0.4,0.1],
         size=55, italic=True,
         anchor_x=0, anchor_y=0,
         color=[0,0,0]
