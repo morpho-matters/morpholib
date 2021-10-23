@@ -2892,6 +2892,10 @@ class Arrow(morpho.Figure):
     # change the alpha blend method so that arrowhead alpha doesn't
     # influence body alpha.
     def draw(self, camera, ctx):
+        # Check if it's too short to draw
+        if self.head == self.tail:
+            return
+
         # Update and draw the internal path figure.
         self.path.seq = [self.tail, self.head]
         self.path.color = self.color
