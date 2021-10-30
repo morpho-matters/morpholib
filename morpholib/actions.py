@@ -24,6 +24,18 @@ def fadeOut(actors, duration=30, atFrame=None):
         actor.newendkey(duration).alpha = 0
         actor.last().visible = False
 
+def fadeIn(actors, duration=30, atFrame=None):
+    # if not isinstance(actors, list) and not isinstance(actors, tuple):
+    #     actors = [actors]
+    # Turn into a list if necessary
+    if isinstance(actors, morpho.Actor):
+        actors = [actors]
+    if atFrame is None:
+        atFrame = max(actor.lastID() for actor in actors)
+    for actor in actors:
+        actor.newkey(atFrame).visible = True
+        actor.newendkey(duration).alpha = 1
+
 def rollback(actors, duration=30, atFrame=None):
     # if not isinstance(actors, list) and not isinstance(actors, tuple):
     #     actors = [actors]
