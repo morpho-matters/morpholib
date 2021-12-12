@@ -431,7 +431,8 @@ class Path(morpho.Figure):
     # Returns the interpolated position along the path corresponding to the
     # parameter t, where t = 0 is the path start and t = 1 is the path end.
     # NOTE: This method ignores deadends and the transformation tweenables
-    # origin, rotation, transform.
+    # origin, rotation, transform, as well as the "start" and "end"
+    # parameters!
     def positionAt(self, t):
         if not(0 <= t <= 1):
             raise ValueError("Index parameter must be in the interval [0,1]")
