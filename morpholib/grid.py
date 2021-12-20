@@ -535,6 +535,10 @@ class Path(morpho.Figure):
         # streamlined, but I'm so scared of breaking it! There are so many cases
         # to test and the Path figure is a critically important figure.
 
+        # Don't bother drawing an invisible path.
+        if self.alpha == 0:
+            return
+
         # Check bounds of start and end
         if not(0 <= self.start <= 1):
             raise ValueError("start parameter must be in the range [0,1] (inclusive).")
