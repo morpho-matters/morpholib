@@ -2417,7 +2417,7 @@ class Animation(object):
             )
 
     # Sets up the cairo context and prepares it for rendering to a pyglet window
-    def setupContext(self):
+    def setupContext(self, flip=True):
         # Prepare data object to allow cairo contexts to be rendered
         # on the pyglet window.
         # I owe some of this code to stuaxo of github.
@@ -2440,8 +2440,9 @@ class Animation(object):
             fontops.set_antialias(cr.Antialias.GOOD)
             self.context.set_font_options(fontops)
         # Put origin in lower-left
-        self.context.translate(0, height)
-        self.context.scale(1, -1)
+        if flip:
+            self.context.translate(0, height)
+            self.context.scale(1, -1)
         # Paint background
         self.clearContext()
 
@@ -2672,6 +2673,9 @@ class Animation(object):
                 anim2.background = self.background
                 anim2.alpha = self.alpha
 
+                anim2.setupContext(flip=False)
+                anim2.context.scale(scale, scale)
+
             # Prepare to "play" animation
             self.currentIndex = firstIndex
             self.setupContext()
@@ -2691,10 +2695,10 @@ class Animation(object):
                 if scale == 1:
                     self.context.get_target().write_to_png(imgfile)
                 else:
-                    # Setup a modified standard context and scale it.
-                    anim2.setupContext()
-                    anim2.context = cr.Context(anim2.context.get_target())
-                    anim2.context.scale(scale, scale)
+                    # # Setup a modified standard context and scale it.
+                    # anim2.setupContext()
+                    # anim2.context = cr.Context(anim2.context.get_target())
+                    # anim2.context.scale(scale, scale)
 
                     # Grab target surface from real animation and set it as source
                     # then paint it onto the secondary animation and export!
@@ -3033,6 +3037,8 @@ class IntDict(dict):
 ### HELPERS ###
 
 # Clears the given context and fills it with the background color
+# NOTE: This function is now redundant with a version in morpho.base.
+# Consider removing the definition here and replacing with an import.
 def clearContext(context, background, alpha):
     # This extra stuff is to ensure that we can actually paint WITH
     # transparency.
@@ -3043,6 +3049,8 @@ def clearContext(context, background, alpha):
     context.restore()
 
 # Sets up an isolated, basic cairo context and returns it.
+# NOTE: This function is now redundant with a version in morpho.base.
+# Consider removing the definition here and replacing with an import.
 def setupContext(width, height, background=(0,0,0), alpha=0, flip=True, antialiasText=True):
     # Prepare data object to allow cairo contexts to be rendered
     # on the pyglet window.
