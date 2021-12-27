@@ -11,7 +11,7 @@ import morpholib as morpho
 
 # TODO: Add "stagger" argument to both fadeOut() and rollback()
 
-def fadeOut(actors, duration=30, atFrame=None):
+def fadeOut(actors, duration=30, atFrame=None, stagger=0):
     # if not isinstance(actors, list) and not isinstance(actors, tuple):
     #     actors = [actors]
     # Turn into a list if necessary
@@ -19,12 +19,13 @@ def fadeOut(actors, duration=30, atFrame=None):
         actors = [actors]
     if atFrame is None:
         atFrame = max(actor.lastID() for actor in actors)
-    for actor in actors:
-        actor.newkey(atFrame)
+    for n in range(len(actors)):
+        actor = actors[n]
+        actor.newkey(atFrame+n*stagger)
         actor.newendkey(duration).alpha = 0
         actor.last().visible = False
 
-def fadeIn(actors, duration=30, atFrame=None):
+def fadeIn(actors, duration=30, atFrame=None, stagger=0):
     # if not isinstance(actors, list) and not isinstance(actors, tuple):
     #     actors = [actors]
     # Turn into a list if necessary
@@ -32,11 +33,12 @@ def fadeIn(actors, duration=30, atFrame=None):
         actors = [actors]
     if atFrame is None:
         atFrame = max(actor.lastID() for actor in actors)
-    for actor in actors:
-        actor.newkey(atFrame).visible = True
+    for n in range(len(actors)):
+        actor = actors[n]
+        actor.newkey(atFrame+n*stagger).visible = True
         actor.newendkey(duration).alpha = 1
 
-def rollback(actors, duration=30, atFrame=None):
+def rollback(actors, duration=30, atFrame=None, stagger=0):
     # if not isinstance(actors, list) and not isinstance(actors, tuple):
     #     actors = [actors]
     # Turn into a list if necessary
@@ -44,8 +46,9 @@ def rollback(actors, duration=30, atFrame=None):
         actors = [actors]
     if atFrame is None:
         atFrame = max(actor.lastID() for actor in actors)
-    for actor in actors:
-        actor.newkey(atFrame)
+    for n in range(len(actors)):
+        actor = actors[n]
+        actor.newkey(atFrame+n*stagger)
         actor.newendkey(duration, actor.first().copy())
         actor.last().visible = False
 
