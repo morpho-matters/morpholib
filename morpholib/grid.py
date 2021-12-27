@@ -3267,7 +3267,8 @@ def rect(box):
     NE = b + d*1j
     SE = b + c*1j
 
-    return Polygon([SW, NW, NE, SE])
+    # return Polygon([SW, NW, NE, SE])
+    return Polygon([NW, SW, SE, NE])
 
 # Given a list of complex numbers and a (possibly non-integer)
 # index t, linearly interpolates the sequence to give a point on the
