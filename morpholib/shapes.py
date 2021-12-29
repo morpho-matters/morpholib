@@ -1562,6 +1562,10 @@ class EllipticalArc(morpho.Figure):
 
     # Converts the figure into an equivalent Path figure.
     # Optionally specify the angular steps (in degs). Default: 5
+    # NOTE: Arc center will be assigned using Path.origin.
+    # You will need to call commitTransforms() on the resulting
+    # path figure if you want the vertex list to perfectly reflect
+    # points on the arc in true space.
     def toPath(self, dTheta=5):
 
         theta0, theta1 = self.theta0, self.theta1
@@ -1592,7 +1596,8 @@ class EllipticalArc(morpho.Figure):
 
         # Stretch it into an ellipse and move it
         path = path.fimage(lambda z: mat(self.xradius,0,0,self.yradius)*z)
-        path = path.fimage(lambda z: z + self.pos)
+        # path = path.fimage(lambda z: z + self.pos)
+        path.origin = self.pos
 
         return path
 
@@ -1688,6 +1693,10 @@ class Pie(EllipticalArc):
 
     # Converts the figure into an equivalent polygon figure
     # Optionally specify the angular steps (in degs). Default: 5
+    # NOTE: Arc center will be assigned using Polygon.origin.
+    # You will need to call commitTransforms() on the resulting
+    # path figure if you want the vertex list to perfectly reflect
+    # points on the arc in true space.
     def toPolygon(self, dTheta=5):
 
         theta0, theta1 = self.theta0, self.theta1
@@ -1736,7 +1745,8 @@ class Pie(EllipticalArc):
 
         # Stretch it into an ellipse and move it
         poly = poly.fimage(lambda z: mat(self.xradius,0,0,self.yradius)*z)
-        poly = poly.fimage(lambda z: z + self.pos)
+        # poly = poly.fimage(lambda z: z + self.pos)
+        poly.origin = self.pos
         return poly
 
 
