@@ -1575,11 +1575,12 @@ class EllipticalArc(morpho.Figure):
             theta1 = theta0 + tau
         # Ensure theta0 <= theta1
         elif theta1 < theta0:
-            theta0, theta1 = theta1, theta0
+            # theta0, theta1 = theta1, theta0
+            dTheta *= -1
 
         # steps = int(math.ceil(360 / abs(dTheta)))
         dTheta *= tau/360  # convert dTheta to radians
-        steps = math.ceil((theta1 - theta0) / abs(dTheta))
+        steps = math.ceil(abs((theta1 - theta0) / dTheta))
 
         # Make unit circle arc
         z0 = cmath.exp(theta0*1j)
@@ -1706,11 +1707,12 @@ class Pie(EllipticalArc):
             theta1 = theta0 + tau
         # Ensure theta0 <= theta1
         elif theta1 < theta0:
-            theta0, theta1 = theta1, theta0
+            # theta0, theta1 = theta1, theta0
+            dTheta *= -1
 
         # steps = int(math.ceil(360 / abs(dTheta)))
         dTheta *= tau/360  # convert dTheta to radians
-        steps = math.ceil((theta1 - theta0) / abs(dTheta))
+        steps = math.ceil(abs((theta1 - theta0) / dTheta))
 
         # Make unit circle
         z0 = cmath.exp(theta0*1j)
