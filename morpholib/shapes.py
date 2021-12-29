@@ -1520,6 +1520,7 @@ class Ellipse(morpho.Figure):
 # TWEENABLES
 # pos = Ellipse center (complex number). Default: 0
 # xradius, yradius = Horizontal and vertical radii (physical units). Default: 1
+#                    If yradius is unspecified, copies xradius.
 # theta0, theta1 = Angles (in rad) defining the angular span.
 #                  The arc is always drawn starting from theta0 and going
 #                  toward theta1, covering all angles between theta0 and theta1.
@@ -1529,8 +1530,11 @@ class Ellipse(morpho.Figure):
 # alpha = Opacity. Default: 1 (opaque)
 class EllipticalArc(morpho.Figure):
 
-    def __init__(self, pos=0, xradius=1, yradius=1, theta0=0, theta1=tau,
+    def __init__(self, pos=0, xradius=1, yradius=None, theta0=0, theta1=tau,
         strokeWeight=3, color=(1,1,1), alpha=1):
+
+        if yradius is None:
+            yradius = xradius
 
         super().__init__()
 
@@ -1544,6 +1548,17 @@ class EllipticalArc(morpho.Figure):
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
 
         self.update([pos, xradius, yradius, theta0, theta1, strokeWeight, color, alpha])
+
+    @property
+    def radius(self):
+        if self.xradius != self.yradius:
+            raise ValueError("xradius does not equal yradius. No common radius.")
+        return self.xradius
+
+    @radius.setter
+    def radius(self, value):
+        self.xradius = value
+        self.yradius = value
 
     # Converts the figure into an equivalent Path figure.
     # Optionally specify the angular steps (in degs). Default: 5
@@ -1618,7 +1633,7 @@ class EllipticalArc(morpho.Figure):
 # should appear relative to the outer arc. So setting innerFactor = 0.25 means
 # the inner arc will appear 25 percent of the way from the origin to the outer arc.
 class Pie(EllipticalArc):
-    def __init__(self, pos=0, xradius=1, yradius=1, innerFactor=0, theta0=0, theta1=tau,
+    def __init__(self, pos=0, xradius=1, yradius=None, innerFactor=0, theta0=0, theta1=tau,
         strokeWeight=3, color=(1,1,1), alphaEdge=1, fill=(1,0,0), alphaFill=1, alpha=1):
 
         super().__init__(pos, xradius, yradius, theta0, theta1, strokeWeight,
