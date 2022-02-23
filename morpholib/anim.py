@@ -32,6 +32,12 @@ from warnings import warn
 # Get temp directory
 tempdir = tempfile.gettempdir()
 
+# Export signature is a string appended to the name
+# of the temporary directory "Morpho-export" that is created
+# whenever an MP4 of GIF animation is exported. Useful
+# for doing parallel exports.
+exportSignature = ""
+
 ### FFMPEG CONFIG ###
 
 # Command to use to call the ffmpeg executable
@@ -2547,7 +2553,7 @@ class Animation(object):
 
         if extension.lower() in ("gif", "mp4"):
             # Make temp directory for PNG files
-            tempDir = tempdir.replace("/", os.sep).replace("\\", os.sep) + os.sep + "Morpho-export"
+            tempDir = tempdir.replace("/", os.sep).replace("\\", os.sep) + os.sep + "Morpho-export"+exportSignature
             try:
                 if os.path.isdir(tempDir):
                     shutil.rmtree(tempDir)
