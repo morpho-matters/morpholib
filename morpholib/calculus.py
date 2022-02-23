@@ -462,7 +462,7 @@ class RiemannDisk(morpho.Figure):
             faceFill, edgeFill, alpha, align, strokeWeight])
 
         # Initialize ellipse reference figure
-        self.face = morpho.shapes.Ellipse(fillAlpha=1)
+        self.face = morpho.shapes.Ellipse(alphaFill=1)
         self.updateFace()
 
     # Update ellipse figure representing the disk's face.
