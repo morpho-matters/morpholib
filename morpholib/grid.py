@@ -714,7 +714,16 @@ class Path(morpho.Figure):
             else:
                 back.seq[0] += dl*unit
 
-            back.draw(camera, ctx)
+            # I'm changing back.draw() to Path.draw(back) because
+            # that seems to be the better convention based on how I've
+            # used subclasses of Path before. But I'm not 100% sure this
+            # is a good convention long-term as it forces subclasses
+            # of Path to draw outlines only using the Path draw() method,
+            # meaning the drawing of outlines may not be easily changed
+            # by subclasses. At least for now, that's the behavior I want,
+            # but consider changing it back if that seems better.
+            Path.draw(back, camera, ctx)
+            # back.draw(camera, ctx)
 
         # Setup color parameters
         # gradMode = False  # Indicates whether gradients are used anywhere
