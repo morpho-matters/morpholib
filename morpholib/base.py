@@ -530,6 +530,8 @@ spareContext2 = None
 # THIS FUNCTION HAS NOT BEEN TESTED! I DO NOT CONSIDER
 # SPARE CONTEXTS OFFICIALLY IMPLEMENTED YET!!
 def setupSpareContexts(ctx):
+    raise NotImplementedError
+
     global spareContext1
     global spareContext2
 
