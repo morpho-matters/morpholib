@@ -1457,15 +1457,15 @@ def SVGdata(string):
 # strokeWeight = Border thickness (in pixels). Default: 3
 # color = Border color (RGB list). Default: [1,1,1] (white)
 # fill = Interior fill color (RGB list). Default [1,0,0] (red)
-# edgeAlpha = Border opacity. Default: 1 (opaque)
-# fillAlpha = Interior opacity. Default: 1 (opaque)
-# alpha = Overall opacity. Multiplies edgeAlpha and fillAlpha.
+# alphaEdge = Border opacity. Default: 1 (opaque)
+# alphaFill = Interior opacity. Default: 1 (opaque)
+# alpha = Overall opacity. Multiplies alphaEdge and alphaFill.
 #         Default: 1 (opaque)
 class Ellipse(morpho.Figure):
 
     def __init__(self, pos=0, xradius=1, yradius=1,
         strokeWeight=3, color=(1,1,1), fill=(1,0,0),
-        edgeAlpha=1, fillAlpha=1, alpha=1):
+        alphaEdge=1, alphaFill=1, alpha=1):
 
         super().__init__()
 
@@ -1475,11 +1475,11 @@ class Ellipse(morpho.Figure):
         strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
         color = morpho.Tweenable("color", list(color), tags=["color"])
         fill = morpho.Tweenable("fill", list(fill), tags=["color"])
-        edgeAlpha = morpho.Tweenable("edgeAlpha", edgeAlpha, tags=["scalar"])
-        fillAlpha = morpho.Tweenable("fillAlpha", fillAlpha, tags=["scalar"])
+        alphaEdge = morpho.Tweenable("alphaEdge", alphaEdge, tags=["scalar"])
+        alphaFill = morpho.Tweenable("alphaFill", alphaFill, tags=["scalar"])
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
 
-        self.update([pos, xradius, yradius, strokeWeight, color, fill, edgeAlpha, fillAlpha, alpha])
+        self.update([pos, xradius, yradius, strokeWeight, color, fill, alphaEdge, alphaFill, alpha])
 
     # NOT IMPLEMENTED YET!!!
     def toPolygon(self, dTheta=5):
@@ -1505,9 +1505,9 @@ class Ellipse(morpho.Figure):
         ctx.arc(0,0, 1, 0, tau)
         ctx.restore()
 
-        ctx.set_source_rgba(*self.fill, self.fillAlpha*self.alpha)
+        ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
         ctx.fill_preserve()
-        ctx.set_source_rgba(*self.color, self.edgeAlpha*self.alpha)
+        ctx.set_source_rgba(*self.color, self.alphaEdge*self.alpha)
         ctx.set_line_width(self.strokeWeight)
         ctx.stroke()
 
