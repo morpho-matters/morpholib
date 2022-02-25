@@ -120,6 +120,10 @@ def rotation(u, theta=None):
     new_u[:len(u)] = u
     u = new_u
 
+    # Infer theta from magnitude of u if unspecified
+    if theta is None:
+        theta = np.linalg.norm(u)
+
     # Throw error if u is the zero vector AND theta is non-zero (mod tau)
     # If u = 0 AND theta = 0 (mod tau), then interpret this as the
     # identity rotation and return the identity matrix.
@@ -128,10 +132,6 @@ def rotation(u, theta=None):
             return np.identity(3)
         else:
             raise ValueError("u must be a non-zero 3D vector")
-
-    # Infer theta from magnitude of u if unspecified
-    if theta is None:
-        theta = np.linalg.norm(u)
 
     # Convert to unit vector
     u = u / np.linalg.norm(u)
