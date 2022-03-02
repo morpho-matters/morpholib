@@ -60,13 +60,15 @@ class Point(morpho.Figure):
         strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
         color = morpho.Tweenable("color", color, tags=["color"])
         fill = morpho.Tweenable("fill", fill, tags=["color"])
+        alphaEdge = morpho.Tweenable(name="alphaEdge", value=1, tags=["scalar"])
+        alphaFill = morpho.Tweenable(name="alphaFill", value=1, tags=["scalar"])
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
         self.style = "circle"
         # size = diameter in pixels
         size = morpho.Tweenable("size", size, tags=["size"])
 
         # Initialize tweenables
-        self.update([pos, strokeWeight, color, fill, alpha, size])
+        self.update([pos, strokeWeight, color, fill, alphaEdge, alphaFill, alpha, size])
 
 
     # Draws the point on the given cairo context.
@@ -80,10 +82,10 @@ class Point(morpho.Figure):
         ctx.arc(X, Y, R, 0, tau)
         ctx.close_path()
 
-        ctx.set_source_rgba(*self.fill, self.alpha)
+        ctx.set_source_rgba(*self.fill, self.alpha*self.alphaFill)
         ctx.fill_preserve()
 
-        ctx.set_source_rgba(*self.color, self.alpha)
+        ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
         ctx.set_line_width(self.strokeWeight)
         ctx.stroke()
 
