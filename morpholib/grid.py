@@ -3171,6 +3171,21 @@ def line(z1, z2, steps=50):
     steps = int(steps)
     steps = max(1, steps)
     dz = (z2-z1)/steps
+    # seq = [z1]
+    ns = np.arange(0, steps+1, dtype=float)
+    seq = z1 + ns*dz
+    seq = seq.tolist()
+    # for n in range(1,steps+1):
+    #     seq.append(z1 + n*dz)
+    # # seq.append(z2)
+
+    return Path(seq)
+
+# Old, unvectorized version of line()
+def line_old(z1, z2, steps=50):
+    steps = int(steps)
+    steps = max(1, steps)
+    dz = (z2-z1)/steps
     seq = [z1]
     for n in range(1,steps+1):
         seq.append(z1 + n*dz)
@@ -3187,13 +3202,31 @@ def spaceLine(v1, v2, steps=50):
     v2 = morpho.matrix.array(v2)
     steps = int(steps)
     dz = (v2-v1)/steps
+    dz.shape = (1,-1)
+    # seq = [v1]
+    ns = np.arange(0, steps+1, dtype=float).reshape(-1,1)
+    seq = v1 + (ns @ dz)
+    seq = list(seq)
+
+    # for n in range(1,steps):
+    #     seq.append(v1 + n*dz)
+    # seq.append(v2)
+
+    return SpacePath(seq)
+
+spaceline = spaceLine
+
+# Old, unvectorized version of spaceLine()
+def spaceLine_old(v1, v2, steps=50):
+    v1 = morpho.matrix.array(v1)
+    v2 = morpho.matrix.array(v2)
+    steps = int(steps)
+    dz = (v2-v1)/steps
     seq = [v1]
     for n in range(1,steps):
         seq.append(v1 + n*dz)
     seq.append(v2)
     return SpacePath(seq)
-
-spaceline = spaceLine
 
 # Returns a Path figure in the shape of a circular arc that connects
 # the two complex numbers p and q by the given angle of arc.
