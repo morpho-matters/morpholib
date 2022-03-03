@@ -2464,7 +2464,7 @@ class Quadmesh(morpho.Figure):
 
         if type(fill) is tuple:
             fill = list(fill)
-        elif type(fill) is not list and not isinstance(fill, function):
+        elif type(fill) is not list and not callable(fill):
             raise TypeError("Unsupported fill input")
 
         if type(fill2) is tuple:
@@ -2538,7 +2538,7 @@ class Quadmesh(morpho.Figure):
 
         # Handle the case where self.fill is a color function
         # Note that fill2 is ignored in this case.
-        if isinstance(self.fill, function):
+        if callable(self.fill):
             # Apply decorator to self.fill to ensure the output type
             # is always a python list of python floats
             fillfunc = handleColorTypeCasting(self.fill)
@@ -2612,7 +2612,7 @@ class Quadmesh(morpho.Figure):
                     # according to Lambert's cosine law
                     # (with gamma adjustment)
                     quad = quads[n]
-                    if isinstance(self.fill, function):
+                    if callable(self.fill):
                         # quad.fill = quad.fill*cos**gamma_inv
                         RGB = np.array(quad.fill.colors, dtype=float)
                         RGBnew = RGB*cos**gamma_inv
@@ -2639,7 +2639,7 @@ class Quadmesh(morpho.Figure):
         # have a way to make the edge of a polygon be a gradient, and doing
         # something like taking the average color doesn't seem to make it look
         # very good.
-        if (self.width < 0.5 or self.alphaEdge == 0) and not isinstance(self.fill, function):
+        if (self.width < 0.5 or self.alphaEdge == 0) and not callable(self.fill):
             for quad in quads:
                 quad.width = 1
                 quad.color = quad.fill
@@ -2679,8 +2679,8 @@ class Quadmesh(morpho.Figure):
         tw = super().tweenLinear(other, t, *args, **kwargs)
 
         # Handle tween fill if it's a color function
-        if isinstance(self.fill, function):
-            if not isinstance(other.fill, function):
+        if callable(self.fill):
+            if not callable(other.fill):
                 raise TypeError("Can't tween color function with non color function.")
             tw.fill = lambda v: (1-t)*morpho.matrix.array(self.fill(v)) + t*morpho.matrix.array(other.fill(v))
             return tw
