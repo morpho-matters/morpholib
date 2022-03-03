@@ -2365,7 +2365,7 @@ class Animation(object):
     def endDelay(self, f=oo, timeOffset=0):
         end = self.maxkeyID() + timeOffset
         if end == -oo:
-            raise Exception("End of animation is undefined.")
+            raise IndexError("End of animation is undefined.")
         self.delays[end] = f
 
         # # Remove delay if it is shorter than half of a single frame.
@@ -2378,7 +2378,7 @@ class Animation(object):
     def endDelayUntil(self, f=oo):
         f = f - self.length()
         if f < 0:
-            raise ValueError("The until frame given occurs before the final frame.")
+            raise ValueError(f"Until frame occurs {-f} frames before the final frame.")
         self.endDelay(f)
 
     # Convert all infinite delays to the specified delay (units=frames).
@@ -3036,7 +3036,7 @@ class IntDict(dict):
             return
         # Negative delays are disallowed.
         elif value < 0:
-            raise ValueError("Delay values cannot be negative!")
+            raise ValueError(f"Delay values cannot be negative: {value}")
 
         super().__setitem__(key, value)
 
