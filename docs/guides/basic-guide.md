@@ -160,7 +160,8 @@ movie.play()
 By default, the angular separation between adjacent vertices is 5 degrees, but this can also be changed:
 
 ```python
-myoval = morpho.grid.ellipse(1+1j, 3, 1, dTheta=10)
+myoval = morpho.grid.ellipse(1+1j, 3, 1, dTheta=10*deg)
+# (This requires the constant "deg" to be imported from morpholib.tools.basics)
 ```
 
 #### Grids
