@@ -3254,14 +3254,14 @@ def arc(p,q, angle=pi, steps=None):
 # at the complex number z0 with semi-width a and
 # semi-height b.
 # Optionally specify the angular step dTheta to take
-# between each node on the elliptical path (in degs).
-# Defaults to 5 degs.
-# Optionally specify starting phase (in degs).
-# Measured CCW from positive real axis. Defaults to 0 degs.
-def ellipse(z0, a, b, dTheta=5, phase=0):
-    steps = int(math.ceil(360 / abs(dTheta)))
-    dTheta *= DEG2RAD  # convert dTheta to radians
-    phase *= DEG2RAD
+# between each node on the elliptical path (in radians).
+# Defaults to 2pi/72 (so 72 steps for a full ellipse; equiv 5 degs).
+# Optionally specify starting phase (in radians).
+# Measured CCW from positive real axis. Defaults to 0 rad.
+def ellipse(z0, a, b, dTheta=tau/72, phase=0):
+    steps = int(math.ceil(tau / abs(dTheta)))
+    # dTheta *= DEG2RAD  # convert dTheta to radians
+    # phase *= DEG2RAD
 
     # Make unit circle
     seq = [cmath.exp(phase*1j)]
