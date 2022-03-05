@@ -1482,7 +1482,7 @@ class Ellipse(morpho.Figure):
         self.update([pos, xradius, yradius, strokeWeight, color, fill, alphaEdge, alphaFill, alpha])
 
     # NOT IMPLEMENTED YET!!!
-    def toPolygon(self, dTheta=5):
+    def toPolygon(self, dTheta=tau/72):
         raise NotImplementedError
 
     def draw(self, camera, ctx):
@@ -1561,12 +1561,13 @@ class EllipticalArc(morpho.Figure):
         self.yradius = value
 
     # Converts the figure into an equivalent Path figure.
-    # Optionally specify the angular steps (in degs). Default: 5
+    # Optionally specify the angular steps (in rad).
+    # Default: 2pi/72 (5 degrees)
     # NOTE: Arc center will be assigned using Path.origin.
     # You will need to call commitTransforms() on the resulting
     # path figure if you want the vertex list to perfectly reflect
     # points on the arc in true space.
-    def toPath(self, dTheta=5):
+    def toPath(self, dTheta=tau/72):
 
         theta0, theta1 = self.theta0, self.theta1
         # If angular span is greater than tau,
@@ -1579,7 +1580,7 @@ class EllipticalArc(morpho.Figure):
             dTheta *= -1
 
         # steps = int(math.ceil(360 / abs(dTheta)))
-        dTheta *= tau/360  # convert dTheta to radians
+        # dTheta *= tau/360  # convert dTheta to radians
         steps = math.ceil(abs((theta1 - theta0) / dTheta))
 
         # Make unit circle arc
@@ -1689,16 +1690,17 @@ class Pie(EllipticalArc):
         ctx.set_line_width(self.strokeWeight)
         ctx.stroke()
 
-    def toPath(self, dTheta=5):
+    def toPath(self, dTheta=tau/72):
         raise NotImplementedError
 
     # Converts the figure into an equivalent polygon figure
-    # Optionally specify the angular steps (in degs). Default: 5
+    # Optionally specify the angular steps (in rads).
+    # Default: 2pi/72 (5 degrees)
     # NOTE: Arc center will be assigned using Polygon.origin.
     # You will need to call commitTransforms() on the resulting
     # path figure if you want the vertex list to perfectly reflect
     # points on the arc in true space.
-    def toPolygon(self, dTheta=5):
+    def toPolygon(self, dTheta=tau/72):
 
         theta0, theta1 = self.theta0, self.theta1
         # If angular span is greater than tau,
@@ -1711,7 +1713,7 @@ class Pie(EllipticalArc):
             dTheta *= -1
 
         # steps = int(math.ceil(360 / abs(dTheta)))
-        dTheta *= tau/360  # convert dTheta to radians
+        # dTheta *= tau/360  # convert dTheta to radians
         steps = math.ceil(abs((theta1 - theta0) / dTheta))
 
         # Make unit circle
