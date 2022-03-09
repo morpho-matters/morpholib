@@ -35,7 +35,9 @@ I2 = np.identity(2)
 # strokeWeight = Thickness of outer edge (pixels). Default: 1
 # color = Edge color. Default: [0,0,0] (black)
 # fill = Interior fill color. Default [1,0,0] (red)
-# alpha = Opacity. Default: 1 (opaque)
+# alpha = Overall opacity. Default: 1 (opaque)
+# alphaEdge = Outer edge opacity. Default 1 (opaque)
+# alphaFill = Interior opacity. Default: 1 (opaque)
 class Point(morpho.Figure):
     def __init__(self, pos=0, size=15, strokeWeight=1, color=None, fill=None,
         alpha=1):
