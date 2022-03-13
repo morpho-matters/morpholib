@@ -986,8 +986,16 @@ class Layer(object):
     # IN PLACE so that the relative time offset carries over when merged.
     def merge(self, other, atFrame=0, beforeActor=oo):
         atFrame = round(atFrame)
-        if abs(beforeActor) != oo:
+
+        # Handle case that beforeActor is an actual Actor object
+        if isinstance(beforeActor, morpho.Actor):
+            if beforeActor not in self.actors:
+                raise LayerMergeError("Given 'beforeActor' is not in this Layer!")
+            else:
+                beforeActor = self.actors.index(beforeActor)
+        elif abs(beforeActor) != oo:
             beforeActor = round(beforeActor)
+
         if atFrame != int(atFrame):
             raise ValueError("atFrame parameter must be an integer!")
         if beforeActor != oo and beforeActor != int(beforeActor):
@@ -1893,7 +1901,14 @@ class Animation(object):
             raise Exception("Can't merge: One or both animations are configured badly.")
 
         atFrame = round(atFrame)
-        if abs(beforeLayer) != oo:
+
+        # Handle case that beforeLayer is an actual Layer object
+        if isinstance(beforeLayer, morpho.Layer):
+            if beforeLayer not in self.layers:
+                raise MergeError("Given 'beforeLayer' is not in the Layer list!")
+            else:
+                beforeLayer = self.layers.index(beforeLayer)
+        elif abs(beforeLayer) != oo:
             beforeLayer = round(beforeLayer)
 
         if atFrame != int(atFrame):
