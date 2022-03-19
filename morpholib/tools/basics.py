@@ -96,6 +96,35 @@ def argShiftArray(th1, th2):
 
     return dth
 
+# Computes the total winding angle of a complex-valued function
+# around the origin on a specified interval of its parameter.
+# Divide the output of this function by 2pi to obtain the winding
+# number.
+#
+# INPUTS
+# f = Complex-valued function. Should be non-zero on the
+#     closed interval given.
+# a = Lowerbound of the input interval
+# b = Upperbound of the input interval
+# maxstep = the maximum step size to use when computing the angle sum.
+#           It should be chosen so that the angle traveled from any
+#           f(t) to f(t+maxstep) is less than pi radians.
+def windingAngle(f, a, b, maxstep):
+    length = b-a
+    # if maxstep is None:
+    #     maxstep = length/10
+
+    N = math.ceil(length/maxstep)
+    step = length/N
+    angleSum = 0
+    z0 = f(a)
+    for n in range(1,N+1):
+        z = f(a+n*step)
+        angleSum += cmath.phase(z/z0)
+        z0 = z
+
+    return angleSum
+
 # Given two points in the complex plane and the angle (in radians)
 # of the circular arc that is supposed to go between them,
 # returns the center point of the arc (as a complex number).
