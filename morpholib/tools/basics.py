@@ -65,6 +65,8 @@ def squeezeFloat(number):
     else:
         return number
 
+flattenFloat = squeezeFloat
+
 # Used in the spiral tween method.
 # Computes the correct amount to shift an angle th1 so that it
 # becomes th2 in the shortest possible path
@@ -166,12 +168,12 @@ def listceil(a, x):
     else:
         return listfloor(a,x) + 1
 
-# If x is a float that is really an integer, returns int(x).
-# Otherwise, just returns back x unchanged.
-def flattenFloat(x):
-    if type(x) is float and x == int(x):
-        x = int(x)
-    return x
+# # If x is a float that is really an integer, returns int(x).
+# # Otherwise, just returns back x unchanged.
+# def flattenFloat(x):
+#     if type(x) is float and x == int(x):
+#         x = int(x)
+#     return x
 
 # Returns the functional composition of all the functions provided.
 # e.g. Given compose(f,g,h), returns f o g o h = f(g(h(*)))
