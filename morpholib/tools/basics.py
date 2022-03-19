@@ -57,6 +57,14 @@ def truncate(num, ndigits):
     decshift = 10**ndigits
     return int(num*decshift)/decshift
 
+# If a float is equal to an int, converts it into an int.
+def squeezeFloat(number):
+    integer = int(number)
+    if number == integer:
+        return integer
+    else:
+        return number
+
 # Used in the spiral tween method.
 # Computes the correct amount to shift an angle th1 so that it
 # becomes th2 in the shortest possible path
