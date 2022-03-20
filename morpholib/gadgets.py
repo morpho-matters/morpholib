@@ -41,7 +41,7 @@ def crossout_old(box, time=30, width=3, color=(1,0,0), view=None):
 # Returns a path actor which when animated makes a colored X cross
 # out the box you specify.
 # box = a 4-item list/tuple [xmin,xmax,ymin,ymax]
-# time = duration for the animation
+# time/duration = duration for the animation
 # width = thickness of the lines
 # color = color of the lines
 # transition = Transition function assigned to path.
@@ -51,7 +51,11 @@ def crossout_old(box, time=30, width=3, color=(1,0,0), view=None):
 #            point, or are in absolute physical coordinates of the layer.
 #            Default: False (absolute coordinates)
 def crossoutPath(box, time=30, width=3, color=(1,0,0),
-    transition=None, origin=0, relative=False):
+    transition=None, origin=0, relative=False, *, duration=None):
+
+    # "duration" is a dominant alias for the "time" parameter
+    if duration is not None:
+        time = duration
 
     x_min, x_max, y_min, y_max = box
 
@@ -75,7 +79,7 @@ crossout = crossoutPath
 #
 # ARGUMENTS
 # box = 4-item list/tuple [xmin,xmax,ymin,ymax]
-# time = Duration of animation (in frames). Default: 30
+# time/duration = Duration of animation (in frames). Default: 30
 # width = Border thickness (in pixels). Default: 3
 # color = Border color (RGB list). Default: [1,0,0] (red)
 # phase = Starting angle in radians measured CCW from east. Default: pi/2
@@ -89,7 +93,12 @@ crossout = crossoutPath
 #            point, or are in absolute physical coordinates of the layer.
 #            Default: False (absolute coordinates)
 def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
-    CCW=True, steps=75, transition=None, origin=0, relative=False):
+    CCW=True, steps=75, transition=None, origin=0, relative=False,
+    *, duration=None):
+
+    # "duration" is a dominant alias for the "time" parameter
+    if duration is not None:
+        time = duration
 
     orbit = 2*int(CCW) - 1
     z0 = (box[0]+box[1])/2 + (box[2]+box[3])/2*1j if not relative else 0
@@ -119,7 +128,7 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
 #
 # ARGUMENTS
 # box = 4-item list/tuple [xmin,xmax,ymin,ymax]
-# time = Duration of animation (in frames). Default: 30
+# time/duration = Duration of animation (in frames). Default: 30
 # width = Border thickness (in pixels). Default: 3
 # color = Border color (RGB list). Default: [1,0,0] (red)
 # corner = Which corner should the animation start at?
@@ -131,7 +140,11 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
 #              Default: morpho.transition.default
 # origin = origin point of path (complex number). Default: 0
 def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
-    transition=None, origin=0):
+    transition=None, origin=0, *, duration=None):
+
+    # "duration" is a dominant alias for the "time" parameter
+    if duration is not None:
+        time = duration
 
     corner = corner.upper()
     dirs = ["NW", "SW", "SE", "NE"]
