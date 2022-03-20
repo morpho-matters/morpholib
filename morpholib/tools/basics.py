@@ -113,6 +113,8 @@ def argShiftArray(th1, th2):
 #           f(t) to f(t+maxstep) is less than pi radians.
 def windingAngle(f, a, b, maxstep):
     length = b-a
+    if length == 0:
+        return 0
     # if maxstep is None:
     #     maxstep = length/10
 
