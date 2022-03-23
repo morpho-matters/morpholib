@@ -448,6 +448,8 @@ class MultiText(morpho.MultiFigure):
             textlist = [Text(text, *args, **kwargs)]
         elif isinstance(text, list) or isinstance(text, tuple):
             textlist = [(Text(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
+        elif isinstance(text, Text):
+            textlist = [text]
         else:
             textlist = [Text(text, *args, **kwargs)]
 
