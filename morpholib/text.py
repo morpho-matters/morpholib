@@ -946,9 +946,8 @@ class Number(morpho.Figure):
 # This is basically a cheap and dirty way to implement something like
 # a variable-style Text figure.
 #
-# NOTE: The "pos" attribute of all inputted Text figures will be
-# modified IN PLACE by this function. No other attributes will be
-# affected.
+# NOTE: This function makes copies of the individual Text figures
+# to construct the MultiText figure. The originals are not affected.
 #
 # INPUTS
 # textfigs = List/tuple of Text figures
@@ -962,10 +961,11 @@ class Number(morpho.Figure):
 # anchor_y = Overall vertical alignment parameter.
 #            -1 = bottom-aligned, 0 = center-aligned, 1 = top-aligned.
 #            Default: 0 (center-aligned)
+# alpha = Overall opacity of group. Default: 1 (opaque)
 # gap = Pixel separation between adjacent text figures.
 #       Default: 0 pixels
 def group(textfigs, view, windowShape,
-    pos=0, anchor_x=0, anchor_y=0, gap=0):
+    pos=0, anchor_x=0, anchor_y=0, alpha=1, gap=0):
     # FUTURE: Perhaps allow for multi-line concatenations so something
     # like a Paragraph figure can be implemented.
 
@@ -974,6 +974,10 @@ def group(textfigs, view, windowShape,
 
     # Convert gap to physical units
     gap = morpho.physicalWidth(gap, view, windowShape)
+
+    # Handle case that Frame figure is given
+    if isinstance(textfigs, morpho.Frame):
+        textfigs = textfigs.figures
 
     # Record the widths and heights of all text figures
     totalWidth = 0
@@ -995,15 +999,22 @@ def group(textfigs, view, windowShape,
         widths.append(width)
         heights.append(height)
         totalWidth += width
+
     totalWidth += gap*(len(textfigs)-1)
     totalHeight = max(heights)
     totalxRadius = totalWidth/2
     totalyRadius = totalHeight/2
     curpos = pos-totalxRadius*(anchor_x+1) - 1j*totalyRadius*(anchor_y+1)
+
     for n, fig in enumerate(textfigs):
+        # Make a copy of fig so to not affect the original
+        fig = fig.copy()
+        textfigs[n] = fig
+
         width = widths[n]
         height = heights[n]
         fig.pos = curpos + (fig.anchor_x+1)*width/2 + 1j*(fig.anchor_y+1)*height/2
+        fig.alpha *= alpha
         curpos += width + gap
 
     return MultiText(textfigs)
