@@ -962,18 +962,18 @@ class Number(morpho.Figure):
 # anchor_y = Overall vertical alignment parameter.
 #            -1 = bottom-aligned, 0 = center-aligned, 1 = top-aligned.
 #            Default: 0 (center-aligned)
-# gapSize = Pixel separation between adjacent text figures.
-#           Default: 0 pixels
+# gap = Pixel separation between adjacent text figures.
+#       Default: 0 pixels
 def group(textfigs, view, windowShape,
-    pos=0, anchor_x=0, anchor_y=0, gapSize=0):
+    pos=0, anchor_x=0, anchor_y=0, gap=0):
     # FUTURE: Perhaps allow for multi-line concatenations so something
     # like a Paragraph figure can be implemented.
 
     widths = []
     heights = []
 
-    # Convert gapSize to physical units
-    gapSize = morpho.physicalWidth(gapSize, view, windowShape)
+    # Convert gap to physical units
+    gap = morpho.physicalWidth(gap, view, windowShape)
 
     # Record the widths and heights of all text figures
     totalWidth = 0
@@ -995,7 +995,7 @@ def group(textfigs, view, windowShape,
         widths.append(width)
         heights.append(height)
         totalWidth += width
-    totalWidth += gapSize*(len(textfigs)-1)
+    totalWidth += gap*(len(textfigs)-1)
     totalHeight = max(heights)
     totalxRadius = totalWidth/2
     totalyRadius = totalHeight/2
@@ -1004,7 +1004,7 @@ def group(textfigs, view, windowShape,
         width = widths[n]
         height = heights[n]
         fig.pos = curpos + (fig.anchor_x+1)*width/2 + 1j*(fig.anchor_y+1)*height/2
-        curpos += width + gapSize
+        curpos += width + gap
 
     return MultiText(textfigs)
 
