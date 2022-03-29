@@ -1167,6 +1167,105 @@ class Path(morpho.Figure):
 
         return T
 
+class Track(Path):
+    '''Path with tick marks - like a train track: --|--|--|--
+
+    TWEENABLES (in addition to those inherited from Path)
+    tickWidth = Width of tickmarks in pixels. Default: self.width/2
+    tickLength = Length of tickmarks in pixels. Default: 15
+    tickColor = Tickmark color (RGB vector-like).
+                Default: mirrors "color" tweenable
+    tickAlpha = Tickmark opacity. Default: 1 (opaque)
+    tickGap = Separation between adjacent tickmarks in pixels.
+              Default: 35
+    tickStart = Initial draw point for ticks. A number between 0 and 1.
+                0 = Path beginning, 1 = Path end
+                Default: 0
+    tickEnd = Final draw point for ticks. A number between 0 and 1.
+              0 = Path beginning, 1 = Path end
+              Default: 1
+    '''
+
+    def __init__(self, seq=None, width=3, color=(1,1,1), alpha=1,
+        tickWidth=None, tickColor=None, tickAlpha=1,
+        tickLength=15, tickGap=35):
+
+        # Set default tick width and color based on the
+        # given values for path width and color
+        if tickWidth is None:
+            tickWidth = width/2
+        if tickColor is None:
+            tickColor = color[:]
+
+        # New tweenables
+        tickWidth = morpho.Tweenable("tickWidth", tickWidth, tags=["size"])
+        tickColor = morpho.Tweenable("tickColor", tickColor, tags=["color"])
+        tickAlpha = morpho.Tweenable("tickAlpha", tickAlpha, tags=["scalar"])
+        tickLength = morpho.Tweenable("tickLength", tickLength, tags=["scalar"])
+        tickGap = morpho.Tweenable("tickGap", tickGap, tags=["scalar"])
+        tickStart = morpho.Tweenable("tickStart", 0, tags=["scalar"])
+        tickEnd = morpho.Tweenable("tickEnd", 1, tags=["scalar"])
+
+        if isinstance(seq, Path):
+            path = seq
+            super().__init__(path.seq[:], path.width, path.color, path.alpha)
+            self.start = path.start
+            self.end = path.end
+            self.alphaEdge = path.alphaEdge
+            self.fill = path.fill[:]
+            self.alphaFill = path.alphaFill
+            self.headSize = path.headSize
+            self.tailSize = path.tailSize
+            self.outlineWidth = path.outlineWidth
+            self.outlineColor = path.outlineColor[:]
+            self.outlineAlpha = path.outlineAlpha
+            self.origin = path.origin
+            self.rotation = path.rotation
+            self._transform = path._transform.copy()
+
+            # # Make ticks have zero width intially so the track looks
+            # # identical to the given Path figure.
+            # # Actually, maybe nevermind. This could conflict with
+            # # any user-specified tickAlpha in the constructor.
+            # tickAlpha.value = 0
+
+        else:
+            super().__init__(seq, width, color, alpha)
+
+        self.extendState(
+            [tickWidth, tickColor, tickAlpha,
+            tickLength, tickGap, tickStart, tickEnd]
+            )
+
+    # Generates the underlying path object which when drawn
+    # makes the ticks appear.
+    def makeTicks(self):
+        backpath = Path(self.seq)
+        backpath.color = self.tickColor
+        backpath.alpha = self.tickAlpha*self.alphaEdge*self.alpha
+        backpath.width = self.tickLength
+        backpath.start = max(self.tickStart, self.start)
+        backpath.end = min(self.tickEnd, self.end)
+        backpath.dash = [self.tickWidth, self.tickGap-self.tickWidth]
+
+        backpath.origin = self.origin
+        backpath.rotation = self.rotation
+        backpath._transform = self._transform
+
+        return backpath
+
+    def draw(self, camera, ctx):
+        super().draw(camera, ctx)
+        # Only draw ticks if necessary
+        if self.tickWidth > 0 and self.tickAlpha > 0 and \
+            self.tickStart < self.tickEnd:
+
+            backpath = self.makeTicks()
+            backpath.draw(camera, ctx)
+
+TickPath = Track  # Alternate name
+
+
 # DEPRECATED!
 # Polar Path class. Identical to the Path class except it adds
 # an attribute called "wind" which represents winding number about
