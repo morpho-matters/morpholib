@@ -718,6 +718,22 @@ class Path(morpho.Figure):
             else:
                 back.seq[0] += dl*unit
 
+            # Dash adjustment
+            if len(back.dash) > 0:
+                dash = list(back.dash)
+
+                # If dash pattern is odd, make it an equivalent even
+                # version by concatenating it with itself.
+                if len(dash) % 2 == 1:
+                    dash = dash*2
+
+                adjust = 2*self.outlineWidth
+                for i in range(len(dash)):
+                    dash[i] += adjust
+                    adjust *= -1
+
+                back.dash = dash
+
             # I'm changing back.draw() to Path.draw(back) because
             # that seems to be the better convention based on how I've
             # used subclasses of Path before. But I'm not 100% sure this
