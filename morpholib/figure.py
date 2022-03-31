@@ -597,7 +597,7 @@ class Figure(object):
 
         # Perform spiral tween on all relevant tweenables
         for tweenable in self._state.values():
-            # Skip this tweenable if it contains the "nopivot" tag,
+            # Skip this tweenable if it contains the "nospiral" tag,
             # or is in the ignore list, or is not in the tag list.
             if tweenable.tags.isdisjoint(tags) or "nospiral" in tweenable.tags or "notween" in tweenable.tags \
                 or tweenable.name in ig:
