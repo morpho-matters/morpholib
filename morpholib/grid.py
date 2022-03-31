@@ -272,8 +272,8 @@ def handlePathNodeInterp(tweenmethod):
             return tweenmethod(selfcopy, other, t, *args, **kwargs)
     return wrapper
 
-# Given an even-length dash pattern, returns a non-empty dash pattern
-# of the same length which is equivalent to an empty (solid) dash
+# Given an even-length dash pattern, returns a dash pattern
+# of the same length which is equivalent to an empty (i.e. solid) dash
 # pattern. Useful when tweening an empty dash with a non-empty dash.
 def equivSolidDash(dash):
     if len(dash) % 2 == 1:
@@ -288,16 +288,19 @@ def equivSolidDash(dash):
     return a.tolist()
 
 
+# Decorator modifies a tween method of a Figure that possesses
+# a "dash" tweenable and enables it to handle tweening dashes
+# of different lengths.
 def handleDash(tweenmethod):
     def dashWrapper(self, other, t, *args, **kwargs):
-        m = len(self.dash)
-        n = len(other.dash)
-
-        # Save copies of the original dashes in case we have
-        # to change them temporarily
+        # Save the original dashes in case we have
+        # to change them temporarily later
         selfdash_old = self.dash
         otherdash_old = other.dash
 
+        m = len(self.dash)
+        n = len(other.dash)
+        # Both dashes are non-empty
         if m > 0 and n > 0:
             # Handle (easy) case that they have the same non-zero length
             if m == n:
@@ -315,6 +318,7 @@ def handleDash(tweenmethod):
 
             return tw
 
+        # Only self is non-empty
         elif m > 0:
             # Make the dash length an equivalent even length dash
             # if it's odd. This is necessary for equivSolidDash()
@@ -329,6 +333,7 @@ def handleDash(tweenmethod):
 
             return tw
 
+        # Only other is non-empty
         elif n > 0:
             # Make the dash length an equivalent even length dash
             # if it's odd. This is necessary for equivSolidDash()
@@ -342,6 +347,8 @@ def handleDash(tweenmethod):
             self.dash = selfdash_old
 
             return tw
+
+        # Both dashes are empty
         else:
             return tweenmethod(self, other, t, *args, **kwargs)
 
@@ -366,6 +373,10 @@ def handleDash(tweenmethod):
 # fill = Interior fill color (RGB vector-like). Default: [1,0,0] (red)
 #        Can also be a GradientFill object (see morpho.color.GradientFill)
 # alphaFill = Interior opacity. Default: 0 (invisible)
+# dash = Dash pattern. Works exactly like how it does in cairo. It's a list
+#        of ints which are traversed cyclically and will alternatingly indicate
+#        number of pixels of visibility and invisibility.
+#        Note: Effect will not appear if "color" is a gradient.
 # outlineWidth = Thickness of path outline (in pixels). Default: 0 (no outline)
 # outlineColor = Outline color (RGB vector-like). Default: [0,0,0] (black)
 # outlineAlpha = Outline opacity. Default: 1 (opaque)
@@ -374,10 +385,6 @@ def handleDash(tweenmethod):
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
 #
 # OTHER ATTRIBUTES
-# dash = Dash pattern. Works exactly like how it does in cairo. It's a list
-#        of ints which are traversed cyclically and will alternatingly indicate
-#        number of pixels of visibility and invisibility.
-#        Note: Effect will not appear if "color" is a gradient.
 # deadends = Set of ints specifying indices of seq that are "deadends". Meaning
 #            no line segment will be drawn from the deadend index to the next index.
 #            This is mainly used under the hood by helper functions like mathgrid()
