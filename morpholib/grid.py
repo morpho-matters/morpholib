@@ -272,6 +272,81 @@ def handlePathNodeInterp(tweenmethod):
             return tweenmethod(selfcopy, other, t, *args, **kwargs)
     return wrapper
 
+# Given an even-length dash pattern, returns a non-empty dash pattern
+# of the same length which is equivalent to an empty (solid) dash
+# pattern. Useful when tweening an empty dash with a non-empty dash.
+def equivSolidDash(dash):
+    if len(dash) % 2 == 1:
+        raise IndexError("Given dash pattern must be even-length.")
+
+    dash = np.array(dash, dtype=float)
+    a = dash.copy()
+
+    a[1::2] = 0
+    a[::2] += dash[1::2]
+
+    return a.tolist()
+
+
+def handleDash(tweenmethod):
+    def dashWrapper(self, other, t, *args, **kwargs):
+        m = len(self.dash)
+        n = len(other.dash)
+
+        # Save copies of the original dashes in case we have
+        # to change them temporarily
+        selfdash_old = self.dash
+        otherdash_old = other.dash
+
+        if m > 0 and n > 0:
+            # Handle (easy) case that they have the same non-zero length
+            if m == n:
+                return tweenmethod(self, other, t, *args, **kwargs)
+
+            # Repeat each dash pattern until they have the same length
+            lcm = (m*n) // math.gcd(m,n)
+            self.dash = self.dash*(lcm//m)
+            other.dash = other.dash*(lcm//n)
+            tw = tweenmethod(self, other, t, *args, **kwargs)
+
+            # Restore original dash patterns
+            self.dash = selfdash_old
+            other.dash = otherdash_old
+
+            return tw
+
+        elif m > 0:
+            # Make the dash length an equivalent even length dash
+            # if it's odd. This is necessary for equivSolidDash()
+            # to work.
+            if m % 2 == 1:
+                self.dash = self.dash*2
+            other.dash = equivSolidDash(self.dash)
+            tw = tweenmethod(self, other, t, *args, **kwargs)
+
+            # Restore original dash pattern to other
+            other.dash = otherdash_old
+
+            return tw
+
+        elif n > 0:
+            # Make the dash length an equivalent even length dash
+            # if it's odd. This is necessary for equivSolidDash()
+            # to work.
+            if n % 2 == 1:
+                other.dash = other.dash*2
+            self.dash = equivSolidDash(other.dash)
+            tw = tweenmethod(self, other, t, *args, **kwargs)
+
+            # Restore original dash pattern to self
+            self.dash = selfdash_old
+
+            return tw
+        else:
+            return tweenmethod(self, other, t, *args, **kwargs)
+
+    return dashWrapper
+
 # Path object. Consists of a sequence of complex number positions
 # defining a polygonal path. Approximates a curve for large vertex count.
 #
@@ -324,6 +399,7 @@ class Path(morpho.Figure):
         width = morpho.Tweenable(name="width", value=width, tags=["size"])
         headSize = morpho.Tweenable("headSize", 0, tags=["scalar"])
         tailSize = morpho.Tweenable("tailSize", 0, tags=["scalar"])
+        dash = morpho.Tweenable("dash", [], tags=["scalar", "list"])
         outlineWidth = morpho.Tweenable("outlineWidth", value=0, tags=["size"])
         outlineColor = morpho.Tweenable("outlineColor", value=[0,0,0], tags=["color"])
         outlineAlpha = morpho.Tweenable("outlineAlpha", value=1, tags=["scalar"])
@@ -332,7 +408,7 @@ class Path(morpho.Figure):
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
         self.update([seq, start, end, color, alphaEdge, fill, alphaFill, alpha,
-            width, headSize, tailSize,
+            width, headSize, tailSize, dash,
             outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform]
             )
 
@@ -348,7 +424,7 @@ class Path(morpho.Figure):
         # Note that specifying only one value to the dash list is interpreted
         # as alternating that dash width ON and OFF.
         # Also note that dash pattern is ignored if gradient colors are used.
-        self.dash = []
+        # self.dash = []
 
         # Set of indices that represent where a path should terminate.
         self.deadends = set()
@@ -358,7 +434,7 @@ class Path(morpho.Figure):
         C = morpho.Figure.copy(self)
         C.interp = self.interp
         C.deadends = self.deadends.copy()
-        C.dash = self.dash.copy() if not isinstance(self.dash, tuple) else self.dash
+        # C.dash = self.dash.copy() if not isinstance(self.dash, tuple) else self.dash
         return C
 
     @property
@@ -1068,6 +1144,7 @@ class Path(morpho.Figure):
     ### TWEEN METHODS ###
 
     @morpho.TweenMethod
+    @handleDash
     @morpho.color.handleGradients(["color"])
     @morpho.color.handleGradientFills(["fill"])
     @handlePathNodeInterp
@@ -1086,6 +1163,7 @@ class Path(morpho.Figure):
         pivot = handlePathNodeInterp(pivot)
         pivot = morpho.color.handleGradientFills(["fill"])(pivot)
         pivot = morpho.color.handleGradients(["color"])(pivot)
+        pivot = handleDash(pivot)
         # handleGradients decorator can be omitted because it will
         # be applied implicitly within super().tweenPivot() since
         # it calls Path.tweenLinear() which incorporates the
@@ -1097,6 +1175,7 @@ class Path(morpho.Figure):
 
     # Returns an interpolated path between itself and another path.
     @morpho.TweenMethod
+    @handleDash
     @morpho.color.handleGradients(["color"])
     @morpho.color.handleGradientFills(["fill"])
     @handlePathNodeInterp
