@@ -1661,7 +1661,8 @@ class SpacePath(Path):
             # array = array[:2,:]  # Extract x and y coords and discard z
 
         # Convert into complex numbers
-        seq = [(array[0,n] + 1j*array[1,n]).tolist() for n in range(array.shape[1])]
+        # seq = [(array[0,n] + 1j*array[1,n]).tolist() for n in range(array.shape[1])]
+        seq = (array[0,:] + 1j*array[1,:]).tolist()
 
         # Construct 2D path in the same style
         path = Path(seq)
@@ -2518,7 +2519,8 @@ class SpacePolygon(Polygon):
             # array = array[:2,:]  # Extract x and y coords and discard z
 
         # Convert into complex numbers
-        vertices = [(array[0,n] + 1j*array[1,n]).tolist() for n in range(array.shape[1])]
+        # vertices = [(array[0,n] + 1j*array[1,n]).tolist() for n in range(array.shape[1])]
+        vertices = (array[0,:] + 1j*array[1,:]).tolist()
 
         # Construct 2D polygon in the same style
         poly = Polygon(vertices)
