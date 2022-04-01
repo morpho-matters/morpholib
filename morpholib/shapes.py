@@ -89,14 +89,14 @@ def handleSplineNodeInterp(tweenmethod):
 # alphaEdge = Path opacity independent of fill. Default: 1 (opaque)
 # fill = Interior fill color (RGB vector-like). Default: [1,0,0] (red)
 # alphaFill = Interior opacity. Default: 0 (invisible)
+# dash = Dash pattern. Works exactly like how it does in cairo. It's a list
+#        of ints which are traversed cyclically and will alternatingly indicate
+#        number of pixels of visibility and invisibility.
 # origin = Translation value (complex number). Default: 0 (complex number).
 # rotation = Path rotation about origin point (radians). Default: 0
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
 #
 # OTHER ATTRIBUTES
-# dash = Dash pattern. Works exactly like how it does in cairo. It's a list
-#        of ints which are traversed cyclically and will alternatingly indicate
-#        number of pixels of visibility and invisibility.
 # deadends = Set of ints specifying indices of seq that are "deadends". Meaning
 #            no line segment will be drawn from the deadend index to the next index.
 #            This is mainly used under the hood by helper functions like mathgrid()
@@ -127,6 +127,7 @@ class Spline(morpho.Figure):
         alphaFill = morpho.Tweenable(name="alphaFill", value=0, tags=["scalar"])
         alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         width = morpho.Tweenable(name="width", value=width, tags=["size"])
+        dash = morpho.Tweenable("dash", [], tags=["scalar", "list"])
         # headSize = morpho.Tweenable("headSize", 0, tags=["scalar"])
         # tailSize = morpho.Tweenable("tailSize", 0, tags=["scalar"])
         # outlineWidth = morpho.Tweenable("outlineWidth", value=0, tags=["size"])
@@ -137,7 +138,7 @@ class Spline(morpho.Figure):
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
         self.update([_data, start, end, color, alphaEdge, fill, alphaFill, alpha,
-            width, origin, rotation, _transform]
+            width, dash, origin, rotation, _transform]
             )
 
 
@@ -148,7 +149,7 @@ class Spline(morpho.Figure):
         # Note that specifying only one value to the dash list is interpreted
         # as alternating that dash width ON and OFF.
         # Also note that dash pattern is ignored if gradient colors are used.
-        self.dash = []
+        # self.dash = []
 
         # Set of indices that represent where a path should terminate.
         self.deadends = set()
@@ -178,7 +179,7 @@ class Spline(morpho.Figure):
 
     def copy(self):
         new = super().copy()
-        new.dash = self.dash.copy() if "copy" in dir(self.dash) else self.dash
+        # new.dash = self.dash.copy() if "copy" in dir(self.dash) else self.dash
         new.deadends = self.deadends.copy()
         new.showTangents = self.showTangents
 
@@ -937,6 +938,7 @@ class Spline(morpho.Figure):
     ### TWEEN METHODS ###
 
     @morpho.tweenMethod
+    @morpho.grid.handleDash
     @morpho.color.handleGradientFills(["fill"])
     @handleSplineNodeInterp
     def tweenLinear(self, other, t):
@@ -949,6 +951,7 @@ class Spline(morpho.Figure):
         return tw
 
     @morpho.tweenMethod
+    @morpho.grid.handleDash
     @morpho.color.handleGradientFills(["fill"])
     @handleSplineNodeInterp
     def tweenSpiral(self, other, t):
@@ -974,6 +977,7 @@ class Spline(morpho.Figure):
     def tweenPivot(cls, angle=tau/2):
 
         @morpho.TweenMethod
+        @morpho.grid.handleDash
         @morpho.color.handleGradientFills(["fill"])
         @handleSplineNodeInterp
         def pivot(self, other, t):
@@ -997,6 +1001,7 @@ class Spline(morpho.Figure):
         return pivot
 
 
+# Space version of Spline figure. See "Spline" for more info.
 class SpaceSpline(Spline):
     def __init__(self, data=None, width=3, color=(1,1,1), alpha=1):
 
