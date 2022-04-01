@@ -272,6 +272,88 @@ def handlePathNodeInterp(tweenmethod):
             return tweenmethod(selfcopy, other, t, *args, **kwargs)
     return wrapper
 
+# Given an even-length dash pattern, returns a dash pattern
+# of the same length which is equivalent to an empty (i.e. solid) dash
+# pattern. Useful when tweening an empty dash with a non-empty dash.
+def equivSolidDash(dash):
+    if len(dash) % 2 == 1:
+        raise IndexError("Given dash pattern must be even-length.")
+
+    dash = np.array(dash, dtype=float)
+    a = dash.copy()
+
+    a[1::2] = 0
+    a[::2] += dash[1::2]
+
+    return a.tolist()
+
+
+# Decorator modifies a tween method of a Figure that possesses
+# a "dash" tweenable and enables it to handle tweening dashes
+# of different lengths.
+def handleDash(tweenmethod):
+    def dashWrapper(self, other, t, *args, **kwargs):
+        # Save the original dashes in case we have
+        # to change them temporarily later
+        selfdash_old = self.dash
+        otherdash_old = other.dash
+
+        m = len(self.dash)
+        n = len(other.dash)
+        # Both dashes are non-empty
+        if m > 0 and n > 0:
+            # Handle (easy) case that they have the same non-zero length
+            if m == n:
+                return tweenmethod(self, other, t, *args, **kwargs)
+
+            # Repeat each dash pattern until they have the same length
+            lcm = (m*n) // math.gcd(m,n)
+            self.dash = self.dash*(lcm//m)
+            other.dash = other.dash*(lcm//n)
+            tw = tweenmethod(self, other, t, *args, **kwargs)
+
+            # Restore original dash patterns
+            self.dash = selfdash_old
+            other.dash = otherdash_old
+
+            return tw
+
+        # Only self is non-empty
+        elif m > 0:
+            # Make the dash length an equivalent even length dash
+            # if it's odd. This is necessary for equivSolidDash()
+            # to work.
+            if m % 2 == 1:
+                self.dash = self.dash*2
+            other.dash = equivSolidDash(self.dash)
+            tw = tweenmethod(self, other, t, *args, **kwargs)
+
+            # Restore original dash pattern to other
+            other.dash = otherdash_old
+
+            return tw
+
+        # Only other is non-empty
+        elif n > 0:
+            # Make the dash length an equivalent even length dash
+            # if it's odd. This is necessary for equivSolidDash()
+            # to work.
+            if n % 2 == 1:
+                other.dash = other.dash*2
+            self.dash = equivSolidDash(other.dash)
+            tw = tweenmethod(self, other, t, *args, **kwargs)
+
+            # Restore original dash pattern to self
+            self.dash = selfdash_old
+
+            return tw
+
+        # Both dashes are empty
+        else:
+            return tweenmethod(self, other, t, *args, **kwargs)
+
+    return dashWrapper
+
 # Path object. Consists of a sequence of complex number positions
 # defining a polygonal path. Approximates a curve for large vertex count.
 #
@@ -291,6 +373,10 @@ def handlePathNodeInterp(tweenmethod):
 # fill = Interior fill color (RGB vector-like). Default: [1,0,0] (red)
 #        Can also be a GradientFill object (see morpho.color.GradientFill)
 # alphaFill = Interior opacity. Default: 0 (invisible)
+# dash = Dash pattern. Works exactly like how it does in cairo. It's a list
+#        of ints which are traversed cyclically and will alternatingly indicate
+#        number of pixels of visibility and invisibility.
+#        Note: Effect will not appear if "color" is a gradient.
 # outlineWidth = Thickness of path outline (in pixels). Default: 0 (no outline)
 # outlineColor = Outline color (RGB vector-like). Default: [0,0,0] (black)
 # outlineAlpha = Outline opacity. Default: 1 (opaque)
@@ -299,10 +385,6 @@ def handlePathNodeInterp(tweenmethod):
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
 #
 # OTHER ATTRIBUTES
-# dash = Dash pattern. Works exactly like how it does in cairo. It's a list
-#        of ints which are traversed cyclically and will alternatingly indicate
-#        number of pixels of visibility and invisibility.
-#        Note: Effect will not appear if "color" is a gradient.
 # deadends = Set of ints specifying indices of seq that are "deadends". Meaning
 #            no line segment will be drawn from the deadend index to the next index.
 #            This is mainly used under the hood by helper functions like mathgrid()
@@ -324,6 +406,7 @@ class Path(morpho.Figure):
         width = morpho.Tweenable(name="width", value=width, tags=["size"])
         headSize = morpho.Tweenable("headSize", 0, tags=["scalar"])
         tailSize = morpho.Tweenable("tailSize", 0, tags=["scalar"])
+        dash = morpho.Tweenable("dash", [], tags=["scalar", "list"])
         outlineWidth = morpho.Tweenable("outlineWidth", value=0, tags=["size"])
         outlineColor = morpho.Tweenable("outlineColor", value=[0,0,0], tags=["color"])
         outlineAlpha = morpho.Tweenable("outlineAlpha", value=1, tags=["scalar"])
@@ -332,7 +415,7 @@ class Path(morpho.Figure):
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
         self.update([seq, start, end, color, alphaEdge, fill, alphaFill, alpha,
-            width, headSize, tailSize,
+            width, headSize, tailSize, dash,
             outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform]
             )
 
@@ -348,7 +431,7 @@ class Path(morpho.Figure):
         # Note that specifying only one value to the dash list is interpreted
         # as alternating that dash width ON and OFF.
         # Also note that dash pattern is ignored if gradient colors are used.
-        self.dash = []
+        # self.dash = []
 
         # Set of indices that represent where a path should terminate.
         self.deadends = set()
@@ -358,7 +441,7 @@ class Path(morpho.Figure):
         C = morpho.Figure.copy(self)
         C.interp = self.interp
         C.deadends = self.deadends.copy()
-        C.dash = self.dash.copy() if not isinstance(self.dash, tuple) else self.dash
+        # C.dash = self.dash.copy() if not isinstance(self.dash, tuple) else self.dash
         return C
 
     @property
@@ -1068,6 +1151,7 @@ class Path(morpho.Figure):
     ### TWEEN METHODS ###
 
     @morpho.TweenMethod
+    @handleDash
     @morpho.color.handleGradients(["color"])
     @morpho.color.handleGradientFills(["fill"])
     @handlePathNodeInterp
@@ -1086,6 +1170,7 @@ class Path(morpho.Figure):
         pivot = handlePathNodeInterp(pivot)
         pivot = morpho.color.handleGradientFills(["fill"])(pivot)
         pivot = morpho.color.handleGradients(["color"])(pivot)
+        pivot = handleDash(pivot)
         # handleGradients decorator can be omitted because it will
         # be applied implicitly within super().tweenPivot() since
         # it calls Path.tweenLinear() which incorporates the
@@ -1097,6 +1182,7 @@ class Path(morpho.Figure):
 
     # Returns an interpolated path between itself and another path.
     @morpho.TweenMethod
+    @handleDash
     @morpho.color.handleGradients(["color"])
     @morpho.color.handleGradientFills(["fill"])
     @handlePathNodeInterp
@@ -1453,7 +1539,7 @@ class SpacePath(Path):
         # Note that specifying only one value to the dash list is interpreted
         # as alternating that dash width ON and OFF.
         # Also note that dash pattern is ignored if gradient colors are used.
-        self.dash = []
+        # self.dash = []
 
         origin = morpho.matrix.array([0,0,0])
 
@@ -1467,7 +1553,7 @@ class SpacePath(Path):
                     self._state[name] = seq._state[name].copy()
             # Copy other attributes
             self.interp = seq.interp
-            self.dash = seq.dash[:]
+            # self.dash = seq.dash[:]
             self.deadends = seq.deadends.copy()
             origin = morpho.matrix.array(seq.origin)
 
@@ -1725,6 +1811,7 @@ class SpacePath(Path):
     ### TWEEN METHODS ###
 
     @morpho.TweenMethod
+    @handleDash
     @morpho.color.handleGradients(["color"])
     @morpho.color.handleGradientFills(["fill"])
     @handlePathNodeInterp
@@ -2186,6 +2273,10 @@ def handlePolyVertexInterp(tweenmethod):
 # alphaFill = Interior opacity. Default: 1 (opaque)
 # alpha = Overall opacity. Multiplies alphaEdge and alphaFill when drawn.
 #         Default: 1 (opaque)
+# dash = Dash pattern for the polygon's edge.
+#        Works exactly like how it does in cairo. It's a list
+#        of ints which are traversed cyclically and will alternatingly indicate
+#        number of pixels of visibility and invisibility.
 # origin = Translation value (complex number). Default: 0
 # rotation = Polygon rotation about origin point (radians). Default: 0
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
@@ -2234,11 +2325,13 @@ class Polygon(morpho.Figure):
         alphaFill = morpho.Tweenable(name="alphaFill", value=alphaFill, tags=["scalar"])
         alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         width = morpho.Tweenable(name="width", value=width, tags=["size"])
+        dash = morpho.Tweenable("dash", [], tags=["scalar", "list"])
         origin = morpho.Tweenable("origin", value=0, tags=["complex", "nofimage"])
         rotation = morpho.Tweenable("rotation", value=0, tags=["scalar"])
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
-        self.update([vertices, color, alphaEdge, fill, alphaFill, alpha, width,
+        self.update([vertices, color, alphaEdge,
+            fill, alphaFill, alpha, width, dash,
             origin, rotation, _transform])
 
         # The dash pattern for this line. The format is identical to how
@@ -2247,7 +2340,7 @@ class Polygon(morpho.Figure):
         # Defaults to [] which means make the line solid.
         # Note that specifying only one value to the dash list is interpreted
         # as alternating that dash width ON and OFF.
-        self.dash = []
+        # self.dash = []
 
     @property
     def transform(self):
@@ -2257,12 +2350,12 @@ class Polygon(morpho.Figure):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
-    def copy(self):
-        new = super().copy()
+    # def copy(self):
+    #     new = super().copy()
 
-        new.dash = self.dash[:]
+    #     new.dash = self.dash[:]
 
-        return new
+    #     return new
 
     # Applies all of the transformation attributes
     # origin, rotation, transform
@@ -2374,12 +2467,15 @@ class Polygon(morpho.Figure):
     ### TWEEN METHODS ###
 
     @morpho.TweenMethod
+    @handleDash
     @morpho.color.handleGradientFills(["fill"])
     @handlePolyVertexInterp
     def tweenLinear(self, other, t, *args, **kwargs):
         return super().tweenLinear(other, t, *args, **kwargs)
 
     @morpho.TweenMethod
+    @handleDash
+    @morpho.color.handleGradientFills(["fill"])
     @handlePolyVertexInterp
     def tweenSpiral(self, other, t):
         return super().tweenSpiral(other, t)
@@ -2390,6 +2486,7 @@ class Polygon(morpho.Figure):
         # Apply necessary decorators
         pivot = handlePolyVertexInterp(pivot)
         pivot = morpho.color.handleGradientFills(["fill"])(pivot)
+        pivot = handleDash(pivot)
         pivot = morpho.TweenMethod(pivot)
 
         return pivot
@@ -2895,6 +2992,9 @@ def quadgrid(*,
 # width = Arrow segment thickness (in pixels). Default: 3
 # headSize = Size of arrow head (in pixels). Default: 25
 # tailSize = Size of arrow tail (in pixels). Default: 0
+# dash = Dash pattern. Works exactly like how it does in cairo. It's a list
+#        of ints which are traversed cyclically and will alternatingly indicate
+#        number of pixels of visibility and invisibility.
 # outlineWidth = Thickness of arrow outline (in pixels). Default: 0 (no outline)
 # outlineColor = Outline color (RGB vector-like). Default: [0,0,0] (black)
 # outlineAlpha = Outline opacity. Default: 1 (opaque)
@@ -2928,6 +3028,7 @@ class Arrow(morpho.Figure):
         width = morpho.Tweenable("width", value=width, tags=["size"])
         headSize = morpho.Tweenable("headSize", headSize, tags=["scalar"])
         tailSize = morpho.Tweenable("tailSize", tailSize, tags=["scalar"])
+        dash = morpho.Tweenable("dash", [], tags=["scalar", "list"])
         outlineWidth = morpho.Tweenable("outlineWidth", value=0, tags=["size"])
         outlineColor = morpho.Tweenable("outlineColor", value=[0,0,0], tags=["color"])
         outlineAlpha = morpho.Tweenable("outlineAlpha", value=1, tags=["scalar"])
@@ -2935,10 +3036,10 @@ class Arrow(morpho.Figure):
         rotation = morpho.Tweenable("rotation", value=0, tags=["scalar"])
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
-        self.update([tail, head, color, alpha, width, headSize, tailSize,
+        self.update([tail, head, color, alpha, width, headSize, tailSize, dash,
             outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform])
 
-        self.dash = []
+        # self.dash = []
 
         # Initialize internal path figure
         self.path = Path([tail, head])
@@ -2965,12 +3066,12 @@ class Arrow(morpho.Figure):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
-    def copy(self):
-        new = super().copy()
+    # def copy(self):
+    #     new = super().copy()
 
-        new.dash = self.dash[:]
+    #     new.dash = self.dash[:]
 
-        return new
+    #     return new
 
     # Applies all of the transformation attributes
     # origin, rotation, transform
@@ -3051,6 +3152,13 @@ class Arrow(morpho.Figure):
     ### TWEEN METHODS ###
 
     @morpho.TweenMethod
+    @handleDash
+    def tweenLinear(self, other, t):
+        tw = super().tweenLinear(other, t)
+        return tw
+
+    @morpho.TweenMethod
+    @handleDash
     def tweenSpiral(self, other, t):
         # Do standard spiral tween first.
         newfig = morpho.Figure.tweenSpiral(self, other, t)
@@ -3070,6 +3178,16 @@ class Arrow(morpho.Figure):
         newfig.angle = th
 
         return newfig
+
+    @classmethod
+    def tweenPivot(cls, angle=tau/2):
+        pivot = super().tweenPivot(angle)
+
+        # Apply necessary decorators
+        pivot = handleDash(pivot)
+        pivot = morpho.TweenMethod(pivot)
+
+        return pivot
 
 
 # OBSOLETE!
@@ -3096,6 +3214,7 @@ class ArrowPolar(Arrow):
 class SpaceArrow(Arrow):
     def __init__(self, tail=0, head=1, color=None, alpha=1, width=3,
         headSize=25, tailSize=0):
+
         # Use superclass constructor
         super().__init__(
             color=color, alpha=alpha, width=width,
