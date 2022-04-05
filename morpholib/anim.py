@@ -2573,7 +2573,7 @@ class Animation(object):
                 if os.path.isdir(tempDir):
                     shutil.rmtree(tempDir)
                 os.makedirs(tempDir)
-            except:
+            except Exception:
                 raise PermissionError
 
             try:
@@ -2681,7 +2681,7 @@ class Animation(object):
                 try:
                     if os.path.isdir(tempDir):
                         shutil.rmtree(tempDir)
-                except:
+                except Exception:
                     raise PermissionError
                 print("DONE!")
 

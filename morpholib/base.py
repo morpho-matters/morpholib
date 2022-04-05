@@ -136,7 +136,7 @@ class Tweenable(object):
         if "copy" in dir(self.value):
             try:
                 twCopy.value = self.value.copy()
-            except:  # Upon failure, just reassign and hope for the best.
+            except Exception:  # Upon failure, just reassign and hope for the best.
                 twCopy.value = self.value  # Not sure this line is needed
         return twCopy
 
