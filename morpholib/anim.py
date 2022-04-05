@@ -14,7 +14,9 @@ from morpholib.tools.basics import *
 from morpholib.tools.ktimer import tic, toc
 
 # Backward compatibility because these functions used to live in anim.py
-from morpholib import screenCoords, physicalCoords, pixelWidth, physicalWidth, pixelHeight, physicalHeight
+from morpholib import screenCoords, physicalCoords, \
+    pixelWidth, physicalWidth, pixelHeight, physicalHeight, \
+    setupContext, clearContext, cairoJointStyle
 
 import math, cmath
 import numpy as np
@@ -50,6 +52,7 @@ ffmpeg = "ffmpeg"
 ffmpegConfig = {
     "crf" : 23  # Sensible range = [18, 28]; lower <=> better quality
 }
+
 
 ### SPECIAL EXCEPTIONS ###
 
@@ -1389,6 +1392,7 @@ class Layer(object):
         if self._ctx1 is None:
             # Setup contexts if they are undefined.
             self._ctx1 = setupContext(width, height, flip=False)
+            self._ctx1.set_line_join(ctx.get_line_join())
         else:
             # Setup new contexts if dimensions are mismatched
             surf1 = self._ctx1.get_target()
@@ -1396,8 +1400,10 @@ class Layer(object):
             height1 = surf1.get_height()
             if (width, height) != (width1, height1):
                 self._ctx1 = setupContext(width, height, flip=False)
+                self._ctx1.set_line_join(ctx.get_line_join())
         if self._ctx2 is None:
             self._ctx2 = setupContext(width, height, flip=False)
+            self._ctx2.set_line_join(ctx.get_line_join())
         else:
             # Setup new contexts if dimensions are mismatched
             surf2 = self._ctx2.get_target()
@@ -1405,6 +1411,7 @@ class Layer(object):
             height2 = surf2.get_height()
             if (width, height) != (width2, height2):
                 self._ctx2 = setupContext(width, height, flip=False)
+                self._ctx2.set_line_join(ctx.get_line_join())
 
         # Clear both subcontexts
         clearContext(self._ctx1, background=(0,0,0), alpha=0)
@@ -1787,6 +1794,10 @@ class Animation(object):
         # slowed by text rendering.
         self.antialiasText = True
 
+        # Set the style to use for joining line segments together.
+        # Options are "bevel", "miter", and "round". Default: "round"
+        self.jointStyle = "round"
+
         # Active animation variables
         self.active = False
         self.context = None
@@ -1875,6 +1886,7 @@ class Animation(object):
         ani.transition = self.transition
         ani.currentIndex = self.currentIndex
         ani.antialiasText = self.antialiasText
+        ani.jointStyle = self.jointStyle
 
         # # Relink mask layers to the copy's layer list whenever possible
         # for n in range(len(ani.layers)):
@@ -2438,6 +2450,8 @@ class Animation(object):
             )
 
     # Sets up the cairo context and prepares it for rendering to a pyglet window
+    # NOTE: A lot of this code is mirrored in morpho.base.setupContext().
+    # To reduce redundancy, consider calling that function in this one.
     def setupContext(self, flip=True):
         # Prepare data object to allow cairo contexts to be rendered
         # on the pyglet window.
@@ -2464,6 +2478,8 @@ class Animation(object):
         if flip:
             self.context.translate(0, height)
             self.context.scale(1, -1)
+        # Setup line join style
+        self.context.set_line_join(cairoJointStyle[self.jointStyle])
         # Paint background
         self.clearContext()
 
@@ -3056,53 +3072,6 @@ class IntDict(dict):
         super().__setitem__(key, value)
 
 ### HELPERS ###
-
-# Clears the given context and fills it with the background color
-# NOTE: This function is now redundant with a version in morpho.base.
-# Consider removing the definition here and replacing with an import.
-def clearContext(context, background, alpha):
-    # This extra stuff is to ensure that we can actually paint WITH
-    # transparency.
-    context.save()
-    context.set_source_rgba(*background, alpha)
-    context.set_operator(cr.OPERATOR_SOURCE)
-    context.paint()
-    context.restore()
-
-# Sets up an isolated, basic cairo context and returns it.
-# NOTE: This function is now redundant with a version in morpho.base.
-# Consider removing the definition here and replacing with an import.
-def setupContext(width, height, background=(0,0,0), alpha=0, flip=True, antialiasText=True):
-    # Prepare data object to allow cairo contexts to be rendered
-    # on the pyglet window.
-    # I owe some of this code to stuaxo of github.
-    # The code itself is taken from
-    # stuaxo/cairo_pyglet.py
-    # within github
-
-    # self.renderData = (ctypes.c_ubyte * (width*height*4))()
-    # stride = width*4
-    # surface = cr.ImageSurface.create_for_data(self.renderData, cr.FORMAT_ARGB32,
-    #     width, height, stride
-    #     )
-    # self.renderTexture = pg.image.Texture.create_for_size(pg.gl.GL_TEXTURE_2D, width, height, pg.gl.GL_RGBA)
-
-    surface = cr.ImageSurface(cr.FORMAT_ARGB32, width, height)
-
-    # Setup cairo context
-    context = cr.Context(surface)
-    # Setup text antialiasing
-    if antialiasText:
-        fontops = context.get_font_options()
-        fontops.set_antialias(cr.Antialias.GOOD)
-        context.set_font_options(fontops)
-    # Put origin in lower-left
-    if flip:
-        context.translate(0, height)
-        context.scale(1, -1)
-    # Paint background
-    clearContext(context, background, alpha)
-    return context
 
 # Draws an ellipse at the point (x,y) with width 2a
 # and height 2b.

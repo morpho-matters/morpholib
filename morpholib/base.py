@@ -1,8 +1,8 @@
 '''
 This is the base module of the morpho library.
 All the classes, functions, constants, etc. in this file
-are imported into the "morpho" namespace when the command
-import morpho
+are imported into the "morpholib" namespace when the command
+import morpholib
 is called.
 
 To avoid name conflicts, please avoid using names in the
@@ -477,6 +477,14 @@ def applyTransforms(ctx, origin=0, rotation=0, transform=I2):
 
 ### INTERNAL SPARE CAIRO CONTEXT ###
 
+# Dictionary mapping the names of line join styles
+# to the corresponding cairo data value.
+cairoJointStyle = {
+    "miter" : cairo.LINE_JOIN_MITER,
+    "bevel" : cairo.LINE_JOIN_BEVEL,
+    "round" : cairo.LINE_JOIN_ROUND
+}
+
 # Clears the given context and fills it with the background color
 def clearContext(context, background, alpha):
     # This extra stuff is to ensure that we can actually paint WITH
@@ -488,20 +496,8 @@ def clearContext(context, background, alpha):
     context.restore()
 
 # Sets up an isolated, basic cairo context and returns it.
-def setupContext(width, height, background=(0,0,0), alpha=0, flip=True, antialiasText=True):
-    # Prepare data object to allow cairo contexts to be rendered
-    # on the pyglet window.
-    # I owe some of this code to stuaxo of github.
-    # The code itself is taken from
-    # stuaxo/cairo_pyglet.py
-    # within github
-
-    # self.renderData = (ctypes.c_ubyte * (width*height*4))()
-    # stride = width*4
-    # surface = cr.ImageSurface.create_for_data(self.renderData, cr.FORMAT_ARGB32,
-    #     width, height, stride
-    #     )
-    # self.renderTexture = pg.image.Texture.create_for_size(pg.gl.GL_TEXTURE_2D, width, height, pg.gl.GL_RGBA)
+def setupContext(width, height, background=(0,0,0), alpha=0,
+    flip=True, antialiasText=True, jointStyle="round"):
 
     surface = cr.ImageSurface(cr.FORMAT_ARGB32, width, height)
 
@@ -516,6 +512,8 @@ def setupContext(width, height, background=(0,0,0), alpha=0, flip=True, antialia
     if flip:
         context.translate(0, height)
         context.scale(1, -1)
+    # Setup line join style
+    context.set_line_join(cairoJointStyle[jointStyle])
     # Paint background
     clearContext(context, background, alpha)
     return context
