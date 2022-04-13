@@ -59,7 +59,13 @@ def truncate(num, ndigits):
 
 # If a float is equal to an int, converts it into an int.
 def squeezeFloat(number):
-    integer = int(number)
+    try:
+        integer = int(number)
+    except OverflowError:
+        return number
+    except ValueError:
+        return number
+
     if number == integer:
         return integer
     else:
