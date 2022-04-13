@@ -2404,6 +2404,9 @@ class Animation(object):
     # Essentially equivalent to self.endDelay(f - self.length())
     def endDelayUntil(self, f=oo):
         f = f - self.length()
+        if abs(f) != oo:
+            f = round(f)
+
         if f < 0:
             raise ValueError(f"Until frame occurs {-f} frames before the final frame.")
         self.endDelay(f)
