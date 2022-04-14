@@ -2420,7 +2420,7 @@ class Animation(object):
             currentEndDelay = self.delays[end]
             if currentEndDelay == oo and f != oo:
                 raise Exception("Final frame already has infinitely long delay.")
-            f += self.delays[end]  # BUT WHAT IF IT'S INFINITE???
+            f += currentEndDelay
 
         self.endDelay(f)
 
