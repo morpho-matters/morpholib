@@ -2401,14 +2401,27 @@ class Animation(object):
 
     # Makes the animation delay at its current final frame for
     # however long is needed until the specified frame f is reached.
-    # Essentially equivalent to self.endDelay(f - self.length())
+    # This is usually equivalent to self.endDelay(f - self.length())
     def endDelayUntil(self, f=oo):
         f = f - self.length()
         if abs(f) != oo:
             f = round(f)
 
         if f < 0:
-            raise ValueError(f"Until frame occurs {-f} frames before the final frame.")
+            raise ValueError(f"Until frame occurs {-f} frames before animation's end.")
+
+        # If the animation already has a delay at its final frame,
+        # add that delay to the current frame difference, so it's
+        # taken into account when assigning the new end delay.
+        end = self.maxkeyID()
+        if end == -oo:
+            raise IndexError("End of animation is undefined.")
+        if end in self.delays:
+            currentEndDelay = self.delays[end]
+            if currentEndDelay == oo and f != oo:
+                raise Exception("Final frame already has infinitely long delay.")
+            f += self.delays[end]  # BUT WHAT IF IT'S INFINITE???
+
         self.endDelay(f)
 
     # Convert all infinite delays to the specified delay (units=frames).
