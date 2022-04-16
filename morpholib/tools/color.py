@@ -414,7 +414,7 @@ def handleGradients(gradTweenableNames):
 
 
 # This class does nothing (by itself). It just exists to be the parent of all
-# GradientFill subclasses like GradientFillLinear and GradientFillRadial.
+# GradientFill subclasses like LinearGradientFill and RadialGradientFill.
 # It makes it easier to implement handleGradientFills because I can use
 # isinstance(fig, GradientFill) to check for being an object of ANY
 # GradientFill subclass.

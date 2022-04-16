@@ -334,8 +334,8 @@ ovalpath = myoval.edge()
 ```
 
 Note that ``ellipse()`` can also take two additional optional inputs:
-- ``dTheta``: Angular separation between adjacent vertices of the polygon (in ***degrees***). Default: 5 degrees
-- ``phase``: Angle (in ***degrees***) where the initial vertex of the polygon begins. Measured counter-clockwise from the positive real axis. Default: 0 degrees
+- ``dTheta``: Angular separation between adjacent vertices of the polygon (in ***radians***). Default: 2&pi;/72 (5 degrees)
+- ``phase``: Angle (in ***radians***) where the initial vertex of the polygon begins. Measured counter-clockwise from the positive real axis. Default: 0
 
 I generally don't find much occasion to mess with these parameters, but they might be important in certain special cases. For example, ``phase`` might matter if you want to more precisely control how the ellipse morphs into a different polygon.
 
@@ -467,7 +467,7 @@ myoval.rotation = 2*pi/3
 ```
 Success! The ellipse has been rotated by ``2*pi/3`` radians<sup>[</sup>[^2]<sup>]</sup>. However, you'll have noticed that our ellipse has moved to a significantly different position on the screen. This is because the ``rotation`` attribute applies the rotation with respect to the origin point, which is (0,0) here. But we can change that using the ``origin`` tweenable!
 
-[^2]: ***Tip:*** Morpho has some convenience constants that facilitate converting between radians and degrees if you need to. They can be accessed by including the following line at the top of your code: ``from morpholib.tools.basics import *``. You can then convert degrees to radians like this: ``45*deg``, which can make it easier to specify a rotation angle when you have a value in degrees in mind, but the function or object expects radians: ``myoval.rotation = 120*deg``. You can similarly convert a radian value to degrees: ``dTheta=pi/12*rad``, or 120 degrees.
+[^2]: ***Tip:*** Morpho has some convenience constants that facilitate converting between radians and degrees if you need to. They can be accessed by including the following line at the top of your code: ``from morpholib.tools.basics import *``. You can then convert degrees to radians like this: ``45*deg``, which can make it easier to specify a rotation angle when you have a value in degrees in mind, but the function or object expects radians: ``myoval.rotation = 120*deg``. You can similarly convert a radian value to degrees: ``pi/12*rad``, or 15 degrees.
 
 To do it, let's make a new ellipse that starts out centered at the origin of the plane:
 ```python
@@ -767,5 +767,3 @@ movie.play()
 > **Note:** Depending on the actual text string you're using, sometimes the bounding box does does not totally enclose the text (in particular if your text includes a lowercase "y"). This is a known issue which may be addressed at some point, but just be aware that it happens. If it bothers you, you can always increase the padding on the box until it truly encloses it, or just determine the box dimensions manually.
 
 There's actually a slightly cleaner way to do this which doesn't require hard-coding the actual viewbox and window dimensions or knowing them in advance, but that's best discussed after we've talked about layer merging and the typical workflow I use to create more complex animations. But that's a story for another guide.
-
-#### Footnotes

@@ -57,6 +57,22 @@ def truncate(num, ndigits):
     decshift = 10**ndigits
     return int(num*decshift)/decshift
 
+# If a float is equal to an int, converts it into an int.
+def squeezeFloat(number):
+    try:
+        integer = int(number)
+    except OverflowError:
+        return number
+    except ValueError:
+        return number
+
+    if number == integer:
+        return integer
+    else:
+        return number
+
+flattenFloat = squeezeFloat
+
 # Used in the spiral tween method.
 # Computes the correct amount to shift an angle th1 so that it
 # becomes th2 in the shortest possible path
@@ -87,6 +103,37 @@ def argShiftArray(th1, th2):
     dth[flagset] = subset - np.copysign(tau, subset)
 
     return dth
+
+# Computes the total winding angle of a complex-valued function
+# around the origin on a specified interval of its parameter.
+# Divide the output of this function by 2pi to obtain the winding
+# number.
+#
+# INPUTS
+# f = Complex-valued function. Should be non-zero on the
+#     closed interval given.
+# a = Lowerbound of the input interval
+# b = Upperbound of the input interval
+# step = The step size to use when computing the angle sum.
+#        It should be chosen so that the winding angle traveled
+#        from any f(t) to f(t+step) is strictly less than pi radians.
+def windingAngle(f, a, b, step):
+    length = b-a
+    if length == 0:
+        return 0
+    # if step is None:
+    #     step = length/10
+
+    N = math.ceil(length/step)
+    step = length/N
+    angleSum = 0
+    z0 = f(a)
+    for n in range(1,N+1):
+        z = f(a+n*step)
+        angleSum += cmath.phase(z/z0)
+        z0 = z
+
+    return angleSum
 
 # Given two points in the complex plane and the angle (in radians)
 # of the circular arc that is supposed to go between them,
@@ -129,12 +176,12 @@ def listceil(a, x):
     else:
         return listfloor(a,x) + 1
 
-# If x is a float that is really an integer, returns int(x).
-# Otherwise, just returns back x unchanged.
-def flattenFloat(x):
-    if type(x) is float and x == int(x):
-        x = int(x)
-    return x
+# # If x is a float that is really an integer, returns int(x).
+# # Otherwise, just returns back x unchanged.
+# def flattenFloat(x):
+#     if type(x) is float and x == int(x):
+#         x = int(x)
+#     return x
 
 # Returns the functional composition of all the functions provided.
 # e.g. Given compose(f,g,h), returns f o g o h = f(g(h(*)))

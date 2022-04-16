@@ -89,14 +89,14 @@ def handleSplineNodeInterp(tweenmethod):
 # alphaEdge = Path opacity independent of fill. Default: 1 (opaque)
 # fill = Interior fill color (RGB vector-like). Default: [1,0,0] (red)
 # alphaFill = Interior opacity. Default: 0 (invisible)
+# dash = Dash pattern. Works exactly like how it does in cairo. It's a list
+#        of ints which are traversed cyclically and will alternatingly indicate
+#        number of pixels of visibility and invisibility.
 # origin = Translation value (complex number). Default: 0 (complex number).
 # rotation = Path rotation about origin point (radians). Default: 0
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
 #
 # OTHER ATTRIBUTES
-# dash = Dash pattern. Works exactly like how it does in cairo. It's a list
-#        of ints which are traversed cyclically and will alternatingly indicate
-#        number of pixels of visibility and invisibility.
 # deadends = Set of ints specifying indices of seq that are "deadends". Meaning
 #            no line segment will be drawn from the deadend index to the next index.
 #            This is mainly used under the hood by helper functions like mathgrid()
@@ -127,6 +127,7 @@ class Spline(morpho.Figure):
         alphaFill = morpho.Tweenable(name="alphaFill", value=0, tags=["scalar"])
         alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         width = morpho.Tweenable(name="width", value=width, tags=["size"])
+        dash = morpho.Tweenable("dash", [], tags=["scalar", "list"])
         # headSize = morpho.Tweenable("headSize", 0, tags=["scalar"])
         # tailSize = morpho.Tweenable("tailSize", 0, tags=["scalar"])
         # outlineWidth = morpho.Tweenable("outlineWidth", value=0, tags=["size"])
@@ -137,7 +138,7 @@ class Spline(morpho.Figure):
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
         self.update([_data, start, end, color, alphaEdge, fill, alphaFill, alpha,
-            width, origin, rotation, _transform]
+            width, dash, origin, rotation, _transform]
             )
 
 
@@ -148,7 +149,7 @@ class Spline(morpho.Figure):
         # Note that specifying only one value to the dash list is interpreted
         # as alternating that dash width ON and OFF.
         # Also note that dash pattern is ignored if gradient colors are used.
-        self.dash = []
+        # self.dash = []
 
         # Set of indices that represent where a path should terminate.
         self.deadends = set()
@@ -178,7 +179,7 @@ class Spline(morpho.Figure):
 
     def copy(self):
         new = super().copy()
-        new.dash = self.dash.copy() if "copy" in dir(self.dash) else self.dash
+        # new.dash = self.dash.copy() if "copy" in dir(self.dash) else self.dash
         new.deadends = self.deadends.copy()
         new.showTangents = self.showTangents
 
@@ -937,6 +938,7 @@ class Spline(morpho.Figure):
     ### TWEEN METHODS ###
 
     @morpho.tweenMethod
+    @morpho.grid.handleDash
     @morpho.color.handleGradientFills(["fill"])
     @handleSplineNodeInterp
     def tweenLinear(self, other, t):
@@ -949,6 +951,7 @@ class Spline(morpho.Figure):
         return tw
 
     @morpho.tweenMethod
+    @morpho.grid.handleDash
     @morpho.color.handleGradientFills(["fill"])
     @handleSplineNodeInterp
     def tweenSpiral(self, other, t):
@@ -974,6 +977,7 @@ class Spline(morpho.Figure):
     def tweenPivot(cls, angle=tau/2):
 
         @morpho.TweenMethod
+        @morpho.grid.handleDash
         @morpho.color.handleGradientFills(["fill"])
         @handleSplineNodeInterp
         def pivot(self, other, t):
@@ -997,6 +1001,7 @@ class Spline(morpho.Figure):
         return pivot
 
 
+# Space version of Spline figure. See "Spline" for more info.
 class SpaceSpline(Spline):
     def __init__(self, data=None, width=3, color=(1,1,1), alpha=1):
 
@@ -1457,15 +1462,15 @@ def SVGdata(string):
 # strokeWeight = Border thickness (in pixels). Default: 3
 # color = Border color (RGB list). Default: [1,1,1] (white)
 # fill = Interior fill color (RGB list). Default [1,0,0] (red)
-# edgeAlpha = Border opacity. Default: 1 (opaque)
-# fillAlpha = Interior opacity. Default: 1 (opaque)
-# alpha = Overall opacity. Multiplies edgeAlpha and fillAlpha.
+# alphaEdge = Border opacity. Default: 1 (opaque)
+# alphaFill = Interior opacity. Default: 1 (opaque)
+# alpha = Overall opacity. Multiplies alphaEdge and alphaFill.
 #         Default: 1 (opaque)
 class Ellipse(morpho.Figure):
 
     def __init__(self, pos=0, xradius=1, yradius=1,
         strokeWeight=3, color=(1,1,1), fill=(1,0,0),
-        edgeAlpha=1, fillAlpha=1, alpha=1):
+        alphaEdge=1, alphaFill=1, alpha=1):
 
         super().__init__()
 
@@ -1475,14 +1480,14 @@ class Ellipse(morpho.Figure):
         strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
         color = morpho.Tweenable("color", list(color), tags=["color"])
         fill = morpho.Tweenable("fill", list(fill), tags=["color"])
-        edgeAlpha = morpho.Tweenable("edgeAlpha", edgeAlpha, tags=["scalar"])
-        fillAlpha = morpho.Tweenable("fillAlpha", fillAlpha, tags=["scalar"])
+        alphaEdge = morpho.Tweenable("alphaEdge", alphaEdge, tags=["scalar"])
+        alphaFill = morpho.Tweenable("alphaFill", alphaFill, tags=["scalar"])
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
 
-        self.update([pos, xradius, yradius, strokeWeight, color, fill, edgeAlpha, fillAlpha, alpha])
+        self.update([pos, xradius, yradius, strokeWeight, color, fill, alphaEdge, alphaFill, alpha])
 
     # NOT IMPLEMENTED YET!!!
-    def toPolygon(self, dTheta=5):
+    def toPolygon(self, dTheta=tau/72):
         raise NotImplementedError
 
     def draw(self, camera, ctx):
@@ -1505,9 +1510,9 @@ class Ellipse(morpho.Figure):
         ctx.arc(0,0, 1, 0, tau)
         ctx.restore()
 
-        ctx.set_source_rgba(*self.fill, self.fillAlpha*self.alpha)
+        ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
         ctx.fill_preserve()
-        ctx.set_source_rgba(*self.color, self.edgeAlpha*self.alpha)
+        ctx.set_source_rgba(*self.color, self.alphaEdge*self.alpha)
         ctx.set_line_width(self.strokeWeight)
         ctx.stroke()
 
@@ -1520,6 +1525,7 @@ class Ellipse(morpho.Figure):
 # TWEENABLES
 # pos = Ellipse center (complex number). Default: 0
 # xradius, yradius = Horizontal and vertical radii (physical units). Default: 1
+#                    If yradius is unspecified, copies xradius.
 # theta0, theta1 = Angles (in rad) defining the angular span.
 #                  The arc is always drawn starting from theta0 and going
 #                  toward theta1, covering all angles between theta0 and theta1.
@@ -1529,8 +1535,11 @@ class Ellipse(morpho.Figure):
 # alpha = Opacity. Default: 1 (opaque)
 class EllipticalArc(morpho.Figure):
 
-    def __init__(self, pos=0, xradius=1, yradius=1, theta0=0, theta1=tau,
+    def __init__(self, pos=0, xradius=1, yradius=None, theta0=0, theta1=tau,
         strokeWeight=3, color=(1,1,1), alpha=1):
+
+        if yradius is None:
+            yradius = xradius
 
         super().__init__()
 
@@ -1545,9 +1554,25 @@ class EllipticalArc(morpho.Figure):
 
         self.update([pos, xradius, yradius, theta0, theta1, strokeWeight, color, alpha])
 
+    @property
+    def radius(self):
+        if self.xradius != self.yradius:
+            raise ValueError("xradius does not equal yradius. No common radius.")
+        return self.xradius
+
+    @radius.setter
+    def radius(self, value):
+        self.xradius = value
+        self.yradius = value
+
     # Converts the figure into an equivalent Path figure.
-    # Optionally specify the angular steps (in degs). Default: 5
-    def toPath(self, dTheta=5):
+    # Optionally specify the angular steps (in rad).
+    # Default: 2pi/72 (5 degrees)
+    # NOTE: Arc center will be assigned using Path.origin.
+    # You will need to call commitTransforms() on the resulting
+    # path figure if you want the vertex list to perfectly reflect
+    # points on the arc in true space.
+    def toPath(self, dTheta=tau/72):
 
         theta0, theta1 = self.theta0, self.theta1
         # If angular span is greater than tau,
@@ -1556,11 +1581,12 @@ class EllipticalArc(morpho.Figure):
             theta1 = theta0 + tau
         # Ensure theta0 <= theta1
         elif theta1 < theta0:
-            theta0, theta1 = theta1, theta0
+            # theta0, theta1 = theta1, theta0
+            dTheta *= -1
 
         # steps = int(math.ceil(360 / abs(dTheta)))
-        dTheta *= tau/360  # convert dTheta to radians
-        steps = math.ceil((theta1 - theta0) / abs(dTheta))
+        # dTheta *= tau/360  # convert dTheta to radians
+        steps = math.ceil(abs((theta1 - theta0) / dTheta))
 
         # Make unit circle arc
         z0 = cmath.exp(theta0*1j)
@@ -1577,7 +1603,8 @@ class EllipticalArc(morpho.Figure):
 
         # Stretch it into an ellipse and move it
         path = path.fimage(lambda z: mat(self.xradius,0,0,self.yradius)*z)
-        path = path.fimage(lambda z: z + self.pos)
+        # path = path.fimage(lambda z: z + self.pos)
+        path.origin = self.pos
 
         return path
 
@@ -1618,7 +1645,7 @@ class EllipticalArc(morpho.Figure):
 # should appear relative to the outer arc. So setting innerFactor = 0.25 means
 # the inner arc will appear 25 percent of the way from the origin to the outer arc.
 class Pie(EllipticalArc):
-    def __init__(self, pos=0, xradius=1, yradius=1, innerFactor=0, theta0=0, theta1=tau,
+    def __init__(self, pos=0, xradius=1, yradius=None, innerFactor=0, theta0=0, theta1=tau,
         strokeWeight=3, color=(1,1,1), alphaEdge=1, fill=(1,0,0), alphaFill=1, alpha=1):
 
         super().__init__(pos, xradius, yradius, theta0, theta1, strokeWeight,
@@ -1668,12 +1695,17 @@ class Pie(EllipticalArc):
         ctx.set_line_width(self.strokeWeight)
         ctx.stroke()
 
-    def toPath(self, dTheta=5):
+    def toPath(self, dTheta=tau/72):
         raise NotImplementedError
 
     # Converts the figure into an equivalent polygon figure
-    # Optionally specify the angular steps (in degs). Default: 5
-    def toPolygon(self, dTheta=5):
+    # Optionally specify the angular steps (in rads).
+    # Default: 2pi/72 (5 degrees)
+    # NOTE: Arc center will be assigned using Polygon.origin.
+    # You will need to call commitTransforms() on the resulting
+    # path figure if you want the vertex list to perfectly reflect
+    # points on the arc in true space.
+    def toPolygon(self, dTheta=tau/72):
 
         theta0, theta1 = self.theta0, self.theta1
         # If angular span is greater than tau,
@@ -1682,11 +1714,12 @@ class Pie(EllipticalArc):
             theta1 = theta0 + tau
         # Ensure theta0 <= theta1
         elif theta1 < theta0:
-            theta0, theta1 = theta1, theta0
+            # theta0, theta1 = theta1, theta0
+            dTheta *= -1
 
         # steps = int(math.ceil(360 / abs(dTheta)))
-        dTheta *= tau/360  # convert dTheta to radians
-        steps = math.ceil((theta1 - theta0) / abs(dTheta))
+        # dTheta *= tau/360  # convert dTheta to radians
+        steps = math.ceil(abs((theta1 - theta0) / dTheta))
 
         # Make unit circle
         z0 = cmath.exp(theta0*1j)
@@ -1721,7 +1754,8 @@ class Pie(EllipticalArc):
 
         # Stretch it into an ellipse and move it
         poly = poly.fimage(lambda z: mat(self.xradius,0,0,self.yradius)*z)
-        poly = poly.fimage(lambda z: z + self.pos)
+        # poly = poly.fimage(lambda z: z + self.pos)
+        poly.origin = self.pos
         return poly
 
 

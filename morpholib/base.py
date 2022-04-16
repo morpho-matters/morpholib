@@ -1,8 +1,8 @@
 '''
 This is the base module of the morpho library.
 All the classes, functions, constants, etc. in this file
-are imported into the "morpho" namespace when the command
-import morpho
+are imported into the "morpholib" namespace when the command
+import morpholib
 is called.
 
 To avoid name conflicts, please avoid using names in the
@@ -15,6 +15,7 @@ names are all lowercase letters.
 from morpholib.tools.basics import tau, argShift, argShiftArray, arcCenter, arcCenterArray
 import numpy as np
 import cairo
+cr = cairo
 from warnings import filterwarnings
 
 # Ignore warnings by default.
@@ -22,8 +23,8 @@ from warnings import filterwarnings
 # uses some non-standard arithmetic intentionally.
 filterwarnings("ignore")
 
-version = "0.2.5"  # Current public morpho version
-internalVersion = "2.2.5"  # Current internal morpho version
+version = "0.3.0"  # Current public morpho version
+internalVersion = "2.2.6"  # Current internal morpho version
 subversion = ""
 DEBUG_MODE = False
 
@@ -135,7 +136,7 @@ class Tweenable(object):
         if "copy" in dir(self.value):
             try:
                 twCopy.value = self.value.copy()
-            except:  # Upon failure, just reassign and hope for the best.
+            except Exception:  # Upon failure, just reassign and hope for the best.
                 twCopy.value = self.value  # Not sure this line is needed
         return twCopy
 
@@ -472,3 +473,92 @@ def applyTransforms(ctx, origin=0, rotation=0, transform=I2):
         ctx.transform(mat)
     if (rotation % tau) != 0:
         ctx.rotate(rotation)
+
+
+### INTERNAL SPARE CAIRO CONTEXT ###
+
+# Dictionary mapping the names of line join styles
+# to the corresponding cairo data value.
+cairoJointStyle = {
+    "miter" : cairo.LINE_JOIN_MITER,
+    "bevel" : cairo.LINE_JOIN_BEVEL,
+    "round" : cairo.LINE_JOIN_ROUND
+}
+
+# Clears the given context and fills it with the background color
+def clearContext(context, background, alpha):
+    # This extra stuff is to ensure that we can actually paint WITH
+    # transparency.
+    context.save()
+    context.set_source_rgba(*background, alpha)
+    context.set_operator(cr.OPERATOR_SOURCE)
+    context.paint()
+    context.restore()
+
+# Sets up an isolated, basic cairo context and returns it.
+def setupContext(width, height, background=(0,0,0), alpha=0,
+    flip=True, antialiasText=True, jointStyle="round"):
+
+    surface = cr.ImageSurface(cr.FORMAT_ARGB32, width, height)
+
+    # Setup cairo context
+    context = cr.Context(surface)
+    # Setup text antialiasing
+    if antialiasText:
+        fontops = context.get_font_options()
+        fontops.set_antialias(cr.Antialias.GOOD)
+        context.set_font_options(fontops)
+    # Put origin in lower-left
+    if flip:
+        context.translate(0, height)
+        context.scale(1, -1)
+    # Setup line join style
+    context.set_line_join(cairoJointStyle[jointStyle])
+    # Paint background
+    clearContext(context, background, alpha)
+    return context
+
+spareContext1 = None
+spareContext2 = None
+
+# Setup the spare cairo contexts.
+# The idea is these cairo contexts can be used by certain draw()
+# methods as intermediate drawing
+# contexts to aid in creating certain effects.
+# THIS FUNCTION HAS NOT BEEN TESTED! I DO NOT CONSIDER
+# SPARE CONTEXTS OFFICIALLY IMPLEMENTED YET!!
+def setupSpareContexts(ctx):
+    raise NotImplementedError
+
+    global spareContext1
+    global spareContext2
+
+    # Extract surface's width and height
+    surface = ctx.get_target()
+    width = surface.get_width()
+    height = surface.get_height()
+
+    if spareContext1 is None:
+        # Create new context if no current spareContext exists
+        spareContext1 = setupContext(width, height, flip=False)
+    else:
+        # Replace existing spareContext if there is a dimension
+        # mismatch
+        surf1 = spareContext.get_target()
+        width1 = surf1.get_width()
+        height1 = surf1.get_height()
+        if (width, height) != (width1, height1):
+            spareContext1 = setupContext(width, height, flip=False)
+    if spareContext2 is None:
+        spareContext2 = setupContext(width, height, flip=False)
+    else:
+        # Setup new contexts if dimensions are mismatched
+        surf2 = spareContext2.get_target()
+        width2 = surf2.get_width()
+        height2 = surf2.get_height()
+        if (width, height) != (width2, height2):
+            spareContext2 = setupContext(width, height, flip=False)
+
+    # Clear the spareContext
+    clearContext(spareContext1, background=(0,0,0), alpha=0)
+    clearContext(spareContext2, background=(0,0,0), alpha=0)

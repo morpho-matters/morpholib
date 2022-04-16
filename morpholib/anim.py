@@ -14,7 +14,9 @@ from morpholib.tools.basics import *
 from morpholib.tools.ktimer import tic, toc
 
 # Backward compatibility because these functions used to live in anim.py
-from morpholib import screenCoords, physicalCoords, pixelWidth, physicalWidth, pixelHeight, physicalHeight
+from morpholib import screenCoords, physicalCoords, \
+    pixelWidth, physicalWidth, pixelHeight, physicalHeight, \
+    setupContext, clearContext, cairoJointStyle
 
 import math, cmath
 import numpy as np
@@ -32,6 +34,12 @@ from warnings import warn
 # Get temp directory
 tempdir = tempfile.gettempdir()
 
+# Export signature is a string appended to the name
+# of the temporary directory "Morpho-export" that is created
+# whenever an MP4 of GIF animation is exported. Useful
+# for doing parallel exports.
+exportSignature = ""
+
 ### FFMPEG CONFIG ###
 
 # Command to use to call the ffmpeg executable
@@ -44,6 +52,7 @@ ffmpeg = "ffmpeg"
 ffmpegConfig = {
     "crf" : 23  # Sensible range = [18, 28]; lower <=> better quality
 }
+
 
 ### SPECIAL EXCEPTIONS ###
 
@@ -980,8 +989,16 @@ class Layer(object):
     # IN PLACE so that the relative time offset carries over when merged.
     def merge(self, other, atFrame=0, beforeActor=oo):
         atFrame = round(atFrame)
-        if abs(beforeActor) != oo:
+
+        # Handle case that beforeActor is an actual Actor object
+        if isinstance(beforeActor, morpho.Actor):
+            if beforeActor not in self.actors:
+                raise LayerMergeError("Given 'beforeActor' is not in this Layer!")
+            else:
+                beforeActor = self.actors.index(beforeActor)
+        elif abs(beforeActor) != oo:
             beforeActor = round(beforeActor)
+
         if atFrame != int(atFrame):
             raise ValueError("atFrame parameter must be an integer!")
         if beforeActor != oo and beforeActor != int(beforeActor):
@@ -1375,6 +1392,7 @@ class Layer(object):
         if self._ctx1 is None:
             # Setup contexts if they are undefined.
             self._ctx1 = setupContext(width, height, flip=False)
+            self._ctx1.set_line_join(ctx.get_line_join())
         else:
             # Setup new contexts if dimensions are mismatched
             surf1 = self._ctx1.get_target()
@@ -1382,8 +1400,10 @@ class Layer(object):
             height1 = surf1.get_height()
             if (width, height) != (width1, height1):
                 self._ctx1 = setupContext(width, height, flip=False)
+                self._ctx1.set_line_join(ctx.get_line_join())
         if self._ctx2 is None:
             self._ctx2 = setupContext(width, height, flip=False)
+            self._ctx2.set_line_join(ctx.get_line_join())
         else:
             # Setup new contexts if dimensions are mismatched
             surf2 = self._ctx2.get_target()
@@ -1391,6 +1411,7 @@ class Layer(object):
             height2 = surf2.get_height()
             if (width, height) != (width2, height2):
                 self._ctx2 = setupContext(width, height, flip=False)
+                self._ctx2.set_line_join(ctx.get_line_join())
 
         # Clear both subcontexts
         clearContext(self._ctx1, background=(0,0,0), alpha=0)
@@ -1773,6 +1794,10 @@ class Animation(object):
         # slowed by text rendering.
         self.antialiasText = True
 
+        # Set the style to use for joining line segments together.
+        # Options are "bevel", "miter", and "round". Default: "round"
+        self.jointStyle = "round"
+
         # Active animation variables
         self.active = False
         self.context = None
@@ -1861,6 +1886,7 @@ class Animation(object):
         ani.transition = self.transition
         ani.currentIndex = self.currentIndex
         ani.antialiasText = self.antialiasText
+        ani.jointStyle = self.jointStyle
 
         # # Relink mask layers to the copy's layer list whenever possible
         # for n in range(len(ani.layers)):
@@ -1887,7 +1913,14 @@ class Animation(object):
             raise Exception("Can't merge: One or both animations are configured badly.")
 
         atFrame = round(atFrame)
-        if abs(beforeLayer) != oo:
+
+        # Handle case that beforeLayer is an actual Layer object
+        if isinstance(beforeLayer, morpho.Layer):
+            if beforeLayer not in self.layers:
+                raise MergeError("Given 'beforeLayer' is not in the Layer list!")
+            else:
+                beforeLayer = self.layers.index(beforeLayer)
+        elif abs(beforeLayer) != oo:
             beforeLayer = round(beforeLayer)
 
         if atFrame != int(atFrame):
@@ -2359,7 +2392,7 @@ class Animation(object):
     def endDelay(self, f=oo, timeOffset=0):
         end = self.maxkeyID() + timeOffset
         if end == -oo:
-            raise Exception("End of animation is undefined.")
+            raise IndexError("End of animation is undefined.")
         self.delays[end] = f
 
         # # Remove delay if it is shorter than half of a single frame.
@@ -2368,11 +2401,27 @@ class Animation(object):
 
     # Makes the animation delay at its current final frame for
     # however long is needed until the specified frame f is reached.
-    # Essentially equivalent to self.endDelay(f - self.length())
+    # This is usually equivalent to self.endDelay(f - self.length())
     def endDelayUntil(self, f=oo):
         f = f - self.length()
+        if abs(f) != oo:
+            f = round(f)
+
         if f < 0:
-            raise ValueError("The until frame given occurs before the final frame.")
+            raise ValueError(f"Until frame occurs {-f} frames before animation's end.")
+
+        # If the animation already has a delay at its final frame,
+        # add that delay to the current frame difference, so it's
+        # taken into account when assigning the new end delay.
+        end = self.maxkeyID()
+        if end == -oo:
+            raise IndexError("End of animation is undefined.")
+        if end in self.delays:
+            currentEndDelay = self.delays[end]
+            if currentEndDelay == oo and f != oo:
+                raise Exception("Final frame already has infinitely long delay.")
+            f += currentEndDelay
+
         self.endDelay(f)
 
     # Convert all infinite delays to the specified delay (units=frames).
@@ -2417,7 +2466,9 @@ class Animation(object):
             )
 
     # Sets up the cairo context and prepares it for rendering to a pyglet window
-    def setupContext(self):
+    # NOTE: A lot of this code is mirrored in morpho.base.setupContext().
+    # To reduce redundancy, consider calling that function in this one.
+    def setupContext(self, flip=True):
         # Prepare data object to allow cairo contexts to be rendered
         # on the pyglet window.
         # I owe some of this code to stuaxo of github.
@@ -2440,8 +2491,11 @@ class Animation(object):
             fontops.set_antialias(cr.Antialias.GOOD)
             self.context.set_font_options(fontops)
         # Put origin in lower-left
-        self.context.translate(0, height)
-        self.context.scale(1, -1)
+        if flip:
+            self.context.translate(0, height)
+            self.context.scale(1, -1)
+        # Setup line join style
+        self.context.set_line_join(cairoJointStyle[self.jointStyle])
         # Paint background
         self.clearContext()
 
@@ -2546,12 +2600,12 @@ class Animation(object):
 
         if extension.lower() in ("gif", "mp4"):
             # Make temp directory for PNG files
-            tempDir = tempdir.replace("/", os.sep).replace("\\", os.sep) + os.sep + "Morpho-export"
+            tempDir = tempdir.replace("/", os.sep).replace("\\", os.sep) + os.sep + "Morpho-export"+exportSignature
             try:
                 if os.path.isdir(tempDir):
                     shutil.rmtree(tempDir)
                 os.makedirs(tempDir)
-            except:
+            except Exception:
                 raise PermissionError
 
             try:
@@ -2659,7 +2713,7 @@ class Animation(object):
                 try:
                     if os.path.isdir(tempDir):
                         shutil.rmtree(tempDir)
-                except:
+                except Exception:
                     raise PermissionError
                 print("DONE!")
 
@@ -2671,6 +2725,9 @@ class Animation(object):
                 anim2.windowShape = tuple(round(scale*coord) for coord in self.windowShape)
                 anim2.background = self.background
                 anim2.alpha = self.alpha
+
+                anim2.setupContext(flip=False)
+                anim2.context.scale(scale, scale)
 
             # Prepare to "play" animation
             self.currentIndex = firstIndex
@@ -2691,10 +2748,10 @@ class Animation(object):
                 if scale == 1:
                     self.context.get_target().write_to_png(imgfile)
                 else:
-                    # Setup a modified standard context and scale it.
-                    anim2.setupContext()
-                    anim2.context = cr.Context(anim2.context.get_target())
-                    anim2.context.scale(scale, scale)
+                    # # Setup a modified standard context and scale it.
+                    # anim2.setupContext()
+                    # anim2.context = cr.Context(anim2.context.get_target())
+                    # anim2.context.scale(scale, scale)
 
                     # Grab target surface from real animation and set it as source
                     # then paint it onto the secondary animation and export!
@@ -3026,54 +3083,11 @@ class IntDict(dict):
             return
         # Negative delays are disallowed.
         elif value < 0:
-            raise ValueError("Delay values cannot be negative!")
+            raise ValueError(f"Delay values cannot be negative: {value}")
 
         super().__setitem__(key, value)
 
 ### HELPERS ###
-
-# Clears the given context and fills it with the background color
-def clearContext(context, background, alpha):
-    # This extra stuff is to ensure that we can actually paint WITH
-    # transparency.
-    context.save()
-    context.set_source_rgba(*background, alpha)
-    context.set_operator(cr.OPERATOR_SOURCE)
-    context.paint()
-    context.restore()
-
-# Sets up an isolated, basic cairo context and returns it.
-def setupContext(width, height, background=(0,0,0), alpha=0, flip=True, antialiasText=True):
-    # Prepare data object to allow cairo contexts to be rendered
-    # on the pyglet window.
-    # I owe some of this code to stuaxo of github.
-    # The code itself is taken from
-    # stuaxo/cairo_pyglet.py
-    # within github
-
-    # self.renderData = (ctypes.c_ubyte * (width*height*4))()
-    # stride = width*4
-    # surface = cr.ImageSurface.create_for_data(self.renderData, cr.FORMAT_ARGB32,
-    #     width, height, stride
-    #     )
-    # self.renderTexture = pg.image.Texture.create_for_size(pg.gl.GL_TEXTURE_2D, width, height, pg.gl.GL_RGBA)
-
-    surface = cr.ImageSurface(cr.FORMAT_ARGB32, width, height)
-
-    # Setup cairo context
-    context = cr.Context(surface)
-    # Setup text antialiasing
-    if antialiasText:
-        fontops = context.get_font_options()
-        fontops.set_antialias(cr.Antialias.GOOD)
-        context.set_font_options(fontops)
-    # Put origin in lower-left
-    if flip:
-        context.translate(0, height)
-        context.scale(1, -1)
-    # Paint background
-    clearContext(context, background, alpha)
-    return context
 
 # Draws an ellipse at the point (x,y) with width 2a
 # and height 2b.

@@ -22,9 +22,9 @@ import numpy as np
 
 
 
-def dummy():
-    pass
-function = type(dummy)
+# def dummy():
+#     pass
+# function = type(dummy)
 
 ### CLASSES ###
 
@@ -359,7 +359,8 @@ class Figure(object):
                         if "integer" in tweenable.tags:
                             tw = tw.round()
 
-                    elif isinstance(a, function) or "function" in tweenable.tags:
+                    # elif isinstance(a, function) or "function" in tweenable.tags:
+                    elif callable(a) or "function" in tweenable.tags:
                         if a == b:
                             tw = a
                         else:
@@ -432,8 +433,9 @@ class Figure(object):
                     if "integer" in tweenable.tags:
                         tw = tw.round()
 
-            # Data type is python function
-            elif isinstance(A, function) or "function" in tweenable.tags:
+            # Data type is callable
+            # elif isinstance(A, function) or "function" in tweenable.tags:
+            elif callable(A) or "function" in tweenable.tags:
                 if A == B:
                     tw = A
                 else:
@@ -595,7 +597,7 @@ class Figure(object):
 
         # Perform spiral tween on all relevant tweenables
         for tweenable in self._state.values():
-            # Skip this tweenable if it contains the "nopivot" tag,
+            # Skip this tweenable if it contains the "nospiral" tag,
             # or is in the ignore list, or is not in the tag list.
             if tweenable.tags.isdisjoint(tags) or "nospiral" in tweenable.tags or "notween" in tweenable.tags \
                 or tweenable.name in ig:

@@ -15,6 +15,11 @@ mation.setupContext()
 ctx0 = mation.context
 del mation
 
+# Default font. If set to a font's name, this font
+# will be used as the default font for the Text class
+# and its derivatives.
+defaultFont = "Times New Roman"
+
 ### CLASSES ###
 
 '''
@@ -23,6 +28,8 @@ origin for the text is. (0,0) corresponds to centered,
 (1,1) corresponds to the upper-right corner,
 (-1, -1) corresponds to the lower-left corner.
 '''
+
+I2 = np.identity(2)
 
 # Basic text figure. Displays uniformly formatted text on screen.
 #
@@ -52,7 +59,7 @@ origin for the text is. (0,0) corresponds to centered,
 # italic = Boolean indicating whether to use italics. Default: False
 class Text(morpho.Figure):
     def __init__(self, text="", pos=complex(0),
-        size=64, font="Times New Roman",
+        size=64, font=None,
         bold=False, italic=False,
         anchor_x=0, anchor_y=0,
         color=(1,1,1), alpha=1,
@@ -110,7 +117,7 @@ class Text(morpho.Figure):
 
         # Other attributes
         self.text = text
-        self.font = font
+        self.font = font if font is not None else defaultFont
         self.bold = bold
         self.italic = italic
 
@@ -360,8 +367,9 @@ def Multi(imageMethod, reverseMethod=None):
                 # Compute the scale matrices
                 selfWidth, selfHeight = selffig.pixelDimensions()
                 otherWidth, otherHeight = otherfig.pixelDimensions()
-                forward_scale_x = otherWidth / selfWidth
-                forward_scale_y = otherHeight / selfHeight
+                self_to_other_size_ratio = selffig.size/otherfig.size
+                forward_scale_x = otherWidth / selfWidth * self_to_other_size_ratio
+                forward_scale_y = otherHeight / selfHeight * self_to_other_size_ratio
                 backward_scale_x = 1/forward_scale_x
                 backward_scale_y = 1/forward_scale_y
                 # # Scale matrix for self so that it fits other at t=1
@@ -440,6 +448,8 @@ class MultiText(morpho.MultiFigure):
             textlist = [Text(text, *args, **kwargs)]
         elif isinstance(text, list) or isinstance(text, tuple):
             textlist = [(Text(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
+        elif isinstance(text, Text):
+            textlist = [text]
         else:
             textlist = [Text(text, *args, **kwargs)]
 
@@ -715,7 +725,7 @@ class Text_old(morpho.Figure):
 #              or just behave like a label always facing the camera. Default: False
 class SpaceText(Text):
     def __init__(self, text=None, pos=None,
-        size=64, font="Times New Roman",
+        size=64, font=None,
         bold=False, italic=False,
         anchor_x=0, anchor_y=0,
         color=(1,1,1), alpha=1,
@@ -929,4 +939,83 @@ class Number(morpho.Figure):
         Num.number = a*(b/a)**t
 
         return Num
+
+
+# Takes a collection of Text figures and returns a MultiText figure
+# that concatenates all the individual Text figures.
+# This is basically a cheap and dirty way to implement something like
+# a variable-style Text figure.
+#
+# NOTE: This function makes copies of the individual Text figures
+# to construct the MultiText figure. The originals are not affected.
+#
+# INPUTS
+# textfigs = List/tuple of Text figures
+# view = viewbox of the layer this group will be in
+# windowShape = Tuple denoting pixel dimensions of the animation window
+#               (pixel width, pixel height)
+# pos = Position of the text group (complex number). Default: 0
+# anchor_x = Overall horizontal alignment parameter.
+#            -1 = left-aligned, 0 = center-aligned, 1 = right-aligned.
+#            Default: 0 (center-aligned)
+# anchor_y = Overall vertical alignment parameter.
+#            -1 = bottom-aligned, 0 = center-aligned, 1 = top-aligned.
+#            Default: 0 (center-aligned)
+# alpha = Overall opacity of group. Default: 1 (opaque)
+# gap = Pixel separation between adjacent text figures.
+#       Default: 0 pixels
+def group(textfigs, view, windowShape,
+    pos=0, anchor_x=0, anchor_y=0, alpha=1, gap=0):
+    # FUTURE: Perhaps allow for multi-line concatenations so something
+    # like a Paragraph figure can be implemented.
+
+    widths = []
+    heights = []
+
+    # Convert gap to physical units
+    gap = morpho.physicalWidth(gap, view, windowShape)
+
+    # Handle case that Frame figure is given
+    if isinstance(textfigs, morpho.Frame):
+        textfigs = textfigs.figures
+
+    # Record the widths and heights of all text figures
+    totalWidth = 0
+    for fig in textfigs:
+
+        # Check if the figure is NOT a Text figure
+        if not isinstance(fig, Text):
+            raise TypeError("At least one figure in the list is NOT an instance of the Text class.")
+        # Check for non-identity transformations. For now,
+        # group() only works on text figures that have not been
+        # transformed using a transformation attribute such as
+        # rotation, prescale_x, prescale_y, or transform.
+        if fig.rotation != 0 or fig.prescale_x != 1 \
+            or fig.prescale_y != 1 or not np.array_equal(fig._transform, I2):
+
+            raise ValueError("At least one text figure has a non-identity transformation attribute.")
+
+        width, height = fig.dimensions(view, windowShape)
+        widths.append(width)
+        heights.append(height)
+        totalWidth += width
+
+    totalWidth += gap*(len(textfigs)-1)
+    totalHeight = max(heights)
+    totalxRadius = totalWidth/2
+    totalyRadius = totalHeight/2
+    curpos = pos-totalxRadius*(anchor_x+1) - 1j*totalyRadius*(anchor_y+1)
+
+    for n, fig in enumerate(textfigs):
+        # Make a copy of fig so to not affect the original
+        fig = fig.copy()
+        textfigs[n] = fig
+
+        width = widths[n]
+        height = heights[n]
+        fig.pos = curpos + (fig.anchor_x+1)*width/2 + 1j*(fig.anchor_y+1)*height/2
+        fig.alpha *= alpha
+        curpos += width + gap
+
+    return MultiText(textfigs)
 
