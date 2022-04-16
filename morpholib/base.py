@@ -23,8 +23,8 @@ from warnings import filterwarnings
 # uses some non-standard arithmetic intentionally.
 filterwarnings("ignore")
 
-version = "0.2.6a1"  # Current public morpho version
-internalVersion = "2.2.6ip"  # Current internal morpho version
+version = "0.3.0"  # Current public morpho version
+internalVersion = "2.2.6"  # Current internal morpho version
 subversion = ""
 DEBUG_MODE = False
 
