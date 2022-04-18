@@ -341,6 +341,7 @@ Multifigure = MultiFigure
 # Mainly for internal use in the MultiFigure class and its derivatives.
 class StateStruct(object):
     def __init__(self, tweenableNames, figures):
+        raise NotImplementedError
 
         object.__setattr__(self, "_state", [tweenableNames, figures])
 
