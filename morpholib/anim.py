@@ -345,6 +345,39 @@ class StateStruct(object):
 
         object.__setattr__(self, "_state", [tweenableNames, figures])
 
+    # THE BELOW COMMENTED OUT BLOCKS ARE POTENTIALLY REALLY BAD IDEAS...
+    # def __copy__(self):
+    #     names, figures = self._state
+    #     return type(self)(names[:], figures[:])
+
+    # def __ioper__(self, value, optype):
+    #     names, figures = self._state
+
+    #     for fig in figures:
+    #         for name in names:
+    #             currentValue = getattr(fig, name)
+
+    #             oper = getattr(type(currentValue), optype)
+    #             setattr(fig, name, oper(currentValue, value))
+
+    # def __add__(self, value):
+    #     result = self.__copy__()
+    #     names, figures = result._state
+
+    #     for fig in figures:
+    #         for name in names:
+    #             currentValue = getattr(fig, name)
+    #             setattr(fig, name, currentValue + value)
+
+    #     return result
+
+    # def __getattr__(self, name):
+    #     names, figures = self._state
+
+    #     if name not in names:
+    #         raise AttributeError(f"Attribute '{name}' could not be found.")
+
+    #     return type(self)([name], figures)
 
     # Modified setattr() first checks if the attribute is a native
     # attribute of StateStruct, and if so, handles it normally.
