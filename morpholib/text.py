@@ -358,8 +358,11 @@ def Multi(imageMethod, reverseMethod=None):
             selffig = self.figures[n]
             otherfig = other.figures[n]
 
-            # If both underlying figures have the same text, don't do anything fancy.
-            if selffig.text == otherfig.text:
+            # If both underlying figures have the same text and style,
+            # don't do anything fancy.
+            if selffig.text == otherfig.text and selffig.font == otherfig.font \
+                and selffig.bold == otherfig.bold and selffig.italic == otherfig.italic:
+
                 new = imageMethod(selffig, otherfig, t, *args, **kwargs)
                 figures.append(new)
             # Fade out self and fade in other
@@ -471,6 +474,18 @@ class MultiText(morpho.MultiFigure):
             if not isinstance(fig, Text):
                 newfig = fig.images[0].copy()
                 self.figures[n] = newfig
+
+    def all(self):
+        raise NotImplementedError
+        if len(self.figures) == 0:
+            raise IndexError("MultiText figure has no component Text figures.")
+
+        tweenableNames = list(self.figures[0]._state)
+        tweenableNames.extend(["text", "font", "bold", "italic"])
+        figures = self.figures
+
+        return super().all(tweenableNames, figures)
+
 
     ### TWEEN METHODS ###
 

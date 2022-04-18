@@ -234,6 +234,27 @@ class MultiFigure(Frame):
         # modified setattr() method.
         self._active = True
 
+    # Returns a StateStruct encapsulating all the tweenables
+    # of all the figures in the MultiFigure.
+    # Main example use case:
+    # my_multifig.all().alpha = 0 changes all the subfigures'
+    # alpha attribute to 0.
+    # By default, the tweenables encapsulated are all the
+    # tweenables contained in the zeroth figure in the list,
+    # but this can be overridden, as well as exactly what figures
+    # should be encapsulated.
+    def all(self, tweenableNames=None, figures=None):
+        raise NotImplementedError
+        if len(self.figures) == 0:
+            raise IndexError("Multifigure has no subfigures.")
+
+        if tweenableNames is None:
+            tweenableNames = list(self.figures[0]._state)
+        if figures is None:
+            figures = self.figures
+
+        return StateStruct(tweenableNames, figures)
+
 
     # If attempted to access a non-existent attribute,
     # check if it's an attribute of the first figure in
@@ -312,6 +333,39 @@ class MultiFigure(Frame):
     tween = morpho.Figure.tween
 
 Multifigure = MultiFigure
+
+
+# Class encapsulates all the tweenables of a list of figures of common
+# type so that you can easily modify a single tweenable across all the
+# figures in a single line of code.
+# Mainly for internal use in the MultiFigure class and its derivatives.
+class StateStruct(object):
+    def __init__(self, tweenableNames, figures):
+
+        object.__setattr__(self, "_state", [tweenableNames, figures])
+
+
+    # Modified setattr() first checks if the attribute is a native
+    # attribute of StateStruct, and if so, handles it normally.
+    # Else, it checks if the attribute is one of the special
+    # attributes it's supposed to manage for its figure list.
+    # If it is, it modifies that attribute across all figures
+    # in the figure list.
+    def __setattr__(self, name, value):
+
+        # Extract the tweenable names and figure list from
+        # the _state attribute
+        names, figures = self._state
+
+        if name in dir(self):
+            object.__setattr__(self, name, value)
+        elif name in names:
+            for fig in figures:
+                setattr(fig, name, value)
+        else:
+            # Guaranteed to throw an error, which is what I want to happen.
+            object.__setattr__(self, name, value)
+
 
 
 # 3D version of Frame which supports the primitives() method.
