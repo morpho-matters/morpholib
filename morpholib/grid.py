@@ -1477,7 +1477,7 @@ class OutlinedPath(Path):
             back.tailSize += self.outlineWidth*sgn(self.tailSize)
 
         # Draw the backside path using the super draw() method
-        super(type(back), back).draw(camera, ctx)
+        super(__class__, back).draw(camera, ctx)
 
         # Now draw self using the supermethod
         super().draw(camera, ctx)
