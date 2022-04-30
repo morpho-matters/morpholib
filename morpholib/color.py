@@ -819,7 +819,7 @@ rainbow = lambda: Gradient({
     1:   [1,0,0]
 })
 
-heatmap = Gradient({
+heatmap = lambda: Gradient({
     0: [0,0,1],
     1/4: [0,1,1],
     1/2: [0,1,0],
