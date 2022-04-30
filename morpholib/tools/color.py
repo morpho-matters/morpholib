@@ -28,6 +28,10 @@ def rgbNormalize(R, G=None, B=None, upperbound=255):
 # Returns boolean indicating validity.
 def validHexColor(string):
     string = string.lower()
+    if string[:2] == "0x":
+        string = string[2:]
+    if len(string) == 0:
+        return False
     for char in string:
         if char not in "0123456789abcdef":
             return False
@@ -38,9 +42,13 @@ def validHexColor(string):
 # is the raw hex data in the range [0...255]: (0-255, 0-255, 0-255).
 # By default: normalize = True.
 def parseHexColor(string, normalize=True):
-    if not validHexColor(string):
-        raise ValueError("Not a valid hex string!")
-    N = int(string, 16)
+    if isinstance(string, str):
+        # if not validHexColor(string):
+        #     raise ValueError("Not a valid hex string!")
+        N = int(string, 16)
+    else:
+        N = int(string)
+
     B = N % 256
 
     N = N // 256
