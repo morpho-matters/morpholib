@@ -205,16 +205,20 @@ class Image(morpho.Figure):
     # Sets the "linked" attr to True and updates the aspect ratio.
     def link(self):
         # Do nothing if already linked.
-        if self.linked: return
+        if self.linked:
+            return self
 
         self.linked = True
         if self.width == 0 or self.height == 0:
             raise ValueError("Can't link image with a zero width or height!")
         self.aspectRatioWH = self.width/self.height
 
+        return self
+
     # Sets the "linked" attr to False
     def unlink(self):
         self.linked = False
+        return self
 
     # # Allows you to specify the origin using a scheme
     # # similar to the Text class's anchor scheme
