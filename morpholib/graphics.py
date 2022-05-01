@@ -132,6 +132,7 @@ class Image(morpho.Figure):
         self.aspectRatioWH = self.imageWidth / self.imageHeight
         if view is not None and windowShape is not None:
             self.aspectRatioWH /= morpho.pixelAspectRatioWH(view, windowShape)
+        return self
 
 
     # Restores the aspect ratio to normal, keeping width fixed
@@ -142,6 +143,7 @@ class Image(morpho.Figure):
         # self.aspectRatioWH = self.imageWidth / self.imageHeight
         self.rescaleAspectRatioWH(view, windowShape)
         self._height = self.width/self.aspectRatioWH
+        return self
 
     # Restores the aspect ratio to normal, keeping height fixed
     # and adjusting width. Optionally specify viewbox and windowShape
@@ -151,6 +153,7 @@ class Image(morpho.Figure):
         # self.aspectRatioWH = self.imageWidth / self.imageHeight
         self.rescaleAspectRatioWH(view, windowShape)
         self._width = self.height*self.aspectRatioWH
+        return self
 
     # Supply a new source to the image figure.
     # Aspect ratio and width and height will NOT be changed!
