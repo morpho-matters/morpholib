@@ -167,6 +167,23 @@ class Figure(object):
         else:
             object.__setattr__(self, name, value)
 
+    # Sets attributes of the figure according to the keyword arguments given
+    # and returns the figure that called it.
+    #
+    # EXAMPLE USAGE:
+    # fig.set(pos=0, alpha=1)  # equivalent to fig.pos = 0; fig.alpha = 1
+    #
+    # Or with actors:
+    # actor.newkey(30).set(pos=0, alpha=1, etc=stuff)
+    #
+    # Since this method returns the calling figure, it enables one liners
+    # like this:
+    # fig = MyFigureClass().set(pos=0, alpha=1, etc=stuff)
+    def set(self, **kwargs):
+        for name, value in kwargs.items():
+            setattr(self, name, value)
+        return self
+
     # # Creates a struct representation of the object.
     # def Struct(self):
     #     st = ps.Struct()
