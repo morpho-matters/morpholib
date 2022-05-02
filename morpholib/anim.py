@@ -525,15 +525,30 @@ class SpaceSkit(Skit):
 # @morpho.SkitParameters({"x":1, "y":2, "z":3})
 # class Pendulum(morpho.Skit):
 #     etc...
-def SkitParameters(params):
+def SkitParameters(params=None, /, **kwargs):
     # assert isinstance(params, list) or isinstance(params, tuple) or isinstance(params, dict)
 
+    if params is None:
+        params = {}
     # Convert params to default dict if params is not a dict.
-    if not isinstance(params, dict):
+    elif not isinstance(params, dict):
         D = {}
         for varname in params:
             D[varname] = 0
         params = D
+
+    # Check for duplicates in the params and kwargs dicts
+    paramSet = set(params.keys())
+    kwargSet = set(kwargs.keys())
+    if not paramSet.isdisjoint(kwargSet):
+        raise KeyError(f"Multiple values supplied for the parameters {paramSet.intersection(kwargSet)}")
+
+    # Pool together params with kwargs
+    params.update(kwargs)
+
+    # Check it's not empty
+    if len(params) == 0:
+        raise KeyError("No parameters supplied.")
 
     def decorator(subSkit):
         def newInit(self):
