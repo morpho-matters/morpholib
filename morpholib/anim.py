@@ -541,18 +541,25 @@ def SkitParameters(params=None, /, **kwargs):
     paramSet = set(params.keys())
     kwargSet = set(kwargs.keys())
     if not paramSet.isdisjoint(kwargSet):
-        raise KeyError(f"Multiple values supplied for the parameters {paramSet.intersection(kwargSet)}")
+        raise TypeError(f"Multiple values supplied for parameter(s) {paramSet.intersection(kwargSet)}")
 
     # Pool together params with kwargs
     params.update(kwargs)
+    paramSet = set(params.keys())
 
     # Check it's not empty
     if len(params) == 0:
-        raise KeyError("No parameters supplied.")
+        raise TypeError("No parameters supplied.")
 
     def decorator(subSkit):
         def newInit(self, **kwargs):
             super(subSkit, self).__init__()
+
+            # Check if any keyword arguments were given that are not
+            # valid parameters
+            kwSet = set(kwargs.keys())
+            if not kwSet.issubset(paramSet):
+                raise TypeError(f"Unexpected keyword argument(s): {kwSet-paramSet}")
 
             state = []
             for varname in params:
