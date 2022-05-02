@@ -466,10 +466,10 @@ SpaceMultifigure = Spacemultifigure = SpaceMultiFigure
 # pendulum.newkey(90).t = final_t_value
 class Skit(morpho.Figure):
 
-    def __init__(self):
+    def __init__(self, *, t=0):
         super().__init__()
 
-        t = morpho.Tweenable("t", 0, tags=["scalar"])
+        t = morpho.Tweenable("t", t, tags=["scalar"])
 
         self.update([t])
 
