@@ -520,9 +520,9 @@ class SpaceSkit(Skit):
 # class Pendulum(morpho.Skit):
 #     etc...
 #
-# By default the new parameters will default to 0, but you can
-# optionally specify a dict with different default values:
-# @morpho.SkitParameters({"x":1, "y":2, "z":3})
+# By default the new parameters will have default values of 0,
+# but you can optionally supply alternative default values like this:
+# @morpho.SkitParameters(x=1, y=2, z=3)
 # class Pendulum(morpho.Skit):
 #     etc...
 def SkitParameters(params=None, /, **kwargs):
