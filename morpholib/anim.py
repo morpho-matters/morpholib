@@ -551,12 +551,15 @@ def SkitParameters(params=None, /, **kwargs):
         raise KeyError("No parameters supplied.")
 
     def decorator(subSkit):
-        def newInit(self):
+        def newInit(self, **kwargs):
             super(subSkit, self).__init__()
 
             state = []
             for varname in params:
-                tweenable = morpho.Tweenable(varname, params[varname], tags=["scalar"])
+                if varname in kwargs:
+                    tweenable = morpho.Tweenable(varname, kwargs[varname], tags=["scalar"])
+                else:
+                    tweenable = morpho.Tweenable(varname, params[varname], tags=["scalar"])
                 state.append(tweenable)
             self.update(state)
 
