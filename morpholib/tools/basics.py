@@ -45,6 +45,13 @@ def sgn(x):
     else:
         return 0
 
+# Constrains x to being in the interval [low, high].
+# If x is above high, constrain() returns high.
+# If x is below low, constrain() returns low.
+# Equivalent to min(max(x,low), high)
+def constrain(x, low, high):
+    return min(max(x, low), high)
+
 # Computes the mean of a vector-like thing.
 def mean(a):
     if len(a) == 0:
