@@ -1001,19 +1001,42 @@ class Actor(object):
     def keys(self):
         return self.timeline.values()
 
-    # NOT IMPLEMENTED!
+    # Returns the first keyID coming before the given index.
+    # If given index IS a key, finds the preceding one.
+    # If does not exist, returns -inf.
+    def prevkeyID(self, f):
+        k = listfloor(self.keyIDs, f-1)
+        if k == -1:
+            return -oo
+        return self.keyIDs[k]
+
     # Returns the first keyfigure coming before the given index.
     # If given index IS a key, finds the preceding one.
     # If does not exist, returns None.
-    def prevkey(self, i):
-        raise NotImplementedError
+    def prevkey(self, f):
+        keyID = self.prevkeyID(f)
+        if keyID == -oo:
+            return None
+        return self.timeline[keyID]
 
-    # NOT IMPLEMENTED!
+    # Returns the first keyID coming after the given index.
+    # If given index IS a key, finds the next one.
+    # If does not exist, returns inf.
+    def nextkeyID(self, f):
+        k = listceil(self.keyIDs, f+1)
+        if k == len(self.keyIDs):
+            return oo
+        return self.keyIDs[k]
+
     # Returns the first keyfigure coming after the given index.
     # If given index IS a key, finds the next one.
     # If does not exist, returns None.
-    def nextkey(self, i):
-        raise NotImplementedError
+    def nextkey(self, f):
+        keyID = self.nextkeyID(f)
+        if keyID is oo:
+            return None
+        return self.timeline[keyID]
+
 
     # Returns keyfigure with lowest index.
     # Equivalent to calling self.key(0)
@@ -1038,20 +1061,6 @@ class Actor(object):
     # Returns the i-th keyfigure's index in the timeline
     def keyID(self, i):
         return self.keyIDs[i]
-
-    # NOT IMPLEMENTED!
-    # Returns the first keyID coming before the given index.
-    # If given index IS a key, finds the preceding one.
-    # If does not exist, returns None.
-    def prevkeyID(self, i):
-        raise NotImplementedError
-
-    # NOT IMPLEMENTED!
-    # Returns the first keyID coming after the given index.
-    # If given index IS a key, finds the next one.
-    # If does not exist, returns None.
-    def nextkeyID(self, i):
-        raise NotImplementedError
 
     def haskeyID(self, f):
         # if type(f) is not int:
@@ -1407,21 +1416,17 @@ class Actor(object):
     def overwrite(self, afterFrame=None):
         raise NotImplementedError
 
-    # Given frame index f, returns the latest key index
-    # before or equal to f.
-    def latestKeyID(self, f):
-        k = listfloor(self.keyIDs, f)
-        if k == -1:
-            return None
-        return self.keyIDs[k]
+    # Returns the first keyID coming before or equal to the given index.
+    # If given index IS a key, finds the preceding one.
+    # If does not exist, returns -inf.
+    def latestkeyID(self, f):
+        return self.prevkeyID(f+1)
 
-    # Given frame index f, returns the latest keyfigure
-    # that occurs at a lower or equal frame index to f.
-    def latestKey(self, f):
-        keyID = self.latestKeyID(f)
-        if keyID is None:
-            return None
-        return self.timeline[keyID]
+    # Returns the first keyfigure coming before or equal to the given index.
+    # If given index IS a key, finds the preceding one.
+    # If does not exist, returns None.
+    def latestkey(self, f):
+        return self.prevkey(f+1)
 
     # Returns a figure interpolated based on the given frame index f
     # and the actor's timeline. If f is a key index, it will return
