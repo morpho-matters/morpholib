@@ -1415,6 +1415,14 @@ class Actor(object):
             return None
         return self.keyIDs[k]
 
+    # Given frame index f, returns the latest keyfigure
+    # that occurs at a lower or equal frame index to f.
+    def latestKey(self, f):
+        keyID = self.latestKeyID(f)
+        if keyID is None:
+            return None
+        return self.timeline[keyID]
+
     # Returns a figure interpolated based on the given frame index f
     # and the actor's timeline. If f is a key index, it will return
     # the key figure.
