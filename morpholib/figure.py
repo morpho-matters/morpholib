@@ -1407,6 +1407,14 @@ class Actor(object):
     def overwrite(self, afterFrame=None):
         raise NotImplementedError
 
+    # Given frame index f, returns the latest key index
+    # before or equal to f.
+    def latestKeyID(self, f):
+        k = listfloor(self.keyIDs, f)
+        if k == -1:
+            return None
+        return self.keyIDs[k]
+
     # Returns a figure interpolated based on the given frame index f
     # and the actor's timeline. If f is a key index, it will return
     # the key figure.
