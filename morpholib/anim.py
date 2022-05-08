@@ -22,6 +22,7 @@ import math, cmath
 import numpy as np
 import os, shutil, tempfile, ctypes
 import subprocess as sp
+import pyperclip
 from warnings import warn
 
 # # Get location of the Morpho directory.
@@ -1821,9 +1822,16 @@ class SpaceLayer(Layer):
 # locaterLayer = Given layer or layer list index, prints the physical coordinates
 #                of a mouse click relative to that layer whenever the animation
 #                playback is clicked. Default: None
-# clickTime = If set to True current frame index is printed whenever animation
-#             is clicked to pause. Options: "frames", "seconds"
+# clickTime = Boolean if set to True, prints current frame index to console
+#             whenever animation is clicked to pause.
+#             Options: "frames", "seconds"
 #             Note: This ignores animation delays.
+# clickCopy = Boolean if set to True and locaterLayer is set, then every click
+#             will copy the complex coordinates of the click to the
+#             clipboard.
+# clickRound = Boolean if set to int N, the coordinates of a locater layer
+#              click round to N decimal places. By default it's set to None,
+#              meaning no rounding will take place.
 # transition = Global transition function applied to all figures in the animation.
 #              Default: morpho.transitions.uniform
 # antialiasText = Boolean indicating whether text should be antialiased.
@@ -1894,6 +1902,16 @@ class Animation(object):
         # Options: "frames", "seconds"
         # Note: This ignores animation delays.
         self.clickTime = "none"
+
+        # If set to True and locaterLayer is set, then every click
+        # will copy the complex coordinates of the click to the
+        # clipboard.
+        self.clickCopy = False
+
+        # If set to int N, the coordinates of a locater layer click
+        # round to N decimal places. By default it's set to None,
+        # meaning no rounding will take place.
+        self.clickRound = None
 
         # transition governs how tweening animation proceeds.
         # It is a function that takes a time parameter in the
@@ -2000,6 +2018,8 @@ class Animation(object):
         ani.currentIndex = self.currentIndex
         ani.antialiasText = self.antialiasText
         ani.jointStyle = self.jointStyle
+        ani.clickCopy = self.clickCopy
+        ani.clickRound = self.clickRound
 
         # # Relink mask layers to the copy's layer list whenever possible
         # for n in range(len(ani.layers)):
@@ -3063,6 +3083,17 @@ class Animation(object):
                     view = mation.locaterLayer.viewtime(mation.currentIndex)
 
                 z = physicalCoords(X, Y, view, mation.context)
+
+                # Round the real and imag components of z if needed.
+                if self.clickRound is not None:
+                    x,y = z.real, z.imag
+                    x = round(x, self.clickRound)
+                    y = round(y, self.clickRound)
+                    z = x + y*1j
+
+                # Copy to the clipboard if needed
+                if self.clickCopy:
+                    pyperclip.copy(str(z))
 
                 print((z.real, z.imag))
 
