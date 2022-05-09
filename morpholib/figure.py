@@ -902,7 +902,7 @@ class Figure(object):
         else:
             return other.copy()
 
-    tweenStep = tweenJump = tweenInstant  # Alternate names
+    # tweenStep = tweenJump = tweenInstant  # Alternate names
 
 
 # Base class for certain space figures.
@@ -1040,23 +1040,23 @@ class Actor(object):
 
     # Returns keyfigure with lowest index.
     # Equivalent to calling self.key(0)
-    def firstkey(self):
+    def first(self):
         return self.key(0)
 
-    # Synonyms for firstkey()
-    minkey = firstkey
-    start = firstkey
-    first = firstkey
+    # # Synonyms for firstkey()
+    # minkey = firstkey
+    # start = firstkey
+    # first = firstkey
 
     # Returns keyfigure with highest index.
     # Equivalent to calling self.key(-1)
-    def lastkey(self):
+    def last(self):
         return self.key(-1)
 
-    # Synonyms for lastkey()
-    maxkey = lastkey
-    end = lastkey
-    last = lastkey
+    # # Synonyms for lastkey()
+    # maxkey = lastkey
+    # end = lastkey
+    # last = lastkey
 
     # Returns the i-th keyfigure's index in the timeline
     def keyID(self, i):
@@ -1134,7 +1134,7 @@ class Actor(object):
         df = round(df)
         if not isinstance(df, int):
             raise TypeError("Cannot make newkey at non-integer frame index.")
-        f = self.maxkeyID() + df
+        f = self.lastID() + df
         if f == -oo:
             raise IndexError("Actor has no keyframes! End key is undefined.")
         return self.newkey(f, figure, seamless)
@@ -1175,7 +1175,7 @@ class Actor(object):
         self.delkey(old)
         self.newkey(new, figure, seamless=False)
 
-    reindex = movekey  # Alternative name for movekey()
+    # reindex = movekey  # Alternative name for movekey()
 
     # Swaps two keyfigures' indices.
     def swapkeys(self, t1, t2):
@@ -1191,17 +1191,17 @@ class Actor(object):
             return oo
         return min(self.timeline)
 
-    minkeyID = firstkeyID = firstID  # Synonyms for firstID()
+    # minkeyID = firstkeyID = firstID  # Synonyms for firstID()
 
     def lastID(self):
         if len(self.timeline) == 0:
             return -oo
         return max(self.timeline)
 
-    maxkeyID = lastkeyID = lastID  # Synonyms for lastID()
+    # maxkeyID = lastkeyID = lastID  # Synonyms for lastID()
 
     def __len__(self):
-        return max(self.maxkeyID() - self.minkeyID() + 1, 0)
+        return max(self.lastID() - self.firstID() + 1, 0)
 
     # Shifts all keyIDs after but not including the given frame f up.
     # Given f = -oo, shifts every keyID up.
@@ -1256,7 +1256,7 @@ class Actor(object):
 
     # Shifts the timeline so that the lowest keyID is zero.
     def rezero(self):
-        self.shift(-self.minkeyID())
+        self.shift(-self.firstID())
         return self
 
     # Compresses or expands keyIDs so as to slow down or speed up playback.
@@ -1318,9 +1318,9 @@ class Actor(object):
     # FUTURE: Implement this via python's slicing commands.
     def segment(self, start=None, end=None, edgeInterp="seamless"):
         if start is None:
-            start = self.minkeyID()
+            start = self.firstID()
         if end is None:
-            end = self.maxkeyID()
+            end = self.lastID()
 
         start = flattenFloat(start)
         end = flattenFloat(end)
@@ -1344,7 +1344,7 @@ class Actor(object):
 
         # Make extra keys at the start and end times on the subactor
         if edgeInterp == "boundary only":
-            if start not in self.timeline and start > self.minkeyID():
+            if start not in self.timeline and start > self.firstID():
                 subactor.newkey(start, self.time(start))
             if end not in self.timeline and len(self.timeline) > 0:
                 subactor.newkey(end, self.time(end))
@@ -1367,7 +1367,7 @@ class Actor(object):
 
         return subactor
 
-    subactor = segment  # Alternate name for segment()
+    # subactor = segment  # Alternate name for segment()
 
     # Like segment(), but removes the given subactor from
     # the given actor. Has additional
@@ -1396,19 +1396,19 @@ class Actor(object):
         # afterFrame defaults to maxkeyID, or zero in case self is
         # an empty actor.
         if afterFrame is None:
-            afterFrame = self.maxkeyID()
+            afterFrame = self.lastID()
             if afterFrame == -oo:
                 afterFrame = 0
 
         # Make some room for the incoming actor!
         self.shiftAfter(afterFrame, len(actor))
 
-        start = actor.minkeyID()
+        start = actor.firstID()
         for keyID in actor.timeline:
             self.newkey(keyID-start+afterFrame+1, actor.timeline[keyID])
 
     # Alternate name for insert() is paste()
-    paste = insert
+    # paste = insert
 
     # NOT IMPLEMENTED!
     # Like insert(), except it overwrites the original actor
@@ -1488,7 +1488,7 @@ class Actor(object):
             return keyfig.tween(keyfig2, T)
 
     # Alternate name for the time method.
-    frame = time
+    # frame = time
 
     # Should the final keyfigure persist after the final frame?
     # If set to True, to make an actor vanish, you will need to

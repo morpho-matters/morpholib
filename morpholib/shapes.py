@@ -201,7 +201,7 @@ class Spline(morpho.Figure):
     # of the node at the given index (see node() for more info).
     # Input and output values of this method are in absolute
     # physical coordinates of the plane (as a complex number).
-    # See also: inhandleRelative().
+    # See also: inhandleRel().
     #
     # If optional "raw" is set to True, the values are ripped
     # straight from the data array, including inf values;
@@ -224,7 +224,7 @@ class Spline(morpho.Figure):
     # of the node at the given index (see node() for more info).
     # Input and output values of this method are in absolute
     # physical coordinates of the plane (as a complex number).
-    # See also: outhandleRelative().
+    # See also: outhandleRel().
     #
     # If optional "raw" is set to True, the values are ripped
     # straight from the data array, including inf values;
@@ -272,7 +272,7 @@ class Spline(morpho.Figure):
     # straight from the data array, including inf values;
     # but if set to False, it computes the current position
     # inf corresponds to.
-    def inhandleRelative(self, index, value=None, raw=False):
+    def inhandleRel(self, index, value=None, raw=False):
         if value is None:
             return self.inhandle(index, value, raw) - self.node(index)
         # Convert to oo given any non-finite value
@@ -280,7 +280,7 @@ class Spline(morpho.Figure):
             value = oo
         self.data[index, 1] = self.data[index, 0] + value
 
-    inhandlerel = inhandleRel = inhandlerelative = inhandleRelative
+    # inhandlerel = inhandleRel = inhandlerelative = inhandleRelative
 
     # Returns or sets the position of the outward handle
     # of the node at the given index relative to the node position.
@@ -292,7 +292,7 @@ class Spline(morpho.Figure):
     # straight from the data array, including inf values;
     # but if set to False, it computes the current position
     # inf corresponds to.
-    def outhandleRelative(self, index, value=None, raw=False):
+    def outhandleRel(self, index, value=None, raw=False):
         if value is None:
             return self.outhandle(index, value, raw) - self.node(index)
             # return (self.data[index,2] - self.data[index,0]).tolist()
@@ -301,7 +301,7 @@ class Spline(morpho.Figure):
             value = oo
         self.data[index, 2] = self.data[index, 0] + value
 
-    outhandlerel = outhandleRel = outhandlerelative = outhandleRelative
+    # outhandlerel = outhandleRel = outhandlerelative = outhandleRelative
 
 
     # Creates a new node at the specified point.
@@ -427,7 +427,7 @@ class Spline(morpho.Figure):
                 I = round(I)
                 if I == segCount:
                     # self._data = np.insert(self._data, length, self._data[-1,:].copy(), axis=0)
-                    self.outhandleRelative(-1, 0)
+                    self.outhandleRel(-1, 0)
                     self.newNode(self.node(-1))
                     return
             else:
@@ -1111,7 +1111,7 @@ class SpaceSpline(Spline):
     # of the node at the given index (see node() for more info).
     # Input and output values of this method are in absolute
     # physical coordinates of the plane (as a complex number).
-    # See also: inhandleRelative().
+    # See also: inhandleRel().
     #
     # If optional "raw" is set to True, the values are ripped
     # straight from the data array, including inf values;
@@ -1136,7 +1136,7 @@ class SpaceSpline(Spline):
     # of the node at the given index (see node() for more info).
     # Input and output values of this method are in absolute
     # physical coordinates of the plane (as a complex number).
-    # See also: outhandleRelative().
+    # See also: outhandleRel().
     #
     # If optional "raw" is set to True, the values are ripped
     # straight from the data array, including inf values;
@@ -1184,7 +1184,7 @@ class SpaceSpline(Spline):
     # straight from the data array, including inf values;
     # but if set to False, it computes the current position
     # inf corresponds to.
-    def inhandleRelative(self, index, value=None, raw=False):
+    def inhandleRel(self, index, value=None, raw=False):
         if value is None:
             return self.inhandle(index, value, raw) - self.node(index)
         # Convert to oo given any non-finite value
@@ -1194,7 +1194,7 @@ class SpaceSpline(Spline):
             value = morpho.array(value)
         self.data[index, 1, :] = self.data[index, 0, :] + value
 
-    inhandlerel = inhandleRel = inhandlerelative = inhandleRelative
+    # inhandlerel = inhandleRel = inhandlerelative = inhandleRelative
 
     # Returns or sets the position of the outward handle
     # of the node at the given index relative to the node position.
@@ -1206,7 +1206,7 @@ class SpaceSpline(Spline):
     # straight from the data array, including inf values;
     # but if set to False, it computes the current position
     # inf corresponds to.
-    def outhandleRelative(self, index, value=None, raw=False):
+    def outhandleRel(self, index, value=None, raw=False):
         if value is None:
             return self.outhandle(index, value, raw) - self.node(index)
         # Convert to oo given any non-finite value
@@ -1216,7 +1216,7 @@ class SpaceSpline(Spline):
             value = morpho.array(value)
         self.data[index, 2, :] = self.data[index, 0, :] + value
 
-    outhandlerel = outhandleRel = outhandlerelative = outhandleRelative
+    # outhandlerel = outhandleRel = outhandlerelative = outhandleRelative
 
     # Creates a new node at the specified point.
     # Optionally also specify inhandle and outhandle which default to inf.
@@ -1256,7 +1256,7 @@ class SpaceSpline(Spline):
     # Optionally specify "segsteps" which is how many path steps to
     # use in a single bezier curve segment of the spline.
     # Defaults to 30 steps per segment.
-    def toSpacePath(self, segsteps=30):
+    def toPath(self, segsteps=30):
         steps = segsteps*(self.length()-1)
         seq = []
         for n in range(0,steps+1):
@@ -1277,7 +1277,7 @@ class SpaceSpline(Spline):
 
         return path
 
-    toPath = toSpacepath = toSpacePath
+    # toPath = toSpacepath = toSpacePath
 
     def primitives(self, camera):
         # If the spline is fully transparent, don't bother

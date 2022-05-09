@@ -1187,7 +1187,7 @@ class Layer(object):
     # merges at the maxkeyID of self.
     # If maxkeyID is -oo, then merges at frame 0.
     def append(self, other, timeOffset=0, beforeActor=oo):
-        atFrame = self.maxkeyID()
+        atFrame = self.lastID()
         if atFrame == -oo:
             atFrame = 0
         atFrame += timeOffset
@@ -1206,7 +1206,7 @@ class Layer(object):
         for actor in self.actors:
             minkey = min((minkey, actor.keyIDs[0] if len(actor.timeline) > 0 else minkey))
         return minkey + self.timeOffset if useOffset else minkey
-    minkeyID = firstkeyID = firstID  # Synonyms for firstID()
+    # minkeyID = firstkeyID = firstID  # Synonyms for firstID()
 
     # Returns the maximum key index across all actors (including the camera).
     # The index value returned is in LOCAL time coordinates unless useOffset is True
@@ -1232,7 +1232,7 @@ class Layer(object):
 
         return maxkey + self.timeOffset if useOffset else maxkey
 
-    maxkeyID = lastkeyID = lastID  # Synonyms for lastID()
+    # maxkeyID = lastkeyID = lastID  # Synonyms for lastID()
 
     # Return a frame of all the actors' states at index f.
     # Skips invisible actors.
@@ -2254,10 +2254,10 @@ class Animation(object):
     # merges at the maxkeyID of self.
     # If maxkeyID is -oo, merges at frame 0 (+timeOffset).
     def append(self, other, timeOffset=0, beforeLayer=oo):
-        atFrame = self.maxkeyID()
+        atFrame = self.lastID()
         if atFrame == -oo:
             atFrame = 0
-        # self.merge(other, atFrame=self.maxkeyID()+timeOffset, beforeLayer=beforeLayer)
+        # self.merge(other, atFrame=self.lastID()+timeOffset, beforeLayer=beforeLayer)
         self.merge(other, atFrame+timeOffset, beforeLayer)
 
     # Pretweens all layers. See Layer.pretween() and Actor.pretween() for more info.
@@ -2351,8 +2351,8 @@ class Animation(object):
         return
         ani = self.pretweened()
         layers = []
-        firstIndex = ani.start()
-        finalIndex = ani.end()
+        firstIndex = ani.start
+        finalIndex = ani.end
 
         for currentIndex in range(firstIndex, finalIndex+1):
             # now will contain all frames across all layers that have
@@ -2468,15 +2468,15 @@ class Animation(object):
 
     # Returns the lowest index amongst all keyfigures in all layers.
     def firstID(self):
-        return min(layer.minkeyID(useOffset=True) for layer in self.layers) if len(self.layers) > 0 else 0
-    minkeyID = firstkeyID = firstID  # Synonyms for firstID()
+        return min(layer.firstID(useOffset=True) for layer in self.layers) if len(self.layers) > 0 else 0
+    # minkeyID = firstkeyID = firstID  # Synonyms for firstID()
 
     # Returns the highest index amongst all keyfigures in all layers.
     # By default, this also includes all mask layers, whether or not those
     # mask layers are included in the layer list.
     def lastID(self, ignoreMasks=False):
-        return max(layer.maxkeyID(useOffset=True, ignoreMask=ignoreMasks) for layer in self.layers) if len(self.layers) > 0 else 0
-    maxkeyID = lastkeyID = lastID  # Synonyms for lastID()
+        return max(layer.lastID(useOffset=True, ignoreMask=ignoreMasks) for layer in self.layers) if len(self.layers) > 0 else 0
+    # maxkeyID = lastkeyID = lastID  # Synonyms for lastID()
 
     # Return length of animation in units of frames.
     # Takes firstIndex and finalIndex into account and also
@@ -2501,7 +2501,7 @@ class Animation(object):
     # Convenience function sets the firstIndex attr to
     # the final key index.
     def gotoEnd(self):
-        firstIndex = self.maxkeyID()
+        firstIndex = self.lastID()
         if firstIndex == oo:
             self.firstIndex = None
         else:
@@ -2523,7 +2523,7 @@ class Animation(object):
     # Optionally specify a timeOffset. Positive means after lastID,
     # negative means before lastID.
     def endDelay(self, f=oo, timeOffset=0):
-        end = self.maxkeyID() + timeOffset
+        end = self.lastID() + timeOffset
         if end == -oo:
             raise IndexError("End of animation is undefined.")
         self.delays[end] = f
@@ -2546,7 +2546,7 @@ class Animation(object):
         # If the animation already has a delay at its final frame,
         # add that delay to the current frame difference, so it's
         # taken into account when assigning the new end delay.
-        end = self.maxkeyID()
+        end = self.lastID()
         if end == -oo:
             raise IndexError("End of animation is undefined.")
         if end in self.delays:
@@ -2704,12 +2704,12 @@ class Animation(object):
 
         # Get first and final indices if specified.
         if self.finalIndex is None:
-            finalIndex = self.maxkeyID()
+            finalIndex = self.lastID()
         else:
             finalIndex = self.finalIndex
 
         if self.firstIndex is None:
-            firstIndex = self.minkeyID()
+            firstIndex = self.firstID()
         else:
             firstIndex = self.firstIndex
 
@@ -2917,12 +2917,12 @@ class Animation(object):
         self.sanityCheck()
 
         if self.finalIndex is None:
-            finalIndex = self.maxkeyID()
+            finalIndex = self.lastID()
         else:
             finalIndex = self.finalIndex
 
         if self.firstIndex is None:
-            firstIndex = self.minkeyID()
+            firstIndex = self.firstID()
         else:
             firstIndex = self.firstIndex
 
@@ -3049,7 +3049,7 @@ class Animation(object):
                 mation.active = True
                 mation.paused = False
                 # mation.delay = 0
-                mation.currentIndex = mation.firstIndex if mation.firstIndex is not None else mation.minkeyID()
+                mation.currentIndex = mation.firstIndex if mation.firstIndex is not None else mation.firstID()
                 # mation._keyID = listfloor([frm.index for frm in self.keyframes],
                 #     mation.currentIndex)
                 # mation._keyIDs = [listfloor([frm.index for frm in layer],

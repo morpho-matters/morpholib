@@ -485,7 +485,7 @@ class LinearGradientFill(GradientFill):
 
     # Returns a cairo gradient object which can be set as a cairo source to draw
     # a gradient somewhere
-    def makeGradient(self, camera, ctx, alpha=1, pushPhysicalCoords=True):
+    def makeSource(self, camera, ctx, alpha=1, pushPhysicalCoords=True):
         if pushPhysicalCoords:
             morpho.pushPhysicalCoords(camera.view, ctx)  # Implicit ctx.save()
 
@@ -508,7 +508,7 @@ class LinearGradientFill(GradientFill):
         # ctx.fill_preserve()
         return cairoGrad
 
-    makeSource = makeGradient
+    # makeSource = makeGradient
 
     # # Fills whatever the current path of the given cairo context is with the
     # # gradient specified by this figure.
@@ -557,7 +557,7 @@ class RadialGradientFill(GradientFill):
     # a gradient somewhere.
     # PLEASE NOTE: This method implicitly calls ctx.save(), so you will
     # need to call ctx.restore() later to reset it.
-    def makeGradient(self, camera, ctx, alpha=1, pushPhysicalCoords=True):
+    def makeSource(self, camera, ctx, alpha=1, pushPhysicalCoords=True):
         if pushPhysicalCoords:
             morpho.pushPhysicalCoords(camera.view, ctx)  # Implicit ctx.save()
 
@@ -583,7 +583,7 @@ class RadialGradientFill(GradientFill):
         # ctx.set_source(cairoGrad)
         # ctx.fill_preserve()
 
-    makeSource = makeGradient
+    # makeSource = makeGradient
 
     # # Fills whatever the current path of the given cairo context is with the
     # # gradient specified by this figure.
@@ -634,7 +634,7 @@ class QuadGradientFill(QuadGrad):
     # Please note this method changes the coordinate system of the
     # inputted cairo context, and you will need to call ctx.restore()
     # at some point to reset it.
-    def makeMeshPattern(self, camera, ctx, alpha=1, pushPhysicalCoords=True):
+    def makeSource(self, camera, ctx, alpha=1, pushPhysicalCoords=True):
         if pushPhysicalCoords:
             morpho.pushPhysicalCoords(camera.view, ctx)  # Implicit ctx.save()
 
@@ -658,10 +658,10 @@ class QuadGradientFill(QuadGrad):
 
         return pat
 
-    # Alias for makeMeshPattern(). Please remember calling this
-    # method implicitly calls ctx.save() so you will need to call
-    # ctx.restore() later.
-    makeSource = makeMeshPattern
+    # # Also, please remember calling this
+    # # method implicitly calls ctx.save() so you will need to call
+    # # ctx.restore() later.
+    # makeSource = makeMeshPattern
 
     def makePatch(self, meshPattern, alpha=1):
         pat = meshPattern
@@ -706,7 +706,7 @@ class QuadGradGroup(QuadGrad):
     # Please note this method changes the coordinate system of the
     # inputted cairo context, and you will need to call ctx.restore()
     # at some point to reset it.
-    def makeMeshPattern(self, camera, ctx, alpha=1, pushPhysicalCoords=True):
+    def makeSource(self, camera, ctx, alpha=1, pushPhysicalCoords=True):
         if pushPhysicalCoords:
             morpho.pushPhysicalCoords(camera.view, ctx)  # Implicit ctx.save()
 
@@ -716,7 +716,7 @@ class QuadGradGroup(QuadGrad):
 
         return pat
 
-    makeSource = makeMeshPattern
+    # makeSource = makeMeshPattern
 
     ### TWEEN METHODS ###
 
