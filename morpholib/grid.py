@@ -464,12 +464,15 @@ class Path(morpho.Figure):
         self.origin = 0
         self.rotation = 0
         self.transform = np.identity(2)
+        return self
 
     # Closes the path IN PLACE if it is not already closed.
     def close(self):
-        if len(self.seq) == 0: return
+        if len(self.seq) == 0:
+            return self
         if self.seq[0] != self.seq[-1]:
             self.seq.append(self.seq[0])
+        return self
 
     # Breaks the path into a list of the specified number of subpaths.
     # Leaves the original path unchanged.
@@ -514,6 +517,7 @@ class Path(morpho.Figure):
     # path IN PLACE.
     def insertNodesUniformly(self, numNodes):
         self.seq = insertNodesUniformlyTo(self.seq, numNodes)
+        return self
 
     # Returns the interpolated position along the path corresponding to the
     # parameter t, where t = 0 is the path start and t = 1 is the path end.
@@ -1137,6 +1141,8 @@ class Path(morpho.Figure):
         for n in other.deadends:
             self.deadends.add(n+len_self)
 
+        return self
+
         # return result
 
     # Notation: self + other
@@ -1639,6 +1645,7 @@ class SpacePath(Path):
         newSeq = self.fimage(lambda v: v+self.origin).seq
         self.seq = newSeq
         self.origin = 0
+        return self
 
     def copy(self):
         new = super().copy()
@@ -1656,10 +1663,12 @@ class SpacePath(Path):
 
     # Closes the path if it is not already closed.
     def close(self):
-        if len(self.seq) == 0: return
+        if len(self.seq) == 0:
+            return self
         # if (self.seq[0] != self.seq[-1]).any():
         if not np.array_equal(self.seq[0], self.seq[-1]):
             self.seq.append(self.seq[0].copy())
+        return self
 
     # Returns the physical length of the path
     # NOTE: ignores deadends and pretends all nodes are connected!
@@ -2369,6 +2378,7 @@ class Polygon(morpho.Figure):
         self.origin = 0
         self.rotation = 0
         self.transform = np.identity(2)
+        return self
 
 
     # Specifies which class to use in constructing the edge path.
@@ -2574,6 +2584,7 @@ class SpacePolygon(Polygon):
         newVertices = self.fimage(lambda v: v+self.origin).vertices
         self.vertices = newVertices
         self.origin = 0
+        return self
 
     def copy(self):
         new = super().copy()
@@ -3087,6 +3098,7 @@ class Arrow(morpho.Figure):
         self.origin = 0
         self.rotation = 0
         self.transform = np.identity(2)
+        return self
 
     @property
     def length(self):
@@ -3259,6 +3271,7 @@ class SpaceArrow(Arrow):
         self.head = f(self.head)
         self.tail = f(self.tail)
         self.origin = 0
+        return self
 
     @property
     def head(self):

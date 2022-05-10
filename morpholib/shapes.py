@@ -196,6 +196,7 @@ class Spline(morpho.Figure):
         if value is None:
             return self.data[index, 0].tolist()
         self.data[index, 0] = value
+        return self
 
     # Returns or sets the position of the inward handle
     # of the node at the given index (see node() for more info).
@@ -219,6 +220,7 @@ class Spline(morpho.Figure):
         if isbadnum(value):
             value = oo
         self.data[index, 1] = value
+        return self
 
     # Returns or sets the position of the outward handle
     # of the node at the given index (see node() for more info).
@@ -242,6 +244,7 @@ class Spline(morpho.Figure):
         if isbadnum(value):
             value = oo
         self.data[index, 2] = value
+        return self
 
     # Returns (node, inhandle, and outhandle) of given index.
     # Equivalent to extracting a row of the data array, but
@@ -279,6 +282,7 @@ class Spline(morpho.Figure):
         if isbadnum(value):
             value = oo
         self.data[index, 1] = self.data[index, 0] + value
+        return self
 
     # inhandlerel = inhandleRel = inhandlerelative = inhandleRelative
 
@@ -300,6 +304,7 @@ class Spline(morpho.Figure):
         if isbadnum(value):
             value = oo
         self.data[index, 2] = self.data[index, 0] + value
+        return self
 
     # outhandlerel = outhandleRel = outhandlerelative = outhandleRelative
 
@@ -318,6 +323,7 @@ class Spline(morpho.Figure):
         else:
             # self._data = np.vstack((self.data, [point,inhandle,outhandle]))
             self._data = np.insert(self.data, beforeIndex, [point,inhandle,outhandle], axis=0)
+        return self
 
     # Deletes the node at the specified index. The dangling nodes on
     # either side will then be connected assuming they aren't prevented
@@ -325,13 +331,15 @@ class Spline(morpho.Figure):
     # NOTE: Calling delNode() will NOT update the deadends attribute!
     def delNode(self, index):
         self._data = np.delete(self._data, index, axis=0)
+        return self
 
 
     # Closes the path IN PLACE if it is not already closed.
     def close(self):
         if self.length() < 2 or self.node(0) == self.node(1):
-            return
+            return self
         self._data = np.insert(self._data, self.length(), self._data[0].copy(), axis=0)
+        return self
 
 
     # Returns the interpolated position along the path corresponding to the
@@ -370,6 +378,7 @@ class Spline(morpho.Figure):
         segCount = self.length() - 1
         I = t*segCount  # Index value (possibly non-int)
         self.splitAtIndex(I, force=force)
+        return self
 
         # length = self.length()
         # if length < 2:
@@ -457,6 +466,7 @@ class Spline(morpho.Figure):
 
         # Insert new node into data array between index and index+1
         self._data = np.insert(self._data, index+1, [p,pin,pout], axis=0)
+        return self
 
 
     # NOT IMPLEMENTED!
@@ -477,6 +487,7 @@ class Spline(morpho.Figure):
             x = (n+1)/(numNodes+1) * segCount
             t = (x + n)/(segCount + n)
             self.splitAt(t, force=True)
+        return self
 
     def _insertNodesUniformly_old(self, numNodes):
         raise NotImplementedError
@@ -563,6 +574,7 @@ class Spline(morpho.Figure):
     # myspline.commitHandles(a,b)  # Commits the handles of nodes a thru b (inclusive)
     def commitHandles(self, index=None, upper=None):
         commitSplineHandles(self.data, index, upper)
+        return self
         # if index is None and upper is None:
         #     index = 0
         #     upper = -1
@@ -606,6 +618,7 @@ class Spline(morpho.Figure):
         self.origin = 0
         self.rotation = 0
         self._transform = np.eye(2)
+        return self
 
 
     def draw(self, camera, ctx):
@@ -1106,6 +1119,7 @@ class SpaceSpline(Spline):
         if value is None:
             return self.data[index, 0, :].copy()
         self.data[index, 0, :] = morpho.array(value)
+        return self
 
     # Returns or sets the position of the inward handle
     # of the node at the given index (see node() for more info).
@@ -1131,6 +1145,7 @@ class SpaceSpline(Spline):
         else:
             value = morpho.array(value)
         self.data[index, 1, :] = value
+        return self
 
     # Returns or sets the position of the outward handle
     # of the node at the given index (see node() for more info).
@@ -1156,6 +1171,7 @@ class SpaceSpline(Spline):
         else:
             value = morpho.array(value)
         self.data[index, 2, :] = value
+        return self
 
     # Returns the matrix fully describing the node of given index.
     # Equivalent to extracting the 2D matrix slice at a specified first
@@ -1193,6 +1209,7 @@ class SpaceSpline(Spline):
         else:
             value = morpho.array(value)
         self.data[index, 1, :] = self.data[index, 0, :] + value
+        return self
 
     # inhandlerel = inhandleRel = inhandlerelative = inhandleRelative
 
@@ -1215,6 +1232,7 @@ class SpaceSpline(Spline):
         else:
             value = morpho.array(value)
         self.data[index, 2, :] = self.data[index, 0, :] + value
+        return self
 
     # outhandlerel = outhandleRel = outhandlerelative = outhandleRelative
 
@@ -1236,13 +1254,15 @@ class SpaceSpline(Spline):
             self._data = np.array([[point, inhandle, outhandle]], dtype=float)
         else:
             self._data = np.insert(self.data, beforeIndex, [point,inhandle,outhandle], axis=0)
+        return self
 
 
     # Closes the path IN PLACE if it is not already closed.
     def close(self):
         if self.length() < 2 or np.array_equal(self.node(0), self.node(1)):
-            return
+            return self
         self._data = np.insert(self._data, self.length(), self._data[0,:,:].copy(), axis=0)
+        return self
 
 
     # Translates the spline by the value of the "origin" attribute
@@ -1250,6 +1270,7 @@ class SpaceSpline(Spline):
     def commitTransforms(self):
         self._data += self.origin
         self.origin = np.array([0,0,0], dtype=float)
+        return self
 
 
     # Converts the Spline figure to a similar-looking SpacePath figure.
