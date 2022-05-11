@@ -51,7 +51,8 @@ class Tracker(morpho.Skit):
 
         return label
 ```
-> **Note:** The name ``makeFrame`` is important here! A Skit expects to have a method with this name defined, and calls it in order to construct the figures it needs to draw to the screen.
+<!-- > **Note:** The name ``makeFrame`` is important here! A Skit expects to have a method with this name defined, and calls it in order to construct the figures it needs to draw to the screen. -->
+> **Note:** Remember not to convert figures into actors within the ``makeFrame()`` method of a Skit definition; they should remain plain figures.
 
 And that's it! The ``Tracker`` Skit is now fully defined! Now we just need to instantiate an instance of it so we can animate it and watch it in action. This can be done like any other figure:
 
