@@ -238,7 +238,6 @@ class Image(morpho.Figure):
         X,Y = value
         self.align = [2*X/self.imageWidth-1, 2*Y/self.imageHeight-1]
 
-
     # Returns the bounding box (with possible padding) of the image
     # ignoring any transformations like rotation, transform, or scale
     # Also assumes the image has physical set to True.
@@ -291,6 +290,24 @@ class Image(morpho.Figure):
         NE = b + d*1j
 
         return [NW,SW,SE,NE]
+
+    # Returns the visual centerpoint of the image, ignoring
+    # the transformation attributes.
+    @property
+    def center(self):
+        return mean(self.corners())
+
+    @center.setter
+    def center(self, value):
+        center_x, center_y = value.real, value.imag
+        align_x, align_y = self.align
+
+        # Compute new position
+        x = center_x + self.width*align_x/2
+        y = center_y + self.height*align_y/2
+
+        self.pos = complex(x,y)
+
 
     def draw(self, camera, ctx):
         if self.imageSurface is None: return
