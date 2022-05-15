@@ -551,6 +551,16 @@ class SpaceImage(Image):
 
         return corners
 
+    # Property is not supported for SpaceImages.
+    @property
+    def center(self):
+        raise TypeError("`center` attribute not supported for SpaceImage.")
+
+    @center.setter
+    def center(self, value):
+        # Throw error by attempting to access self.center
+        self.center
+
 
     def primitives(self, camera): # orient=np.identity(3), focus=np.zeros(3)):
         if self.alpha == 0:
