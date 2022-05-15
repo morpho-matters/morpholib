@@ -626,20 +626,20 @@ class Path(morpho.Figure):
         # streamlined, but I'm so scared of breaking it! There are so many cases
         # to test and the Path figure is a critically important figure.
 
-        # Don't bother drawing an invisible path.
-        if self.alpha == 0:
-            return
-
         # Check bounds of start and end
         if not(0 <= self.start <= 1):
             raise ValueError("start parameter must be in the range [0,1] (inclusive).")
         if not(0 <= self.end <= 1):
             raise ValueError("end parameter must be in the range [0,1] (inclusive).")
 
+        # Don't bother drawing an invisible path.
+        if self.alpha == 0:
+            return
+
         # Handle trivial length path and start >= end.
         len_seq = len(self.seq)
         maxIndex = len(self.seq) - 1
-        if maxIndex < 1 or self.start >= self.end or self.alpha == 0:
+        if maxIndex < 1 or self.start >= self.end:
             return
 
         # If determinant of the transform matrix is too small,
