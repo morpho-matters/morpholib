@@ -30,6 +30,12 @@ import morpholib as morpho
 #           the third actor will begin fading 5 frames after the
 #           second actor starts fading, and so on.
 #           Default: 0 (meaning all actors begin fading at the same time)
+# jump = Displacement each actor should "jump" during the fade out.
+#        Example: jump=2j causes each actor to jump up by 2 units;
+#        `jump` can also be a list to specify different jump vectors
+#        for each actor in the `actors` list. If the list is too short,
+#        it will loop back to the start.
+#        Default: () empty tuple (meaning no jumps)
 def fadeOut(actors, duration=30, atFrame=None, stagger=0, jump=()):
     # if not isinstance(actors, list) and not isinstance(actors, tuple):
     #     actors = [actors]
