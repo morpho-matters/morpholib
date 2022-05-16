@@ -11,7 +11,7 @@ import morpholib as morpho
 
 # Convenience function fades out a collection of actors and then
 # sets the visibility attribute of the final keyfigure of each actor
-# set to False.
+# to False. Useful for dismissing actors from a scene.
 #
 # NOTE: Only works for figures that possess an "alpha" tweenable, so
 # this function may not work for custom figures like Skits unless you
@@ -68,26 +68,48 @@ def fadeOut(actors, duration=30, atFrame=None, stagger=0, jump=()):
             else:
                 raise TypeError(f"{type(keyfig)} figure cannot be jumped.")
 
-# Similar to fadeOut(), but fades in actors from (presumed) invisibility.
+# Similar to fadeOut(), but fades in actors from invisibility.
 # See fadeOut() for more info.
 #
 # NOTE: Only works for figures that possess an "alpha" tweenable, so
 # this function may not work for custom figures like Skits unless you
 # implement an alpha tweenable yourself.
 #
-# Only intended to work for actors whose final keyfigure has alpha = 0.
-def fadeIn(actors, duration=30, atFrame=None, stagger=0, jump=0):
+# Also note that this function will force alpha=0 for the current
+# final keyfigure in each actor before applying the effect.
+def fadeIn(actors, duration=30, atFrame=None, stagger=0, jump=()):
     # if not isinstance(actors, list) and not isinstance(actors, tuple):
     #     actors = [actors]
     # Turn into a list if necessary
+
     if isinstance(actors, morpho.Actor):
         actors = [actors]
+
     if atFrame is None:
         atFrame = max(actor.lastID() for actor in actors)
+
+    # If jump isn't a subscriptable type, turn it into a singleton list
+    if not hasattr(jump, "__getitem__"):
+        jump = [jump]
+
     for n in range(len(actors)):
         actor = actors[n]
-        actor.newkey(atFrame+n*stagger).visible = True
-        actor.newendkey(duration).alpha = 1
+        actor.last().alpha = 0
+        keyfigInit = actor.newkey(atFrame+n*stagger)
+        keyfigInit.visible = True
+        keyfig = actor.newendkey(duration)
+        keyfig.alpha = 1
+        if len(jump) > 0:
+            dz = jump[n%len(jump)]
+
+            # Add dz in place to either the "pos" or "origin"
+            # attributes (if they exist).
+            if "pos" in keyfig._state:
+                keyfigInit.pos -= dz
+            elif "origin" in keyfig._state:
+                keyfigInit.origin -= dz
+            else:
+                raise TypeError(f"{type(keyfigInit)} figure cannot be jumped.")
 
 # Convenience function tweens an actor back to its first keyfigure
 # and then sets the visibility attribute of the final keyfigure of
