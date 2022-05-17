@@ -75,8 +75,9 @@ def fadeOut(actors, duration=30, atFrame=None, stagger=0, jump=()):
 # this function may not work for custom figures like Skits unless you
 # implement an alpha tweenable yourself.
 #
-# Also note that this function will force alpha=0 for the current
-# final keyfigure in each actor before applying the effect.
+# Also note that this function will force alpha=0 and visible=False
+# for the current final keyfigure in each actor before applying
+# the effect.
 def fadeIn(actors, duration=30, atFrame=None, stagger=0, jump=()):
     # if not isinstance(actors, list) and not isinstance(actors, tuple):
     #     actors = [actors]
@@ -94,7 +95,7 @@ def fadeIn(actors, duration=30, atFrame=None, stagger=0, jump=()):
 
     for n in range(len(actors)):
         actor = actors[n]
-        actor.last().alpha = 0
+        actor.last().set(alpha=0, visible=False)
         keyfigInit = actor.newkey(atFrame+n*stagger)
         keyfigInit.visible = True
         keyfig = actor.newendkey(duration)
