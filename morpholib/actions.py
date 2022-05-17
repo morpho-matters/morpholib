@@ -61,9 +61,9 @@ def fadeOut(actors, duration=30, atFrame=None, stagger=0, jump=()):
 
             # Add dz in place to either the "pos" or "origin"
             # attributes (if they exist).
-            if "pos" in keyfig._state:
+            if hasattr(keyfig, "pos"):
                 keyfig.pos += dz
-            elif "origin" in keyfig._state:
+            elif hasattr(keyfig, "origin"):
                 keyfig.origin += dz
             else:
                 raise TypeError(f"{type(keyfig)} figure cannot be jumped.")
@@ -105,9 +105,9 @@ def fadeIn(actors, duration=30, atFrame=None, stagger=0, jump=()):
 
             # Add dz in place to either the "pos" or "origin"
             # attributes (if they exist).
-            if "pos" in keyfig._state:
+            if hasattr(keyfig, "pos"):
                 keyfigInit.pos -= dz
-            elif "origin" in keyfig._state:
+            elif hasattr(keyfig, "origin"):
                 keyfigInit.origin -= dz
             else:
                 raise TypeError(f"{type(keyfigInit)} figure cannot be jumped.")
