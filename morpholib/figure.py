@@ -1063,8 +1063,12 @@ class Actor(object):
     # last = lastkey
 
     # Returns the i-th keyfigure's index in the timeline
-    def keyID(self, i):
+    def _keyIDno(self, i):
         return self.keyIDs[i]
+
+    @property
+    def keyID(self):
+        return _KeyIDContainer(self)
 
     def haskeyID(self, f):
         # if type(f) is not int:
@@ -1575,6 +1579,16 @@ class _KeyContainer(object):
 
     def __setitem__(self, i, value):
         self.actor.replacekey(self.actor.keyID(i), value)
+
+    def __call__(self, i):
+        return self[i]
+
+class _KeyIDContainer(object):
+    def __init__(self, actor):
+        self.actor = actor
+
+    def __getitem__(self, i):
+        return self.actor._keyIDno(i)
 
     def __call__(self, i):
         return self[i]
