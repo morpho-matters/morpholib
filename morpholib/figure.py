@@ -997,6 +997,10 @@ class Actor(object):
     def _keyno(self, i):
         return self.timeline[self.keyIDs[i]]
 
+    # Returns the i-th keyfigure in the timeline when subscripted:
+    # firstkey = myactor.key[0]
+    # Also can replace keys:
+    # myactor.key[0] = newfig
     @property
     def key(self):
         return _KeyContainer(self)
@@ -1041,6 +1045,16 @@ class Actor(object):
             return None
         return self.timeline[keyID]
 
+    # Property returns the first keyfigure in the timeline.
+    # Equivalent to self.first(), but supports assignment.
+    @property
+    def beg(self):
+        return self.key[0]
+
+    @beg.setter
+    def beg(self, value):
+        self.key[0] = value
+
 
     # Returns keyfigure with lowest index.
     # Equivalent to calling self.key(0)
@@ -1051,6 +1065,16 @@ class Actor(object):
     # minkey = firstkey
     # start = firstkey
     # first = firstkey
+
+    # Property returns the last keyfigure in the timeline.
+    # Equivalent to self.last(), but supports assignment.
+    @property
+    def fin(self):
+        return self.key[-1]
+
+    @fin.setter
+    def fin(self, value):
+        self.key[-1] = value
 
     # Returns keyfigure with highest index.
     # Equivalent to calling self.key(-1)
