@@ -994,8 +994,12 @@ class Actor(object):
         return new
 
     # Returns the i-th keyfigure in the timeline.
-    def key(self, i):
+    def _keyno(self, i):
         return self.timeline[self.keyIDs[i]]
+
+    @property
+    def key(self):
+        return _KeyContainer(self)
 
     # Same as self.timeline.values()
     def keys(self):
@@ -1561,6 +1565,20 @@ class Actor(object):
         if figure is None:
             return
         figure.draw(camera, ctx)
+
+class _KeyContainer(object):
+    def __init__(self, actor):
+        self.actor = actor
+
+    def __getitem__(self, i):
+        return self.actor._keyno(i)
+
+    def __setitem__(self, i, value):
+        self.actor.replacekey(self.actor.keyID(i), value)
+
+    def __call__(self, i):
+        return self[i]
+
 
 ### HELPERS ###
 
