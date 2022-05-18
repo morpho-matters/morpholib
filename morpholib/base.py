@@ -132,12 +132,14 @@ class Tweenable(object):
             value=self.value,
             metadata=self.metadata)
 
-        # Attempt to make a copy of the value if the copy() method exists.
-        if "copy" in dir(self.value):
-            try:
-                twCopy.value = self.value.copy()
-            except Exception:  # Upon failure, just reassign and hope for the best.
-                twCopy.value = self.value  # Not sure this line is needed
+        try:
+            twCopy.value = self.value.copy()
+        except Exception:  # Upon failure, just reassign and hope for the best.
+            # Actually, I think I DO want this line. It looks redundant,
+            # but if the try clause somehow messed up the assignment
+            # process itself, I'd like to reassign the initial value.
+            twCopy.value = self.value
+
         return twCopy
 
     def __repr__(self):
