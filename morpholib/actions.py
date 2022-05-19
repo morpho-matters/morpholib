@@ -9,6 +9,8 @@ import morpholib as morpho
 # from morpho.tools.basics import *
 # import math, cmath
 
+autoJumpNames = {"pos", "origin", "_pos", "_origin"}
+
 # Convenience function fades out a collection of actors and then
 # sets the visibility attribute of the final keyfigure of each actor
 # to False. Useful for dismissing actors from a scene.
@@ -61,7 +63,7 @@ def fadeOut(actors, duration=30, atFrame=None, stagger=0, jump=()):
 
             # Add dz in place to all supported tweenables
             for tweenable in keyfig._state.values():
-                if (tweenable.name in ("pos", "origin") and "nojump" not in tweenable.tags) \
+                if (tweenable.name in autoJumpNames and "nojump" not in tweenable.tags) \
                     or ("jump" in tweenable.tags):
 
                     tweenable.value += dz
@@ -112,7 +114,7 @@ def fadeIn(actors, duration=30, atFrame=None, stagger=0, jump=()):
 
             # Subtract dz in place from all supported tweenables
             for tweenable in keyfigInit._state.values():
-                if (tweenable.name in ("pos", "origin") and "nojump" not in tweenable.tags) \
+                if (tweenable.name in autoJumpNames and "nojump" not in tweenable.tags) \
                     or ("jump" in tweenable.tags):
 
                     tweenable.value -= dz
