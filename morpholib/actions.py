@@ -59,14 +59,21 @@ def fadeOut(actors, duration=30, atFrame=None, stagger=0, jump=()):
         if len(jump) > 0:
             dz = jump[n%len(jump)]
 
-            # Add dz in place to either the "pos" or "origin"
-            # attributes (if they exist).
-            if hasattr(keyfig, "pos"):
-                keyfig.pos += dz
-            elif hasattr(keyfig, "origin"):
-                keyfig.origin += dz
-            else:
-                raise TypeError(f"{type(keyfig)} figure cannot be jumped.")
+            # Add dz in place to all supported tweenables
+            for tweenable in keyfig._state.values():
+                if (tweenable.name in ("pos", "origin") and "nojump" not in tweenable.tags) \
+                    or ("jump" in tweenable.tags):
+
+                    tweenable.value += dz
+
+            # # Add dz in place to either the "pos" or "origin"
+            # # attributes (if they exist).
+            # if hasattr(keyfig, "pos"):
+            #     keyfig.pos += dz
+            # elif hasattr(keyfig, "origin"):
+            #     keyfig.origin += dz
+            # else:
+            #     raise TypeError(f"{type(keyfig)} figure cannot be jumped.")
 
 # Similar to fadeOut(), but fades in actors from invisibility.
 # See fadeOut() for more info.
@@ -103,14 +110,21 @@ def fadeIn(actors, duration=30, atFrame=None, stagger=0, jump=()):
         if len(jump) > 0:
             dz = jump[n%len(jump)]
 
-            # Add dz in place to either the "pos" or "origin"
-            # attributes (if they exist).
-            if hasattr(keyfig, "pos"):
-                keyfigInit.pos -= dz
-            elif hasattr(keyfig, "origin"):
-                keyfigInit.origin -= dz
-            else:
-                raise TypeError(f"{type(keyfigInit)} figure cannot be jumped.")
+            # Subtract dz in place from all supported tweenables
+            for tweenable in keyfigInit._state.values():
+                if (tweenable.name in ("pos", "origin") and "nojump" not in tweenable.tags) \
+                    or ("jump" in tweenable.tags):
+
+                    tweenable.value -= dz
+
+            # # Subtract dz in place from either the "pos" or "origin"
+            # # attributes (if they exist).
+            # if hasattr(keyfig, "pos"):
+            #     keyfigInit.pos -= dz
+            # elif hasattr(keyfig, "origin"):
+            #     keyfigInit.origin -= dz
+            # else:
+            #     raise TypeError(f"{type(keyfigInit)} figure cannot be jumped.")
 
 # Convenience function tweens an actor back to its first keyfigure
 # and then sets the visibility attribute of the final keyfigure of
