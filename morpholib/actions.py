@@ -11,6 +11,27 @@ import morpholib as morpho
 
 autoJumpNames = {"pos", "origin", "_pos", "_origin"}
 
+# Applies the jump amount `dz` to all supported tweenables
+# in the given figure's state
+def _applyJump(figure, dz):
+    # Handle multifigure case
+    if isinstance(figure, morpho.MultiFigure):
+        return _applyJump(figure.figures[0], dz)
+
+    # Add dz in place to all supported tweenables
+    for tweenable in figure._state.values():
+        if (tweenable.name in autoJumpNames and "nojump" not in tweenable.tags) \
+            or ("jump" in tweenable.tags):
+
+            tweenable.value += dz
+
+        # This clause works, but doesn't handle alpha.
+        # I've decided not to use it for now.
+        # elif "figures" in tweenable.tags:
+        #     figlist = tweenable.value
+        #     for fig in figlist:
+        #         _applyJump(fig, dz)
+
 # Convenience function fades out a collection of actors and then
 # sets the visibility attribute of the final keyfigure of each actor
 # to False. Useful for dismissing actors from a scene.
@@ -60,13 +81,14 @@ def fadeOut(actors, duration=30, atFrame=None, stagger=0, jump=()):
         keyfig.visible = False
         if len(jump) > 0:
             dz = jump[n%len(jump)]
+            _applyJump(keyfig, dz)
 
-            # Add dz in place to all supported tweenables
-            for tweenable in keyfig._state.values():
-                if (tweenable.name in autoJumpNames and "nojump" not in tweenable.tags) \
-                    or ("jump" in tweenable.tags):
+            # # Add dz in place to all supported tweenables
+            # for tweenable in keyfig._state.values():
+            #     if (tweenable.name in autoJumpNames and "nojump" not in tweenable.tags) \
+            #         or ("jump" in tweenable.tags):
 
-                    tweenable.value += dz
+            #         tweenable.value += dz
 
             # # Add dz in place to either the "pos" or "origin"
             # # attributes (if they exist).
@@ -111,13 +133,14 @@ def fadeIn(actors, duration=30, atFrame=None, stagger=0, jump=()):
         keyfig.alpha = 1
         if len(jump) > 0:
             dz = jump[n%len(jump)]
+            _applyJump(keyfigInit, -dz)
 
-            # Subtract dz in place from all supported tweenables
-            for tweenable in keyfigInit._state.values():
-                if (tweenable.name in autoJumpNames and "nojump" not in tweenable.tags) \
-                    or ("jump" in tweenable.tags):
+            # # Subtract dz in place from all supported tweenables
+            # for tweenable in keyfigInit._state.values():
+            #     if (tweenable.name in autoJumpNames and "nojump" not in tweenable.tags) \
+            #         or ("jump" in tweenable.tags):
 
-                    tweenable.value -= dz
+            #         tweenable.value -= dz
 
             # # Subtract dz in place from either the "pos" or "origin"
             # # attributes (if they exist).
