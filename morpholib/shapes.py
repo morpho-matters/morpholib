@@ -942,7 +942,8 @@ class Spline(morpho.Figure):
         crossCommitHandles(data1, data2)
 
         # Interpolate normally.
-        data = morpho.lerp0(data1, data2, t)
+        with np.errstate(all="ignore"):  # Suppress numpy warnings
+            data = morpho.lerp0(data1, data2, t)
         nan2inf(data)
 
         return data
@@ -1444,7 +1445,8 @@ def crossCommitHandles(data1, data2):
     # These are the rows where we will have to replace the infinities
     # with concrete values.
     # rows = set(np.where(np.isinf(abs(data1) - abs(data2)).any(axis=1))[0].tolist())
-    rows = set(np.where(np.isinf(abs(data1) - abs(data2)).any(axis=tuple(range(1,len(data1.shape)))))[0].tolist())
+    with np.errstate(all="ignore"):  # Suppress numpy warnings
+        rows = set(np.where(np.isinf(abs(data1) - abs(data2)).any(axis=tuple(range(1,len(data1.shape)))))[0].tolist())
     for r in rows:
         commitSplineHandles(data1, r)
         commitSplineHandles(data2, r)

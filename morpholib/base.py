@@ -16,12 +16,12 @@ from morpholib.tools.basics import tau, argShift, argShiftArray, arcCenter, arcC
 import numpy as np
 import cairo
 cr = cairo
-from warnings import filterwarnings
+# from warnings import filterwarnings
 
 # Ignore warnings by default.
 # This is mainly for the sake of the Spline class, which
 # uses some non-standard arithmetic intentionally.
-filterwarnings("ignore")
+# filterwarnings("ignore")
 
 version = "0.3.1a1"  # Current public morpho version
 internalVersion = "2.2.7ip"  # Current internal morpho version
