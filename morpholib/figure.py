@@ -1637,13 +1637,16 @@ class Actor(object):
     # from the morpho.actions module? For now, they're hard-coded in.
 
     def fadeIn(self, *args, **kwargs):
-        return morpho.actions.fadeIn(self, *args, **kwargs)
+        morpho.actions.fadeIn(self, *args, **kwargs)
+        return self
 
     def fadeOut(self, *args, **kwargs):
-        return morpho.actions.fadeOut(self, *args, **kwargs)
+        morpho.actions.fadeOut(self, *args, **kwargs)
+        return self
 
     def rollback(self, *args, **kwargs):
-        return morpho.actions.rollback(self, *args, **kwargs)
+        morpho.actions.rollback(self, *args, **kwargs)
+        return self
 
 
 
