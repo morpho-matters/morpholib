@@ -1636,17 +1636,25 @@ class Actor(object):
     # Future: Maybe find some way to auto-create these methods
     # from the morpho.actions module? For now, they're hard-coded in.
 
+    # Equivalent to morpho.actions.fadeIn(self)
     def fadeIn(self, *args, **kwargs):
         morpho.actions.fadeIn(self, *args, **kwargs)
-        return self
 
+        # Yes, I really mean None. I think returning self
+        # here may be a bad convention. I think a good convention
+        # is no method that adds new keys to the timeline should
+        # return self.
+        return None
+
+    # Equivalent to morpho.actions.fadeOut(self)
     def fadeOut(self, *args, **kwargs):
         morpho.actions.fadeOut(self, *args, **kwargs)
-        return self
+        return None
 
+    # Equivalent to morpho.actions.rollback(self)
     def rollback(self, *args, **kwargs):
         morpho.actions.rollback(self, *args, **kwargs)
-        return self
+        return None
 
 
 
