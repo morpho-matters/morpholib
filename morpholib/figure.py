@@ -252,6 +252,24 @@ class Figure(object):
     def allTags(self):
         return set(tag for tweenable in self.listState() for tag in tweenable.tags)
 
+    # Returns Actor(self)
+    def toActor(self, *args, **kwargs):
+        return Actor(self, *args, **kwargs)
+
+    # Creates Actor out of self, and then merges it to the specified
+    # target (a layer or animation), and returns the actor.
+    def mergeTo(self, target, *args, **kwargs):
+        actor = Actor(self)
+        actor.mergeTo(target, *args, **kwargs)
+        return actor
+
+    # Creates Actor out of self, and then appends it to the specified
+    # target (a layer or animation), and returns the actor.
+    def appendTo(self, target, *args, **kwargs):
+        actor = Actor(self)
+        actor.appendTo(target, *args, **kwargs)
+        return actor
+
     # Uses whatever the default tween method is, but applies the
     # transition function first.
     # To tween WITHOUT taking the transition function into account,
@@ -1594,6 +1612,22 @@ class Actor(object):
         if figure is None:
             return
         figure.draw(camera, ctx)
+
+    ### MERGING CONVENIENCE METHODS ###
+
+    # Merges the actor to the given target object (a layer or animation)
+    # and then returns self.
+    # Equivalent to target.merge(self)
+    def mergeTo(self, target, *args, **kwargs):
+        target.merge(self, *args, **kwargs)
+        return self
+
+    # Appends the actor to the given target object (a layer or animation)
+    # and then returns self.
+    # Equivalent to target.append(self)
+    def appendTo(self, target, *args, **kwargs):
+        target.append(self, *args, **kwargs)
+        return self
 
     ### BUILT-IN ACTIONS ###
 
