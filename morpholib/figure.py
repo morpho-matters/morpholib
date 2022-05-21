@@ -16,6 +16,7 @@ names are all lowercase letters.
 import morpholib as morpho
 from morpholib.tools.basics import *
 import morpholib.matrix
+import morpholib.actions
 
 import math, cmath
 import numpy as np
@@ -1593,6 +1594,24 @@ class Actor(object):
         if figure is None:
             return
         figure.draw(camera, ctx)
+
+    ### BUILT-IN ACTIONS ###
+
+    # Actions from morpho.actions supported as native methods
+    # of the Actor class.
+    # Future: Maybe find some way to auto-create these methods
+    # from the morpho.actions module? For now, they're hard-coded in.
+
+    def fadeIn(self, *args, **kwargs):
+        return morpho.actions.fadeIn(self, *args, **kwargs)
+
+    def fadeOut(self, *args, **kwargs):
+        return morpho.actions.fadeOut(self, *args, **kwargs)
+
+    def rollback(self, *args, **kwargs):
+        return morpho.actions.rollback(self, *args, **kwargs)
+
+
 
 class _KeyContainer(object):
     def __init__(self, actor):
