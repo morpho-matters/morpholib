@@ -252,20 +252,26 @@ class Figure(object):
     def allTags(self):
         return set(tag for tweenable in self.listState() for tag in tweenable.tags)
 
+    # NOT IMPLEMENTED!
     # Returns Actor(self)
     def toActor(self, *args, **kwargs):
+        raise NotImplementedError
         return Actor(self, *args, **kwargs)
 
+    # NOT IMPLEMENTED!
     # Creates Actor out of self, and then merges it to the specified
     # target (a layer or animation), and returns the actor.
     def mergeTo(self, target, *args, **kwargs):
+        raise NotImplementedError
         actor = Actor(self)
         actor.mergeTo(target, *args, **kwargs)
         return actor
 
+    # NOT IMPLEMENTED!
     # Creates Actor out of self, and then appends it to the specified
     # target (a layer or animation), and returns the actor.
     def appendTo(self, target, *args, **kwargs):
+        raise NotImplementedError
         actor = Actor(self)
         actor.appendTo(target, *args, **kwargs)
         return actor
@@ -1615,17 +1621,21 @@ class Actor(object):
 
     ### MERGING CONVENIENCE METHODS ###
 
+    # NOT IMPLEMENTED!
     # Merges the actor to the given target object (a layer or animation)
     # and then returns self.
     # Equivalent to target.merge(self)
     def mergeTo(self, target, *args, **kwargs):
+        raise NotImplementedError
         target.merge(self, *args, **kwargs)
         return self
 
+    # NOT IMPLEMENTED!
     # Appends the actor to the given target object (a layer or animation)
     # and then returns self.
     # Equivalent to target.append(self)
     def appendTo(self, target, *args, **kwargs):
+        raise NotImplementedError
         target.append(self, *args, **kwargs)
         return self
 
