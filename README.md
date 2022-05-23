@@ -24,7 +24,7 @@ Documentation is currently limited, but there are [a few guides](https://morpho-
 
 ## Installation
 
-Morpho is a library for Python and works on Python 3.6 or higher and requires [Pycairo](https://www.cairographics.org/pycairo/) to run. For Windows users, Morpho and all its basic dependencies, including Pycairo, should be installable via a simple pip command:
+Morpho is a library for Python and works on Python 3.8 or higher and requires [Pycairo](https://www.cairographics.org/pycairo/) to run. For Windows users, Morpho and all its basic dependencies, including Pycairo, should be installable via a simple pip command:
 
 ```sh
 pip3 install morpholib
