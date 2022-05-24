@@ -155,6 +155,22 @@ class Image(morpho.Figure):
         self._width = self.height*self.aspectRatioWH
         return self
 
+    # Restores the aspect ratio to normal, keeping height fixed
+    # and rescaling width. Optionally specify viewbox and windowShape
+    # to rescale the aspect ratio so that the image looks normal even
+    # if the viewbox and windowShape are not proportional to each other.
+    def rescaleWidth(self, view=None, windowShape=None):
+        self.scaleByHeight(view, windowShape)
+        return self
+
+    # Restores the aspect ratio to normal, keeping width fixed
+    # and rescaling height. Optionally specify viewbox and windowShape
+    # to rescale the aspect ratio so that the image looks normal even
+    # if the viewbox and windowShape are not proportional to each other.
+    def rescaleHeight(self, view=None, windowShape=None):
+        self.scaleByWidth(view, windowShape)
+        return self
+
     # Supply a new source to the image figure.
     # Aspect ratio and width and height will NOT be changed!
     # You need to call either scaleByWidth() or scaleByHeight()
