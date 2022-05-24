@@ -646,6 +646,34 @@ class Camera(morpho.Figure):
 
         return self
 
+    # Rescales the width of the viewbox to make it match
+    # the given aspect ratio.
+    # Syntax: mycamera.rescaleWidth(aspectRatioWH)
+    def rescaleWidth(self, aspectRatioWH):
+        xmin, xmax, ymin, ymax = self.view
+        xmid = mean([xmin, xmax])
+
+        radius = (ymax-ymin)*aspectRatioWH/2
+        xmin = xmid - radius
+        xmax = xmid + radius
+
+        self.view = [xmin, xmax, ymin, ymax]
+        return self
+
+    # Rescales the height of the viewbox to make it match
+    # the given aspect ratio.
+    # Syntax: mycamera.rescaleHeight(aspectRatioWH)
+    def rescaleHeight(self, aspectRatioWH):
+        xmin, xmax, ymin, ymax = self.view
+        ymid = mean([ymin, ymax])
+
+        radius = (xmax-xmin)/(2*aspectRatioWH)
+        ymin = ymid - radius
+        ymax = ymid + radius
+
+        self.view = [xmin, xmax, ymin, ymax]
+        return self
+
     # Modifies the view so that the current view will correspond
     # to the area of the window currently covered by the given box.
     # This can be useful for setting up a mini animation inside
