@@ -207,6 +207,31 @@ class Text(morpho.Figure):
 
         return [a-pad, b+pad, c-pad, d+pad]
 
+    # Returns the four corners of the text's bounding box
+    # plus any optional padding. The sequence of the corners is
+    # NW, SW, SE, NE.
+    def corners(self, view, ctx, pad=0):
+        a,b,c,d = self.box(view, ctx, pad)
+
+        NW = a + d*1j
+        SW = a + c*1j
+        SE = b + c*1j
+        NE = b + d*1j
+
+        return [NW,SW,SE,NE]
+
+    # Same as corners(), but the coordinates are relative to wherever
+    # the text's physical position is.
+    def relcorners(self, view, ctx, pad=0):
+        a,b,c,d = self.relbox(view, ctx, pad)
+
+        NW = a + d*1j
+        SW = a + c*1j
+        SE = b + c*1j
+        NE = b + d*1j
+
+        return [NW,SW,SE,NE]
+
 
     # Returns the width of the text in pixels.
     def pixelWidth(self):
