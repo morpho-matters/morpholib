@@ -22,7 +22,7 @@ class IntegralArea(morpho.Figure):
 
     def __init__(self, func=lambda x: x, start=0, end=1,
         strokeWeight=3, color=(0,0,0), fill=(1,0,0), alpha=1,
-        steps=50):
+        steps=50, *, alphaEdge=1, alphaFill=1):
 
         # Construct default figure
         super().__init__()
@@ -32,8 +32,8 @@ class IntegralArea(morpho.Figure):
         end = morpho.Tweenable("end", end, tags=["scalar"])
         color = morpho.Tweenable("color", list(color), tags=["color"])
         fill = morpho.Tweenable("fill", list(fill), tags=["color"])
-        alphaEdge = morpho.Tweenable("alphaEdge", 1, tags=["scalar"])
-        alphaFill = morpho.Tweenable("alphaFill", 1, tags=["scalar"])
+        alphaEdge = morpho.Tweenable("alphaEdge", alphaEdge, tags=["scalar"])
+        alphaFill = morpho.Tweenable("alphaFill", alphaFill, tags=["scalar"])
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
         strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
         steps = morpho.Tweenable("steps", steps, tags=["integer"])
