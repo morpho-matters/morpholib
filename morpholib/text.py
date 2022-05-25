@@ -232,6 +232,11 @@ class Text(morpho.Figure):
 
         return [NW,SW,SE,NE]
 
+    # Returns the visual centerpoint of the text, ignoring
+    # the transformation attributes.
+    def center(self, view, ctx):
+        return mean(self.corners(view, ctx))
+
 
     # Returns the width of the text in pixels.
     def pixelWidth(self):
