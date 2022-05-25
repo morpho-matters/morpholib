@@ -32,11 +32,14 @@ class IntegralArea(morpho.Figure):
         end = morpho.Tweenable("end", end, tags=["scalar"])
         color = morpho.Tweenable("color", list(color), tags=["color"])
         fill = morpho.Tweenable("fill", list(fill), tags=["color"])
+        alphaEdge = morpho.Tweenable("alphaEdge", 1, tags=["scalar"])
+        alphaFill = morpho.Tweenable("alphaFill", 1, tags=["scalar"])
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
         strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
         steps = morpho.Tweenable("steps", steps, tags=["integer"])
 
-        self.update([func, start, end, color, fill, alpha, strokeWeight, steps])
+        self.update([func, start, end, color, fill,
+            alphaEdge, alphaFill, alpha, strokeWeight, steps])
 
         # # Integrand function
         # self.func = func
@@ -56,6 +59,8 @@ class IntegralArea(morpho.Figure):
         self.polygon.width = self.strokeWeight
         self.polygon.color = self.color[:]
         self.polygon.fill = self.fill[:]
+        self.polygon.alphaEdge = self.alphaEdge
+        self.polygon.alphaFill = self.alphaFill
         self.polygon.alpha = self.alpha
 
     def copy(self, *args, **kwargs):
