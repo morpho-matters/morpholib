@@ -95,21 +95,24 @@ def standardSpaceAnimation(layers=None, background=(1,1,1), alpha=1):
 #        Default: -80*pi/180 (80 degs clockwise)
 # tilt = Amount camera is tilted down from viewing the xy-plane from above.
 #        Default: 70*pi/180 (70 degs)
-def setupSpace(t_rot=300, initOrient=np.identity(3), spin=-80*tau/360,
-    tilt=70*tau/360):
+def setupSpace(
+    t_rot=300, initOrient=np.identity(3), spin=-80*tau/360,
+    tilt=70*tau/360, *,
+    xColor=(0, 0.5, 0), yColor=(0,0,0.7), zColor=(0.7,0,0)
+    ):
 
     xAxis = morpho.grid.SpaceArrow(0, 7.5)
-    xAxis.color = [0, 0.5, 0]
+    xAxis.color = xColor
     xAxis.width = 7
     xAxis.headSize = 20
 
     yAxis = xAxis.copy()
     yAxis.head = 7.5j
-    yAxis.color = [0, 0, 0.7]
+    yAxis.color = yColor
 
     zAxis = xAxis.copy()
     zAxis.head = [0,0,4.5]
-    zAxis.color = [0.7,0,0]
+    zAxis.color = zColor
 
     xLabel = morpho.text.SpaceText(
         text="x", font="Times New Roman",
@@ -157,7 +160,7 @@ def setupSpace(t_rot=300, initOrient=np.identity(3), spin=-80*tau/360,
         view=[0,7, 0,7],
         dx=1, dy=1,
         hnodes=2, vnodes=2,
-        hcolor=morpho.color.colormap["green"], vcolor=[0,0,1],
+        hcolor=xColor[:], vcolor=yColor[:],
         axes=False, optimize=True
         )
     # grid.figures.pop(14)
@@ -192,17 +195,20 @@ def setupSpace(t_rot=300, initOrient=np.identity(3), spin=-80*tau/360,
 #        Default: -80*pi/180 (80 degs clockwise)
 # tilt = Amount camera is tilted down from viewing the xy-plane from above.
 #        Default: 70*pi/180 (70 degs)
-def setupSpaceAlt(t_rot=300, initOrient=np.identity(3), spin=-80*tau/360,
-    tilt=70*tau/360):
+def setupSpaceAlt(
+    t_rot=300, initOrient=np.identity(3), spin=-80*tau/360,
+    tilt=70*tau/360, *,
+    xColor=(0, 0.5, 0), yColor=(0,0,0.7), zColor=(0.7,0,0)
+    ):
 
     xAxis = morpho.grid.SpaceArrow(0, 4.5)
-    xAxis.color = [0, 0.5, 0]
+    xAxis.color = xColor
     xAxis.width = 7
     xAxis.headSize = 20
 
     yAxis = xAxis.copy()
     yAxis.head = 4.5j
-    yAxis.color = [0, 0, 0.7]
+    yAxis.color = yColor
 
     # zAxis = xAxis.copy()
     # zAxis.head = [0,0,4.5]
@@ -253,7 +259,7 @@ def setupSpaceAlt(t_rot=300, initOrient=np.identity(3), spin=-80*tau/360,
         view=[-4,4, -4,4],
         dx=1, dy=1,
         hnodes=2, vnodes=2,
-        hcolor=morpho.color.colormap["green"], vcolor=[0,0,1],
+        hcolor=xColor[:], vcolor=yColor[:],
         axes=False
         )
     grid = morpho.Frame(grid.figures)
