@@ -3509,7 +3509,10 @@ def arc(p,q, angle=pi, steps=None):
 # Defaults to 2pi/72 (so 72 steps for a full ellipse; equiv 5 degs).
 # Optionally specify starting phase (in radians).
 # Measured CCW from positive real axis. Defaults to 0 rad.
-def ellipse(z0, a, b, dTheta=tau/72, phase=0):
+def ellipse(z0, a, b=None, dTheta=tau/72, phase=0):
+    if b is None:
+        b = a
+
     steps = int(math.ceil(tau / abs(dTheta)))
     # dTheta *= DEG2RAD  # convert dTheta to radians
     # phase *= DEG2RAD
