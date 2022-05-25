@@ -1678,6 +1678,9 @@ class _KeyContainer(object):
     def __setitem__(self, i, value):
         self.actor.replacekey(self.actor.keyID(i), value)
 
+    def __delitem__(self, i):
+        self.actor.delkey(self.actor.keyID[i])
+
     def __call__(self, i):
         return self[i]
 
@@ -1687,6 +1690,9 @@ class _KeyIDContainer(object):
 
     def __getitem__(self, i):
         return self.actor._keyIDno(i)
+
+    def __delitem__(self, i):
+        self.actor.delkey(self.actor.keyID[i])
 
     def __call__(self, i):
         return self[i]
