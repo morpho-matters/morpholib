@@ -58,19 +58,30 @@ class Point(morpho.Figure):
         if fill is None:
             fill = [1,0,0]
 
-        pos = morpho.Tweenable("pos", pos, tags=["complex", "position"])
-        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
-        color = morpho.Tweenable("color", color, tags=["color"])
-        fill = morpho.Tweenable("fill", fill, tags=["color"])
-        alphaEdge = morpho.Tweenable(name="alphaEdge", value=1, tags=["scalar"])
-        alphaFill = morpho.Tweenable(name="alphaFill", value=1, tags=["scalar"])
-        alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
+        # pos = morpho.Tweenable("pos", pos, tags=["complex", "position"])
+        # strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
+        # color = morpho.Tweenable("color", color, tags=["color"])
+        # fill = morpho.Tweenable("fill", fill, tags=["color"])
+        # alphaEdge = morpho.Tweenable(name="alphaEdge", value=1, tags=["scalar"])
+        # alphaFill = morpho.Tweenable(name="alphaFill", value=1, tags=["scalar"])
+        # alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
+        # self.style = "circle"
+        # # size = diameter in pixels
+        # size = morpho.Tweenable("size", size, tags=["size"])
+
+        # # Initialize tweenables
+        # self.update([pos, strokeWeight, color, fill, alphaEdge, alphaFill, alpha, size])
+
+        self.Tweenable("pos", pos, tags=["complex", "position"])
+        self.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
+        self.Tweenable("color", color, tags=["color"])
+        self.Tweenable("fill", fill, tags=["color"])
+        self.Tweenable(name="alphaEdge", value=1, tags=["scalar"])
+        self.Tweenable(name="alphaFill", value=1, tags=["scalar"])
+        self.Tweenable("alpha", alpha, tags=["scalar"])
         self.style = "circle"
         # size = diameter in pixels
-        size = morpho.Tweenable("size", size, tags=["size"])
-
-        # Initialize tweenables
-        self.update([pos, strokeWeight, color, fill, alphaEdge, alphaFill, alpha, size])
+        self.Tweenable("size", size, tags=["size"])
 
 
     # Draws the point on the given cairo context.

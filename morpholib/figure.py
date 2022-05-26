@@ -244,6 +244,12 @@ class Figure(object):
             for tweenable in tweenables:
                 self._state[tweenable.name] = tweenable
 
+    # Creates a new tweenable object and assigns it to the figure state.
+    # Equivalent to self.extendState([morpho.Tweenable(...)])
+    def Tweenable(self, name, value=0.0, tags=None, metadata=""):
+        tweenable = morpho.Tweenable(name, value, tags, metadata)
+        self._state[tweenable.name] = tweenable
+        return tweenable
 
     # Lists all the tweenables of a state.
     def listState(self):
