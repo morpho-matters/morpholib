@@ -8,6 +8,8 @@ from morpholib.tools.basics import listfloor, listceil
 
 import math, cairo
 import numpy as np
+from numbers import Number
+import colorsys
 
 # Normalizes an RGB triplet in the range [0...255] into
 # the range [0.0, 1.0].
@@ -61,6 +63,23 @@ def parseHexColor(string, normalize=True):
         return tuple(X/255 for X in (R,G,B))
     else:
         return (R,G,B)
+
+# Converts RGB triple into HSV triple.
+# Both input and output triples have components in the range [0,1].
+def rgb2hsv(rgb):
+    if isinstance(rgb, str) or isinstance(rgb, Number):
+        rgb = parseHexColor(rgb)
+
+    return colorsys.rgb_to_hsv(*rgb)
+
+# Converts HSV triple into RGB triple.
+# Both input and output triples have components in the range [0,1].
+def hsv2rgb(hsv):
+    if isinstance(hsv, str) or isinstance(hsv, Number):
+        hsv = parseHexColor(hsv)
+
+    return colorsys.hsv_to_rgb(*hsv)
+
 
 # Takes a color string (whether named or hex) and returns
 # the normalized RGB triple (0-1, 0-1, 0-1)
