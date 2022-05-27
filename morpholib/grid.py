@@ -1747,23 +1747,23 @@ class SpacePath(Path):
 
         # Transform spacepath seq using orient + focus:
 
-        # Discard final row. This matrix will only compute the x,y coords
-        # of the final vector and forget z.
-        orient_flat = orient[:2,:]
+        # # Discard final row. This matrix will only compute the x,y coords
+        # # of the final vector and forget z.
+        # orient_flat = orient[:2,:]
         focus = focus.flatten()  # Ensure single-dimensional so expand_dims() works as intended
         if not np.allclose(focus, 0):
             array = np.array(self.seq, dtype=float)
             if not np.allclose(self.origin, 0):
                 array += self.origin
             array -= focus  # Translate so focus point is at the origin.
-            array = orient_flat @ array.T  # Apply orient rotation mat
+            array = orient @ array.T  # Apply orient rotation mat
             # array = array[:2,:]  # Extract x and y coords and discard z
             array = array + np.expand_dims(focus[:2], axis=1)  # Translate back
         else:  # Easy case when focus is zero.
             array = np.array(self.seq, dtype=float)
             if not np.allclose(self.origin, 0):
                 array += self.origin
-            array = orient_flat @ array.T
+            array = orient @ array.T
             # array = array[:2,:]  # Extract x and y coords and discard z
 
         # Convert into complex numbers
@@ -1793,13 +1793,14 @@ class SpacePath(Path):
         # path.defaultTween = self.defaultTween
 
         # zdepth of the whole path is given by the median node's visual zdepth.
-        max_index = len(self.seq)-1
-        x = (max_index) // 2  # This is (the floor of) the median index
-        if max_index % 2 == 0:  # Even max index => easy median
-            path.zdepth = float((orient[2,:] @ (self.seq[x]-focus)) + focus[2])
-        else:  # Odd max index => average the two nearest
-            w1, w2 = self.seq[x:x+2]
-            path.zdepth = float((orient[2,:] @ ((w1+w2)/2 - focus)) + focus[2])
+        path.zdepth = np.median(array[2,:]).tolist()
+        # max_index = len(self.seq)-1
+        # x = (max_index) // 2  # This is (the floor of) the median index
+        # if max_index % 2 == 0:  # Even max index => easy median
+        #     path.zdepth = float((orient[2,:] @ (self.seq[x]-focus)) + focus[2])
+        # else:  # Odd max index => average the two nearest
+        #     w1, w2 = self.seq[x:x+2]
+        #     path.zdepth = float((orient[2,:] @ ((w1+w2)/2 - focus)) + focus[2])
 
         return [path]
 
