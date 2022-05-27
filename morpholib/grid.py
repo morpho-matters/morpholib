@@ -1758,7 +1758,7 @@ class SpacePath(Path):
             array -= focus  # Translate so focus point is at the origin.
             array = orient @ array.T  # Apply orient rotation mat
             # array = array[:2,:]  # Extract x and y coords and discard z
-            array = array + np.expand_dims(focus[:2], axis=1)  # Translate back
+            array = array + np.expand_dims(focus, axis=1)  # Translate back
         else:  # Easy case when focus is zero.
             array = np.array(self.seq, dtype=float)
             if not np.allclose(self.origin, 0):
@@ -1792,8 +1792,8 @@ class SpacePath(Path):
         path.deadends = self.deadends
         # path.defaultTween = self.defaultTween
 
-        # zdepth of the whole path is given by the median node's visual zdepth.
-        path.zdepth = np.median(array[2,:]).tolist()
+        # zdepth of the whole path is given by the mean visual zdepth.
+        path.zdepth = np.mean(array[2,:]).tolist()
         # max_index = len(self.seq)-1
         # x = (max_index) // 2  # This is (the floor of) the median index
         # if max_index % 2 == 0:  # Even max index => easy median
@@ -2655,7 +2655,8 @@ class SpacePolygon(Polygon):
 
         # Compute zdepth as the average of all z-coords of vertices
         z_coords = array[2,:]
-        poly.zdepth = sum(z_coords) / z_coords.size
+        # poly.zdepth = sum(z_coords) / z_coords.size
+        poly.zdepth = np.mean(z_coords).tolist()
 
         return [poly]
 
