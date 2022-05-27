@@ -2619,8 +2619,9 @@ class SpacePolygon(Polygon):
         orient = camera.orient
         focus = camera.focus
 
-        # Transform spacepath vertices using orient + focus:
+        # Transform spacepolygon vertices using orient + focus:
         # if not ((focus == 0).all()):
+        focus = focus.flatten()  # Ensure single-dimensional so expand_dims() works as intended
         if not np.allclose(focus, 0):
             array = np.array(self.vertices, dtype=float)
             if not np.allclose(self.origin, 0):
