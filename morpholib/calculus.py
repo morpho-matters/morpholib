@@ -99,9 +99,9 @@ class DoubleIntegralVolume(morpho.SpaceFigure):
 
         # Modify constants into constant functions for the
         # inner bounds.
-        if not isinstance(inmin, morpho.function):
+        if not callable(inmin):
             inmin = lambda t, value=inmin: value
-        if not isinstance(inmax, morpho.function):
+        if not callable(inmax):
             inmax = lambda t, value=inmax: value
 
         # Define tweenables
@@ -137,7 +137,7 @@ class DoubleIntegralVolume(morpho.SpaceFigure):
 
     @inmin.setter
     def inmin(self, value):
-        if not isinstance(value, morpho.function):
+        if not callable(value):
             self._inmin = lambda t, value=value: value
         else:
             self._inmin = value
@@ -148,7 +148,7 @@ class DoubleIntegralVolume(morpho.SpaceFigure):
 
     @inmax.setter
     def inmax(self, value):
-        if not isinstance(value, morpho.function):
+        if not callable(value):
             self._inmax = lambda t, value=value: value
         else:
             self._inmax = value
@@ -176,7 +176,8 @@ class DoubleIntegralVolume(morpho.SpaceFigure):
         dr = 1/self.steps
         swap = (self.mode.lower()=="dxdy")
 
-        westWall = morpho.grid.quadgrid([0,1,0,1],
+        westWall = morpho.grid.quadgrid(
+            view=[0,1,0,1],
             dx=1, dy=dr,
             width=self.width, color=self.color, alphaEdge=self.alphaEdge,
             fill=self.fill, alphaFill=self.alphaFill, alpha=self.alpha
@@ -206,7 +207,8 @@ class DoubleIntegralVolume(morpho.SpaceFigure):
         westWall = westWall.fimage(curveWest)
 
 
-        eastWall = morpho.grid.quadgrid([0,1,0,1],
+        eastWall = morpho.grid.quadgrid(
+            view=[0,1,0,1],
             dx=1, dy=dr,
             width=self.width, color=self.color, alphaEdge=self.alphaEdge,
             fill=self.fill, alphaFill=self.alphaFill, alpha=self.alpha
@@ -236,7 +238,8 @@ class DoubleIntegralVolume(morpho.SpaceFigure):
         eastWall = eastWall.fimage(curveEast)
 
 
-        southWall = morpho.grid.quadgrid([0,1,0,1],
+        southWall = morpho.grid.quadgrid(
+            view=[0,1,0,1],
             dx=dr, dy=1,
             width=self.width, color=self.color, alphaEdge=self.alphaEdge,
             fill=self.fill, alphaFill=self.alphaFill, alpha=self.alpha
@@ -263,7 +266,8 @@ class DoubleIntegralVolume(morpho.SpaceFigure):
         southWall = southWall.fimage(southTop)
 
 
-        northWall = morpho.grid.quadgrid([0,1,0,1],
+        northWall = morpho.grid.quadgrid(
+            view=[0,1,0,1],
             dx=dr, dy=1,
             width=self.width, color=self.color, alphaEdge=self.alphaEdge,
             fill=self.fill, alphaFill=self.alphaFill, alpha=self.alpha
