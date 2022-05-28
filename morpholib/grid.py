@@ -2791,7 +2791,7 @@ class Quadmesh(morpho.Figure):
                     quadblockRaw = self.array[i:i+2, j:j+2, :]  # Original array block
                     vertices = (quadblock[:,:,0] + 1j*quadblock[:,:,1]).flatten().tolist()
                     vertices[2], vertices[3] = vertices[3], vertices[2]
-                    verticesRaw = quadblockRaw.reshape((4,3)).tolist()
+                    verticesRaw = quadblockRaw.reshape((4,3)).copy()
                     verticesRaw[2], verticesRaw[3] = verticesRaw[3], verticesRaw[2]
                     fill = morpho.color.QuadGradientFill(
                         vertices=vertices,
