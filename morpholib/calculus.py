@@ -168,8 +168,9 @@ class DoubleIntegralVolume(morpho.SpaceFigure):
     def origin(self, value):
         self._origin = morpho.array(value)
 
-    def primitives(self, camera):
-
+    # Returns a dict mapping a cardinal direction ("north", "east", etc.)
+    # to a quadmesh representing that wall.
+    def makeWalls(self):
         a,b = self.outmin, self.outmax
         xLen = b-a
         cfunc, dfunc = self.inmin, self.inmax
@@ -309,8 +310,18 @@ class DoubleIntegralVolume(morpho.SpaceFigure):
         # else:
         #     edges = []
 
+        return {
+            "west": westWall,
+            "east": eastWall,
+            "south": southWall,
+            "north": northWall
+        }
+
+
+    def primitives(self, camera):
+        walls = self.makeWalls()
         prims = []
-        for fig in [westWall, eastWall, southWall, northWall]:  # + edges:
+        for fig in walls.values():  # + edges:
             prims.extend(fig.primitives(camera))
         return prims
 
