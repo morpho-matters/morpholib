@@ -271,6 +271,11 @@ The ``unit()`` method returns a complex number representing the direction unit v
 print(arrow.unit())
 ```
 
+The ``midpoint()`` method returns the midpoint between the arrow's head and tail:
+```python
+print(arrow.midpoint())
+```
+
 ## Helpful gadgets
 
 There are a number of helpful functions and gadgets to assist in creating common figure constructions. We already looked at a few in the previous guide, but now we'll explore them in more detail and give a more comprehensive list of the available tools.
@@ -587,6 +592,18 @@ movie = morpho.Animation(morpho.Layer([ball, label]))
 movie.play()
 ```
 However, note that neither ``Text`` nor ``Image`` possess an ``origin`` tweenable. This is because their origin point is already implicitly determined by setting their position attribute ``pos`` together with the alignment attributes ``anchor_x`` and ``anchor_y`` for ``Text``, or ``align`` for ``Image``.
+
+## Color Tools
+
+The submodule ``morpho.color`` contains a number of useful tools for specifying colors. It also contains tools for creating color gradients, but we won't cover that in this guide.
+
+One useful tool is ``parseHexColor()`` which converts a standard HTML hexadecimal representation of a color into an RGB tuple:
+```python
+# The following are equivalent ways to define a pink color
+pink = morpho.color.parseHexColor("ffc0cb")
+pink = morpho.color.parseHexColor("0xffc0cb")
+pink = morpho.color.parseHexColor(0xffc0cb)
+```
 
 ## Miscellaneous Gadgets
 

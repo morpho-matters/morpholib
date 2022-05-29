@@ -71,7 +71,8 @@ Let's move our point to the position ``4 + 3i``. We can do it like so:
 ```python
 mypoint.pos = 4 + 3*1j
 ```
-(This can also be specified as ``4 + 3j``, but using ``*1j`` is safer if you're new to the syntax since it works even when the imaginary component is a variable instead of a literal.)
+
+This can also be specified as ``4 + 3j``, but using ``*1j`` is safer if you're new to the syntax since it works even when the imaginary component is a variable instead of a literal. You can also use the syntax ``complex(4,3)`` if you prefer.
 
 > ***CAUTION!*** In Python, the imaginary unit is represented with ``j``, not ``i``. To avoid confusion, this guide will use *j* instead of *i* from now on.
 
@@ -306,11 +307,36 @@ mypoint.newkey(180, mypoint.time(0).copy())
 
 > ***CAUTION!*** Be sure to remember to include the ``copy()`` method! Forgetting to do so will mean the frame 180 keyfigure and the frame 0 keyfigure will be linked, so changing the attributes of one will influence the other. This can lead to considerable confusion in debugging your code.
 
+#### Streamlining the code using ``set()``
+
+It's getting a little annoying to keep typing ``mypoint.time(etc)`` over and over again in order to modify each keyfigure attribute one at a time. We can condense these into a single line using the figure ``set()`` method.
+
+For example, we can condense all the changes we made to ``mypoint`` at frame 120, like this:
+
+```python
+mypoint.newkey(120)
+# Inflate size of point, move it to (-3+3j), and fade it to invisibility
+mypoint.time(120).set(size=75, pos=-3+3*1j, alpha=0)
+```
+
+In fact, we can take this a step further: The ``newkey()`` method actually returns the new keyfigure it creates. That means you can modify the new keyfigure's attributes in the same line they were created using this syntax:
+
+```python
+mypoint.newkey(120).size = 75
+```
+
+Chaining this with ``set()``, you can change multiple attributes at a time, completely removing the need to call the ``time()`` method at all:
+
+```python
+# Inflate size of point, move it to (-3+3j), and fade it to invisibility
+mypoint.newkey(120).set(size=75, pos=-3+3*1j, alpha=0)
+```
+
 ### Transitions
 
 Our animation looks fine as far as it goes, but it looks a bit mechanical. It would be nice if we could make the transitions between keyframes a little more organic, such as by having it accelerate and decelerate as it leaves and arrives at keyframes. This can be accomplished by setting a so-called *transition* or *transition function*.
 
-Since we want to change the transition of all the movements, we can change the transition function of our initial starting figure before we made it an actor. This will then cause the transition function to propagate to all the other keyfigures as they are created. Built-in transition functions can be found in the ``morpho.transitions`` submodule, and a good one for this purpose is ``quadease`` (short for "quadratic easing"):
+Since we want to change the transition of all the movements, we can change the transition function of our initial starting figure before we made it an actor. This will then cause the transition function to propagate to all future keyfigures as they are created. Built-in transition functions can be found in the ``morpho.transitions`` submodule, and a good one for this purpose is ``quadease`` (short for "quadratic easing"):
 
 ```python
 mypoint = morpho.grid.Point()
@@ -371,7 +397,7 @@ mypoint.last().pos = -3 + 3*1j  # Move point to (-3+3i)
 mypoint.last().alpha = 0        # Fade point to invisibility
 
 mypoint.newendkey(-30)  # New key 30 frames before last key
-mypoint.key(-2).pos = -3  # key(-2) means second-to-last key
+mypoint.key[-2].pos = -3  # key[-2] means second-to-last key
 
 mypoint.newendkey(60, mypoint.first().copy())
 
@@ -381,17 +407,17 @@ movie.play()
 
 Now if we want to modify the second keyfigure's timing, we just need to change the first instance of ``mypoint.newendkey(60)`` to ``mypoint.newendkey(30)`` and all future keyfigure times will adjust accordingly.
 
-One last thing to note about the above code. In it, we made use of the ``key()`` method. Typing ``mypoint.key(n)`` returns the ``n``th keyfigure in the actor where ``n = 0`` is the first keyfigure. Negative ``n`` values are interpreted cyclically, so ``mypoint.key(-1)`` is equivalent to ``mypoint.last()`` and so ``mypoint.key(-2)`` returns the second-to-last keyfigure. We had to use this instead of the usual ``last()`` method because we were trying to modify the keyfigure we created 30 frames *before* the current last figure.
+One last thing to note about the above code. In it, we made use of the ``key`` property. Typing ``mypoint.key[n]`` returns the ``n``th keyfigure in the actor where ``n = 0`` is the first keyfigure. Negative ``n`` values are interpreted cyclically, so ``mypoint.key[-1]`` is equivalent to ``mypoint.last()`` and so ``mypoint.key[-2]`` returns the second-to-last keyfigure. We had to use this instead of the usual ``last()`` method because we were trying to modify the keyfigure we created 30 frames *before* the current last figure.
 
-> ***Tip:*** The ``newkey()`` and ``newendkey()`` methods actually return the new keyfigure they create. That means you can modify the new keyfigure's attributes in the same line they were created using this syntax:
+> ***Tip:*** Just like ``newkey()``, the ``newendkey()`` method also returns the new keyfigure it creates. So you can modify the new keyfigure's attributes in the same line they were created using this syntax:
 ```python
-myfig.newkey(100).pos = 1+1j
+mypoint.newendkey(60).size = 75
 ```
-And using ``set()``, you can modify multiple attributes:
+Or chaining it with ``set()``, you can modify multiple attributes:
 ```python
-myfig.newkey(100).set(pos=1+1j, alpha=0.5, etc=123)
+mypoint.newendkey(60).set(size=75, pos=-3+3*1j, alpha=0)
 ```
-which avoids the need to call ``last()`` or ``key()`` in the following line to modify an attribute.
+removing the need to call ``last()`` or ``key()`` in the following lines.
 
 ### An example with grids
 
@@ -676,7 +702,7 @@ movie.end = 120   # End the animation at frame 120
 
 By default, ``start`` and ``end`` are set to the Python null value ``None``, which means the animation will start and end at the earliest and latest keyframes it contains.
 
-While constructing an animation, I sometimes want to just view its final frame without playing through the entire animation first. You can accomplish this by setting
+While constructing an animation, I sometimes want to just view its current final frame without playing through the entire animation first. You can accomplish this by setting
 ```python
 movie.start = movie.lastID()
 ```
