@@ -378,8 +378,7 @@ class Wall(morpho.SpaceFigure):
     def origin(self, value):
         self._origin = morpho.array(value)
 
-    def primitives(self, camera):
-
+    def makePolygon(self):
         # v0 = np.pad(self.start, (0,1))
         # v1 = np.pad(self.end, (0,1))
         v0 = self.start
@@ -402,6 +401,10 @@ class Wall(morpho.SpaceFigure):
         if not np.allclose(self.origin, (0,0,0)):
             wall = wall.fimage(lambda v: v + self.origin)
 
+        return wall
+
+    def primitives(self, camera):
+        wall = self.makePolygon()
         return wall.primitives(camera)
 
 
