@@ -9,7 +9,7 @@ title: Morpho Guide -- Skits
 > ```python
 > import morpholib as morpho
 > morpho.importAll()
-> 
+>
 > from morpholib.tools.basics import *
 >
 > import math, cmath
@@ -51,7 +51,8 @@ class Tracker(morpho.Skit):
 
         return label
 ```
-> **Note:** The name ``makeFrame`` is important here! A Skit expects to have a method with this name defined, and calls it in order to construct the figures it needs to draw to the screen.
+<!-- > **Note:** The name ``makeFrame`` is important here! A Skit expects to have a method with this name defined, and calls it in order to construct the figures it needs to draw to the screen. -->
+> **Note:** Remember not to convert figures into actors within the ``makeFrame()`` method of a Skit definition; they should remain plain figures.
 
 And that's it! The ``Tracker`` Skit is now fully defined! Now we just need to instantiate an instance of it so we can animate it and watch it in action. This can be done like any other figure:
 
@@ -82,8 +83,6 @@ mytracker.last().t = 1
 movie = morpho.Animation(mytracker)
 movie.play()
 ```
-
-> **Note:** By default, the ``t`` value of a Skit is set to 0 when initialized. You can modify the starting ``t`` value after initialization, of course (just like any other figure attribute), but you unfortunately cannot initialize an alternative ``t`` value during construction, e.g. by doing ``mytracker = Tracker(t=3)``. This may be possible in a future version, but it's not possible for now.
 
 And.... well, it works, but it's honestly pretty ugly. This is because it's trying to display all 15 decimal places after the decimal point every single frame, but some values of ``t`` are nice and round (like ``t = 0.5`` or ``t = 0.25``) and so it's constantly shifting from showing 15 decimals to showing only a few, and so you can't really make anything out.
 
@@ -178,10 +177,9 @@ class Follower(morpho.Skit):
 
         return point
 
-myfollower = Follower()
 # Set the follower to begin at the END of the path,
 # just to change things up a little.
-myfollower.t = 1
+myfollower = Follower(t=1)
 
 # Turn it into an actor, and set its t value to be 0
 # after 2 seconds (60 frames) have passed.
@@ -195,6 +193,7 @@ myfollower.last().t = 0
 movie = morpho.Animation(morpho.Layer([path, myfollower]))
 movie.play()
 ```
+> **Note:** By default, the ``t`` value of a Skit is set to 0 when initialized. You can supply a different initial value by passing it to the constructor like in the above code with ``Follower(t=1)``, but note that this can only be done by *keyword*. So ``Follower(t=1)`` works, but ``Follower(1)`` will not.
 
 And there you have it! Our point figure *follows* the specified path! You've just constructed your first basic Follower Skit! But why stop here? Let's be a little adventurous and add some cool stuff to our follower. How about a label that tracks the coordinates of the point as it moves along the path? So let's edit our ``Follower`` class like this:
 
@@ -405,10 +404,17 @@ class TangentLine(morpho.Skit):
 class TangentLine(morpho.Skit):
 ```
 
+or just pass them in as keyword arguments:
+
+```python
+@morpho.SkitParameters(t=-4, length=4)
+class TangentLine(morpho.Skit):
+```
+
 Now let's modify the contents of ``makeFrame()`` to take advantage of our new parameter ``length``:
 
 ```python
-@morpho.SkitParameters({"t":-4, "length":4})
+@morpho.SkitParameters(t=-4, length=4)
 class TangentLine(morpho.Skit):
     def makeFrame(self):
         # t will represent the input to the function f
@@ -444,7 +450,7 @@ class TangentLine(morpho.Skit):
         return morpho.Frame([line, dlabel])
 ```
 
-Note that we assigned ``length = self.length`` at the beginning just like we do for ``t``. This is actually an optional step, but I usually prefer to "extract" the parameters from the attributes of ``self`` just to make it easier to work with them in the code. The other change is to the definition of ``line``: we made the ``Path`` extend from ``-length/2`` to ``+length/2`` which will now give our tangent line a variable length depending on the value of the ``length`` parameter.
+Note that we assigned ``length = self.length`` at the beginning just like we do for ``t``. This is actually an optional step, but I usually prefer to "extract" the parameters from the attributes of ``self`` just to make it easier to work with them in the code (it also protects us from accidentally modifying their values). The other change is to the definition of ``line``: we made the ``Path`` extend from ``-length/2`` to ``+length/2`` which will now give our tangent line a variable length depending on the value of the ``length`` parameter.
 
 Now let's try it out. We'll recycle the code from before, but now let's have the tangent line grow out of the tangent point as it moves along the curve:
 
@@ -469,7 +475,7 @@ movie.play()
 Let's go one step further and we'll call it done with this tangent line Skit: Let's add a transparency parameter (``alpha``) so that we can make the tangent line fade when we're done:
 
 ```python
-@morpho.SkitParameters({"t":-4, "length":4, "alpha":1})
+@morpho.SkitParameters(t=-4, length=4, alpha=1)
 class TangentLine(morpho.Skit):
     def makeFrame(self):
         # t will represent the input to the function f

@@ -59,6 +59,11 @@ movie = morpho.Animation(mypoint)
 movie.play()
 ```
 
+> ***Tip:*** To modify multiple attributes of a figure in a single line, you can use the ``set()`` method:
+```python
+mypoint.set(size=50, fill=[0,1,0], color=[1,1,1], strokeWeight=5)
+```
+
 Let's also change where it's located. To do that, we modify the point's ``pos`` attribute. One thing to note: in Morpho, you should always think of the animation canvas as viewing a particular rectangular region of the complex plane. By default, the region is the square whose real and imaginary extents are ``[-5,5]`` and ``[-5i, 5i]`` respectively, but this can be changed. Thus, all positions in Morpho are expressed as complex numbers (``x + y*1j`` in Python lingo).
 
 Let's move our point to the position ``4 + 3i``. We can do it like so:
@@ -376,7 +381,17 @@ movie.play()
 
 Now if we want to modify the second keyfigure's timing, we just need to change the first instance of ``mypoint.newendkey(60)`` to ``mypoint.newendkey(30)`` and all future keyfigure times will adjust accordingly.
 
-One last thing to note about the above code. In it, we made use of the ``key()`` method. Typing ``mypoint.key(n)`` returns the ``n``th keyfigure in the actor where ``n = 0`` is the first keyfigure. Negative ``n`` values are interpreted cyclically, so ``mypoint.key(-1)`` is equivalent to ``mypoint.last()`` and so ``mypoint.key(-2)`` returns the second-to-last keyfigure.
+One last thing to note about the above code. In it, we made use of the ``key()`` method. Typing ``mypoint.key(n)`` returns the ``n``th keyfigure in the actor where ``n = 0`` is the first keyfigure. Negative ``n`` values are interpreted cyclically, so ``mypoint.key(-1)`` is equivalent to ``mypoint.last()`` and so ``mypoint.key(-2)`` returns the second-to-last keyfigure. We had to use this instead of the usual ``last()`` method because we were trying to modify the keyfigure we created 30 frames *before* the current last figure.
+
+> ***Tip:*** The ``newkey()`` and ``newendkey()`` methods actually return the new keyfigure they create. That means you can modify the new keyfigure's attributes in the same line they were created using this syntax:
+```python
+myfig.newkey(100).pos = 1+1j
+```
+And using ``set()``, you can modify multiple attributes:
+```python
+myfig.newkey(100).set(pos=1+1j, alpha=0.5, etc=123)
+```
+which avoids the need to call ``last()`` or ``key()`` in the following line to modify an attribute.
 
 ### An example with grids
 
