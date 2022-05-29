@@ -318,7 +318,7 @@ movie.start = movie.lastID()
 movie.play()
 ```
 
-Finally, there is actually another way to specify a locator layer which I actually find more useful when I'm creating an animation that contains many layers. Usually in a multi-layer animation, I have given names to the various layers (e.g. ``mainlayer`` or ``toplayer``). In this case, you can set the locator layer to be the actual *Layer* object itself instead of its position within the animation's internal stack:
+There's actually another way to specify a locator layer which I find more useful when I'm creating an animation that contains many layers. Usually in a multi-layer animation, I have given names to the various layers (e.g. ``mainlayer`` or ``toplayer``). In this case, you can set the locator layer to be the actual *Layer* object itself instead of its position within the animation's internal stack:
 
 ```python
 # Setup layer and animation in advance
@@ -342,6 +342,17 @@ movie.start = movie.lastID()
 # Set mainlayer to be the locator layer
 movie.locatorLayer = mainlayer
 movie.play()
+```
+
+Finally, there are two additional attributes for locator layers called ``clickCopy`` and ``clickRound``.
+
+``clickCopy`` is a boolean which if set to True, causes the coordinates of every click to be copied to your clipboard.
+
+``clickRound`` takes an integer specifying the decimal place to round the coordinates to. By default, it's set to ``None``, meaning it doesn't round.
+
+```python
+movie.clickCopy = True  # Coordinates will be copied to clipboard
+movie.clickRound = 2    # Coordinates round to the second decimal place
 ```
 
 ### Still other tools
