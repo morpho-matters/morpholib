@@ -53,13 +53,14 @@ def _applyJump(figure, dz):
 #           the third actor will begin fading 5 frames after the
 #           second actor starts fading, and so on.
 #           Default: 0 (meaning all actors begin fading at the same time)
+# KEYWORD ONLY
 # jump = Displacement each actor should "jump" during the fade out.
 #        Example: jump=2j causes each actor to jump up by 2 units;
 #        `jump` can also be a list to specify different jump vectors
 #        for each actor in the `actors` list. If the list is too short,
 #        it will loop back to the start.
 #        Default: () empty tuple (meaning no jumps)
-def fadeOut(actors, duration=30, atFrame=None, stagger=0, jump=()):
+def fadeOut(actors, duration=30, atFrame=None, stagger=0, *, jump=()):
     # if not isinstance(actors, list) and not isinstance(actors, tuple):
     #     actors = [actors]
     # Turn into a list if necessary
@@ -102,6 +103,11 @@ def fadeOut(actors, duration=30, atFrame=None, stagger=0, jump=()):
 # Similar to fadeOut(), but fades in actors from invisibility.
 # See fadeOut() for more info.
 #
+# UNIQUE PARAMETERS
+# alpha = Final alpha value (keyword only).
+#         Like `jump`, it can also be a list of alphas to be applied
+#         to the actors list.
+#
 # NOTE: Only works for figures that possess an "alpha" tweenable, so
 # this function may not work for custom figures like Skits unless you
 # implement an alpha tweenable yourself.
@@ -109,7 +115,9 @@ def fadeOut(actors, duration=30, atFrame=None, stagger=0, jump=()):
 # Also note that this function will force alpha=0 and visible=False
 # for the current final keyfigure in each actor before applying
 # the effect.
-def fadeIn(actors, duration=30, atFrame=None, stagger=0, jump=()):
+def fadeIn(actors, duration=30, atFrame=None, stagger=0, *,
+    jump=(), alpha=(1,)):
+
     # if not isinstance(actors, list) and not isinstance(actors, tuple):
     #     actors = [actors]
     # Turn into a list if necessary
@@ -124,13 +132,16 @@ def fadeIn(actors, duration=30, atFrame=None, stagger=0, jump=()):
     if not hasattr(jump, "__getitem__"):
         jump = [jump]
 
+    if not hasattr(alpha, "__getitem__"):
+        alpha = [alpha]
+
     for n in range(len(actors)):
         actor = actors[n]
         actor.last().set(alpha=0, visible=False)
         keyfigInit = actor.newkey(atFrame+n*stagger)
         keyfigInit.visible = True
         keyfig = actor.newendkey(duration)
-        keyfig.alpha = 1
+        keyfig.alpha = alpha[n%len(alpha)]
         if len(jump) > 0:
             dz = jump[n%len(jump)]
             _applyJump(keyfigInit, -dz)
