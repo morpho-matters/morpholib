@@ -514,13 +514,7 @@ movie.play()
 ```
 > **Note:** The code above invokes the function ``morpho.array()``. It's recommended to use this function whenever you need to define a matrix or a vector. It's basically just a wrapper around ``numpy.array()``, but it has a few different properties, and usually ensures that the result will be compatible with other components of Morpho.
 
-You can also apply the ``origin`` and ``rotation`` tweenables in addition to the ``transform`` tweenable to get other composite effects. However, you will need to be mindful of the order of operations here, which is worth summarizing now.
-
-The transformation tweenables are always applied in the following order: ``rotation``, ``transform``, ``origin``
-
-meaning the transformation effects are performed in the following order:
-
-<p align="center">Rotate, Transform, Translate</p>
+You can also apply the ``origin`` and ``rotation`` tweenables in addition to the ``transform`` tweenable to get other composite effects. However, you will need to be mindful of the order of operations. The transformation tweenables are always applied in the order ``rotation``, ``transform``, ``origin``. This means the figure will be rotated first, then transformed according to the matrix given, and finally translated to its new origin point.
 
 Remember how I said that the transformation tweenables are stored separately, or alongside, the other attributes? Meaning that modifying the transformation tweenables has no effect on the actual "raw" data comprising the figure? Well, there is a way to apply the transformation effects *directly* to the data as well. To do it, call the ``commitTransforms()`` method:
 ```python
