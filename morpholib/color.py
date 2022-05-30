@@ -456,17 +456,18 @@ class GradientFill(morpho.Figure):
             morpho.pushPhysicalCoords(camera.view, ctx)  # Implicit ctx.save()
         return None
 
-    # This method should be tailored to each subclass.
-    # It generates the correct gradient source object (after
+    # This method generates the correct gradient source object (after
     # pushing physical coordinates) and then calls
     # fill_preserve() on the given cairo context.
     # It then calls ctx.restore() as a final step, so the
     # transformation stack should be unchanged after this method is
     # finished.
-    def draw(self, camera, ctx, alpha=1, pushPhysicalCoords=True):
+    def draw(self, camera, ctx, alpha=1, pushPhysicalCoords=True, *, strokeToo=False):
         source = self.makeSource(camera, ctx, alpha, pushPhysicalCoords)  # Implicitly calls ctx.save()
         ctx.set_source(source)
         ctx.fill_preserve()
+        if strokeToo:
+            ctx.stroke_preserve()
         if pushPhysicalCoords:
             ctx.restore()
 

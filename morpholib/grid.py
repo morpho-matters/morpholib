@@ -2355,13 +2355,12 @@ class Polygon(morpho.Figure):
             fill, alphaFill, alpha, width, dash,
             origin, rotation, _transform])
 
-        # The dash pattern for this line. The format is identical to how
-        # pycairo handles dash patterns: each item in the list is how long
-        # ON and OFF dashes are, where the list is read cyclically.
-        # Defaults to [] which means make the line solid.
-        # Note that specifying only one value to the dash list is interpreted
-        # as alternating that dash width ON and OFF.
-        # self.dash = []
+        # If set to True, then if fill is a GradientFill,
+        # the border will be stroked using the GradientFill
+        # instead of self.color.
+        # Mainly for use by the Quadmesh class to remove
+        # seams when width is zero and fill is a color function.
+        self._strokeGradient = False
 
     @property
     def transform(self):
@@ -2371,12 +2370,12 @@ class Polygon(morpho.Figure):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
-    # def copy(self):
-    #     new = super().copy()
+    def copy(self):
+        new = super().copy()
 
-    #     new.dash = self.dash[:]
+        new._strokeGradient = self._strokeGradient
 
-    #     return new
+        return new
 
     # Applies all of the transformation attributes
     # origin, rotation, transform
@@ -2465,7 +2464,11 @@ class Polygon(morpho.Figure):
         if self.alphaFill > 0:
             # Handle gradients
             if isinstance(self.fill, morpho.color.GradientFill):
-                self.fill.draw(camera, ctx, self.alphaFill*self.alpha, pushPhysicalCoords=False)
+                self.fill.draw(
+                    camera, ctx, self.alphaFill*self.alpha,
+                    pushPhysicalCoords=False,
+                    strokeToo=self._strokeGradient
+                    )
             # Handle normal colors
             else:
                 ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
@@ -2475,8 +2478,9 @@ class Polygon(morpho.Figure):
 
         ### EDGE ###
 
-        # Do nothing if edge width is zero or alphaEdge is zero.
-        if self.width == 0 or self.alphaEdge == 0:
+        # Do nothing if edge width is zero, or alphaEdge is zero,
+        # or if the gradient fill was used for the stroke.
+        if self.width == 0 or self.alphaEdge == 0 or self._strokeGradient:
             ctx.new_path()
             return
 
@@ -2880,13 +2884,14 @@ class Quadmesh(morpho.Figure):
         # have a way to make the edge of a polygon be a gradient, and doing
         # something like taking the average color doesn't seem to make it look
         # very good.
-        if (self.width < 0.5 or self.alphaEdge == 0) and not callable(self.fill):
+        if (self.width < 0.5 or self.alphaEdge == 0):  # and not callable(self.fill):
             for quad in quads:
                 quad.width = 1
                 quad.color = quad.fill
                 # We square it to make the edges less conspicuous when the
                 # quadmesh is drawn with some semi-transparency.
                 quad.alphaEdge = (quad.alpha*quad.alphaFill)**2
+                quad._strokeGradient = callable(self.fill)
 
         return quads
 
