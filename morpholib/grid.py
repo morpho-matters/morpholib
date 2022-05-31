@@ -2698,6 +2698,20 @@ Spacepolygon = SpacePolygon  # Synonym for camel-case haters
 # OTHER ATTRIBUTES
 # shading = Boolean indicating whether to implement a shading effect.
 #           Setting to True results in a more realistic surface, but slower render.
+# colormapDomain = String indicating how a color function fill will
+#                  map vertices to colors.
+#   "physical" : (Default). Color function will be evaluated on
+#                3D arrays of the form [x,y,z] representing vertex
+#                positions in physical space.
+#   "index" : Color function will be evaluated on 2D arrays of the form
+#             [i,j] where i and j are the indices used to access the
+#             quadmesh vertex array.
+#   "parametric" : Color function will be evaluated on 2D arrays of the
+#                  form [x,y] with 0 <= x,y <= 1 where x,y represent
+#                  the indices of the quadmesh vertex array normalized
+#                  to the range [0,1].
+#                  So x=0 means i=0, and x=1 means i=i_max;
+#                  and y=0 means j=0, and y=1 means j=j_max.
 class Quadmesh(morpho.Figure):
     def __init__(self, array=None, width=3, color=(0,0,0), alphaEdge=1,
         fill=(1,0,0), alphaFill=1, alpha=1, fill2=None):
@@ -2743,6 +2757,7 @@ class Quadmesh(morpho.Figure):
 
         # Other attributes
         self.shading = False
+        self.colormapDomain = "physical"
 
     @property
     def array(self):
@@ -2756,6 +2771,7 @@ class Quadmesh(morpho.Figure):
         new = super().copy()
 
         new.shading = self.shading
+        new.colormapDomain = self.colormapDomain
         return new
 
     # Returns a list containing all of the polygons to display when the quadmesh
@@ -2797,9 +2813,19 @@ class Quadmesh(morpho.Figure):
                     vertices[2], vertices[3] = vertices[3], vertices[2]
                     verticesRaw = quadblockRaw.reshape((4,3)).copy()
                     verticesRaw[2], verticesRaw[3] = verticesRaw[3], verticesRaw[2]
+                    if self.colormapDomain == "physical":
+                        domain = verticesRaw
+                    elif self.colormapDomain == "parametric":
+                        domain = np.array([[i,j], [i,j+1], [i+1,j], [i+1,j+1]], dtype=float)
+                        domain[:,0] /= (W-1)
+                        domain[:,1] /= (H-1)
+                    elif self.colormapDomain == "index":
+                        domain = np.array([[i,j], [i,j+1], [i+1,j], [i+1,j+1]], dtype=float)
+                    else:
+                        raise ValueError(f'Unrecognized colormap domain "{self.colormapDomain}"')
                     fill = morpho.color.QuadGradientFill(
                         vertices=vertices,
-                        colors=list(map(fillfunc, verticesRaw))
+                        colors=list(map(fillfunc, domain))
                         )
                     quad = Polygon(
                         vertices[:], self.width, self.color, self.alphaEdge,
