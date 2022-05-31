@@ -2816,11 +2816,11 @@ class Quadmesh(morpho.Figure):
                     if self.colormapDomain == "physical":
                         domain = verticesRaw
                     elif self.colormapDomain == "parametric":
-                        domain = np.array([[i,j], [i,j+1], [i+1,j], [i+1,j+1]], dtype=float)
+                        domain = np.array([[i,j], [i,j+1], [i+1,j+1], [i+1,j]], dtype=float)
                         domain[:,0] /= (W-1)
                         domain[:,1] /= (H-1)
                     elif self.colormapDomain == "index":
-                        domain = np.array([[i,j], [i,j+1], [i+1,j], [i+1,j+1]], dtype=float)
+                        domain = np.array([[i,j], [i,j+1], [i+1,j+1], [i+1,j]], dtype=float)
                     else:
                         raise ValueError(f'Unrecognized colormap domain "{self.colormapDomain}"')
                     fill = morpho.color.QuadGradientFill(
