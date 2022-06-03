@@ -70,8 +70,11 @@ def fadeOut(actors, duration=30, atFrame=None, stagger=0, *, jump=()):
     if atFrame is None:
         atFrame = max(actor.lastID() for actor in actors)
 
-    # If jump isn't a subscriptable type, turn it into a singleton list
-    if not hasattr(jump, "__getitem__"):
+    # # If jump isn't a subscriptable type, turn it into a singleton list
+    # if not hasattr(jump, "__getitem__"):
+
+    # If jump isn't a list or tuple, turn it into one.
+    if not isinstance(jump, list) and not isinstance(jump, tuple):
         jump = [jump]
 
     for n in range(len(actors)):
@@ -128,11 +131,15 @@ def fadeIn(actors, duration=30, atFrame=None, stagger=0, *,
     if atFrame is None:
         atFrame = max(actor.lastID() for actor in actors)
 
-    # If jump isn't a subscriptable type, turn it into a singleton list
-    if not hasattr(jump, "__getitem__"):
+    # # If jump isn't a subscriptable type, turn it into a singleton list
+    # if not hasattr(jump, "__getitem__"):
+
+    # If jump isn't a list or tuple, turn it into one.
+    if not isinstance(jump, list) and not isinstance(jump, tuple):
         jump = [jump]
 
-    if not hasattr(alpha, "__getitem__"):
+    # if not hasattr(alpha, "__getitem__"):
+    if not isinstance(alpha, list) and not isinstance(alpha, tuple):
         alpha = [alpha]
 
     for n in range(len(actors)):
