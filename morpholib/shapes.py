@@ -1509,6 +1509,19 @@ class Ellipse(morpho.Figure):
 
         self.update([pos, xradius, yradius, strokeWeight, color, fill, alphaEdge, alphaFill, alpha])
 
+    # Setting `radius` property sets both `xradius` and `yradius` to
+    # the same value.
+    @property
+    def radius(self):
+        if self.xradius != self.yradius:
+            raise ValueError("xradius does not equal yradius. No common radius.")
+        return self.xradius
+
+    @radius.setter
+    def radius(self, value):
+        self.xradius = value
+        self.yradius = value
+
     # NOT IMPLEMENTED YET!!!
     def toPolygon(self, dTheta=tau/72):
         raise NotImplementedError
@@ -1577,6 +1590,8 @@ class EllipticalArc(morpho.Figure):
 
         self.update([pos, xradius, yradius, theta0, theta1, strokeWeight, color, alpha])
 
+    # Setting `radius` property sets both `xradius` and `yradius` to
+    # the same value.
     @property
     def radius(self):
         if self.xradius != self.yradius:
