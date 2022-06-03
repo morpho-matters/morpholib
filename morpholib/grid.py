@@ -3365,6 +3365,9 @@ class SpaceArrow(Arrow):
         head = (head3d[0] + 1j*head3d[1]).tolist()
         tail = (tail3d[0] + 1j*tail3d[1]).tolist()
 
+        if head == tail:
+            return []
+
         # Update and return the internal path figure.
         self.path.seq = [tail, head]
         self.path.zdepth = (head3d[2] + tail3d[2]) / 2  # Average of z-coords
