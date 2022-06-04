@@ -2803,30 +2803,38 @@ class Quadmesh(morpho.Figure):
             # Apply decorator to self.fill to ensure the output type
             # is always a python list of python floats
             fillfunc = handleColorTypeCasting(self.fill)
-            quads = []
             W,H,D = array.shape
+
+            # Create color array
+            if self.colormapDomain == "physical":
+                colorArray = np.array(list(map(fillfunc, self.array.reshape(-1,3))), dtype=float)
+                colorArray.shape = self.array.shape
+            else:
+                indexArray = np.indices((W,H), dtype=float).transpose(1,2,0)
+                if self.colormapDomain == "parametric":
+                    indexArray[:,:,0] /= (W-1)
+                    indexArray[:,:,1] /= (H-1)
+                elif self.colormapDomain == "index":
+                    pass
+                else:
+                    raise ValueError(f'Unrecognized colormap domain "{self.colormapDomain}"')
+                colorArray = np.array(list(map(fillfunc, indexArray.reshape(-1,2))), dtype=float)
+                colorArray.shape = self.array.shape
+
+            quads = []
             for i in range(W-1):
                 for j in range(H-1):
                     quadblock = array[i:i+2, j:j+2, :]
-                    quadblockRaw = self.array[i:i+2, j:j+2, :]  # Original array block
                     vertices = (quadblock[:,:,0] + 1j*quadblock[:,:,1]).flatten().tolist()
                     vertices[2], vertices[3] = vertices[3], vertices[2]
-                    verticesRaw = quadblockRaw.reshape((4,3)).copy()
-                    # verticesRaw[2], verticesRaw[3] = verticesRaw[3], verticesRaw[2]
-                    verticesRaw[[2,3]] = verticesRaw[[3,2]]
-                    if self.colormapDomain == "physical":
-                        domain = verticesRaw
-                    elif self.colormapDomain == "parametric":
-                        domain = np.array([[i,j], [i,j+1], [i+1,j+1], [i+1,j]], dtype=float)
-                        domain[:,0] /= (W-1)
-                        domain[:,1] /= (H-1)
-                    elif self.colormapDomain == "index":
-                        domain = np.array([[i,j], [i,j+1], [i+1,j+1], [i+1,j]], dtype=float)
-                    else:
-                        raise ValueError(f'Unrecognized colormap domain "{self.colormapDomain}"')
+
+                    colorlist = colorArray[i:i+2, j:j+2].reshape(4,3)
+                    # colorlist[[2,3]] = colorlist[[3,2]]
+                    colorlist = colorlist.tolist()
+                    colorlist[2], colorlist[3] = colorlist[3], colorlist[2]
+
                     fill = morpho.color.QuadGradientFill(
-                        vertices=vertices,
-                        colors=list(map(fillfunc, domain))
+                        vertices=vertices, colors=colorlist
                         )
                     quad = Polygon(
                         vertices[:], self.width, self.color, self.alphaEdge,
