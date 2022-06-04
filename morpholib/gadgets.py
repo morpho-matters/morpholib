@@ -177,14 +177,16 @@ def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
     constTrans = path.constantSpeedTransition()
     path.origin = origin
     if transition is None:
-        path.transition = lambda t: constTrans(morpho.transition.default(t))
-    else:
-        path.transition = lambda t: constTrans(transition(t))
+        transition = morpho.transition.default
+    # if transition is None:
+    #     path.transition = lambda t: constTrans(morpho.transition.default(t))
+    path.transition = lambda t: constTrans(transition(t))
     path.end = 0
 
     path = morpho.Actor(path)
     path.newkey(time)
     path.last().end = 1
+    path.last().transition = transition
 
     return path
 
