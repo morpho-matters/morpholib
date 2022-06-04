@@ -2812,7 +2812,8 @@ class Quadmesh(morpho.Figure):
                     vertices = (quadblock[:,:,0] + 1j*quadblock[:,:,1]).flatten().tolist()
                     vertices[2], vertices[3] = vertices[3], vertices[2]
                     verticesRaw = quadblockRaw.reshape((4,3)).copy()
-                    verticesRaw[2], verticesRaw[3] = verticesRaw[3], verticesRaw[2]
+                    # verticesRaw[2], verticesRaw[3] = verticesRaw[3], verticesRaw[2]
+                    verticesRaw[[2,3]] = verticesRaw[[3,2]]
                     if self.colormapDomain == "physical":
                         domain = verticesRaw
                     elif self.colormapDomain == "parametric":
