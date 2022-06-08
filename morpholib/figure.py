@@ -1369,7 +1369,7 @@ class Actor(object):
 
     # Returns a "subactor" of the original actor between
     # the specified start and end times (inclusive).
-    # Optional argument edgeInterp determines what to do
+    # Optional argument `edgeInterp` determines what to do
     # if segment boundaries fall at a non-key.
     # "seamless" : Will make new keys in the subactor to
     #              ensure the segment plays EXACTLY like
@@ -1377,9 +1377,11 @@ class Actor(object):
     # "boundary only" : Will only make keys at the start
     #                   and end frames.
     # "none" : Do no interpolation.
+    # Optional argument `rezero` determines whether the subactor
+    # will be rezeroed before being returned. Default: True.
     # start and end default to minkeyID and maxkeyID.
     # FUTURE: Implement this via python's slicing commands.
-    def segment(self, start=None, end=None, edgeInterp="seamless"):
+    def segment(self, start=None, end=None, edgeInterp="seamless", rezero=True):
         if start is None:
             start = self.firstID()
         if end is None:
@@ -1427,6 +1429,9 @@ class Actor(object):
 
         elif edgeInterp != "none":
             raise ValueError('Unrecognized edgeInterp method: "' + edgeInterp + '"')
+
+        if rezero:
+            subactor.rezero()
 
         return subactor
 
