@@ -985,6 +985,13 @@ class Number(morpho.Figure):
 
         return Num
 
+# Formats a number according to the parameters described in
+# the Number class. See Number for more info.
+# This function essentially creates a Number object then
+# returns its string form.
+def formatNumber(*args, **kwargs):
+    num = Number(*args, **kwargs)
+    return str(num)
 
 # Takes a collection of Text figures and returns a MultiText figure
 # that concatenates all the individual Text figures.
