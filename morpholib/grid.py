@@ -3277,8 +3277,13 @@ def growIn(arrow, duration=30, atFrame=None):
     if atFrame is None:
         atFrame = arrow.lastID()
 
-    pass
-
+    arrow0 = arrow.last()
+    head, tail, headSize, tailSize = arrow0.head, arrow0.tail, arrow0.headSize, arrow0.tailSize
+    arrow0.visible = False
+    arrow1 = arrow.newkey(atFrame)
+    arrow1.set(head=arrow0.tail, headSize=0, tailSize=0, visible=True)
+    arrow2 = arrow.newendkey(duration)
+    arrow2.set(head=head, headSize=headSize, tailSize=tailSize)
 
 # OBSOLETE!
 # Instead, use Arrow with tail set at 0, translate it with origin, and use
