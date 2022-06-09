@@ -1286,6 +1286,20 @@ class Path(morpho.Figure):
 
         return T
 
+@Path.action
+def growIn(path, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = path.lastID()
+
+    path0 = path.last()
+    start, end, headSize, tailSize = path0.start, path0.end, path0.headSize, path0.tailSize
+    path0.visible = False
+    path1 = path.newkey(atFrame)
+    path1.set(start=0, end=0, headSize=0, tailSize=0, visible=True)
+    path2 = path.newendkey(duration)
+    path2.set(start=start, end=end, headSize=headSize, tailSize=tailSize)
+
+
 class Track(Path):
     '''Path with tick marks - like a train track: --|--|--|--
 
