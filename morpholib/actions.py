@@ -212,3 +212,34 @@ def rollback(actors, duration=30, atFrame=None, stagger=0):
 # fading into pig.
 def transform(fig, pig, time=30):
     raise NotImplementedError
+
+
+# Multi-action summoner
+# Mainly for internal use. Used to automatically implement
+# morpho.actions.action that automatically implements multi-action
+# versions of registered actor actions.
+# See "morpho.actions.action" for more info.
+class MultiActionSummoner(object):
+    def __getattr__(self, actionName):
+        def multiaction(actors, duration=30, atFrame=None, stagger=0):
+            if isinstance(actors, morpho.Actor):
+                actors = [actors]
+            if atFrame is None:
+                atFrame = max(actor.lastID() for actor in actors)
+            for n,actor in enumerate(actors):
+                try:
+                    action = getattr(actor, actionName)
+                except AttributeError:
+                    raise AttributeError(f"'{actor.figureType.__name__}' does not implement action '{actionName}'")
+                action(duration=duration, atFrame=atFrame+n*stagger)
+
+        return multiaction
+
+# Used to automatically implement multi-actions
+# for custom actions similar to how fadeIn/Out() and rollback() work.
+# For example, if you have implemented an action called "myaction"
+# for a certain figure type, and you have a list of actors of that
+# figure type, you can apply `myaction` to the whole list, with optional
+# stagger, using the syntax
+#   morpho.actions.action.myaction(myactorlist, ...)
+action = MultiActionSummoner()
