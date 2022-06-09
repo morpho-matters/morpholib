@@ -111,6 +111,18 @@ class Figure(object):
     def tweenMethod(self, value):
         self.defaultTween = value
 
+    # Actor actions registry
+    actions = {}
+
+    # Action decorator adds an action function to
+    # the figure's registry.
+    @classmethod
+    def action(cls, actionFunc):
+        # Create copy so that overriding class attr actions works
+        # in subclasses
+        cls.actions = cls.actions.copy()
+        cls.actions[actionFunc.__name__] = actionFunc
+        return actionFunc
 
     # If the user requested an attribute that doesn't technically exist,
     # check if the attribute name is a tweenable's name. If so,
@@ -935,6 +947,36 @@ class Figure(object):
 
     # tweenStep = tweenJump = tweenInstant  # Alternate names
 
+### BUILT-IN ACTIONS ###
+
+# Actions from morpho.actions supported as native methods
+# of the Actor class.
+# Future: Maybe find some way to auto-create these methods
+# from the morpho.actions module? For now, they're hard-coded in.
+
+# Equivalent to morpho.actions.fadeIn(self)
+@Figure.action
+def fadeIn(self, *args, **kwargs):
+    morpho.actions.fadeIn(self, *args, **kwargs)
+
+    # Yes, I really mean None. I think returning self
+    # here may be a bad convention. I think a good convention
+    # is no method that adds new keys to the timeline should
+    # return self.
+    return None
+
+# Equivalent to morpho.actions.fadeOut(self)
+@Figure.action
+def fadeOut(self, *args, **kwargs):
+    morpho.actions.fadeOut(self, *args, **kwargs)
+    return None
+
+# Equivalent to morpho.actions.rollback(self)
+@Figure.action
+def rollback(self, *args, **kwargs):
+    morpho.actions.rollback(self, *args, **kwargs)
+    return None
+
 
 # Base class for certain space figures.
 class SpaceFigure(Figure):
@@ -1023,6 +1065,17 @@ class Actor(object):
             new.timeline[f] = self.timeline[f].copy()
         new.update()
         return new
+
+    # If attribute doesn't exist, searches the figure type's
+    # registry of action names.
+    def __getattr__(self, name):
+        if name in self.figureType.actions:
+            actionFunc = self.figureType.actions[name]
+            return lambda *args, **kwargs: actionFunc(self, *args, **kwargs)
+        else:
+            # Should throw error
+            object.__getattribute__(self, name)
+
 
     # Returns the i-th keyfigure in the timeline.
     def _keyno(self, i):
@@ -1649,33 +1702,6 @@ class Actor(object):
         raise NotImplementedError
         target.append(self, *args, **kwargs)
         return self
-
-    ### BUILT-IN ACTIONS ###
-
-    # Actions from morpho.actions supported as native methods
-    # of the Actor class.
-    # Future: Maybe find some way to auto-create these methods
-    # from the morpho.actions module? For now, they're hard-coded in.
-
-    # Equivalent to morpho.actions.fadeIn(self)
-    def fadeIn(self, *args, **kwargs):
-        morpho.actions.fadeIn(self, *args, **kwargs)
-
-        # Yes, I really mean None. I think returning self
-        # here may be a bad convention. I think a good convention
-        # is no method that adds new keys to the timeline should
-        # return self.
-        return None
-
-    # Equivalent to morpho.actions.fadeOut(self)
-    def fadeOut(self, *args, **kwargs):
-        morpho.actions.fadeOut(self, *args, **kwargs)
-        return None
-
-    # Equivalent to morpho.actions.rollback(self)
-    def rollback(self, *args, **kwargs):
-        morpho.actions.rollback(self, *args, **kwargs)
-        return None
 
 
 

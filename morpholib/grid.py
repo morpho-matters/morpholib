@@ -3270,6 +3270,15 @@ class Arrow(morpho.Figure):
 
         return pivot
 
+### ACTIONS ###
+
+@Arrow.action
+def growIn(arrow, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = arrow.lastID()
+
+    pass
+
 
 # OBSOLETE!
 # Instead, use Arrow with tail set at 0, translate it with origin, and use
