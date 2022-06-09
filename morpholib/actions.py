@@ -221,7 +221,7 @@ def transform(fig, pig, time=30):
 # See "morpho.actions.action" for more info.
 class MultiActionSummoner(object):
     def __getattr__(self, actionName):
-        def multiaction(actors, duration=30, atFrame=None, stagger=0):
+        def multiaction(actors, *args, atFrame=None, stagger=0, **kwargs):
             if isinstance(actors, morpho.Actor):
                 actors = [actors]
             if atFrame is None:
@@ -231,7 +231,7 @@ class MultiActionSummoner(object):
                     action = getattr(actor, actionName)
                 except AttributeError:
                     raise AttributeError(f"'{actor.figureType.__name__}' does not implement action '{actionName}'")
-                action(duration=duration, atFrame=atFrame+n*stagger)
+                action(atFrame=atFrame+n*stagger, *args, **kwargs)
 
         return multiaction
 
@@ -240,6 +240,8 @@ class MultiActionSummoner(object):
 # For example, if you have implemented an action called "myaction"
 # for a certain figure type, and you have a list of actors of that
 # figure type, you can apply `myaction` to the whole list, with optional
-# stagger, using the syntax
-#   morpho.actions.action.myaction(myactorlist, ...)
+# `stagger`, using the syntax
+#   morpho.action.myaction(myactorlist, *args, [atFrame=etc, stagger=0], **kwargs)
+# Please note that a user-specified `atFrame` value must be specified
+# by keyword in an auto-generated multi-action. Same with `stagger`.
 action = MultiActionSummoner()
