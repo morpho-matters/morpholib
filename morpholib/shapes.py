@@ -1014,6 +1014,19 @@ class Spline(morpho.Figure):
 
         return pivot
 
+@Spline.action
+def growIn(spline, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = spline.lastID()
+
+    spline0 = spline.last()
+    start, end = spline0.start, spline0.end
+    spline0.visible = False
+    spline1 = spline.newkey(atFrame)
+    spline1.set(start=0, end=0, visible=True)
+    spline2 = spline.newendkey(duration)
+    spline2.set(start=start, end=end)
+
 
 # Space version of Spline figure. See "Spline" for more info.
 class SpaceSpline(Spline):
@@ -1326,7 +1339,8 @@ class SpaceSpline(Spline):
             array = np.tensordot(array, orient[:2,:], axes=((2),(1)))
         nan2inf(array)
 
-        array2d = array[:,:,0] + 1j*array[:,:,1]
+        with np.errstate(all="ignore"):  # Suppress numpy warnings
+            array2d = array[:,:,0] + 1j*array[:,:,1]
         spline = Spline(data=array2d)
         spline.start = self.start
         spline.end = self.end
