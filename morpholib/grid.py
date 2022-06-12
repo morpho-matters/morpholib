@@ -867,8 +867,10 @@ class Path(morpho.Figure):
             # Flag for if color gradient contains RGBA data, not RGB.
             RGBAmode = (len(list(self.color.data.values())[0]) == 4)
 
-            RGBA_start = list(self.color.value((start+0.5)/len(self.seq)))
-            RGBA_end = list(self.color.value((end+0.5)/len(self.seq)))
+            # RGBA_start = list(self.color.value((start+0.5)/len(self.seq)))
+            # RGBA_end = list(self.color.value((end+0.5)/len(self.seq)))
+            RGBA_start = list(self.color.value(start/maxIndex))
+            RGBA_end = list(self.color.value(end/maxIndex))
             if RGBAmode:
                 RGBA_start[3] *= A
                 RGBA_end[3] *= A
@@ -902,7 +904,9 @@ class Path(morpho.Figure):
             pxlB = pxlA + self.headSize*DIR*ccw150
             pxlC = pxlA + self.headSize*DIR*cw150
 
-            cairo_triangle(ctx, pxlA,pxlB,pxlC, RGBA_end)
+            headVertices = (pxlA, pxlB, pxlC)
+
+            # cairo_triangle(ctx, pxlA,pxlB,pxlC, RGBA_end)
 
             # Adjust the final node temporarily to be located at the
             # base of the arrowhead.
@@ -934,13 +938,15 @@ class Path(morpho.Figure):
             DIR = BODY/abs(BODY) if BODY != 0 else 1
 
             # Do more stuff
-            X,Y = morpho.anim.screenCoords(tail, view, ctx)
+            X,Y = morpho.screenCoords(tail, view, ctx)
             # x,y = morpho.anim.screenCoords(self.seq[init], view, ctx)
             pxlA = X + 1j*Y
             pxlB = pxlA - self.tailSize*DIR*ccw150
             pxlC = pxlA - self.tailSize*DIR*cw150
 
-            cairo_triangle(ctx, pxlA,pxlB,pxlC, RGBA_start)
+            tailVertices = (pxlA, pxlB, pxlC)
+
+            # cairo_triangle(ctx, pxlA,pxlB,pxlC, RGBA_start)
 
             # Adjust the starting node temporarily to be located
             # at the base of the arrowhead.
@@ -1115,6 +1121,14 @@ class Path(morpho.Figure):
             ctx.set_dash(self.dash)
             ctx.stroke()
             ctx.set_dash([])  # Remove dash pattern and restore to solid strokes
+
+        # Handle actually drawing head and tail now.
+        # The delay is so that the triangles are drawn in front
+        # of the path, which is important when the path is a gradient.
+        if headDraw:
+            cairo_triangle(ctx, *headVertices, RGBA_end)
+        if tailDraw:
+            cairo_triangle(ctx, *tailVertices, RGBA_start)
 
         # Restore modified nodes if necessary
         if end != int_end:
