@@ -23,8 +23,8 @@ cr = cairo
 # uses some non-standard arithmetic intentionally.
 # filterwarnings("ignore")
 
-version = "0.3.1a1"  # Current public morpho version
-internalVersion = "2.2.7ip"  # Current internal morpho version
+version = "0.4.0"  # Current public morpho version
+internalVersion = "2.3.0"  # Current internal morpho version
 subversion = ""
 DEBUG_MODE = False
 
