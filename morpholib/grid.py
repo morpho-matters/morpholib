@@ -1300,6 +1300,9 @@ class Path(morpho.Figure):
 
         return T
 
+# Animates a path actor appearing by "growing in" from a single point.
+# The starting point is always the initial node in the sequence.
+# See also: morpho.actions.fadeIn()
 @Path.action
 def growIn(path, duration=30, atFrame=None):
     if atFrame is None:
@@ -3300,6 +3303,8 @@ class Arrow(morpho.Figure):
 
 ### ACTIONS ###
 
+# Animates an arrow actor appearing by "growing in" from its tailpoint.
+# See also: morpho.actions.fadeIn()
 @Arrow.action
 def growIn(arrow, duration=30, atFrame=None):
     if atFrame is None:

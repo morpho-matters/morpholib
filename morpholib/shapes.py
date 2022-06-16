@@ -1014,6 +1014,9 @@ class Spline(morpho.Figure):
 
         return pivot
 
+# Animates a spline actor appearing by "growing in" from a single point.
+# The starting point is always the initial node in the sequence.
+# See also: morpho.actions.fadeIn()
 @Spline.action
 def growIn(spline, duration=30, atFrame=None):
     if atFrame is None:
