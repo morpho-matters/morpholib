@@ -11,7 +11,7 @@ Now, since I really only have my own use case to go on for now, I'll mostly just
 
 ## Organizing a Project
 
-When working on a longer-form video, I divide up all the animation tasks into individual scenes, where the code for each scene is contained in its own separate, independent Python file. By "scene" I generally mean a single continuous stretch of animated video, each of which will eventually be separated from the others by a jump cut or other video transition in the final product. I like to keep these individual scene files all together in one folder, together with a subfolder called "resources" where I keep other files (mostly images) that need to be imported by some scenes.
+When working on a longer-form video, I divide up all the animation tasks into individual scenes, where the code for each scene is contained in its own separate, independent Python file. By "scene" I generally mean a single continuous stretch of animated video, each of which will eventually be separated from the others by a jump cut or other video transition in the final product. I like to keep these individual scene files all together in one folder, together with a subfolder called "resources" where I keep other files (mostly images) that need to be imported by some scenes. You can find the source code for some of my projects [here.](https://github.com/morpho-matters/video-code)
 
 After the animations of each scene are finished and sync'd up with the narration, all of the individual scenes are rendered as individual MP4 files and then assembled together with the audio using an external video editing program.
 
@@ -92,7 +92,7 @@ def main():
     mation.background = lighttan
 ```
 
-Here, we define one layer, `mainlayer`, and set its viewbox to be the 16:9 view of the complex plane where its lower and upper extents are `-10j` to `10j`. This viewbox can be conveniently accessed by calling `mo.video.view169()`. This layer is used as part of the Animation object named `mation`.
+Here, we define one layer, `mainlayer`, and set its viewbox to be the 16:9 view of the complex plane centered at the origin where its lower and upper extents are `-10j` to `10j`. This viewbox can be conveniently accessed by calling `mo.video.view169()`. This layer is used as part of the Animation object named `mation`.
 
 For our example scene we really only need one layer, but if you needed more, you would define any additional layers here at the top as well:
 ```python
@@ -174,14 +174,14 @@ The next three lines configure the locator layer. It's currently set to `mainlay
 
 The `clickRound` setting rounds the locator coordinates to whatever decimal place you specify. I like to set it to 2 so it rounds coordinates to the hundreths place.
 
-Setting `clickCopy` to `True` causes every coordinate pair to also be copied to the clipboard, which I usually prefer to do so I can quickly paste the clicked coordinates into the code wherever I need it.
+Setting `clickCopy` to `True` causes the coordinates of every click to be copied to the clipboard, which I usually prefer to do so I can quickly paste the clicked coordinates into the code wherever I need it.
 ```python
 mation.locatorLayer = mainlayer
 mation.clickRound = 2
 mation.clickCopy = True
 ```
 
-The next line (currently commented out) is meant to modify the animation framerate for previewing purposes ***only*** (but not the final render!). I generally keep this commented out unless the animation is so complex that it plays sluggishly when previewed. Uncommenting it lowers the framerate, allowing for quicker previewing playback.
+The next line (currently commented out) is meant to modify the animation framerate for previewing purposes ***only*** (but not for the final render!). I generally keep this commented out unless the animation is so complex that it plays sluggishly when previewed. Uncommenting it lowers the framerate, allowing for quicker previewing playback.
 ```python
 mation.newFrameRate(10)
 ```
@@ -244,7 +244,7 @@ grid = mo.Actor(grid)
 mainlayer.merge(grid)
 ```
 
-The `merge()` method is handy to use in longer-form animations because it allows you to add actors to the layer one at a time instead of having to input the complete list of actors all at once when defining the layer. The `merge()` method also allows you to place actors at different points in the timeline, but more on that later.
+The `merge()` method is handy to use in longer-form animations because it allows you to add actors to the layer one at a time instead of having to input the complete list of actors all at once when defining the layer. The `merge()` method also allows you to place actors at different points on the timeline, but more on that later.
 
 Next, we'll create the line and animate it being drawn on the grid. We can define the line itself with `realgraph()`, but then we'll also set the `end` attribute of the resulting path figure to 0 so that we can update it to `end=1` in a new keyframe. This will create the drawing animation we want.
 
@@ -256,6 +256,8 @@ curve = mo.Actor(curve)
 mainlayer.merge(curve)
 curve.newendkey(30).end = 1  # Draw curve over 1 second (30 frames)
 ```
+
+> **Note:** The `end` attribute of a Path is a number between 0 and 1 that controls where along the path it ends. So having the path transition from `end=0` to `end=1` causes the path to gradually be drawn out starting from its initial node.
 
 Now we'll add the text label. However, since we want this text label to appear AFTER the line has finished being drawn, we need to first store the frame number where the line finished animating. Since this corresponds to what is currently the end of the animation, we can grab this frame number by grabbing the current final frame (a.k.a. "index" or "ID") of the animation as a whole. Let's store this frame index value in a variable called `time`:
 
@@ -404,7 +406,7 @@ mation.endDelayUntil()
 
 ### Fading out
 
-We can keep adding new chunks in the same way as we added the previous chunk; however many we need. But for this example, let's end it off by putting in one final chunk where we fade the curve and label away. We'll do it with this code:
+We can keep adding new chunks in the same way as we added the previous chunk---however many we need. But for this example, let's end it off by putting in one final chunk where we fade the curve and label away. We'll do it with this code:
 
 ```python
 print("Fade everything out:", mation.seconds())
@@ -503,20 +505,21 @@ The low quality settings make the export finish much faster, but the video will 
 mation.newFrameRate(60)
 mation.export("./animation.mp4", scale=1)
 ```
-
 > **Note:** The `scale` value should always be less than or equal to 1. Setting `scale` greater than 1 will not actually improve the resolution.
+
+> ***Tip:*** When exporting the animation either to test the audio syncing or do the final render, I recommend commenting out the line in the playback clause that says `mation.finitizeDelays(30)`. Doing so causes Morpho to throw an error when exporting if you happened to forget to replace one of the placeholder pauses with a final finite value. Any leftover placeholder pauses in the animation can cause the audio synchrony to fall out of whack.
 
 
 
 ## Streamlining the Code
 
-So that's the basics of my process for creating a single scene in a video. However, after having used Morpho to create so many scenes for so many videos, I've developed a number of shortcuts that speed up certain animation tasks that occur very frequently. I'll show you them now.
+So that's the basics of my process for creating a single scene in a video. However, after having used Morpho to create so many scenes for so many videos, I've developed a number of shortcuts that speed up certain animation tasks that occur very frequently. I'll show you some of them now.
 
-> ***CAUTION!*** Please note that what I've shown in this guide so far really is the core pattern to follow, and you shouldn't come to rely on the shortcuts without a solid understanding of the core patterns. This is because the shortcuts really only work in specific (albeit common) situations, and so you need to know when they won't work and you'll need to fall back on the core patterns.
+> ***CAUTION!*** Please note that what I've shown in this guide so far is really the core pattern to follow, and you shouldn't come to rely on the shortcuts without a solid understanding of these core patterns. This is because the shortcuts really only work in specific (albeit common) situations, and so you need to know when they won't work and you'll need to fall back on the core patterns.
 
 ### The `append()` method
 
-We've been using `merge()` to add actors to a layer, but there is a method called `append()` which does the same thing, except it merges the given actor to the layer at that layer's current final frame index:
+We've been using `merge()` to add actors to a layer, but there is another method called `append()` which does the same thing, except it merges the given actor to the layer at that layer's current final frame index:
 
 ```python
 # The following lines are equivalent
@@ -572,7 +575,7 @@ layer1.append(pt1)
 layer2.append(pt2)
 ```
 
-the two point actors will not appear one after the other, because each actor will be appended to the end of its respective layer's *local* timeline. To make them properly appear one after the other in the global animation timeline, there's no escaping using the `time` pattern:
+the two point actors will not appear one after the other, because each actor will be appended to the end of its respective layer's *local* timeline. To make them properly appear one after the other in the global animation timeline, you have to use the `time` pattern:
 
 ```python
 layer1.append(pt1)
@@ -643,7 +646,7 @@ label.newkey(time)
 label.fadeOut(duration=30)
 ```
 
-> ***CAUTION!*** The `newkey(time)` calls are important here! By default, actions act starting on the given ***actor's*** current final frame, not the layer's final frame. If you omit the `newkey(time)` calls, the fade outs may occur too early.
+> ***CAUTION!*** The `newkey(time)` calls are important here! By default, actions act starting on the given ***actor's*** current final frame, not the layer or animation's final frame. If you omit the `newkey(time)` calls, the fade outs may occur earlier than you wanted.
 
 However, this can be streamlined even further: If you want to apply the same action to *multiple* actors all at once, you can use the following syntax:
 
@@ -670,7 +673,7 @@ morpho.action.fadeOut([curve, label],
     atFrame=time, duration=30, stagger=15, jump=2j)
 ```
 
-You can apply this on `fadeIn()` as well, which is how I accomplish the fade jump animations in my videos:
+You can apply this on `fadeIn()` as well, which is how I accomplish many of the opening animations in my videos:
 
 ```python
 # Create "Linear" label.
