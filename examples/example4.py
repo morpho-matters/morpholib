@@ -16,8 +16,8 @@ def tracker():
             # to simplify the later syntax.
             t = self.t
 
-            # Create a "number" object based on the value t,
-            # but auto-rounds it to the third decimal place
+            # Turn t into a string formatted so
+            # it's rounded to the third decimal place
             # and always displays three digits to the right
             # of the decimal place, appending zeros if necessary.
             number = morpho.text.formatNumber(t, decimal=3, rightDigits=3)
@@ -56,8 +56,8 @@ def follower():
             # position at parameter t.
             point.pos = path.positionAt(t)
 
-            # Create Number objects out of the coordinates
-            # to handle rounding and trailing zeros.
+            # Format the coordinates
+            # and handle rounding and trailing zeros.
             x,y = point.pos.real, point.pos.imag
             xnum = morpho.text.formatNumber(x, decimal=2, rightDigits=2)
             ynum = morpho.text.formatNumber(y, decimal=2, rightDigits=2)
