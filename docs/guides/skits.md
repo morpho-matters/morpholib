@@ -19,7 +19,7 @@ Skits are perhaps the most powerful of Morpho's animation tools. In short, they 
 
 The basic idea behind a Skit is you are given a parameter value called ``t`` (which can be any real number and you can interpret it to represent any quantity, e.g. time, angle, size, etc.) and you define a function that takes this ``t`` value as input and then returns a figure (or a group of figures) based on that ``t`` value. It's basically like parametric equations, except instead of outputting a set of numbers (like ``x`` or ``y``) given ``t``, you output a figure, or group of figures, corresponding to that ``t`` value.
 
-This is where the name "Skit" comes from: You're basically choreographing the state of a collection of figures at any given "time" ``t`` in order to define what is essentially a little animated "skit". But don't let the name fool you: Skits are powerful. They may be short animations, but they can be *extremely* precisely controlled and fine-tuned.
+That's where the name "Skit" comes from: You're basically choreographing the state of a collection of figures at any given "time" ``t`` in order to define what is essentially a little animated "skit". But although the idea is simple, Skits are powerful. They may be short animations, but they can be *extremely* precisely controlled and fine-tuned.
 
 ## Trackers
 
