@@ -52,8 +52,8 @@ def tanline():
             line.origin = x + 1j*y
 
             # Create derivative tracker
-            slopenum = morpho.text.Number(slope, decimal=3, rightDigits=3)
-            dlabel = morpho.text.Text("Slope = "+str(slopenum),
+            slopenum = morpho.text.formatNumber(slope, decimal=3, rightDigits=3)
+            dlabel = morpho.text.Text("Slope = "+slopenum,
                 pos=line.origin, anchor_y=-1,
                 size=36, color=[1,1,0], alpha=alpha
                 )

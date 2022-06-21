@@ -101,7 +101,7 @@ This is admittedly better, though you can still see a bit of jumping as it passe
 label = morpho.text.Text(str(t)[:5], anchor_x=-1)
 ```
 
-That's a lot better! However, it required us to left-align the text. It would be nice if we could somehow preserve center alignment, but perhaps have it append trailing zeros in the cases where there are round numbers, but not otherwise. Luckily, there is a tool to facilitate doing just that. Use the ``Number`` class:
+That's a lot better! However, it required us to left-align the text. It would be nice if we could somehow preserve center alignment, but perhaps have it append trailing zeros in the cases where there are round numbers, but not otherwise. Luckily, there is a tool to facilitate doing just that. Use the ``formatNumber()`` function:
 
 ```python
 class Tracker(morpho.Skit):
@@ -111,16 +111,16 @@ class Tracker(morpho.Skit):
         # to simplify the later syntax.
         t = self.t
 
-        # Create a "number" object based on the value t,
-        # but auto-rounds it to the third decimal place
+        # Turn t into a string formatted so
+        # it's rounded to the third decimal place
         # and always displays three digits to the right
         # of the decimal place, appending zeros if necessary.
-        number = morpho.text.Number(t, decimal=3, rightDigits=3)
+        number = morpho.text.formatNumber(t, decimal=3, rightDigits=3)
 
         # The label's text is the stringified version of
         # the "number" object, which does the job of
         # rounding and appending trailing zeros for us.
-        label = morpho.text.Text(str(number))
+        label = morpho.text.Text(number)
 
         return label
 ```
@@ -208,15 +208,15 @@ class Follower(morpho.Skit):
         # position at parameter t.
         point.pos = path.positionAt(t)
 
-        # Create Number objects out of the coordinates
-        # to handle rounding and trailing zeros.
+        # Format the coordinates
+        # and handle rounding and trailing zeros.
         x,y = point.pos.real, point.pos.imag
-        xnum = morpho.text.Number(x, decimal=2, rightDigits=2)
-        ynum = morpho.text.Number(y, decimal=2, rightDigits=2)
+        xnum = morpho.text.formatNumber(x, decimal=2, rightDigits=2)
+        ynum = morpho.text.formatNumber(y, decimal=2, rightDigits=2)
 
         # Create coordinate label
         label = morpho.text.Text(
-            "("+str(xnum)+", "+str(ynum)+")",
+            "("+xnum+", "+ynum+")",
             pos=point.pos, anchor_y=-1,
             size=36, color=[0,1,0]
             )
@@ -333,8 +333,8 @@ class TangentLine(morpho.Skit):
         line.origin = x + 1j*y
 
         # Create derivative tracker
-        slopenum = morpho.text.Number(slope, decimal=3, rightDigits=3)
-        dlabel = morpho.text.Text("Slope = "+str(slopenum),
+        slopenum = morpho.text.formatNumber(slope, decimal=3, rightDigits=3)
+        dlabel = morpho.text.Text("Slope = "+slopenum,
             pos=line.origin, anchor_y=-1,
             size=36, color=[1,1,0]
             )
@@ -440,8 +440,8 @@ class TangentLine(morpho.Skit):
         line.origin = x + 1j*y
 
         # Create derivative tracker
-        slopenum = morpho.text.Number(slope, decimal=3, rightDigits=3)
-        dlabel = morpho.text.Text("Slope = "+str(slopenum),
+        slopenum = morpho.text.formatNumber(slope, decimal=3, rightDigits=3)
+        dlabel = morpho.text.Text("Slope = "+slopenum,
             pos=line.origin, anchor_y=-1,
             size=36, color=[1,1,0]
             )
@@ -503,8 +503,8 @@ class TangentLine(morpho.Skit):
         line.origin = x + 1j*y
 
         # Create derivative tracker
-        slopenum = morpho.text.Number(slope, decimal=3, rightDigits=3)
-        dlabel = morpho.text.Text("Slope = "+str(slopenum),
+        slopenum = morpho.text.formatNumber(slope, decimal=3, rightDigits=3)
+        dlabel = morpho.text.Text("Slope = "+slopenum,
             pos=line.origin, anchor_y=-1,
             size=36, color=[1,1,0], alpha=alpha
             )
@@ -740,9 +740,9 @@ class Pendulum(morpho.Skit):
 
         ...
 
-        thetanum = morpho.text.Number(theta*180/pi, decimal=0)
+        thetanum = morpho.text.formatNumber(theta*180/pi, decimal=0)
         tracker = morpho.text.Text(
-            "\u03b8 = "+str(thetanum)+"\u00b0",
+            "\u03b8 = "+thetanum+"\u00b0",
             pos=1j, size=56
             )
 

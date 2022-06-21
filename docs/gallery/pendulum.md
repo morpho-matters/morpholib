@@ -57,9 +57,9 @@ def pendulum():
                 size=min(36, 36*abs(theta/0.36)), italic=True
                 )
 
-            thetanum = morpho.text.Number(theta*180/pi, decimal=0)
+            thetanum = morpho.text.formatNumber(theta*180/pi, decimal=0)
             tracker = morpho.text.Text(
-                "\u03b8 = "+str(thetanum)+"\u00b0",
+                "\u03b8 = "+thetanum+"\u00b0",
                 pos=1j, size=56
                 )
 

@@ -20,12 +20,12 @@ def tracker():
             # but auto-rounds it to the third decimal place
             # and always displays three digits to the right
             # of the decimal place, appending zeros if necessary.
-            number = morpho.text.Number(t, decimal=3, rightDigits=3)
+            number = morpho.text.formatNumber(t, decimal=3, rightDigits=3)
 
             # The label's text is the stringified version of
             # the "number" object, which does the job of
             # rounding and appending trailing zeros for us.
-            label = morpho.text.Text(str(number))
+            label = morpho.text.Text(number)
 
             return label
 
@@ -59,12 +59,12 @@ def follower():
             # Create Number objects out of the coordinates
             # to handle rounding and trailing zeros.
             x,y = point.pos.real, point.pos.imag
-            xnum = morpho.text.Number(x, decimal=2, rightDigits=2)
-            ynum = morpho.text.Number(y, decimal=2, rightDigits=2)
+            xnum = morpho.text.formatNumber(x, decimal=2, rightDigits=2)
+            ynum = morpho.text.formatNumber(y, decimal=2, rightDigits=2)
 
             # Create coordinate label
             label = morpho.text.Text(
-                "("+str(xnum)+", "+str(ynum)+")",
+                "("+xnum+", "+ynum+")",
                 pos=point.pos, anchor_y=-1,
                 size=36, color=[0,1,0]
                 )
@@ -161,8 +161,8 @@ def tanline():
             line.origin = x + 1j*y
 
             # Create derivative tracker
-            slopenum = morpho.text.Number(slope, decimal=3, rightDigits=3)
-            dlabel = morpho.text.Text("Slope = "+str(slopenum),
+            slopenum = morpho.text.formatNumber(slope, decimal=3, rightDigits=3)
+            dlabel = morpho.text.Text("Slope = "+slopenum,
                 pos=line.origin, anchor_y=-1,
                 size=36, color=[1,1,0], alpha=alpha
                 )
@@ -231,9 +231,9 @@ def pendulum():
                 size=min(36, 36*abs(theta/0.36)), italic=True
                 )
 
-            thetanum = morpho.text.Number(theta*180/pi, decimal=0)
+            thetanum = morpho.text.formatNumber(theta*180/pi, decimal=0)
             tracker = morpho.text.Text(
-                "\u03b8 = "+str(thetanum)+"\u00b0",
+                "\u03b8 = "+thetanum+"\u00b0",
                 pos=1j, size=56
                 )
 
