@@ -714,6 +714,6 @@ To restore the animation playback to normal, you can just comment out `mation.st
 
 ## More Example Code
 
-You can find the full code of the example scene we worked on in this guide [here.](https://github.com/morpho-matters/morpholib/blob/master/examples/example4.py)
+You can find the full code of the example scene we worked on in this guide [here.](https://github.com/morpho-matters/morpholib/blob/master/examples/scene.py)
 
 If you'd like to see more examples of how I use Morpho to create videos, I've posted the source code for some of my projects [here.](https://github.com/morpho-matters/video-code)
