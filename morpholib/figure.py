@@ -111,7 +111,8 @@ class Figure(object):
     def tweenMethod(self, value):
         self.defaultTween = value
 
-    # Actor actions registry
+    # Actor actions registry.
+    # Maps action names to the action functions themselves.
     actions = {}
 
     # Action decorator adds an action function to
