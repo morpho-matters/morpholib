@@ -1913,6 +1913,81 @@ def optimizePathList(paths):
     return paths
 
 
+### GRIDS ###
+
+# Special Frame figure for mathgrids
+class MathGrid(morpho.Frame):
+    pass
+
+@MathGrid.action
+def growIn(grid, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = grid.lastID()
+
+    grid0 = grid.last()
+    grid1 = grid.newkey(atFrame)
+    grid2 = grid.newendkey(duration)
+
+    grid0.visible = False
+
+    for path in grid1.figures:
+        path.static = False
+        path.end = 0
+# MathGrid_growIn = growIn
+
+@MathGrid.action
+def fadeIn(grid, duration=30, atFrame=None, jump=0, alpha=1):
+    if atFrame is None:
+        atFrame = grid.lastID()
+
+    grid0 = grid.last()
+    grid0.visible = False
+    grid1 = grid.newkey(atFrame)
+    grid1.visible = True
+    grid2 = grid.newendkey(duration)
+
+    for n,path in enumerate(grid1.figures):
+        path.static = False
+        actor = morpho.Actor(path)
+        actor.fadeIn(duration=duration, jump=jump, alpha=alpha)
+        grid1.figures[n] = actor.first()
+        grid2.figures[n] = actor.last()
+
+@MathGrid.action
+def fadeOut(grid, duration=30, atFrame=None, jump=0):
+    if atFrame is None:
+        atFrame = grid.lastID()
+
+    grid0 = grid.last()
+    grid1 = grid.newkey(atFrame)
+    grid2 = grid.newendkey(duration)
+    grid2.visible = False
+
+    for n,path in enumerate(grid1.figures):
+        path.static = False
+        actor = morpho.Actor(path)
+        actor.fadeOut(duration=duration, jump=jump)
+        grid1.figures[n] = actor.first()
+        grid2.figures[n] = actor.last()
+
+@MathGrid.action
+def rollback(grid, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = grid.lastID()
+
+    grid1 = grid.newkey(atFrame)
+    for path in grid1.figures:
+        path.static = False
+    grid.newendkey(duration, grid.first().copy()).visible = False
+# MathGrid_rollback = rollback
+
+
+# Special SpaceFrame figure for 3D mathgrids
+class SpaceMathGrid(morpho.SpaceFrame):
+    # Just copy over the actions defined for MathGrid
+    actions = MathGrid.actions.copy()
+
+
 # Construct a grid-like frame figure.
 #
 # ARGUMENTS (keyword-only)
@@ -2041,7 +2116,7 @@ def mathgrid3d(*,
         transition=transition,
         optimize=optimize
         )
-    wire = morpho.SpaceFrame(wire)
+    wire = SpaceMathGrid(wire)
     for n in range(len(wire.figures)):
         # wire.figures[n] = Spacepath(wire.figures[n], orient.copy(), offset)
         wire.figures[n] = SpacePath(wire.figures[n])
@@ -2140,7 +2215,7 @@ def standardGrid(*,
     if transition is None:
         transition = morpho.transition.default
 
-    frm = morpho.anim.Frame()
+    frm = MathGrid()
     # frm.view = view
     paths = []
     staticList = []
