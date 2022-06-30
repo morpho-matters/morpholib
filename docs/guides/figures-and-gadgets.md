@@ -309,10 +309,10 @@ or just in a single line like this:
 rectpath = morpho.grid.rect([-3,3, -1,2]).edge()
 ```
 
-``ellipse()`` is used to construct a generic Polygon that looks like an ellipse. It takes three required parameters:
+``ellipse()`` is used to construct a generic Polygon that looks like an ellipse. It takes three parameters:
 - ``z0``: Center of ellipse (complex number)
 - ``a``: Horizontal radius (i.e. semi-width) in physical units
-- ``b``: Vertical radius (i.e. semi-height) in physical units
+- ``b``: Vertical radius (i.e. semi-height) in physical units (optional; if unspecified, it copies `a`)
 
 
 Try it out:
