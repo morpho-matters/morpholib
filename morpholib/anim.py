@@ -1156,11 +1156,10 @@ class Layer(object):
         # beforeActor = int(beforeActor)
 
         if type(other) in (list, tuple):
-            numActorsAlreadyAdded = 0
-            for n in range(len(other)):
-                layer = other[n]
-                self.merge(layer, atFrame, beforeActor + numActorsAlreadyAdded)
-                numActorsAlreadyAdded += len(layer.actors) if isinstance(layer, Layer) else 1
+            # numActorsAlreadyAdded = 0
+            # for n in range(len(other)-1,-1,-1):
+            for layer in reversed(other):
+                self.merge(layer, atFrame, beforeActor)
         elif isinstance(other, morpho.Actor) or isinstance(other, morpho.Figure):
             other = type(self)(other)
             # Temp layer will inherit the time offset of self
@@ -1168,11 +1167,13 @@ class Layer(object):
             other.timeOffset = self.timeOffset
             self.merge(other, atFrame, beforeActor)
         elif isinstance(other, Layer):
+            # Compute time offset
+            df = other.timeOffset - self.timeOffset + atFrame
+
             # for actor in other.actors:
-            for n in range(len(other.actors)):
-                actor = other.actors[n]
+            # for n in range(len(other.actors)):
+            for actor in reversed(other.actors):
                 # Adjust all the indices based on the time offsets
-                df = other.timeOffset - self.timeOffset + atFrame
                 if df != 0:
                     timeline = {}
                     for keyID in actor.timeline:
@@ -1180,7 +1181,7 @@ class Layer(object):
                     actor.timeline = timeline
                     actor.update()
 
-                self.actors.insert(beforeActor + n, actor)
+                self.actors.insert(beforeActor, actor)
 
             # Handle combining mask layers
 
