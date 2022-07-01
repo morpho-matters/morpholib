@@ -550,7 +550,7 @@ label = mo.Actor(label)
 mainlayer.append(label)
 ```
 
-You can also append multiple actors to a layer at the same frame by supplying a list of actors to `append()` after all those actors are constructed:
+If you're using Morpho 0.4.1+, you can also append multiple actors to a layer at the same frame by supplying a list of actors to `append()` after all those actors are constructed:
 
 ```python
 label1 = mo.text.Text("Label 1")
@@ -701,7 +701,7 @@ label.fadeIn(duration=20, jump=1j)
 
 #### Limitations
 
-Actions are a relatively recent addition to Morpho, and they are not fully supported for all figure types yet (probably the most notable deficiency right now is that actions don't really work on mathgrids yet). So it's best not to get overly reliant on them. You should still make sure you master implementing opening and closing animations manually if you need to.
+Actions are a relatively recent addition to Morpho, and they are not fully supported for all figure types yet. So it's best not to get overly reliant on them. You should still make sure you master implementing opening and closing animations manually if you need to.
 
 
 
