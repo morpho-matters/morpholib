@@ -1160,7 +1160,7 @@ class Layer(object):
             for n in range(len(other)):
                 layer = other[n]
                 self.merge(layer, atFrame, beforeActor + numActorsAlreadyAdded)
-                numActorsAlreadyAdded += len(layer.actors)
+                numActorsAlreadyAdded += len(layer.actors) if isinstance(layer, Layer) else 1
         elif isinstance(other, morpho.Actor) or isinstance(other, morpho.Figure):
             other = type(self)(other)
             # Temp layer will inherit the time offset of self
@@ -1181,34 +1181,35 @@ class Layer(object):
                     actor.update()
 
                 self.actors.insert(beforeActor + n, actor)
+
+            # Handle combining mask layers
+
+            # These booleans record whether the corresponding layer's mask is
+            # "external" meaning it exists and does not point to its partner.
+            # This assumes that the user did not accidentally make a layer's
+            # mask point to itself. If the user does have a self-pointing mask,
+            # it will be treated as "external" nonetheless.
+            selfExternal = self.mask is not None and self.mask is not other
+            otherExternal = other.mask is not None and other.mask is not self
+
+            # If both point to external layers, then crash.
+            if selfExternal and otherExternal:
+                raise LayerMergeError("Both layers have mask layers external to each other.")
+            # Else if self is external, it can stay that way.
+            elif selfExternal:
+                pass
+                # print("#2")
+            # Else if other is external, self inherits other's mask.
+            elif otherExternal:
+                self.mask = other.mask
+                # print("#3")
+            # Else self should have no mask.
+            else:
+                self.mask = None
+                # print("#4")
+
         else:
             raise TypeError("Attempted to merge non-layer object!")
-
-        # Handle combining mask layers
-
-        # These booleans record whether the corresponding layer's mask is
-        # "external" meaning it exists and does not point to its partner.
-        # This assumes that the user did not accidentally make a layer's
-        # mask point to itself. If the user does have a self-pointing mask,
-        # it will be treated as "external" nonetheless.
-        selfExternal = self.mask is not None and self.mask is not other
-        otherExternal = other.mask is not None and other.mask is not self
-
-        # If both point to external layers, then crash.
-        if selfExternal and otherExternal:
-            raise LayerMergeError("Both layers have mask layers external to each other.")
-        # Else if self is external, it can stay that way.
-        elif selfExternal:
-            pass
-            # print("#2")
-        # Else if other is external, self inherits other's mask.
-        elif otherExternal:
-            self.mask = other.mask
-            # print("#3")
-        # Else self should have no mask.
-        else:
-            self.mask = None
-            # print("#4")
 
 
     # Convenience function. Behaves just like merge() except it always
