@@ -550,23 +550,35 @@ label = mo.Actor(label)
 mainlayer.append(label)
 ```
 
+You can also append multiple actors to a layer at the same frame by supplying a list of actors to `append()` after all those actors are constructed:
+
+```python
+label1 = mo.text.Text("Label 1")
+label1 = mo.Actor(label1)
+
+label2 = mo.text.Text("Label 2")
+label2 = mo.Actor(label2)
+
+mainlayer.append([label1, label2])
+```
+
+though for this to work, be careful NOT to merge or append the actors individually before appending the list. There should only be a single append command at the end:
+
+```python
+label1 = mo.text.Text("Label 1")
+label1 = mo.Actor(label1)
+mainlayer.append(label1)  # THIS SHOULDN'T BE HERE
+
+label2 = mo.text.Text("Label 2")
+label2 = mo.Actor(label2)
+mainlayer.append(label2)  # THIS SHOULDN'T BE HERE
+
+mainlayer.append([label1, label2])
+```
+
 #### Limitations
 
-This is great and all, but there are some limitations to when you can use `append()`. It's great for adding actors to a single layer one after the other in time,
-```python
-# These actors will appear one after the other in time
-mylayer.append(myfirstactor)
-mylayer.append(mysecondactor)
-```
-but if you want to add two actors to a layer at the exact same frame, `append()` is probably not what you want to use. In this case, using `merge()` with `time` makes more sense:
-```python
-# These actors will appear at the exact same time
-time = mation.lastID()
-mylayer.merge(myfirstactor, atFrame=time)
-mylayer.merge(mysecondactor, atFrame=time)
-```
-
-You also have to be careful using `append()` in a multilayer animation, because `append()` only appends actors to the end of that layer's ***local*** timeline, not the global timeline of the entire animation.
+This is great and all, but there are some limitations to when you can use `append()`. For example, you have to be careful using `append()` in a multilayer animation, because `append()` only appends actors to the end of that layer's ***local*** timeline, not the global timeline of the entire animation.
 
 For example, let's say you have two point actors, `pt1` and `pt2`, that you want to appear in the animation one after the other, but they need to belong to two separate layers, `layer1` and `layer2`. If you try to use `append()` like this,
 
@@ -578,7 +590,8 @@ layer2.append(pt2)
 the two point actors will not appear one after the other, because each actor will be appended to the end of its respective layer's *local* timeline. To make them properly appear one after the other in the global animation timeline, you have to use the `time` pattern:
 
 ```python
-layer1.append(pt1)
+time = mation.lastID()
+layer1.merge(pt1, atFrame=time)
 time = mation.lastID()
 layer2.merge(pt2, atFrame=time)
 ```
