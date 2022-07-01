@@ -1153,7 +1153,7 @@ class Layer(object):
             beforeActor = len(self.actors)
         elif beforeActor < 0:
             beforeActor %= len(self.actors)
-        beforeActor = int(beforeActor)
+        # beforeActor = int(beforeActor)
 
         if type(other) in (list, tuple):
             numActorsAlreadyAdded = 0
