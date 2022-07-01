@@ -1141,12 +1141,12 @@ class Layer(object):
         elif abs(beforeActor) != oo:
             beforeActor = round(beforeActor)
 
-        if atFrame != int(atFrame):
-            raise ValueError("atFrame parameter must be an integer!")
-        if beforeActor != oo and beforeActor != int(beforeActor):
-            raise ValueError("beforeActor parameter must be integer or +infinity!")
+        # if atFrame != int(atFrame):
+        #     raise ValueError("atFrame parameter must be an integer!")
+        # if beforeActor != oo and beforeActor != int(beforeActor):
+        #     raise ValueError("beforeActor parameter must be integer or +infinity!")
 
-        atFrame = int(atFrame)
+        # atFrame = int(atFrame)
 
         # Convert beforeActor into proper format for indexing into actors list
         if beforeActor > len(self.actors):
