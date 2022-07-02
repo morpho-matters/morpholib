@@ -1155,7 +1155,7 @@ class Layer(object):
             beforeActor %= len(self.actors)
         # beforeActor = int(beforeActor)
 
-        if type(other) in (list, tuple):
+        if isinstance(other, list) or isinstance(other, tuple):
             # numActorsAlreadyAdded = 0
             # for n in range(len(other)-1,-1,-1):
             for layer in reversed(other):
