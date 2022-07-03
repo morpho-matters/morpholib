@@ -2537,50 +2537,50 @@ class Polygon(morpho.Figure):
 
         # X,Y = morpho.screenCoords(self.vertices[0], view, ctx)
         # Temporarily make cairo coords the same as physical coords.
-        morpho.pushPhysicalCoords(view, ctx)  # ctx.save() is called implicitly
+        with morpho.pushPhysicalCoords(view, ctx):  # ctx.save() is called implicitly
 
-        # Handle possible other transformations
-        if self.origin != 0:
-            ctx.translate(self.origin.real, self.origin.imag)
-        if not np.array_equal(self.transform, I2):
-            xx, xy, yx, yy = self.transform.flatten().tolist()
-            # Order is MATLAB-style: top-down, then left-right. So the matrix
-            # specified below is:
-            # [[xx  xy]
-            #  [yx  yy]]
-            mat = cairo.Matrix(xx, yx, xy, yy)
-            # Apply to context
-            ctx.transform(mat)
-        if (self.rotation % tau) != 0:
-            ctx.rotate(self.rotation)
+            # Handle possible other transformations
+            if self.origin != 0:
+                ctx.translate(self.origin.real, self.origin.imag)
+            if not np.array_equal(self.transform, I2):
+                xx, xy, yx, yy = self.transform.flatten().tolist()
+                # Order is MATLAB-style: top-down, then left-right. So the matrix
+                # specified below is:
+                # [[xx  xy]
+                #  [yx  yy]]
+                mat = cairo.Matrix(xx, yx, xy, yy)
+                # Apply to context
+                ctx.transform(mat)
+            if (self.rotation % tau) != 0:
+                ctx.rotate(self.rotation)
 
-        z = self.vertices[0]
-        x,y = z.real, z.imag
-        ctx.move_to(x,y)
-        for n in range(1, len(self.vertices)):
-            # X,Y = morpho.screenCoords(self.vertices[n], view, ctx)
-            z = self.vertices[n]
+            z = self.vertices[0]
             x,y = z.real, z.imag
-            # ctx.line_to(X,Y)
-            ctx.line_to(x,y)
-        ctx.close_path()
+            ctx.move_to(x,y)
+            for n in range(1, len(self.vertices)):
+                # X,Y = morpho.screenCoords(self.vertices[n], view, ctx)
+                z = self.vertices[n]
+                x,y = z.real, z.imag
+                # ctx.line_to(X,Y)
+                ctx.line_to(x,y)
+            ctx.close_path()
+            # ctx.restore()
+
+            # Fill the polygon if the fill isn't totally transparent.
+            if self.alphaFill > 0:
+                # Handle gradients
+                if isinstance(self.fill, morpho.color.GradientFill):
+                    self.fill.draw(
+                        camera, ctx, self.alphaFill*self.alpha,
+                        pushPhysicalCoords=False,
+                        strokeToo=self._strokeGradient
+                        )
+                # Handle normal colors
+                else:
+                    ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
+                    ctx.fill_preserve()
+
         # ctx.restore()
-
-        # Fill the polygon if the fill isn't totally transparent.
-        if self.alphaFill > 0:
-            # Handle gradients
-            if isinstance(self.fill, morpho.color.GradientFill):
-                self.fill.draw(
-                    camera, ctx, self.alphaFill*self.alpha,
-                    pushPhysicalCoords=False,
-                    strokeToo=self._strokeGradient
-                    )
-            # Handle normal colors
-            else:
-                ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
-                ctx.fill_preserve()
-
-        ctx.restore()
 
         ### EDGE ###
 

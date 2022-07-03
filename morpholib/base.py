@@ -341,8 +341,10 @@ def screenCoords(z, view, ctx):
 # Alternate name for screenCoords()
 pixelCoords = screenCoords
 
+# pushPhysicalCoords(view, ctx)
+#
 # Starting from a cairo coordinate system in screen coordinates
-# (which is default after calling setupContext()), changes the
+# (which is default after calling setupContext()), changes the cairo
 # coordinate system temporarily into physical coordinates based
 # on the viewbox you provide.
 #
@@ -353,6 +355,12 @@ pixelCoords = screenCoords
 # effects of pushPhysicalCoords()! Forgetting to will undoubtedly lead to all
 # kinds of trouble!
 #
+# To automatically handle calling ctx.restore(), you can call this
+# function as part of a `with` statement:
+#   with morpho.pushPhysicalCoords(view, ctx):
+#       ...
+# At the end of the block, ctx.restore() will be called automatically.
+#
 # To use it correctly, you should call this function BEFORE any
 # calls that modify the context's CTM as part of drawing your given figure.
 # The idea is that you apply all of your CTM modifications pretending the
@@ -362,7 +370,31 @@ pixelCoords = screenCoords
 # into actual pixel coordinates. In a nutshell, pushPhysicalCoords() applies
 # a transformation which has the effect of converting physical coords to pixel
 # coords. Therefore it should be the last transformation applied in your chain.
-def pushPhysicalCoords(view, ctx):
+class pushPhysicalCoords(object):
+    def __init__(self, view, ctx):
+
+        a,b,c,d = view
+
+        surface = ctx.get_target()
+        WIDTH = surface.get_width()
+        HEIGHT = surface.get_height()
+
+        ctx.save()
+        # print("ctx saved!")
+        ctx.scale(WIDTH/(b-a), HEIGHT/(d-c))
+        ctx.translate(-a, -c)
+
+        self.ctx = ctx
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.ctx.restore()
+        # print("ctx restored!")
+
+
+def pushPhysicalCoords_old(view, ctx):
     a,b,c,d = view
 
     surface = ctx.get_target()

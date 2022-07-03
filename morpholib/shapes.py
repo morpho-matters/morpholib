@@ -743,74 +743,74 @@ class Spline(morpho.Figure):
 
         # Temporarily modify cairo coordinates to coincide with
         # physical coordinates.
-        morpho.pushPhysicalCoords(camera.view, ctx)  # Contains a ctx.save()
+        with morpho.pushPhysicalCoords(camera.view, ctx):  # Contains a ctx.save()
 
-        # Handle possible other transformations
-        morpho.applyTransforms(ctx, self.origin, self.rotation, self.transform)
+            # Handle possible other transformations
+            morpho.applyTransforms(ctx, self.origin, self.rotation, self.transform)
 
 
-        # if start == init:
-        # Initialize starting point
-        zprev, inprev, outprev = self.data[init,:].tolist()
-        inprev, outprev = replaceInfHandles(zprev, inprev, outprev)
-        # else:
-        #     p, pin, pout = self.nodeData(init)
-        #     q, qin, qout = self.nodeData(init+1)
-        #     m0, m1, m2, m3 = morpho.bezier.bezierLastSlice(p, pout, qin, q, start-init)
-        #     zprev = m0
-        #     outprev = m1
+            # if start == init:
+            # Initialize starting point
+            zprev, inprev, outprev = self.data[init,:].tolist()
+            inprev, outprev = replaceInfHandles(zprev, inprev, outprev)
+            # else:
+            #     p, pin, pout = self.nodeData(init)
+            #     q, qin, qout = self.nodeData(init+1)
+            #     m0, m1, m2, m3 = morpho.bezier.bezierLastSlice(p, pout, qin, q, start-init)
+            #     zprev = m0
+            #     outprev = m1
 
-        # Move to starting point
-        x,y = zprev.real, zprev.imag
-        ctx.move_to(x,y)
+            # Move to starting point
+            x,y = zprev.real, zprev.imag
+            ctx.move_to(x,y)
 
-        # Draw each curve
-        # for n in range(self.data.shape[0]-1):
-        for n in range(init, final):
-            # Get next node, inhandle, and outhandle
-            z, inhandle, outhandle = self.data[n+1,:].tolist()
-            # Update handles based on possible inf values
-            inhandle, outhandle = replaceInfHandles(z, inhandle, outhandle)
+            # Draw each curve
+            # for n in range(self.data.shape[0]-1):
+            for n in range(init, final):
+                # Get next node, inhandle, and outhandle
+                z, inhandle, outhandle = self.data[n+1,:].tolist()
+                # Update handles based on possible inf values
+                inhandle, outhandle = replaceInfHandles(z, inhandle, outhandle)
 
-            x,y = z.real, z.imag
+                x,y = z.real, z.imag
 
-            # If previous node is a deadend, or current or previous
-            # nodes are bad, move to next node.
-            # Else, draw a curve to the next node.
-            if n in self.deadends or isbadnum(z) or isbadnum(zprev):
-                ctx.move_to(x,y)
-            else:
-                x1,y1 = outprev.real, outprev.imag
-                x2,y2 = inhandle.real, inhandle.imag
-                ctx.curve_to(x1,y1, x2,y2, x,y)
+                # If previous node is a deadend, or current or previous
+                # nodes are bad, move to next node.
+                # Else, draw a curve to the next node.
+                if n in self.deadends or isbadnum(z) or isbadnum(zprev):
+                    ctx.move_to(x,y)
+                else:
+                    x1,y1 = outprev.real, outprev.imag
+                    x2,y2 = inhandle.real, inhandle.imag
+                    ctx.curve_to(x1,y1, x2,y2, x,y)
 
-            # Update previous values to current values
-            zprev = z
-            # inprev = inhandle
-            outprev = outhandle
+                # Update previous values to current values
+                zprev = z
+                # inprev = inhandle
+                outprev = outhandle
 
-        # # Handle non-integer ending index
-        # if end != final:
-        #     x1,y1 = outprev.real, outprev.imag
+            # # Handle non-integer ending index
+            # if end != final:
+            #     x1,y1 = outprev.real, outprev.imag
 
-        #     p, pin, pout = self.nodeData(final)
-        #     q, qin, qout = self.nodeData(final-1)
-        #     m0, m1, m2, m3 = morpho.bezier.bezierFirstSlice(p, pout, qin, q, end-(final-1))
-        #     x2,y2 = m2.real, m2.imag
-        #     x,y = m3.real, m3.imag
+            #     p, pin, pout = self.nodeData(final)
+            #     q, qin, qout = self.nodeData(final-1)
+            #     m0, m1, m2, m3 = morpho.bezier.bezierFirstSlice(p, pout, qin, q, end-(final-1))
+            #     x2,y2 = m2.real, m2.imag
+            #     x,y = m3.real, m3.imag
 
-        #     ctx.curve_to(x1,y1, x2,y2, x,y)
+            #     ctx.curve_to(x1,y1, x2,y2, x,y)
 
-        # Handle gradients
-        if self.alphaFill > 0:
-            if isinstance(self.fill, morpho.color.GradientFill):
-                self.fill.draw(camera, ctx, self.alphaFill*self.alpha, pushPhysicalCoords=False)
-            # Handle normal colors
-            else:
-                ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
-                ctx.fill_preserve()
+            # Handle gradients
+            if self.alphaFill > 0:
+                if isinstance(self.fill, morpho.color.GradientFill):
+                    self.fill.draw(camera, ctx, self.alphaFill*self.alpha, pushPhysicalCoords=False)
+                # Handle normal colors
+                else:
+                    ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
+                    ctx.fill_preserve()
 
-        ctx.restore()
+        # ctx.restore()
 
         # Set line width & color & alpha
         ctx.set_line_width(self.width)
@@ -857,16 +857,16 @@ class Spline(morpho.Figure):
 
             # Temporarily modify cairo coordinates to coincide with
             # physical coordinates.
-            morpho.pushPhysicalCoords(camera.view, ctx)  # Contains a ctx.save()
+            with morpho.pushPhysicalCoords(camera.view, ctx):  # Contains a ctx.save()
 
-            # Handle possible other transformations
-            morpho.applyTransforms(ctx, self.origin, self.rotation, self.transform)
+                # Handle possible other transformations
+                morpho.applyTransforms(ctx, self.origin, self.rotation, self.transform)
 
-            ctx.move_to(inx, iny)
-            ctx.line_to(x,y)
-            ctx.line_to(outx, outy)
+                ctx.move_to(inx, iny)
+                ctx.line_to(x,y)
+                ctx.line_to(outx, outy)
 
-            ctx.restore()
+            # ctx.restore()
             ctx.stroke()
 
     # def draw(self, camera, ctx):
