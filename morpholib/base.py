@@ -341,6 +341,25 @@ def screenCoords(z, view, ctx):
 # Alternate name for screenCoords()
 pixelCoords = screenCoords
 
+
+# Calls ctx.save() and then creates a context manager object for the
+# given ctx object that can be used in a `with` statement like this:
+#   with SavePoint(ctx):
+#       ...
+# and ctx.restore() will be called at the end of the block
+class SavePoint(object):
+    def __init__(self, ctx):
+        self.ctx = ctx
+        # print("ctx saved!")
+        self.ctx.save()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.ctx.restore()
+        # print("ctx restored!")
+
 # pushPhysicalCoords(view, ctx)
 #
 # Starting from a cairo coordinate system in screen coordinates
@@ -370,29 +389,18 @@ pixelCoords = screenCoords
 # into actual pixel coordinates. In a nutshell, pushPhysicalCoords() applies
 # a transformation which has the effect of converting physical coords to pixel
 # coords. Therefore it should be the last transformation applied in your chain.
-class pushPhysicalCoords(object):
-    def __init__(self, view, ctx):
+def pushPhysicalCoords(view, ctx):
+    a,b,c,d = view
 
-        a,b,c,d = view
+    surface = ctx.get_target()
+    WIDTH = surface.get_width()
+    HEIGHT = surface.get_height()
 
-        surface = ctx.get_target()
-        WIDTH = surface.get_width()
-        HEIGHT = surface.get_height()
+    savept = SavePoint(ctx)
+    ctx.scale(WIDTH/(b-a), HEIGHT/(d-c))
+    ctx.translate(-a, -c)
 
-        ctx.save()
-        # print("ctx saved!")
-        ctx.scale(WIDTH/(b-a), HEIGHT/(d-c))
-        ctx.translate(-a, -c)
-
-        self.ctx = ctx
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, type, value, traceback):
-        self.ctx.restore()
-        # print("ctx restored!")
-
+    return savept
 
 def pushPhysicalCoords_old(view, ctx):
     a,b,c,d = view
