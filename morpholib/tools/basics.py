@@ -168,6 +168,11 @@ def arcCenterArray(p, q, angle):
 def vect2complex(v):
     return v[0] + 1j*v[1]
 
+# Converts a complex number into an ordered pair
+# (z.real, z.imag)
+def complex2vect(z):
+    return (z.real, z.imag)
+
 # Given a sorted list of numbers a and value x,
 # returns the highest index i such that a[i] <= x.
 # If all the numbers in a are larger than x, it returns -1.
