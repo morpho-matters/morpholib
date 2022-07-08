@@ -63,7 +63,8 @@ class Text(morpho.Figure):
         bold=False, italic=False,
         anchor_x=0, anchor_y=0,
         color=(1,1,1), alpha=1,
-        background=(1,1,1), backAlpha=0, backPad=0):
+        background=(1,1,1), backAlpha=0, backPad=0,
+        *, align=None):
 
         super().__init__()
 
@@ -88,6 +89,10 @@ class Text(morpho.Figure):
         # Turn position into complex
         if type(pos) in (list, tuple):
             pos = pos[0] + 1j*pos[1]
+
+        # Update anchor_x, anchor_y based on align parameter if given
+        if align is not None:
+            anchor_x, anchor_y = align
 
         # Create tweenables
         pos = morpho.Tweenable("pos", pos, tags=["complex"])
@@ -128,6 +133,14 @@ class Text(morpho.Figure):
     @transform.setter
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
+
+    @property
+    def align(self):
+        return (self.anchor_x, self.anchor_y)
+
+    @align.setter
+    def align(self, value):
+        self.anchor_x, self.anchor_y = value
 
 
     def copy(self):
@@ -774,14 +787,16 @@ class SpaceText(Text):
         bold=False, italic=False,
         anchor_x=0, anchor_y=0,
         color=(1,1,1), alpha=1,
-        background=(1,1,1), backAlpha=0, backPad=0):
+        background=(1,1,1), backAlpha=0, backPad=0,
+        *, align=None):
 
         super().__init__(text, 0,
             size, font,
             bold, italic,
             anchor_x, anchor_y,
             color[:], alpha,
-            background, backAlpha, backPad
+            background, backAlpha, backPad,
+            align=align
             )
 
         if pos is None:

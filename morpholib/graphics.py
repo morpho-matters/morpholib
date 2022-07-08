@@ -122,6 +122,28 @@ class Image(morpho.Figure):
             self._width = value*self.aspectRatioWH
         self._height = value
 
+    @property
+    def anchor_x(self):
+        return self.align[0]
+
+    @anchor_x.setter
+    def anchor_x(self, value):
+        align = list(self.align)
+        align[0] = value
+        self.align = align
+
+    @property
+    def anchor_y(self):
+        return self.align[1]
+
+    @anchor_y.setter
+    def anchor_y(self, value):
+        align = list(self.align)
+        align[1] = value
+        self.align = align
+
+
+
     # Restores the aspect ratio to normal. That is, recomputes it as
     # imageWidth/imageHeight for the current image.
     # Optionally specify view and windowShape that are disproportional,
