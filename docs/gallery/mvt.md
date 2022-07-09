@@ -3,7 +3,7 @@ layout: default
 title: Mean Value Theorem
 ---
 
-<video controls loop style="max-width:600px">
+<video controls loop style="width:100%; max-width:600px">
 <source src="https://raw.githubusercontent.com/morpho-matters/morpholib/master/gallery/mvt.mp4" type="video/mp4">
 </video>
 
