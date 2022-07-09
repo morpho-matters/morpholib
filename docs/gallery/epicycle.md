@@ -3,7 +3,7 @@ layout: default
 title: Epicycle
 ---
 
-<video controls loop style="max-width:450px">
+<video controls loop style="width:100%; max-width:450px">
 <source src="https://raw.githubusercontent.com/morpho-matters/morpholib/master/gallery/epicycle.mp4" type="video/mp4">
 </video>
 
