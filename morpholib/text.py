@@ -1136,6 +1136,7 @@ class RichMultiText(MultiText):
         for fig in self.figures:
             fig = fig.copy()
             fig.pos += dz
+            fig.alpha *= self.alpha
             figs.append(fig)
 
         return MultiText(figs)
