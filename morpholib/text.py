@@ -1032,7 +1032,7 @@ def formatNumber(*args, **kwargs):
 # gap = Pixel separation between adjacent text figures.
 #       Default: 0 pixels
 def group(textfigs, view, windowShape,
-    pos=0, anchor_x=0, anchor_y=0, alpha=1, gap=0):
+    pos=0, anchor_x=0, anchor_y=0, alpha=1, gap=0, *, align=None):
     # FUTURE: Perhaps allow for multi-line concatenations so something
     # like a Paragraph figure can be implemented.
 
@@ -1045,6 +1045,9 @@ def group(textfigs, view, windowShape,
     # Handle case that Frame figure is given
     if isinstance(textfigs, morpho.Frame):
         textfigs = textfigs.figures
+
+    if align is not None:
+        anchor_x, anchor_y = align
 
     # Record the widths and heights of all text figures
     totalWidth = 0
@@ -1085,4 +1088,3 @@ def group(textfigs, view, windowShape,
         curpos += width + gap
 
     return MultiText(textfigs)
-
