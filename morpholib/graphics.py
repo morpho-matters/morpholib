@@ -719,6 +719,10 @@ def Multi(imageMethod, reverseMethod=None):
             self.images = self.images[:-len(extensions)]
 
         tw = type(self)(images)
+        # Copy over all of self's tweenables other than `figures`
+        for name, tweenable in self._state.items():
+            if name != "figures":
+                tw._state[name] = tweenable.copy()
         tw.defaultTween = self.defaultTween
         tw.transition = self.transition
         tw.static = self.static
