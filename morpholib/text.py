@@ -463,6 +463,10 @@ def Multi(imageMethod, reverseMethod=None):
             self.figures = self.figures[:-len(extensions)]
 
         tw = type(self)(figures)
+        # Copy over all of self's tweenables other than `figures`
+        for name, tweenable in self._state.items():
+            if name != "figures":
+                tw._state[name] = tweenable.copy()
         tw.defaultTween = self.defaultTween
         tw.transition = self.transition
         tw.static = self.static
@@ -1088,6 +1092,73 @@ def group(textfigs, view, windowShape,
         curpos += width + gap
 
     return MultiText(textfigs)
+
+
+class RichMultiText(MultiText):
+    def __init__(self, text="", *args, **kwargs):
+
+        if isinstance(text, MultiText):
+            text = text.figures
+
+        super().__init__(text, *args, **kwargs)
+
+        self.Tweenable("pos", 0, tags=["complex", "position"])
+        self.Tweenable("anchor_x", 0, tags=["scalar"])
+        self.Tweenable("anchor_y", 0, tags=["scalar"])
+        self.Tweenable("alpha", 1, tags=["scalar"])
+
+    def makeFrame(self, camera, ctx):
+        boxes = [fig.box(camera, ctx) for fig in self.figures]
+
+        left = min(box[0] for box in boxes)
+        right = max(box[1] for box in boxes)
+        bottom = min(box[2] for box in boxes)
+        top = max(box[3] for box in boxes)
+
+        width = right - left
+        height = top - bottom
+
+        # Calculate translation
+        dx = self.pos.real - morpho.lerp(-width/2, width/2, self.anchor_x, start=-1, end=1)
+        dy = self.pos.imag - morpho.lerp(-height/2, height/2, self.anchor_y, start=-1, end=1)
+        dz = dx + 1j*dy
+
+        # Apply translations
+        figs = []
+        for fig in self.figures:
+            fig = fig.copy()
+            fig.pos += dz
+            figs.append(fig)
+
+        return MultiText(figs)
+
+    def draw(self, camera, ctx):
+        self.makeFrame(camera, ctx).draw(camera, ctx)
+
+    ### TWEEN METHODS ###
+    @morpho.TweenMethod
+    def tweenLinear(self, other, t):
+        tw = super().tweenLinear(other, t)
+        tw = morpho.Figure.tweenLinear(tw, other, t, ignore="figures")
+        return tw
+
+    @morpho.TweenMethod
+    def tweenSpiral(self, other, t):
+        tw = super().tweenSpiral(other, t)
+        tw = morpho.Figure.tweenSpiral(tw, other, t, ignore="figures")
+        return tw
+
+    @classmethod
+    def tweenPivot(cls, angle=tau/2):
+        twMethod1 = Multi(Text.tweenPivot(angle),
+            reverseMethod=Text.tweenPivot(-angle)
+            )
+        def pivot(self, other, t):
+            tw = twMethod1(self, other, t)
+            tw = morpho.Figure.tweenPivot(angle, ignore="figures")(tw, other, t)
+            return tw
+
+        return pivot
 
 
 class TextGroup(MultiText):
