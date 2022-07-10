@@ -1107,6 +1107,14 @@ class RichMultiText(MultiText):
         self.Tweenable("anchor_y", 0, tags=["scalar"])
         self.Tweenable("alpha", 1, tags=["scalar"])
 
+    @property
+    def align(self):
+        return (self.anchor_x, self.anchor_y)
+
+    @align.setter
+    def align(self, value):
+        self.anchor_x, self.anchor_y = value
+
     def makeFrame(self, camera, ctx):
         boxes = [fig.box(camera, ctx) for fig in self.figures]
 
