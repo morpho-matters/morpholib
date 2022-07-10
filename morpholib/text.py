@@ -1094,7 +1094,7 @@ def group(textfigs, view, windowShape,
     return MultiText(textfigs)
 
 
-class RichMultiText(MultiText):
+class FancyMultiText(MultiText):
     def __init__(self, text="", *args, **kwargs):
 
         if isinstance(text, MultiText):
