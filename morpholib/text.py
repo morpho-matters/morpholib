@@ -1204,6 +1204,14 @@ class TextGroup(MultiText):
 
         return new
 
+    @property
+    def align(self):
+        return (self.anchor_x, self.anchor_y)
+
+    @align.setter
+    def align(self, value):
+        self.anchor_x, self.anchor_y = value
+
     @staticmethod
     def conformText(textarray):
         # Handle nonstandard values for textarray
