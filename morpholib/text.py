@@ -1091,7 +1091,7 @@ def group(textfigs, view, windowShape,
         fig.alpha *= alpha
         curpos += width + gap
 
-    return MultiText(textfigs)
+    return FancyMultiText(textfigs)
 
 
 class FancyMultiText(MultiText):
@@ -1114,6 +1114,29 @@ class FancyMultiText(MultiText):
     @align.setter
     def align(self, value):
         self.anchor_x, self.anchor_y = value
+
+    # Returns the physical bounding box of the entire text group as
+    # [xmin, xmax, ymin, ymax]
+    def totalBox(self, view, ctx, pad=0):
+        boxes = [fig.box(view, ctx, pad) for fig in self.figures]
+        left = min(box[0] for box in boxes)
+        right = max(box[1] for box in boxes)
+        bottom = min(box[2] for box in boxes)
+        top = max(box[3] for box in boxes)
+
+        return [left, right, bottom, top]
+
+    # Returns the center of the text group's bounding box.
+    def totalCenter(self, view, ctx):
+        box = self.totalBox(view, ctx)
+        return mean(box[:2]) + 1j*mean(box[2:])
+
+    # Moves the text group so that its total center is at the origin.
+    # This makes it so the alignment respects the `pos` attribute.
+    def recenter(self, view, ctx):
+        center = self.totalCenter(view, ctx)
+        for fig in self.figures:
+            fig.pos -= center
 
     def makeFrame(self, camera, ctx):
         boxes = [fig.box(camera, ctx) for fig in self.figures]
@@ -1168,6 +1191,83 @@ class FancyMultiText(MultiText):
             return tw
 
         return pivot
+
+def conformText(textarray):
+    # Handle nonstandard values for textarray
+    try:
+        textarray[0]
+    except TypeError:
+        textarray = [[textarray]]
+    except IndexError:
+        raise IndexError("Empty `textarray` was given.")
+
+    try:
+        textarray[0][0]
+    except TypeError:
+        textarray = [textarray]
+    except IndexError:
+        raise IndexError("Empty sublist in `textarray`.")
+
+    return textarray
+
+def paragraph(textarray, view, windowShape,
+    pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0, *, justify=0, align=None):
+
+    # Handle case that Frame figure is given
+    if isinstance(textarray, morpho.Frame):
+        textarray = textarray.figures
+
+    if textarray is None:
+        textarray = [[Text("")]]
+    else:
+        textarray = conformText(textarray)
+
+    # Rename xgaps to emphasize its a pixel value
+    xgap_pixels = xgap
+    del xgap
+
+    # Convert gaps to physical units
+    xgap = morpho.physicalWidth(xgap_pixels, view, windowShape)
+    ygap = morpho.physicalHeight(ygap, view, windowShape)
+
+    # Apply align parameter if given
+    if align is not None:
+        anchor_x, anchor_y = align
+
+    # Calculate y-positions of all rows
+    yPositions = [0]
+    rowBoxes = []
+    for i, row in enumerate(textarray[:-1]):
+        boxes = [fig.box(view, windowShape) for fig in row]
+        rowBoxes.append(boxes)
+        rowHeight = max(box[-1]-box[-2] for box in boxes)
+        yPositions.append(yPositions[-1]-ygap-rowHeight)
+    adjust = -mean([yPositions[0], yPositions[-1]])
+    yPositions = [y+adjust for y in yPositions]
+
+    # Append final row of boxes
+    rowBoxes.append([fig.box(view, windowShape) for fig in textarray[-1]])
+
+    # Create rows
+    rows = []
+    for i, row in enumerate(textarray):
+        rowWidth = sum(box[1]-box[0] for box in rowBoxes[i]) + (len(row)-1)*xgap
+        rowPosition = -morpho.lerp(-rowWidth/2, rowWidth/2, justify, start=-1, end=1) + 1j*yPositions[i]
+        row = group(row, view, windowShape, pos=rowPosition, gap=xgap_pixels)
+        rows.append(row)
+
+    # Pool all the rows into a single FancyMultiText figure
+    figs = []
+    for row in rows:
+        figs.extend(row.figures)
+    parag = FancyMultiText(figs)
+    parag.pos = pos
+    parag.anchor_x = anchor_x
+    parag.anchor_y = anchor_y
+    parag.alpha = alpha
+    parag.recenter(view, windowShape)
+
+    return parag
 
 
 class TextGroup(MultiText):
