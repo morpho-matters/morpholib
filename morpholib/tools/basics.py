@@ -8,9 +8,9 @@ tau = 2*pi
 oo = inf = float("inf")
 nan = float("nan")
 # Basic unit vectors for 3D animations
-ihat = mo.matrix.array([1,0,0])
-jhat = mo.matrix.array([0,1,0])
-khat = mo.matrix.array([0,0,1])
+ihat = np.array([1,0,0], dtype=float)
+jhat = np.array([0,1,0], dtype=float)
+khat = np.array([0,0,1], dtype=float)
 
 ### FUNCTIONS ###
 
