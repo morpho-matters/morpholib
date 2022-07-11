@@ -1211,7 +1211,7 @@ def conformText(textarray):
     return textarray
 
 def paragraph(textarray, view, windowShape,
-    pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0, *, justify=0, align=None):
+    pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0, *, flush=0, align=None):
 
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):
@@ -1252,7 +1252,7 @@ def paragraph(textarray, view, windowShape,
     rows = []
     for i, row in enumerate(textarray):
         rowWidth = sum(box[1]-box[0] for box in rowBoxes[i]) + (len(row)-1)*xgap
-        rowPosition = -morpho.lerp(-rowWidth/2, rowWidth/2, justify, start=-1, end=1) + 1j*yPositions[i]
+        rowPosition = -morpho.lerp(-rowWidth/2, rowWidth/2, flush, start=-1, end=1) + 1j*yPositions[i]
         row = group(row, view, windowShape, pos=rowPosition, gap=xgap_pixels)
         rows.append(row)
 
