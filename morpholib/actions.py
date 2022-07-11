@@ -16,7 +16,10 @@ autoJumpNames = {"pos", "origin", "_pos", "_origin"}
 def _applyJump(figure, dz):
     # Handle multifigure case (which has implicit tweenables)
     if isinstance(figure, morpho.MultiFigure):
-        return _applyJump(figure.figures[0], dz)
+        # return _applyJump(figure.figures[0], dz)
+        for fig in figure.figures:
+            _applyJump(fig, dz)
+        return
 
     # Add dz in place to all supported tweenables
     for tweenable in figure._state.values():
