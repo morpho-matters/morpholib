@@ -845,6 +845,9 @@ class SpaceText(Text):
         new.orientable = self.orientable
         return new
 
+    def box(self, view, ctx, pad=0):
+        raise NotImplementedError
+
 
     def primitives(self, camera): # orient=np.identity(3), focus=np.zeros(3)):
         if self.alpha == 0:
@@ -918,7 +921,6 @@ class SpaceMultiText(MultiText):
     def draw(self, camera, ctx):
         for fig in self.primitives(camera):
             fig.draw(camera, ctx)
-
 
 SpaceMultitext = Spacemultitext = SpaceMultiText  # Synonyms
 
@@ -1113,6 +1115,70 @@ class FancyMultiText(MultiText):
 
         return pivot
 
+class SpaceFancyMultiText(FancyMultiText):
+    def __init__(self, text="", *args, **kwargs):
+        super().__init__(text, *args, **kwargs)
+
+        # Redefine pos tweenable to be 3D.
+        self.Tweenable("_pos", morpho.matrix.array(0), tags=["nparray", "fimage"])
+        self._state.pop("pos")
+        self.Tweenable("_orient", np.identity(3), tags=["nparray", "orient"])
+
+    @property
+    def pos(self):
+        return self._pos
+
+    @pos.setter
+    def pos(self, value):
+        self._pos = morpho.matrix.array(value)
+
+    @property
+    def orient(self):
+        return self._orient
+
+    @orient.setter
+    def orient(self, value):
+        self._orient = morpho.matrix.array(value)
+
+    # Returns the center of the text group's bounding box.
+    def totalCenter(self, view, ctx):
+        box = self.totalBox(view, ctx)
+        return mean(box[:2]) + 1j*mean(box[2:])
+
+    # Moves the text group so that its total center is at the origin.
+    # This makes it so the alignment respects the `pos` attribute.
+    def recenter(self, view, ctx):
+        center = self.totalCenter(view, ctx)
+        for fig in self.figures:
+            fig.pos -= center
+
+    def makeFrame(self, camera, ctx):
+        boxes = [fig.box(camera, ctx) for fig in self.figures]
+
+        left = min(box[0] for box in boxes)
+        right = max(box[1] for box in boxes)
+        bottom = min(box[2] for box in boxes)
+        top = max(box[3] for box in boxes)
+
+        width = right - left
+        height = top - bottom
+
+        # Calculate translation
+        dx = self.pos.real - morpho.lerp(-width/2, width/2, self.anchor_x, start=-1, end=1)
+        dy = self.pos.imag - morpho.lerp(-height/2, height/2, self.anchor_y, start=-1, end=1)
+        dz = dx + 1j*dy
+
+        # Apply translations
+        figs = []
+        for fig in self.figures:
+            fig = fig.copy()
+            fig.pos += dz
+            fig.alpha *= self.alpha
+            figs.append(fig)
+
+        return SpaceMultiText(figs)
+
+
 # Takes a collection of Text figures and returns a MultiText figure
 # that concatenates all the individual Text figures.
 # This is basically a cheap and dirty way to implement something like
@@ -1137,7 +1203,8 @@ class FancyMultiText(MultiText):
 # gap = Pixel separation between adjacent text figures.
 #       Default: 0 pixels
 def group(textfigs, view, windowShape,
-    pos=0, anchor_x=0, anchor_y=0, alpha=1, gap=0, *, align=None):
+    pos=0, anchor_x=0, anchor_y=0, alpha=1, gap=0,
+    *, align=None, orient=None):
     # FUTURE: Perhaps allow for multi-line concatenations so something
     # like a Paragraph figure can be implemented.
 
@@ -1151,6 +1218,25 @@ def group(textfigs, view, windowShape,
     if isinstance(textfigs, morpho.Frame):
         textfigs = textfigs.figures
 
+    # Boolean indicating whether we're using SpaceText figures
+    spacemode = isinstance(textfigs[0], SpaceText)
+    # Error check for orient usage on non-SpaceText figures
+    if not spacemode and orient is not None:
+        raise TypeError("Cannot use `orient` on non-SpaceText figure")
+
+    # Set unit vectors depending on 2D or 3D case
+    if spacemode:
+        xdir = ihat
+        ydir = jhat
+        # Set default orient
+        if orient is None:
+            orient = np.eye(3)
+        pos = morpho.array(pos)
+    else:
+        xdir = 1
+        ydir = 1j
+
+    # Override anchors if given align optional kwarg
     if align is not None:
         anchor_x, anchor_y = align
 
@@ -1179,7 +1265,7 @@ def group(textfigs, view, windowShape,
     totalHeight = max(heights)
     totalxRadius = totalWidth/2
     totalyRadius = totalHeight/2
-    curpos = pos-totalxRadius*(anchor_x+1) - 1j*totalyRadius*(anchor_y+1)
+    curpos = pos-xdir*totalxRadius*(anchor_x+1) - ydir*totalyRadius*(anchor_y+1)
 
     for n, fig in enumerate(textfigs):
         # Make a copy of fig so to not affect the original
@@ -1188,9 +1274,9 @@ def group(textfigs, view, windowShape,
 
         width = widths[n]
         height = heights[n]
-        fig.pos = curpos + (fig.anchor_x+1)*width/2 + 1j*(fig.anchor_y+1)*height/2
+        fig.pos = curpos + xdir*(fig.anchor_x+1)*width/2 + ydir*(fig.anchor_y+1)*height/2
         fig.alpha *= alpha
-        curpos += width + gap
+        curpos += xdir*(width + gap)
 
     return FancyMultiText(textfigs)
 
@@ -1213,7 +1299,8 @@ def conformText(textarray):
     return textarray
 
 def paragraph(textarray, view, windowShape,
-    pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0, *, flush=0, align=None):
+    pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0,
+    *, flush=0, align=None, orient=None):
 
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):
@@ -1223,6 +1310,24 @@ def paragraph(textarray, view, windowShape,
         textarray = [[Text("")]]
     else:
         textarray = conformText(textarray)
+
+    # Boolean indicating whether we're using SpaceText figures
+    spacemode = isinstance(textarray[0][0], SpaceText)
+    # Error check for orient usage on non-SpaceText figures
+    if not spacemode and orient is not None:
+        raise TypeError("Cannot use `orient` on non-SpaceText figure")
+
+    # Set unit vectors depending on 2D or 3D case
+    if spacemode:
+        xdir = ihat
+        ydir = jhat
+        # Set default orient
+        if orient is None:
+            orient = np.eye(3)
+        pos = morpho.array(pos)
+    else:
+        xdir = 1
+        ydir = 1j
 
     # Rename xgaps to emphasize its a pixel value
     xgap_pixels = xgap
@@ -1238,23 +1343,22 @@ def paragraph(textarray, view, windowShape,
 
     # Calculate y-positions of all rows
     yPositions = [0]
-    rowBoxes = []
+    rowDims = []
     for i, row in enumerate(textarray[:-1]):
-        boxes = [fig.box(view, windowShape) for fig in row]
-        rowBoxes.append(boxes)
-        rowHeight = max(box[-1]-box[-2] for box in boxes)
+        dims = [fig.dimensions(view, windowShape) for fig in row]
+        rowDims.append(dims)
+        rowHeight = max(dim[1] for dim in dims)
         yPositions.append(yPositions[-1]-ygap-rowHeight)
     adjust = -mean([yPositions[0], yPositions[-1]])
     yPositions = [y+adjust for y in yPositions]
-
-    # Append final row of boxes
-    rowBoxes.append([fig.box(view, windowShape) for fig in textarray[-1]])
+    # Append final row of dimensions (we'll need it later)
+    rowDims.append([fig.dimensions(view, windowShape) for fig in textarray[-1]])
 
     # Create rows
     rows = []
     for i, row in enumerate(textarray):
-        rowWidth = sum(box[1]-box[0] for box in rowBoxes[i]) + (len(row)-1)*xgap
-        rowPosition = -morpho.lerp(-rowWidth/2, rowWidth/2, flush, start=-1, end=1) + 1j*yPositions[i]
+        rowWidth = sum(dim[0] for dim in rowDims[i]) + (len(row)-1)*xgap
+        rowPosition = -xdir*morpho.lerp(-rowWidth/2, rowWidth/2, flush, start=-1, end=1) + ydir*yPositions[i]
         row = group(row, view, windowShape, pos=rowPosition, gap=xgap_pixels)
         rows.append(row)
 
