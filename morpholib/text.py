@@ -1016,6 +1016,8 @@ def formatNumber(*args, **kwargs):
 ### GROUPS AND PARAGRAPHS ###
 
 class FancyMultiText(MultiText):
+    _manuallyJump = True
+
     def __init__(self, text="", *args, **kwargs):
 
         if isinstance(text, MultiText):
