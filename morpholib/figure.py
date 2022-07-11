@@ -1741,4 +1741,4 @@ class _KeyIDContainer(object):
 # Flattens a list of lists into a single list.
 # Thanks to Alex Martelli on StackOverflow
 # https://stackoverflow.com/a/952952
-flattenList = lambda L: [item for sublist in L for item in sublist]
+def flattenList(L): return [item for sublist in L for item in sublist]
