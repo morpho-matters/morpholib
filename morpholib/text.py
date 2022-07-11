@@ -1270,65 +1270,65 @@ def paragraph(textarray, view, windowShape,
     return parag
 
 
-class TextGroup(MultiText):
-    def __init__(self, textarray=None, pos=0, anchor_x=0, anchor_y=0, alpha=1,
-        xgap=0, ygap=0):
+# class TextGroup(MultiText):
+#     def __init__(self, textarray=None, pos=0, anchor_x=0, anchor_y=0, alpha=1,
+#         xgap=0, ygap=0):
 
-        if textarray is None:
-            textarray = [[Text("")]]
-        else:
-            textarray = self.conformText(textarray)
+#         if textarray is None:
+#             textarray = [[Text("")]]
+#         else:
+#             textarray = self.conformText(textarray)
 
-        # Create generic MultiText figure
-        super().__init__()
+#         # Create generic MultiText figure
+#         super().__init__()
 
-        self.Tweenable("pos", pos, tags=["complex", "position"])
-        self.Tweenable("anchor_x", anchor_x, tags=["scalar"])
-        self.Tweenable("anchor_y", anchor_y, tags=["scalar"])
-        self.Tweenable("alpha", alpha, tags=["scalar"])
-        self.Tweenable("xgap", xgap, tags=["scalar"])
-        self.Tweenable("ygap", ygap, tags=["scalar"])
+#         self.Tweenable("pos", pos, tags=["complex", "position"])
+#         self.Tweenable("anchor_x", anchor_x, tags=["scalar"])
+#         self.Tweenable("anchor_y", anchor_y, tags=["scalar"])
+#         self.Tweenable("alpha", alpha, tags=["scalar"])
+#         self.Tweenable("xgap", xgap, tags=["scalar"])
+#         self.Tweenable("ygap", ygap, tags=["scalar"])
 
-        # Non-tweenable attributes
-        self.textarray = textarray
+#         # Non-tweenable attributes
+#         self.textarray = textarray
 
-    def copy(self):
-        new = super().copy()
+#     def copy(self):
+#         new = super().copy()
 
-        # Make deep copy of textarray
-        new.textarray = list(self.textarray)  # Copy outer list
-        for i, subarray in enumerate(new.textarray):
-            subarray = list(subarray)  # Copy inner list
-            # Replace each item with a copy
-            for j, fig in enumerate(subarray):
-                subarray[j] = fig.copy()
+#         # Make deep copy of textarray
+#         new.textarray = list(self.textarray)  # Copy outer list
+#         for i, subarray in enumerate(new.textarray):
+#             subarray = list(subarray)  # Copy inner list
+#             # Replace each item with a copy
+#             for j, fig in enumerate(subarray):
+#                 subarray[j] = fig.copy()
 
-        return new
+#         return new
 
-    @property
-    def align(self):
-        return (self.anchor_x, self.anchor_y)
+#     @property
+#     def align(self):
+#         return (self.anchor_x, self.anchor_y)
 
-    @align.setter
-    def align(self, value):
-        self.anchor_x, self.anchor_y = value
+#     @align.setter
+#     def align(self, value):
+#         self.anchor_x, self.anchor_y = value
 
-    @staticmethod
-    def conformText(textarray):
-        # Handle nonstandard values for textarray
-        try:
-            textarray[0]
-        except TypeError:
-            textarray = [[textarray]]
-        except IndexError:
-            raise IndexError("Empty `textarray` was given.")
+#     @staticmethod
+#     def conformText(textarray):
+#         # Handle nonstandard values for textarray
+#         try:
+#             textarray[0]
+#         except TypeError:
+#             textarray = [[textarray]]
+#         except IndexError:
+#             raise IndexError("Empty `textarray` was given.")
 
-        try:
-            textarray[0][0]
-        except TypeError:
-            textarray = [textarray]
-        except IndexError:
-            raise IndexError("Empty sublist in `textarray`.")
+#         try:
+#             textarray[0][0]
+#         except TypeError:
+#             textarray = [textarray]
+#         except IndexError:
+#             raise IndexError("Empty sublist in `textarray`.")
 
-        return textarray
+#         return textarray
 
