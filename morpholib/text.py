@@ -857,6 +857,21 @@ class SpaceText(Text):
         new.orientable = self.orientable
         return new
 
+    def toText(self):
+        txt = Text()
+        txt._state.update(self.copy()._state)
+        del txt._state["_pos"]
+        del txt._state["_orient"]
+        txt.pos = complex(*self._pos[:2].tolist())
+
+        txt.text = self.text
+        txt.font = self.font
+        txt.bold = self.bold
+        txt.italic = self.italic
+        txt._updateSettings(self)
+
+        return txt
+
 
     def primitives(self, camera): # orient=np.identity(3), focus=np.zeros(3)):
         if self.alpha == 0:
