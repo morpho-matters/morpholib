@@ -121,10 +121,15 @@ class Text(morpho.Figure):
             prescale_x, prescale_y])
 
         # Other attributes
-        self.text = text
-        self.font = font if font is not None else defaultFont
-        self.bold = bold
-        self.italic = italic
+        self.NonTweenable("text", text)
+        self.NonTweenable("font", font if font is not None else defaultFont)
+        self.NonTweenable("bold", bold)
+        self.NonTweenable("italic", italic)
+        # self.text = text
+        # self.font = font if font is not None else defaultFont
+        # self.bold = bold
+        # self.italic = italic
+
 
     @property
     def transform(self):
@@ -143,18 +148,18 @@ class Text(morpho.Figure):
         self.anchor_x, self.anchor_y = value
 
 
-    def copy(self):
-        # Do a standard figure copy first
-        # new = morpho.Figure.copy(self)
-        new = super().copy()
+    # def copy(self):
+    #     # Do a standard figure copy first
+    #     # new = morpho.Figure.copy(self)
+    #     new = super().copy()
 
-        # Copy the non-tweenable attributes
-        new.text = self.text
-        new.font = self.font
-        new.bold = self.bold
-        new.italic = self.italic
+    #     # Copy the non-tweenable attributes
+    #     new.text = self.text
+    #     new.font = self.font
+    #     new.bold = self.bold
+    #     new.italic = self.italic
 
-        return new
+    #     return new
 
     # Returns the dimensions (in pixels) of the text as a pair
     # (textwidth, textheight).
@@ -930,6 +935,8 @@ class SpaceMultiText(MultiText):
             textlist = [SpaceText(text, *args, **kwargs)]
         elif isinstance(text, list) or isinstance(text, tuple):
             textlist = [(SpaceText(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
+        elif isinstance(text, MultiText):
+            textlist = [SpaceText(item, *args, **kwargs) for item in text.figures]
         else:
             textlist = [SpaceText(text, *args, **kwargs)]
 
@@ -1143,6 +1150,49 @@ class FancyMultiText(MultiText):
 
         return pivot
 
+class SpaceParagraph(FancyMultiText):
+    def __init__(self, text="", *args, **kwargs):
+
+        super().__init__(text, *args, **kwargs)
+
+        # Redefine pos tweenable to be 3D.
+        self.Tweenable("_pos", morpho.matrix.array(0), tags=["nparray", "fimage"])
+        self._state.pop("pos")
+        self.Tweenable("_orient", np.identity(3), tags=["nparray", "orient"])
+
+    @property
+    def pos(self):
+        return self._pos
+
+    @pos.setter
+    def pos(self, value):
+        self._pos = morpho.matrix.array(value)
+
+    @property
+    def orient(self):
+        return self._orient
+
+    @orient.setter
+    def orient(self, value):
+        self._orient = morpho.matrix.array(value)
+
+    def makeFrame(self, camera, ctx):
+        # Construct 2D paragraph from self and then 3D-ify it
+        parag = super().makeFrame(camera, ctx)
+        parag3d = SpaceMultiText(parag)
+
+        # Apply transformation
+        def transform(v):
+            return self._pos + (self._orient @ v)
+        parag3d = parag3d.fimage(transform)
+
+        # Setup local orientations for the parag3d component figures
+        for fig in parag3d:
+            fig.orientable = True
+            fig.orient = self._orient
+
+        return parag3d
+
 # Takes a collection of Text figures and returns a MultiText figure
 # that concatenates all the individual Text figures.
 # This is basically a cheap and dirty way to implement something like
@@ -1300,6 +1350,22 @@ def paragraph(textarray, view, windowShape,
     parag.recenter(view, windowShape)
 
     return parag
+
+def paragraph3d(textarray, view, windowShape,
+    pos=0, orient=None, *args, **kwargs):
+
+    # Create 2d paragraph (FancyMultiText)
+    parag = paragraph(textarray, view, windowShape, pos, *args, **kwargs)
+
+    # Handle default orient
+    if orient is None:
+        orient = np.eye(3)
+
+    # Turn it into a SpaceParagraph
+    spaceParag = SpaceParagraph(parag)
+    spaceParag.set(pos=pos, orient=orient)
+
+    return spaceParag
 
 
 # class TextGroup(MultiText):
