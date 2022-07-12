@@ -897,6 +897,7 @@ class Spline(morpho.Figure):
         path.origin = self.origin
         path.rotation = self.rotation
         path._transform = self._transform.copy()
+        path._updateSettings(self)
 
         return path
 
@@ -1312,6 +1313,7 @@ class SpaceSpline(Spline):
         path.alpha = self.alpha
         path.width = self.width
         path.origin = self.origin.copy()
+        path._updateSettings(self)
 
         return path
 
@@ -1661,6 +1663,9 @@ class EllipticalArc(morpho.Figure):
         # path = path.fimage(lambda z: z + self.pos)
         path.origin = self.pos
 
+        # Update standard figure meta-settings
+        path._updateSettings(self)
+
         return path
 
 
@@ -1811,6 +1816,10 @@ class Pie(EllipticalArc):
         poly = poly.fimage(lambda z: mat(self.xradius,0,0,self.yradius)*z)
         # poly = poly.fimage(lambda z: z + self.pos)
         poly.origin = self.pos
+
+        # Update standard figure meta-settings
+        poly._updateSettings(self)
+
         return poly
 
 

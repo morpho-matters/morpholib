@@ -794,17 +794,30 @@ class SpaceText(Text):
         background=(1,1,1), backAlpha=0, backPad=0,
         *, align=None):
 
-        super().__init__(text, 0,
-            size, font,
-            bold, italic,
-            anchor_x, anchor_y,
-            color[:], alpha,
-            background, backAlpha, backPad,
-            align=align
-            )
+        if isinstance(text, Text):
+            # Copy over the state of the text figure
+            super().__init__()
+            self._state = text.copy()._state
+            # Copy non-tweenable attributes
+            self.text = text.text
+            self.font = text.font
+            self.bold = text.bold
+            self.italic = text.italic
+            self._updateSettings(text)
 
-        if pos is None:
-            pos = np.zeros(3)
+            pos = text.pos
+        else:
+            super().__init__(text, 0,
+                size, font,
+                bold, italic,
+                anchor_x, anchor_y,
+                color[:], alpha,
+                background, backAlpha, backPad,
+                align=align
+                )
+
+            if pos is None:
+                pos = np.zeros(3)
 
         # Redefine pos tweenable to be 3D.
         _pos = morpho.Tweenable("_pos", morpho.matrix.array(pos), tags=["nparray", "fimage"])
@@ -848,6 +861,20 @@ class SpaceText(Text):
     def box(self, view, ctx, pad=0):
         raise NotImplementedError
 
+    def toText(self):
+        txt = Text()
+        txt._state.update(self.copy()._state)
+        del txt._state["_pos"]
+        del txt._state["_orient"]
+        txt.pos = complex(*self._pos[:2].tolist())
+
+        txt.text = self.text
+        txt.font = self.font
+        txt.bold = self.bold
+        txt.italic = self.italic
+        txt._updateSettings(self)
+
+        return txt
 
     def primitives(self, camera): # orient=np.identity(3), focus=np.zeros(3)):
         if self.alpha == 0:

@@ -221,12 +221,23 @@ class Figure(object):
         # Create the new figure
         new = type(self)(*args, **kwargs)  # Call constructor
         new.update(newTweenables)
+        # The following 5 lines could be replaced with _updateSettings()
         new.defaultTween = self.defaultTween
         new.transition = self.transition
         new.static = self.static
         new.delay = self.delay
         new.visible = self.visible
         return new
+
+    # Updates the standard "meta-settings" of the figure with those
+    # of thetarget figure. Mainly for use when converting one figure
+    # type to another (e.g. SpaceText.toText() method)
+    def _updateSettings(self, target):
+        self.defaultTween = target.defaultTween
+        self.transition = target.transition
+        self.visible = target.visible
+        self.static = target.static
+        self.delay = target.delay
 
     # Update the state with a new set of tweenables.
     def update(self, tweenables):
