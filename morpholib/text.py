@@ -803,6 +803,7 @@ class SpaceText(Text):
             self.font = text.font
             self.bold = text.bold
             self.italic = text.italic
+            self._updateSettings(text)
 
             pos = text.pos
         else:
