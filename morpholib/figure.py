@@ -227,7 +227,7 @@ class Figure(object):
         new.update(newTweenables)
 
         # Copy registered nontweenables
-        new._nontweenables = self._nontweenables.copy()
+        # new._nontweenables = self._nontweenables.copy()
         # Make deep copy
         for name in self._nontweenables:
             value = getattr(self, name)
