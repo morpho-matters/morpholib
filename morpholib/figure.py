@@ -61,8 +61,11 @@ class Figure(object):
         # zdepth will not affect draw order ACROSS layers.
         zdepth = morpho.Tweenable("zdepth", zdepth, tags=["scalar"])
         self._state["zdepth"] = zdepth
+        self._nontweenables = set()
 
         self.update(tweenables)
+
+        ### META-SETTINGS ###
 
         # Tells higher-level structures whether or not to draw this figure.
         # Note this attribute can always be overridden by manually
@@ -206,7 +209,8 @@ class Figure(object):
     #     return st
 
     # Returns a deep-ish copy of the figure.
-    # This method copies all of the tweenables even for subclasses,
+    # This method copies all of the tweenables and any registered nontweenables
+    # even for subclasses,
     # but it doesn't handle any other attributes not built-in to the
     # Figure class.
     # Any optional arguments are passed to the constructor of the
@@ -221,6 +225,17 @@ class Figure(object):
         # Create the new figure
         new = type(self)(*args, **kwargs)  # Call constructor
         new.update(newTweenables)
+
+        # Copy registered nontweenables
+        new._nontweenables = self._nontweenables.copy()
+        # Make deep copy
+        for name in self._nontweenables:
+            value = getattr(self, name)
+            try:
+                setattr(new, name, value.copy())
+            except Exception:  # Upon failure, just reassign and hope for the best.
+                setattr(new, name, value)  # NOT redundant!
+
         # The following 5 lines could be replaced with _updateSettings()
         new.defaultTween = self.defaultTween
         new.transition = self.transition
@@ -274,6 +289,13 @@ class Figure(object):
         tweenable = morpho.Tweenable(name, value, tags, metadata)
         self._state[tweenable.name] = tweenable
         return tweenable
+
+    # Registers a name as a non-tweenable attribute of the figure.
+    # This enables the built-in Figure.copy() method to automatically
+    # copy non-tweenable attributes.
+    def NonTweenable(self, name, value):
+        setattr(self, name, value)
+        self._nontweenables.add(name)
 
     # Lists all the tweenables of a state.
     def listState(self):
