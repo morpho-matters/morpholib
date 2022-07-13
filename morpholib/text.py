@@ -1161,6 +1161,8 @@ class FancyMultiText(MultiText):
 
         return pivot
 
+# Special class used to render 3D paragraphs.
+# Mainly for internal use by the paragraph3d() function
 class SpaceParagraph(FancyMultiText):
     def __init__(self, text="", *args, **kwargs):
 
@@ -1296,6 +1298,9 @@ def group(textfigs, view, windowShape,
 
     return FancyMultiText(textfigs)
 
+# Creates a conformed version of the given textarray so it's a list
+# of lists of Text figures, where each sublist represents a row in
+# a paragraph. Throws error if unable to conform the given textarray.
 def conformText(textarray):
     # Handle nonstandard values for textarray
     try:
@@ -1314,8 +1319,34 @@ def conformText(textarray):
 
     return textarray
 
+# Creates a group of Text figures that look like a paragraph.
+# It's basically a multi-line version of group(), and can
+# probably replace it.
+#
+# INPUTS
+# textarray = List of lists of Text figures where each sublist
+#             represents a single row of the paragraph.
+# view = viewbox of the layer this group will be in
+# windowShape = Tuple denoting pixel dimensions of the animation window
+#               (pixel width, pixel height)
+# pos = Position of the text group (complex number). Default: 0
+# anchor_x = Overall horizontal position alignment parameter.
+#            -1 = left-aligned, 0 = center-aligned, 1 = right-aligned.
+#            Default: 0 (center-aligned)
+# anchor_y = Overall vertical position alignment parameter.
+#            -1 = bottom-aligned, 0 = center-aligned, 1 = top-aligned.
+#            Default: 0 (center-aligned)
+# alpha = Overall opacity of group. Default: 1 (opaque)
+# xgap = Pixel separation between adjacent text figures in a row.
+#        Default: 0 pixels
+# ygap = Pixel separation between adjacent rows in the paragraph.
+#        Default: 0 pixels
+# flush (keyword only) = Inter-row alignment.
+#            -1 = left-flush, 0 = center-flush, 1 = right-flush.
+#            Default: 0 (center-flush)
 def paragraph(textarray, view, windowShape,
-    pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0, *, flush=0, align=None):
+    pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0,
+    *, flush=0, align=None, gap=None):
 
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):
@@ -1326,9 +1357,13 @@ def paragraph(textarray, view, windowShape,
     else:
         textarray = conformText(textarray)
 
+    # gap overrides xgap if specified. It exists for backward
+    # compatibility with the input scheme of the group() function.
+    if gap is not None:
+        xgap = gap
+
     # Rename xgaps to emphasize its a pixel value
     xgap_pixels = xgap
-    del xgap
 
     # Convert gaps to physical units
     xgap = morpho.physicalWidth(xgap_pixels, view, windowShape)
@@ -1373,6 +1408,14 @@ def paragraph(textarray, view, windowShape,
 
     return parag
 
+# 3D version of paragraph(). See paragraph() for more info.
+#
+# Note that despite returning a space figure, the `textarray` input
+# should be composed of 2D Text figures, NOT 3D SpaceText figures!
+# They will be converted within the function.
+#
+# You also have to specify an `orient` rotation matrix, as space
+# paragraphs cannot be non-orientable. It defaults to the identity.
 def paragraph3d(textarray, view, windowShape,
     pos=0, orient=None, *args, **kwargs):
 
