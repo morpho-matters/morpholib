@@ -254,13 +254,16 @@ class Figure(object):
         self.static = target.static
         self.delay = target.delay
 
-    # Copies over all tweenables, non-tweenables, and meta-settings from
-    # the target figure over to self.
+    # Copies over all tweenables, registered non-tweenables,
+    # and meta-settings from the target figure over to self.
     def _updateFrom(self, target):
         target = target.copy()
-        self._state = target._state
+        self._state = target._state  # Copy tweenables
+        # Copy non-tweenables
         self._nontweenables = target._nontweenables
-        self._updateSettings(target)
+        for name in self._nontweenables:
+            setattr(self, name, getattr(target, name))
+        self._updateSettings(target)  # Copy meta-settings
 
     # Update the state with a new set of tweenables.
     def update(self, tweenables):
