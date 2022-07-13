@@ -943,6 +943,10 @@ class SpaceMultiText(MultiText):
         # Create frame figure
         super().__init__(textlist)
 
+        # If supplied a figure input, copy its meta-settings
+        if isinstance(text, morpho.Figure):
+            self._updateSettings(text)
+
     def primitives(self, camera):
         primlist = []
         for fig in self.figures:
@@ -1055,6 +1059,13 @@ class FancyMultiText(MultiText):
 
     def __init__(self, text="", *args, **kwargs):
 
+        # if isinstance(text, type(self)):
+        #     super().__init__()
+        #     textcopy = text.copy()
+        #     self._state = textcopy._state
+        #     self._nontweenables = textcopy._nontweenables
+        #     self._updateSettings(textcopy)
+        #     return
         if isinstance(text, MultiText):
             text = text.figures
 
@@ -1153,10 +1164,14 @@ class FancyMultiText(MultiText):
 class SpaceParagraph(FancyMultiText):
     def __init__(self, text="", *args, **kwargs):
 
-        super().__init__(text, *args, **kwargs)
+        if isinstance(text, FancyMultiText):
+            super().__init__()
+            self._updateFrom(text)
+        else:
+            super().__init__(text, *args, **kwargs)
 
         # Redefine pos tweenable to be 3D.
-        self.Tweenable("_pos", morpho.matrix.array(0), tags=["nparray", "fimage"])
+        self.Tweenable("_pos", morpho.matrix.array(self.pos), tags=["nparray", "fimage"])
         self._state.pop("pos")
         self.Tweenable("_orient", np.identity(3), tags=["nparray", "orient"])
 
@@ -1178,7 +1193,14 @@ class SpaceParagraph(FancyMultiText):
 
     def makeFrame(self, camera, ctx):
         # Construct 2D paragraph from self and then 3D-ify it
-        parag = super().makeFrame(camera, ctx)
+        posOrig = self._pos
+        self._pos = 0  # Temporarily change pos to 2D origin
+        try:
+            # Outputs MultiText object
+            parag = super().makeFrame(camera, ctx)
+        finally:
+            self._pos = posOrig  # Restore original pos
+
         parag3d = SpaceMultiText(parag)
 
         # Apply transformation
@@ -1187,7 +1209,7 @@ class SpaceParagraph(FancyMultiText):
         parag3d = parag3d.fimage(transform)
 
         # Setup local orientations for the parag3d component figures
-        for fig in parag3d:
+        for fig in parag3d.figures:
             fig.orientable = True
             fig.orient = self._orient
 
@@ -1355,7 +1377,7 @@ def paragraph3d(textarray, view, windowShape,
     pos=0, orient=None, *args, **kwargs):
 
     # Create 2d paragraph (FancyMultiText)
-    parag = paragraph(textarray, view, windowShape, pos, *args, **kwargs)
+    parag = paragraph(textarray, view, windowShape, 0, *args, **kwargs)
 
     # Handle default orient
     if orient is None:
