@@ -254,6 +254,14 @@ class Figure(object):
         self.static = target.static
         self.delay = target.delay
 
+    # Copies over all tweenables, non-tweenables, and meta-settings from
+    # the target figure over to self.
+    def _updateFrom(self, target):
+        target = target.copy()
+        self._state = target._state
+        self._nontweenables = target._nontweenables
+        self._updateSettings(target)
+
     # Update the state with a new set of tweenables.
     def update(self, tweenables):
         if "zdepth" not in self._state:
