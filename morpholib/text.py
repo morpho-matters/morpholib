@@ -1196,8 +1196,8 @@ class SpaceParagraph(FancyMultiText):
         posOrig = self._pos
         self._pos = 0  # Temporarily change pos to 2D origin
         try:
-            # Outputs MultiText object
-            parag = super().makeFrame(camera, ctx)
+            # Outputs 2D MultiText object
+            parag = FancyMultiText.makeFrame(self, camera, ctx)
         finally:
             self._pos = posOrig  # Restore original pos
 
