@@ -1076,6 +1076,9 @@ class FancyMultiText(MultiText):
         self.Tweenable("anchor_y", 0, tags=["scalar"])
         self.Tweenable("alpha", 1, tags=["scalar"])
         self.Tweenable("rotation", 0, tags=["scalar"])
+        self.Tweenable("background", (1,1,1), tags=["color"])
+        self.Tweenable("backAlpha", 0, tags=["scalar"])
+        self.Tweenable("backPad", 0, tags=["scalar"])
 
     @property
     def align(self):
@@ -1120,8 +1123,10 @@ class FancyMultiText(MultiText):
         height = top - bottom
 
         # Calculate translation
-        dx = self.pos.real - morpho.lerp(-width/2, width/2, self.anchor_x, start=-1, end=1)
-        dy = self.pos.imag - morpho.lerp(-height/2, height/2, self.anchor_y, start=-1, end=1)
+        # dx = self.pos.real - morpho.lerp(-width/2, width/2, self.anchor_x, start=-1, end=1)
+        # dy = self.pos.imag - morpho.lerp(-height/2, height/2, self.anchor_y, start=-1, end=1)
+        dx = -morpho.lerp(-width/2, width/2, self.anchor_x, start=-1, end=1)
+        dy = -morpho.lerp(-height/2, height/2, self.anchor_y, start=-1, end=1)
         dz = dx + 1j*dy
 
         # Apply translations
@@ -1129,12 +1134,23 @@ class FancyMultiText(MultiText):
         rot = cmath.exp(1j*self.rotation) if self.rotation != 0 else 1
         for fig in self.figures:
             fig = fig.copy()
-            fig.pos += dz
+            fig.pos += self.pos + dz
             if self.rotation != 0:
                 fig.pos = rot*(fig.pos-self.pos) + self.pos
             fig.alpha *= self.alpha
             fig.rotation += self.rotation
             figs.append(fig)
+
+        if self.backAlpha > 0:
+            rect = morpho.grid.rect(
+                [left-self.backPad+dx, right+self.backPad+dx, bottom-self.backPad+dy, top+self.backPad+dy]
+                )
+            rect.origin = self.pos
+            rect.width = 0
+            rect.fill = self.background
+            rect.alpha = self.backAlpha*self.alpha
+            rect.rotation = self.rotation
+            return morpho.Frame([rect, MultiText(figs)])
 
         return MultiText(figs)
 
@@ -1208,17 +1224,27 @@ class SpaceParagraph(FancyMultiText):
         finally:
             self._pos = posOrig  # Restore original pos
 
+        # Define transformation
+        def transform(v):
+            return self._pos + (self._orient @ v)
+
+        if self.backAlpha > 0:
+            rect, parag = parag.figures
+            rot = morpho.matrix.rotation(khat, rect.rotation)
+            rect = morpho.grid.SpacePolygon(rect)
+            rect = rect.fimage(lambda v: transform(rot @ v))
         parag3d = SpaceMultiText(parag)
 
         # Apply transformation
-        def transform(v):
-            return self._pos + (self._orient @ v)
         parag3d = parag3d.fimage(transform)
 
         # Setup local orientations for the parag3d component figures
         for fig in parag3d.figures:
             fig.orientable = True
             fig.orient = self._orient
+
+        if self.backAlpha > 0:
+            return morpho.SpaceFrame([rect, parag3d])
 
         return parag3d
 
@@ -1351,7 +1377,8 @@ def conformText(textarray):
 #            Default: 0 (center-flush)
 def paragraph(textarray, view, windowShape,
     pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0,
-    *, flush=0, align=None, gap=None, rotation=0):
+    *, flush=0, align=None, gap=None, rotation=0,
+    background=(1,1,1), backAlpha=0, backPad=0):
 
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):
@@ -1410,6 +1437,9 @@ def paragraph(textarray, view, windowShape,
     parag.anchor_y = anchor_y
     parag.alpha = alpha
     parag.rotation = rotation
+    parag.background = background
+    parag.backAlpha = backAlpha
+    parag.backPad = backPad
     parag.recenter(view, windowShape)
 
     return parag
