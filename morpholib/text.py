@@ -1075,6 +1075,7 @@ class FancyMultiText(MultiText):
         self.Tweenable("anchor_x", 0, tags=["scalar"])
         self.Tweenable("anchor_y", 0, tags=["scalar"])
         self.Tweenable("alpha", 1, tags=["scalar"])
+        self.Tweenable("rotation", 0, tags=["scalar"])
 
     @property
     def align(self):
@@ -1125,10 +1126,14 @@ class FancyMultiText(MultiText):
 
         # Apply translations
         figs = []
+        rot = cmath.exp(1j*self.rotation) if self.rotation != 0 else 1
         for fig in self.figures:
             fig = fig.copy()
             fig.pos += dz
+            if self.rotation != 0:
+                fig.pos = rot*(fig.pos-self.pos) + self.pos
             fig.alpha *= self.alpha
+            fig.rotation += self.rotation
             figs.append(fig)
 
         return MultiText(figs)
@@ -1346,7 +1351,7 @@ def conformText(textarray):
 #            Default: 0 (center-flush)
 def paragraph(textarray, view, windowShape,
     pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0,
-    *, flush=0, align=None, gap=None):
+    *, flush=0, align=None, gap=None, rotation=0):
 
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):
@@ -1404,6 +1409,7 @@ def paragraph(textarray, view, windowShape,
     parag.anchor_x = anchor_x
     parag.anchor_y = anchor_y
     parag.alpha = alpha
+    parag.rotation = rotation
     parag.recenter(view, windowShape)
 
     return parag
