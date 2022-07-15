@@ -1076,6 +1076,7 @@ class FancyMultiText(MultiText):
         self.Tweenable("anchor_y", 0, tags=["scalar"])
         self.Tweenable("alpha", 1, tags=["scalar"])
         self.Tweenable("rotation", 0, tags=["scalar"])
+        self.Tweenable("_transform", np.identity(2), tags=["nparray"])
         self.Tweenable("background", (1,1,1), tags=["color"])
         self.Tweenable("backAlpha", 0, tags=["scalar"])
         self.Tweenable("backPad", 0, tags=["scalar"])
@@ -1087,6 +1088,14 @@ class FancyMultiText(MultiText):
     @align.setter
     def align(self, value):
         self.anchor_x, self.anchor_y = value
+
+    @property
+    def transform(self):
+        return self._transform
+
+    @transform.setter
+    def transform(self, value):
+        self._transform = morpho.matrix.array(value)
 
     # Returns the physical bounding box of the entire text group as
     # [xmin, xmax, ymin, ymax]
@@ -1129,16 +1138,18 @@ class FancyMultiText(MultiText):
         dy = -morpho.lerp(-height/2, height/2, self.anchor_y, start=-1, end=1)
         dz = dx + 1j*dy
 
-        # Apply translations
+        # Apply translations/transformations
         figs = []
         rot = cmath.exp(1j*self.rotation) if self.rotation != 0 else 1
+        mat = 1 if np.array_equal(self._transform, I2) else morpho.matrix.Mat(self._transform)
         for fig in self.figures:
             fig = fig.copy()
-            fig.pos += self.pos + dz
-            if self.rotation != 0:
-                fig.pos = rot*(fig.pos-self.pos) + self.pos
+            fig.pos += dz
+            fig.pos = mat*(rot*(fig.pos))
+            fig.pos += self.pos
             fig.alpha *= self.alpha
             fig.rotation += self.rotation
+            fig._transform = self._transform @ fig._transform
             figs.append(fig)
 
         if self.backAlpha > 0:
@@ -1150,6 +1161,7 @@ class FancyMultiText(MultiText):
             rect.fill = self.background
             rect.alpha = self.backAlpha*self.alpha
             rect.rotation = self.rotation
+            rect._transform = self._transform
             return morpho.Frame([rect, MultiText(figs)])
 
         return MultiText(figs)
