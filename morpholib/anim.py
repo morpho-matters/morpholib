@@ -270,6 +270,9 @@ class MultiFigure(Frame):
         # which should grab any valid attribute returns in the
         # main class.
         try:
+            # Not sure it's best to use super() here. Consider
+            # replacing it with morpho.Figure.__getattr__(name).
+            # Same goes for the super() call a few lines down.
             return super().__getattr__(name)
         except AttributeError:
             pass
