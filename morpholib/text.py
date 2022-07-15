@@ -1227,38 +1227,52 @@ class SpaceParagraph(FancyMultiText):
         self._orient = morpho.matrix.array(value)
 
     def makeFrame(self, camera, ctx):
-        # Construct 2D paragraph from self and then 3D-ify it
-        posOrig = self._pos
-        self._pos = 0  # Temporarily change pos to 2D origin
-        try:
-            # Outputs 2D MultiText object
-            parag = FancyMultiText.makeFrame(self, camera, ctx)
-        finally:
-            self._pos = posOrig  # Restore original pos
+        raise NotImplementedError
 
-        # Define transformation
-        def transform(v):
-            return self._pos + (self._orient @ v)
+    def primitives(self, camera):
+        if self.alpha == 0:
+            return []
 
-        if self.backAlpha > 0:
-            rect, parag = parag.figures
-            rot = morpho.matrix.rotation(khat, rect.rotation)
-            rect = morpho.grid.SpacePolygon(rect)
-            rect = rect.fimage(lambda v: transform(rot @ v))
-        parag3d = SpaceMultiText(parag)
+        orient = camera.orient
+        focus = camera.focus
 
-        # Apply transformation
-        parag3d = parag3d.fimage(transform)
+        if np.allclose(focus, 0):
+            pos3d = orient @ self.pos
+        else:
+            pos3d = orient @ (self.pos - focus) + focus
 
-        # Setup local orientations for the parag3d component figures
-        for fig in parag3d.figures:
-            fig.orientable = True
-            fig.orient = self._orient
+        # Create equivalent 2D FancyMultiText object
+        txt = FancyMultiText()
+        txt._updateFrom(self)
+        del txt._state["_pos"]
+        del txt._state["_orient"]
+        # txt.text = self.text
+        txt.pos = (pos3d[0] + 1j*pos3d[1]).tolist()
+        txt.zdepth = pos3d[2]
+        # txt.size = self.size
+        txt._transform = (orient @ self.orient)[:2,:2] @ self._transform
+        # txt.color = self.color
+        # txt.alpha = self.alpha
+        # txt.background = self.background
+        # txt.backAlpha = self.backAlpha
+        # txt.backPad = self.backPad
+        # txt.rotation = self.rotation
+        # txt.anchor_x = self.anchor_x
+        # txt.anchor_y = self.anchor_y
 
-        if self.backAlpha > 0:
-            return morpho.SpaceFrame([rect, parag3d])
+        if False:  # Temporarily disabled. Please remove when prescale is in.
+            txt.prescale_x = self.prescale_x
+            txt.prescale_y = self.prescale_y
 
-        return parag3d
+        # txt.font = self.font
+        # txt.bold = self.bold
+        # txt.italic = self.italic
+
+        return [txt]
+
+    def draw(self, camera, ctx):
+        # Use default SpaceFigure draw()
+        morpho.SpaceFigure.draw(self, camera, ctx)
 
 # Takes a collection of Text figures and returns a MultiText figure
 # that concatenates all the individual Text figures.
