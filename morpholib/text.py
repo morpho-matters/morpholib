@@ -183,7 +183,7 @@ class Text(morpho.Figure):
     # Given viewbox and cairo context (or windowShape tuple),
     # returns tuple (width, height) representing the text's physical
     # width and height.
-    # Note this ignores the "transform" tweenable.
+    # Note this ignores the "transform" and prescale tweenables.
     def dimensions(self, view, ctx):
         if isinstance(view, morpho.anim.Camera):
             view = view.view
@@ -196,7 +196,8 @@ class Text(morpho.Figure):
 
     # Returns bounding box of the text in physical units.
     # Mainly of use internally to draw the background box.
-    # Note: Ignores rotation and prescale factors.
+    # Note: Ignores rotation and transform, but includes
+    # the prescale factors
     def box(self, view, ctx, pad=0):
         width, height = self.dimensions(view, ctx)
         # Modify by prescale factors
@@ -1260,9 +1261,8 @@ class SpaceParagraph(FancyMultiText):
         # txt.anchor_x = self.anchor_x
         # txt.anchor_y = self.anchor_y
 
-        if False:  # Temporarily disabled. Please remove when prescale is in.
-            txt.prescale_x = self.prescale_x
-            txt.prescale_y = self.prescale_y
+        # txt.prescale_x = self.prescale_x
+        # txt.prescale_y = self.prescale_y
 
         # txt.font = self.font
         # txt.bold = self.bold
