@@ -263,9 +263,9 @@ class Figure(object):
     def _updateFrom(self, target, copy=True):
         if copy:
             target = target.copy()
-        self._state = target._state  # Copy tweenables
+        self._state.update(target._state)  # Copy over tweenables
         # Copy non-tweenables
-        self._nontweenables = target._nontweenables
+        self._nontweenables.update(target._nontweenables)
         for name in self._nontweenables:
             setattr(self, name, getattr(target, name))
         self._updateSettings(target)  # Copy meta-settings
