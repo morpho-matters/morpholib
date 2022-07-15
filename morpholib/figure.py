@@ -256,8 +256,13 @@ class Figure(object):
 
     # Copies over all tweenables, registered non-tweenables,
     # and meta-settings from the target figure over to self.
-    def _updateFrom(self, target):
-        target = target.copy()
+    #
+    # If optional argument `copy` is set to False, the target
+    # figure will not be internally copied, and the attributes
+    # of the given target will be transferred directly to self.
+    def _updateFrom(self, target, copy=True):
+        if copy:
+            target = target.copy()
         self._state = target._state  # Copy tweenables
         # Copy non-tweenables
         self._nontweenables = target._nontweenables
