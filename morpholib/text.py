@@ -459,8 +459,11 @@ class PText(Text):
     def height(self, view=None, ctx=None):
         return self.size
 
+    def fontsize(self, view, ctx):
+        return self._fontRatio*self.pixelHeight(view, ctx)
+
     # Returns equivalent non-physical Text object
-    def toText(self, view, ctx):
+    def makeText(self, view, ctx):
         txt = Text()
         txt._updateFrom(self)
 
@@ -470,12 +473,13 @@ class PText(Text):
         del txt._fontRatio
 
         txt.font = self._font
-        txt.size = self._fontRatio*self.pixelHeight(view, ctx)
+        # txt.size = self._fontRatio*self.pixelHeight(view, ctx)
+        txt.size = self.fontsize(view, ctx)
 
         return txt
 
     def draw(self, camera, ctx):
-        self.toText(camera.view, ctx).draw(camera, ctx)
+        self.makeText(camera.view, ctx).draw(camera, ctx)
 
 Ptext = PText  # Alias is maybe easier to type
 
@@ -692,6 +696,9 @@ MultiPtext = MultiPText
 # orientable = Boolean specifying whether text should be orientable in 3D space,
 #              or just behave like a label always facing the camera. Default: False
 class SpaceText(Text):
+
+    baseFigure = Text
+
     def __init__(self, text=None, pos=None,
         size=64, font=None,
         bold=False, italic=False,
@@ -700,7 +707,7 @@ class SpaceText(Text):
         background=(1,1,1), backAlpha=0, backPad=0,
         *, align=None):
 
-        if isinstance(text, Text):
+        if isinstance(text, self.baseFigure):
             # Copy over the state of the text figure
             super().__init__()
             self._state = text.copy()._state
@@ -765,7 +772,7 @@ class SpaceText(Text):
         return new
 
     def toText(self):
-        txt = Text()
+        txt = self.baseFigure()
         txt._state.update(self.copy()._state)
         del txt._state["_pos"]
         del txt._state["_orient"]
@@ -792,7 +799,7 @@ class SpaceText(Text):
         else:
             pos3d = orient @ (self.pos - focus) + focus
 
-        txt = Text()
+        txt = self.baseFigure()
         txt.text = self.text
         txt.pos = (pos3d[0] + 1j*pos3d[1]).tolist()
         txt.zdepth = pos3d[2]
@@ -827,6 +834,12 @@ class SpaceText(Text):
         txt.draw(camera, ctx)
 
 Spacetext = SpaceText  # Synonym
+
+class SpacePText(SpaceText):
+    baseFigure = PText
+
+SpacePtext = SpacePText
+
 
 # Multi version of the SpaceText class.
 # See "SpaceText" and "MultiText" for more info.
