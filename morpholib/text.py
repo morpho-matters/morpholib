@@ -58,7 +58,7 @@ I2 = np.identity(2)
 # bold = Boolean indicating whether to bold. Default: False
 # italic = Boolean indicating whether to use italics. Default: False
 class Text(morpho.Figure):
-    def __init__(self, text="", pos=complex(0),
+    def __init__(self, text="", pos=0,
         size=64, font=None,
         bold=False, italic=False,
         anchor_x=0, anchor_y=0,
@@ -363,14 +363,15 @@ class Text(morpho.Figure):
 
 
 class PText(Text):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, text="", pos=0,
+        size=1, *args, **kwargs):
 
         # `_text` and `_font` attributes will be implicitly set
         # within the super init call.
-        super().__init__(*args, **kwargs)
+        super().__init__(text, pos, size, *args, **kwargs)
 
         # del self._nontweenables["text"]
-        del self._nontweenables["font"]
+        self._nontweenables.remove("font")
         # self._nontweenables.update({"_text", "_font", "_fontRatio", "_aspectRatioWH"})
         self._nontweenables.update({"_font", "_fontRatio"})
 
@@ -392,16 +393,17 @@ class PText(Text):
         self._font = value
         self._updateFontRatio()
 
-    # def _getAspectRatioWH(self):
-    #     txt = Text()
-    #     txt.text = self._text
-    #     txt.font = self._font
-    #     txt.bold = self.bold
-    #     txt.italic = self.italic
-    #     txt.size = 64  # Arbitrarily chosen dummy size
+    def aspectRatioWH(self):
+        # Create dummy non-physical Text figure to reference
+        txt = Text()
+        txt.text = self._text
+        txt.font = self._font
+        txt.bold = self.bold
+        txt.italic = self.italic
+        txt.size = 64  # Arbitrarily chosen dummy size
 
-    #     width, height = txt.pixelDimensions()
-    #     return width/height
+        width, height = txt.pixelDimensions()
+        return width/height
 
     # def _updateAspectRatioWH(self):
     #     self._aspectRatioWH = self._getAspectRatioWH()
@@ -413,53 +415,69 @@ class PText(Text):
     def _getFontRatio(font):
         txt = Text()
         txt.text = "A"
-        txt.font = self._font
-        txt.bold = self.bold
-        txt.italic = self.italic
+        txt.font = font
+        # txt.bold = self.bold
+        # txt.italic = self.italic
         txt.size = 64  # Arbitrarily chosen dummy size
 
         # Ratio of text "size" parameter units to pixel height
         return txt.size/txt.pixelHeight()
 
-
-    # Returns equivalent non-physical Text object
-    def toText(self, view, ctx):
-        txt = Text()
-        txt._updateFrom(self)
-        # Remove nontweenables particular to PText
-        txt._nontweenables.difference_update({"_font", "_fontRatio"})
-        del txt._font
-        del txt._fontRatio
-        txt.font = self._font
-
-        txt.size = self._fontRatio*self.pixelHeight(view, ctx)
-
-        return txt
-
     # Returns the dimensions (in pixels) of the text as a pair
-    # (textwidth, textheight).
+    # (textWidth, textHeight).
     # Note: This ignores the transform attribute.
     def pixelDimensions(self, view, ctx):
-        textHeight = mo.pixelHeight(self.size, view, ctx)
-        textWidth = self._aspectRatioWH*textHeight
+        # aspectRatioWH = self.aspectRatioWH()
+        # textHeight = morpho.pixelHeight(self.size, view, ctx)
+        # textWidth = morpho.pixelWidth(aspectRatioWH*self.size, view, ctx)
+
+        textWidth = self.pixelWidth(view, ctx)
+        textHeight = self.pixelHeight(view, ctx)
 
         return (textWidth, textHeight)
+
+    # Returns the width of the text in pixels.
+    def pixelWidth(self, view, ctx):
+        aspectRatioWH = self.aspectRatioWH()
+        return morpho.pixelWidth(aspectRatioWH*self.size, view, ctx)
+
+    # Returns the height of the text in pixels.
+    def pixelHeight(self, view, ctx):
+        return morpho.pixelHeight(self.size, view, ctx)
 
     # Given viewbox and cairo context (or windowShape tuple),
     # returns tuple (width, height) representing the text's physical
     # width and height.
     # Note this ignores the "transform" and prescale tweenables.
     def dimensions(self, view=None, ctx=None):
-        return (self._aspectRatioWH*self.size, self.size)
+        # return (self.aspectRatioWH()*self.size, self.size)
+        return (self.width(), self.height())
 
-    # Returns the width of the text in pixels.
-    def pixelWidth(self, view, ctx):
-        pass
+    def width(self, view=None, ctx=None):
+        return self.aspectRatioWH()*self.size
 
-    # Returns the height of the text in pixels.
-    def pixelHeight(self, view, ctx):
-        return morpho.pixelHeight(self.size, view, ctx)
+    def height(self, view=None, ctx=None):
+        return self.size
 
+    # Returns equivalent non-physical Text object
+    def toText(self, view, ctx):
+        txt = Text()
+        txt._updateFrom(self)
+
+        # Remove nontweenables particular to PText
+        txt._nontweenables.difference_update({"_font", "_fontRatio"})
+        del txt._font
+        del txt._fontRatio
+
+        txt.font = self._font
+        txt.size = self._fontRatio*self.pixelHeight(view, ctx)
+
+        return txt
+
+    def draw(self, camera, ctx):
+        self.toText(camera.view, ctx).draw(camera, ctx)
+
+Ptext = PText  # Alias is maybe easier to type
 
 
 # Decorator for tween methods in the MultiText class below.
