@@ -270,10 +270,11 @@ class MultiFigure(Frame):
         # which should grab any valid attribute returns in the
         # main class.
         try:
-            # Not sure it's best to use super() here. Consider
-            # replacing it with morpho.Figure.__getattr__(name).
-            # Same goes for the super() call a few lines down.
-            return super().__getattr__(name)
+            # # Not sure it's best to use super() here. Consider
+            # # replacing it with morpho.Figure.__getattr__(self, name).
+            # # Same goes for the super() call a few lines down.
+            # return super().__getattr__(name)
+            return morpho.Figure.__getattr__(self, name)
         except AttributeError:
             pass
 
@@ -287,7 +288,8 @@ class MultiFigure(Frame):
             # This line is guaranteed to fail because it failed
             # in the protected clause above. However, this time
             # I WANT the error to be thrown!
-            return super().__getattr__(name)
+            # return super().__getattr__(name)
+            return morpho.Figure.__getattr__(self, name)
 
         # Try to find the attribute in the first member figure
         # and if found, return it.
