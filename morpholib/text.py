@@ -454,7 +454,7 @@ class PText(Text):
 
     # Returns the width of the text in pixels.
     def pixelWidth(self, view, ctx):
-
+        pass
 
     # Returns the height of the text in pixels.
     def pixelHeight(self, view, ctx):
