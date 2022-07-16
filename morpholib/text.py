@@ -366,7 +366,7 @@ class PText(Text):
     def __init__(self, text="", pos=0,
         size=1, *args, **kwargs):
 
-        # `_text` and `_font` attributes will be implicitly set
+        # `_font` attribute will be implicitly set
         # within the super init call.
         super().__init__(text, pos, size, *args, **kwargs)
 
@@ -396,7 +396,7 @@ class PText(Text):
     def aspectRatioWH(self):
         # Create dummy non-physical Text figure to reference
         txt = Text()
-        txt.text = self._text
+        txt.text = self.text
         txt.font = self._font
         txt.bold = self.bold
         txt.italic = self.italic
@@ -534,8 +534,12 @@ def Multi(imageMethod, reverseMethod=None):
             # Fade out self and fade in other
             else:
                 # Compute the scale matrices
-                selfWidth, selfHeight = selffig.pixelDimensions()
-                otherWidth, otherHeight = otherfig.pixelDimensions()
+                if isinstance(selffig, PText):
+                    selfWidth, selfHeight = selffig.dimensions()
+                    otherWidth, otherHeight = otherfig.dimensions()
+                else:
+                    selfWidth, selfHeight = selffig.pixelDimensions()
+                    otherWidth, otherHeight = otherfig.pixelDimensions()
                 self_to_other_size_ratio = selffig.size/otherfig.size
                 forward_scale_x = otherWidth / selfWidth * self_to_other_size_ratio
                 forward_scale_y = otherHeight / selfHeight * self_to_other_size_ratio
@@ -616,15 +620,17 @@ def Multi(imageMethod, reverseMethod=None):
 # Bottom line: It's just like Text except you can tween between different
 # underlying text strings.
 class MultiText(morpho.MultiFigure):
+    baseFigure = Text
+
     def __init__(self, text="", *args, **kwargs):
         if isinstance(text, str):
-            textlist = [Text(text, *args, **kwargs)]
+            textlist = [self.baseFigure(text, *args, **kwargs)]
         elif isinstance(text, list) or isinstance(text, tuple):
-            textlist = [(Text(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
-        elif isinstance(text, Text):
+            textlist = [(self.baseFigure(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
+        elif isinstance(text, self.baseFigure):
             textlist = [text]
         else:
-            textlist = [Text(text, *args, **kwargs)]
+            textlist = [self.baseFigure(text, *args, **kwargs)]
 
         # Create frame figure
         super().__init__(textlist)
@@ -668,6 +674,10 @@ class MultiText(morpho.MultiFigure):
             reverseMethod=Text.tweenPivot(-angle, *args, **kwargs)
             )
 
+class MultiPText(MultiText):
+    baseFigure = PText
+
+MultiPtext = MultiPText
 
 
 
