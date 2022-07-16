@@ -362,6 +362,105 @@ class Text(morpho.Figure):
         ctx.new_path()
 
 
+class PText(Text):
+    def __init__(self, *args, **kwargs):
+
+        # `_text` and `_font` attributes will be implicitly set
+        # within the super init call.
+        super().__init__(*args, **kwargs)
+
+        # del self._nontweenables["text"]
+        del self._nontweenables["font"]
+        # self._nontweenables.update({"_text", "_font", "_fontRatio", "_aspectRatioWH"})
+        self._nontweenables.update({"_font", "_fontRatio"})
+
+    # @property
+    # def text(self):
+    #     return self._text
+
+    # @text.setter
+    # def text(self, value):
+    #     self._text = value
+    #     self._updateAspectRatioWH()
+
+    @property
+    def font(self):
+        return self._font
+
+    @font.setter
+    def font(self, value):
+        self._font = value
+        self._updateFontRatio()
+
+    # def _getAspectRatioWH(self):
+    #     txt = Text()
+    #     txt.text = self._text
+    #     txt.font = self._font
+    #     txt.bold = self.bold
+    #     txt.italic = self.italic
+    #     txt.size = 64  # Arbitrarily chosen dummy size
+
+    #     width, height = txt.pixelDimensions()
+    #     return width/height
+
+    # def _updateAspectRatioWH(self):
+    #     self._aspectRatioWH = self._getAspectRatioWH()
+
+    def _updateFontRatio(self):
+        self._fontRatio = self._getFontRatio(self._font)
+
+    @staticmethod
+    def _getFontRatio(font):
+        txt = Text()
+        txt.text = "A"
+        txt.font = self._font
+        txt.bold = self.bold
+        txt.italic = self.italic
+        txt.size = 64  # Arbitrarily chosen dummy size
+
+        # Ratio of text "size" parameter units to pixel height
+        return txt.size/txt.pixelHeight()
+
+
+    # Returns equivalent non-physical Text object
+    def toText(self, view, ctx):
+        txt = Text()
+        txt._updateFrom(self)
+        # Remove nontweenables particular to PText
+        txt._nontweenables.difference_update({"_font", "_fontRatio"})
+        del txt._font
+        del txt._fontRatio
+        txt.font = self._font
+
+        txt.size = self._fontRatio*self.pixelHeight(view, ctx)
+
+        return txt
+
+    # Returns the dimensions (in pixels) of the text as a pair
+    # (textwidth, textheight).
+    # Note: This ignores the transform attribute.
+    def pixelDimensions(self, view, ctx):
+        textHeight = mo.pixelHeight(self.size, view, ctx)
+        textWidth = self._aspectRatioWH*textHeight
+
+        return (textWidth, textHeight)
+
+    # Given viewbox and cairo context (or windowShape tuple),
+    # returns tuple (width, height) representing the text's physical
+    # width and height.
+    # Note this ignores the "transform" and prescale tweenables.
+    def dimensions(self, view=None, ctx=None):
+        return (self._aspectRatioWH*self.size, self.size)
+
+    # Returns the width of the text in pixels.
+    def pixelWidth(self, view, ctx):
+
+
+    # Returns the height of the text in pixels.
+    def pixelHeight(self, view, ctx):
+        return morpho.pixelHeight(self.size, view, ctx)
+
+
 
 # Decorator for tween methods in the MultiText class below.
 # Reworks ordinary Text class tween methods so that they work
