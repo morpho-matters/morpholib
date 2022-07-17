@@ -639,6 +639,10 @@ class MultiText(morpho.MultiFigure):
         # Create frame figure
         super().__init__(textlist)
 
+        # If supplied a figure input, copy its meta-settings
+        if isinstance(text, morpho.Figure):
+            self._updateSettings(text)
+
     @property
     def textlist(self):
         return self.figures
@@ -647,13 +651,13 @@ class MultiText(morpho.MultiFigure):
     def textlist(self, value):
         self.figures = value
 
-        # Convert every figure in the list to a Text figure
-        # if possible.
-        for n in range(len(self.figures)):
-            fig = self.figures[n]
-            if not isinstance(fig, Text):
-                newfig = fig.images[0].copy()
-                self.figures[n] = newfig
+        # # Convert every figure in the list to a Text figure
+        # # if possible.
+        # for n in range(len(self.figures)):
+        #     fig = self.figures[n]
+        #     if not isinstance(fig, Text):
+        #         newfig = fig.images[0].copy()
+        #         self.figures[n] = newfig
 
     def all(self):
         raise NotImplementedError
@@ -739,7 +743,8 @@ class SpaceText(Text):
         _orient = morpho.Tweenable("_orient", np.identity(3), tags=["nparray", "orient"])
         self._state["_orient"] = _orient
 
-        self.orientable = False
+        # self.orientable = False
+        self.NonTweenable("orientable", False)
 
         # # Redefine pos tweenable to be 3D.
         # # Change the "pos" tweenable's "complex" tag to "nparray"
@@ -766,10 +771,10 @@ class SpaceText(Text):
     def orient(self, value):
         self._orient = morpho.matrix.array(value)
 
-    def copy(self):
-        new = super().copy()
-        new.orientable = self.orientable
-        return new
+    # def copy(self):
+    #     new = super().copy()
+    #     new.orientable = self.orientable
+    #     return new
 
     def toText(self):
         txt = self.baseFigure()
@@ -835,8 +840,11 @@ class SpaceText(Text):
 
 Spacetext = SpaceText  # Synonym
 
-class SpacePText(SpaceText):
+class SpacePText(PText, SpaceText):
     baseFigure = PText
+
+    def draw(self, camera, ctx):
+        SpaceText.draw(self, camera, ctx)
 
 SpacePtext = SpacePText
 
@@ -844,15 +852,17 @@ SpacePtext = SpacePText
 # Multi version of the SpaceText class.
 # See "SpaceText" and "MultiText" for more info.
 class SpaceMultiText(MultiText):
+    baseFigure = SpaceText
+
     def __init__(self, text="", *args, **kwargs):
         if isinstance(text, str):
-            textlist = [SpaceText(text, *args, **kwargs)]
+            textlist = [self.baseFigure(text, *args, **kwargs)]
         elif isinstance(text, list) or isinstance(text, tuple):
-            textlist = [(SpaceText(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
+            textlist = [(self.baseFigure(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
         elif isinstance(text, MultiText):
-            textlist = [SpaceText(item, *args, **kwargs) for item in text.figures]
+            textlist = [self.baseFigure(item, *args, **kwargs) for item in text.figures]
         else:
-            textlist = [SpaceText(text, *args, **kwargs)]
+            textlist = [self.baseFigure(text, *args, **kwargs)]
 
         # Create frame figure
         super().__init__(textlist)
@@ -872,8 +882,13 @@ class SpaceMultiText(MultiText):
         for fig in self.primitives(camera):
             fig.draw(camera, ctx)
 
-
 SpaceMultitext = Spacemultitext = SpaceMultiText  # Synonyms
+
+
+class SpaceMultiPText(SpaceMultiText):
+    baseFigure = SpacePText
+
+SpaceMultiPtext = SpaceMultiPText
 
 
 # Non-drawable figure that contains numerical data and tools for
