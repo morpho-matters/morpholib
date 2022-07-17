@@ -92,7 +92,8 @@ class MaskConfigurationError(Exception):
 class Frame(morpho.Figure):
     def __init__(self, figures=None):
         # By default, do what the superclass does.
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         if figures is None: figures = []
         figures = morpho.Tweenable(
