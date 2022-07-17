@@ -46,6 +46,10 @@ class Figure(object):
     # attribute name).
     def __init__(self, tweenables=None, zdepth=0):
 
+        # super() call for sake of possible multi-inheritance
+        # by subclasses
+        super().__init__()
+
         if tweenables is None: tweenables = {}
 
         # self._state = {}
