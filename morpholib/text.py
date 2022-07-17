@@ -637,7 +637,10 @@ class MultiText(morpho.MultiFigure):
             textlist = [self.baseFigure(text, *args, **kwargs)]
 
         # Create frame figure
-        super().__init__(textlist)
+        # Splitting the init like this prevents superclass init
+        # from doing fancy stuff with a list to __init__()
+        super().__init__()
+        self.figures = textlist
 
         # If supplied a figure input, copy its meta-settings
         if isinstance(text, morpho.Figure):
@@ -865,7 +868,10 @@ class SpaceMultiText(MultiText):
             textlist = [self.baseFigure(text, *args, **kwargs)]
 
         # Create frame figure
-        super().__init__(textlist)
+        # Splitting the init like this prevents superclass init
+        # from doing fancy stuff with a list to __init__()
+        super().__init__()
+        self.figures = textlist
 
         # If supplied a figure input, copy its meta-settings
         if isinstance(text, morpho.Figure):
