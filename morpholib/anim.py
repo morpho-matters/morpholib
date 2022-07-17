@@ -152,7 +152,8 @@ class Frame(morpho.Figure):
     # and that frame has a lot of big figures (like hi-res paths).
     def copy(self, deep=True):
         # Copy the tweenables, default tween method and transition.
-        new = morpho.Figure.copy(self)
+        # new = morpho.Figure.copy(self)
+        new = super().copy()
         # new = super().copy()
 
         # Make copies of all the underlying figures.
