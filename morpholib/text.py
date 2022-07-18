@@ -1032,6 +1032,17 @@ class FancyMultiText(MultiText):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
+    # FancyMultiText figures should pretty much only be used
+    # where the user really is manipulating multiple Text figures,
+    # so disable the MultiFigure feature where accessing a non-existent
+    # attribute attempts to find it in the attributes of the first
+    # component figure.
+    def __getattr__(self, name):
+        return morpho.Figure.__getattr__(self, name)
+
+    def __setattr__(self, name, value):
+        morpho.Figure.__setattr__(self, name, value)
+
     # Returns the physical bounding box of the entire text group as
     # [xmin, xmax, ymin, ymax]
     def totalBox(self, view, ctx, pad=0):
