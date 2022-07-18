@@ -445,22 +445,84 @@ class PText(Text):
     def pixelHeight(self, view, ctx):
         return morpho.pixelHeight(self.size, view, ctx)
 
-    # Given viewbox and cairo context (or windowShape tuple),
-    # returns tuple (width, height) representing the text's physical
+    # Returns tuple (width, height) representing the text's physical
     # width and height.
+    #
+    # The optional arguments `view` and `ctx` do nothing here,
+    # but they exist for internal implementation reasons.
+    #
     # Note this ignores the "transform" and prescale tweenables.
+    #
+    # Also note the physical width is estimated and may not be
+    # perfectly accurate.
     def dimensions(self, view=None, ctx=None):
         # return (self.aspectRatioWH()*self.size, self.size)
         return (self.width(), self.height())
 
+    # Returns (estimated) physical width of the text's bounding box
+    #
+    # The optional arguments `view` and `ctx` do nothing here,
+    # but they exist for internal implementation reasons.
+    #
+    # Note this ignores the "transform" and prescale tweenables.
     def width(self, view=None, ctx=None):
         return self.aspectRatioWH()*self.size
 
+    # Returns the physical height of the text's bounding box.
+    # It is equal to the `size` attribute.
     def height(self, view=None, ctx=None):
         return self.size
 
     def fontsize(self, view, ctx):
         return self._fontRatio*self.pixelHeight(view, ctx)
+
+    # Returns bounding box of the text in physical units.
+    # Mainly of use internally to draw the background box.
+    # Note: Ignores rotation and transform, but includes
+    # the prescale factors
+    def box(self, pad=0):
+        return Text.box(self, None, None, pad=pad)
+
+    # Same as box(), but the coordinates are relative to
+    # the text's position.
+    def relbox(self, pad=0):
+        return Text.relbox(self, None, None, pad=pad)
+
+    # Returns the four corners of the text's bounding box
+    # plus any optional padding. The sequence of the corners is
+    # NW, SW, SE, NE.
+    #
+    # Note: Since the physical width is merely estimated,
+    # x-coordinates of the corners may be slightly off.
+    def corners(self, pad=0):
+        a,b,c,d = self.box(pad)
+
+        NW = a + d*1j
+        SW = a + c*1j
+        SE = b + c*1j
+        NE = b + d*1j
+
+        return [NW,SW,SE,NE]
+
+    # Same as corners(), but the coordinates are relative to wherever
+    # the text's physical position is.
+    #
+    # Note: Since the physical width is merely estimated,
+    # x-coordinates of the corners may be slightly off.
+    def relcorners(self, view, ctx, pad=0):
+        a,b,c,d = self.relbox(pad)
+
+        NW = a + d*1j
+        SW = a + c*1j
+        SE = b + c*1j
+        NE = b + d*1j
+
+        return [NW,SW,SE,NE]
+
+    # Returns the visual centerpoint of the text, ignoring
+    # the transformation attributes.
+    def center(self):
+        return mean(self.corners())
 
     # Returns equivalent non-physical Text object
     def makeText(self, view, ctx):
