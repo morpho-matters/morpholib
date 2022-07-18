@@ -959,7 +959,8 @@ SpaceMultitext = Spacemultitext = SpaceMultiText  # Synonyms
 class SpaceMultiPText(SpaceMultiText):
     _baseFigure = SpacePText
 
-SpaceMultiPtext = SpaceMultiPText
+# Synonyms
+SpaceMultiPtext = SpacemultiPText = SpacemultiPtext = SpaceMultiPText
 
 
 # Non-drawable figure that contains numerical data and tools for
@@ -1054,6 +1055,15 @@ def formatNumber(*args, **kwargs):
 
 ### GROUPS AND PARAGRAPHS ###
 
+# Fancier MultiText figure that has some global attributes
+# that affect the entire group. These attributes include
+# pos, anchor_x/y, alpha, rotation, transform, background,
+# backAlpha, backPad.
+#
+# This class is mainly for internal use by the paragraph()
+# function, and you probably don't want to use it directly.
+# If you just want something like a morphable single Text
+# figure, use vanilla MultiText instead.
 class FancyMultiText(MultiText):
     _manuallyJump = True
 
@@ -1067,9 +1077,11 @@ class FancyMultiText(MultiText):
         #     self._updateSettings(textcopy)
         #     return
         if isinstance(text, MultiText):
-            text = text.figures
-
-        super().__init__(text, *args, **kwargs)
+            # text = text.figures
+            super().__init__(text.figures, *args, **kwargs)
+            self._updateSettings(text)  # copy its meta-settings
+        else:
+            super().__init__(text, *args, **kwargs)
 
         self.Tweenable("pos", 0, tags=["complex", "position"])
         self.Tweenable("anchor_x", 0, tags=["scalar"])
