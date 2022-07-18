@@ -473,6 +473,9 @@ class PText(Text):
     def height(self, view=None, ctx=None):
         return self.size
 
+    # Returns the corresponding fontsize (i.e. the value of the
+    # `size` attribute in the 2D Text class) for this PText figure
+    # given the viewbox and ctx/windowShape.
     def fontsize(self, view, ctx):
         return self._fontRatio*self.pixelHeight(view, ctx)
 
