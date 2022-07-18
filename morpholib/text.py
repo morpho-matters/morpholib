@@ -371,8 +371,9 @@ _referenceString = "A"
 # pixel size. That means a PText figure will scale correctly as
 # the camera zooms.
 #
-# More precisely, `size` refers to the physical height the text
-# would have if the text string is the single letter "A".
+# More precisely, `size` refers to the physical "A-height" of the text;
+# that is, the physical height the text would have if the text string
+# was the single letter "A".
 class PText(Text):
 
     def __init__(self, text="", pos=0,
@@ -447,6 +448,9 @@ class PText(Text):
     # Computes the ratio of size/pixelHeight for a given font.
     # Used to convert between pixelHeight and fontsize when
     # constructing a Text figure from a PText figure.
+    #
+    # More precisely, it computes size/pixelHeight for a
+    # rendering of the capital letter "A" in the given font.
     @staticmethod
     def _getFontRatio(font):
         txt = Text()
@@ -475,11 +479,11 @@ class PText(Text):
     # Returns the width of the text in pixels.
     def pixelWidth(self, view, ctx):
         aspectRatioWH = self.aspectRatioWH()
-        return morpho.pixelWidth(aspectRatioWH*self.size, view, ctx)
+        return morpho.pixelWidth(aspectRatioWH*self.width(), view, ctx)
 
     # Returns the height of the text in pixels.
     def pixelHeight(self, view, ctx):
-        return morpho.pixelHeight(self.size, view, ctx)
+        return morpho.pixelHeight(self.height(), view, ctx)
 
     # Returns tuple (width, height) representing the text's physical
     # width and height.
@@ -518,7 +522,8 @@ class PText(Text):
     # `size` attribute in the 2D Text class) for this PText figure
     # given the viewbox and ctx/windowShape.
     def fontsize(self, view, ctx):
-        return self._fontRatio*self.pixelHeight(view, ctx)
+        # return self._fontRatio*self.pixelHeight(view, ctx)
+        return self._fontRatio*morpho.pixelHeight(self.size, view, ctx)
 
     # Returns bounding box of the text in physical units.
     # Mainly of use internally to draw the background box.
