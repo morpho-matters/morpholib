@@ -366,9 +366,19 @@ class PText(Text):
     def __init__(self, text="", pos=0,
         size=1, *args, **kwargs):
 
-        # `_font` attribute will be implicitly set
-        # within the super init call.
-        super().__init__(text, pos, size, *args, **kwargs)
+        if isinstance(text, MultiText):
+            text = text.figures[0]
+        elif isinstance(text, Text):
+            # Generic init
+            super().__init__()
+
+            # Copy over tweenables, nontweenables, meta-settings
+            # from text figure
+            self._updateFrom(text)
+        else:
+            # `_font` attribute will be implicitly set
+            # within the super init call.
+            super().__init__(text, pos, size, *args, **kwargs)
 
         # del self._nontweenables["text"]
         self._nontweenables.remove("font")
@@ -512,7 +522,7 @@ class PText(Text):
     #
     # Note: Since the physical width is merely estimated,
     # x-coordinates of the corners may be slightly off.
-    def relcorners(self, view, ctx, pad=0):
+    def relcorners(self, pad=0):
         a,b,c,d = self.relbox(pad)
 
         NW = a + d*1j
@@ -1220,9 +1230,7 @@ class FancyMultiText(MultiText):
         for fig in self.figures:
             fig.pos -= center
 
-    def makeFrame(self, camera, ctx):
-        boxes = [fig.box(camera, ctx) for fig in self.figures]
-
+    def _makeFrameFromBoxes(self, boxes):
         left = min(box[0] for box in boxes)
         right = max(box[1] for box in boxes)
         bottom = min(box[2] for box in boxes)
@@ -1266,6 +1274,11 @@ class FancyMultiText(MultiText):
 
         return MultiText(figs)
 
+    def makeFrame(self, camera, ctx):
+        boxes = [fig.box(camera, ctx) for fig in self.figures]
+
+        return self._makeFrameFromBoxes(boxes)
+
     def draw(self, camera, ctx):
         self.makeFrame(camera, ctx).draw(camera, ctx)
 
@@ -1293,6 +1306,45 @@ class FancyMultiText(MultiText):
             return tw
 
         return pivot
+
+
+class FancyMultiPText(FancyMultiText):
+    _baseFigure = PText
+
+    # Returns the physical bounding box of the entire text group as
+    # [xmin, xmax, ymin, ymax]
+    def totalBox(self, pad=0):
+        boxes = [fig.box(pad) for fig in self.figures]
+        left = min(box[0] for box in boxes)
+        right = max(box[1] for box in boxes)
+        bottom = min(box[2] for box in boxes)
+        top = max(box[3] for box in boxes)
+
+        return [left, right, bottom, top]
+
+    # Returns the center of the text group's bounding box.
+    #
+    # The optional arguments `view` and `ctx` do nothing here,
+    # but they exist for internal implementation reasons.
+    def totalCenter(self, view=None, ctx=None):
+        box = self.totalBox()
+        return mean(box[:2]) + 1j*mean(box[2:])
+
+    # Moves the text group so that its total center is at the origin.
+    # This makes it so the alignment respects the `pos` attribute.
+    #
+    # The optional arguments `view` and `ctx` do nothing here,
+    # but they exist for internal implementation reasons.
+    def recenter(self, view=None, ctx=None):
+        FancyMultiText.recenter(self, None, None)
+
+    def makeFrame(self, camera=None, ctx=None):
+        boxes = [fig.box() for fig in self.figures]
+
+        return self._makeFrameFromBoxes(boxes)
+
+FancyMultiPtext = FancyMultiPText
+
 
 # Special class used to render 3D paragraphs.
 # Mainly for internal use by the paragraph3d() function
@@ -1397,15 +1449,20 @@ class SpaceParagraph(FancyMultiText):
 # gap = Pixel separation between adjacent text figures.
 #       Default: 0 pixels
 def group(textfigs, view, windowShape,
-    pos=0, anchor_x=0, anchor_y=0, alpha=1, gap=0, *, align=None):
-    # FUTURE: Perhaps allow for multi-line concatenations so something
-    # like a Paragraph figure can be implemented.
+    pos=0, anchor_x=0, anchor_y=0, alpha=1, gap=0,
+    *, align=None, physical=False, physicalGap=False):
 
     widths = []
     heights = []
 
-    # Convert gap to physical units
-    gap = morpho.physicalWidth(gap, view, windowShape)
+    if physical:
+        camctx = ()
+    else:
+        camctx = (view, windowShape)
+
+    if not physical or not physicalGap:
+        # Convert gap to physical units
+        gap = morpho.physicalWidth(gap, *camctx)
 
     # Handle case that Frame figure is given
     if isinstance(textfigs, morpho.Frame):
@@ -1430,7 +1487,7 @@ def group(textfigs, view, windowShape,
 
             raise ValueError("At least one text figure has a non-identity transformation attribute.")
 
-        width, height = fig.dimensions(view, windowShape)
+        width, height = fig.dimensions(*camctx)
         widths.append(width)
         heights.append(height)
         totalWidth += width
@@ -1514,17 +1571,22 @@ def paragraph(textarray, view, windowShape,
     else:
         textarray = conformText(textarray)
 
+    physical = isinstance(textarray[0][0], PText)
+    if physical:
+        camctx = ()
+    else:
+        camctx = (view, windowShape)
+
     # gap overrides xgap if specified. It exists for backward
     # compatibility with the input scheme of the group() function.
     if gap is not None:
         xgap = gap
 
-    # Rename xgaps to emphasize its a pixel value
-    xgap_pixels = xgap
-
-    # Convert gaps to physical units
-    xgap = morpho.physicalWidth(xgap_pixels, view, windowShape)
-    ygap = morpho.physicalHeight(ygap, view, windowShape)
+    # Convert gap units to physical units if not in physical mode
+    if not physical:
+        # Convert gaps to physical units
+        xgap = morpho.physicalWidth(xgap, *camctx)
+        ygap = morpho.physicalHeight(ygap, *camctx)
 
     # Apply align parameter if given
     if align is not None:
@@ -1534,7 +1596,7 @@ def paragraph(textarray, view, windowShape,
     yPositions = [0]
     rowBoxes = []
     for i, row in enumerate(textarray[:-1]):
-        boxes = [fig.box(view, windowShape) for fig in row]
+        boxes = [fig.box(*camctx) for fig in row]
         rowBoxes.append(boxes)
         rowHeight = max(box[-1]-box[-2] for box in boxes)
         yPositions.append(yPositions[-1]-ygap-rowHeight)
@@ -1542,21 +1604,27 @@ def paragraph(textarray, view, windowShape,
     yPositions = [y+adjust for y in yPositions]
 
     # Append final row of boxes
-    rowBoxes.append([fig.box(view, windowShape) for fig in textarray[-1]])
+    rowBoxes.append([fig.box(*camctx) for fig in textarray[-1]])
 
     # Create rows
     rows = []
     for i, row in enumerate(textarray):
         rowWidth = sum(box[1]-box[0] for box in rowBoxes[i]) + (len(row)-1)*xgap
         rowPosition = -morpho.lerp(-rowWidth/2, rowWidth/2, flush, start=-1, end=1) + 1j*yPositions[i]
-        row = group(row, view, windowShape, pos=rowPosition, gap=xgap_pixels)
+        if physical:
+            row = group(row, None, None, pos=rowPosition, gap=xgap, physical=physical, physicalGap=True)
+        else:
+            row = group(row, *camctx, pos=rowPosition, gap=xgap, physical=physical, physicalGap=True)
         rows.append(row)
 
     # Pool all the rows into a single FancyMultiText figure
     figs = []
     for row in rows:
         figs.extend(row.figures)
-    parag = FancyMultiText(figs)
+    if physical:
+        parag = FancyMultiPText(figs)
+    else:
+        parag = FancyMultiText(figs)
     parag.pos = pos
     parag.anchor_x = anchor_x
     parag.anchor_y = anchor_y
@@ -1565,9 +1633,27 @@ def paragraph(textarray, view, windowShape,
     parag.background = background
     parag.backAlpha = backAlpha
     parag.backPad = backPad
-    parag.recenter(view, windowShape)
+    parag.recenter(*camctx)
 
     return parag
+
+def paragraphPhys(textarray, *args, **kwargs):
+    # Handle case that Frame figure is given
+    if isinstance(textarray, morpho.Frame):
+        textarray = textarray.figures
+
+    if textarray is None:
+        textarray = [[PText("")]]
+    else:
+        textarray = conformText(textarray)
+
+    # Convert everything to PText if needed
+    for row in textarray:
+        for n,fig in enumerate(row):
+            if not isinstance(fig, PText):
+                row[n] = PText(fig)
+
+    return paragraph(textarray, None, None, *args, **kwargs)
 
 # 3D version of paragraph(). See paragraph() for more info.
 #
