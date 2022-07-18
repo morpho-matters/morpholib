@@ -624,17 +624,17 @@ def Multi(imageMethod, reverseMethod=None):
 # Bottom line: It's just like Text except you can tween between different
 # underlying text strings.
 class MultiText(morpho.MultiFigure):
-    baseFigure = Text
+    _baseFigure = Text
 
     def __init__(self, text="", *args, **kwargs):
         if isinstance(text, str):
-            textlist = [self.baseFigure(text, *args, **kwargs)]
+            textlist = [self._baseFigure(text, *args, **kwargs)]
         elif isinstance(text, list) or isinstance(text, tuple):
-            textlist = [(self.baseFigure(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
-        elif isinstance(text, self.baseFigure):
+            textlist = [(self._baseFigure(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
+        elif isinstance(text, self._baseFigure):
             textlist = [text]
         else:
-            textlist = [self.baseFigure(text, *args, **kwargs)]
+            textlist = [self._baseFigure(text, *args, **kwargs)]
 
         # Create frame figure
         # Splitting the init like this prevents superclass init
@@ -686,7 +686,7 @@ class MultiText(morpho.MultiFigure):
             )
 
 class MultiPText(MultiText):
-    baseFigure = PText
+    _baseFigure = PText
 
 MultiPtext = MultiPText
 
@@ -704,7 +704,7 @@ MultiPtext = MultiPText
 #              or just behave like a label always facing the camera. Default: False
 class SpaceText(Text):
 
-    baseFigure = Text
+    _baseFigure = Text
 
     def __init__(self, text=None, pos=None,
         size=64, font=None,
@@ -714,7 +714,7 @@ class SpaceText(Text):
         background=(1,1,1), backAlpha=0, backPad=0,
         *, align=None):
 
-        if isinstance(text, self.baseFigure):
+        if isinstance(text, self._baseFigure):
             # Copy over the state of the text figure
             super().__init__()
             self._state = text.copy()._state
@@ -780,7 +780,7 @@ class SpaceText(Text):
     #     return new
 
     def toText(self):
-        txt = self.baseFigure()
+        txt = self._baseFigure()
         txt._state.update(self.copy()._state)
         del txt._state["_pos"]
         del txt._state["_orient"]
@@ -807,7 +807,7 @@ class SpaceText(Text):
         else:
             pos3d = orient @ (self.pos - focus) + focus
 
-        txt = self.baseFigure()
+        txt = self._baseFigure()
         txt.text = self.text
         txt.pos = (pos3d[0] + 1j*pos3d[1]).tolist()
         txt.zdepth = pos3d[2]
@@ -844,7 +844,7 @@ class SpaceText(Text):
 Spacetext = SpaceText  # Synonym
 
 class SpacePText(PText, SpaceText):
-    baseFigure = PText
+    _baseFigure = PText
 
     def draw(self, camera, ctx):
         SpaceText.draw(self, camera, ctx)
@@ -855,17 +855,17 @@ SpacePtext = SpacePText
 # Multi version of the SpaceText class.
 # See "SpaceText" and "MultiText" for more info.
 class SpaceMultiText(MultiText):
-    baseFigure = SpaceText
+    _baseFigure = SpaceText
 
     def __init__(self, text="", *args, **kwargs):
         if isinstance(text, str):
-            textlist = [self.baseFigure(text, *args, **kwargs)]
+            textlist = [self._baseFigure(text, *args, **kwargs)]
         elif isinstance(text, list) or isinstance(text, tuple):
-            textlist = [(self.baseFigure(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
+            textlist = [(self._baseFigure(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
         elif isinstance(text, MultiText):
-            textlist = [self.baseFigure(item, *args, **kwargs) for item in text.figures]
+            textlist = [self._baseFigure(item, *args, **kwargs) for item in text.figures]
         else:
-            textlist = [self.baseFigure(text, *args, **kwargs)]
+            textlist = [self._baseFigure(text, *args, **kwargs)]
 
         # Create frame figure
         # Splitting the init like this prevents superclass init
@@ -892,7 +892,7 @@ SpaceMultitext = Spacemultitext = SpaceMultiText  # Synonyms
 
 
 class SpaceMultiPText(SpaceMultiText):
-    baseFigure = SpacePText
+    _baseFigure = SpacePText
 
 SpaceMultiPtext = SpaceMultiPText
 
