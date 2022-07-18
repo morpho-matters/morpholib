@@ -29,6 +29,16 @@ def isbadnum(x):
 def isbadarray(x):
     return (np.any(np.isnan(x)) or np.any(np.isinf(x))).tolist()
 
+# isequal(a,b) does a == b, but works even if a and/or b is
+# a numpy array.
+def isequal(a, b):
+    if isinstance(a, np.ndarray) and isinstance(b, np.ndarray):
+        return np.array_equal(a,b)
+    elif isinstance(a, np.ndarray) != isinstance(b, np.ndarray):
+        return False
+    else:
+        return (a == b)
+
 # Conversion factors between degrees and radians.
 deg = tau/360
 rad = 1/deg
