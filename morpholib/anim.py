@@ -321,9 +321,12 @@ class MultiFigure(Frame):
         # If this attribute is NOT an already existent attribute of
         # the main class, check if it's an attribute of the first
         # member figure. If it is, set THAT.
-        elif len(self.figures) != 0:
-            fig = self.figures[0]
+        # elif len(self.figures) != 0:
+        else:
             try:
+                # Get first component figure (if possible)
+                fig = self.figures[0]
+
                 # See if it already exists as an attribute
                 # of the first member figure.
                 # fig.__getattribute__(name)
@@ -336,7 +339,7 @@ class MultiFigure(Frame):
             # Got an attribute error, so the given attribute isn't
             # even in the first member figure. Therefore, just assign it
             # as a regular (but new) attribute of the main class.
-            except AttributeError:
+            except (AttributeError, IndexError):
                 # super().__setattr__(name, value)
                 morpho.Figure.__setattr__(self, name, value)
 
