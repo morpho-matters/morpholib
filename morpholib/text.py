@@ -362,7 +362,19 @@ class Text(morpho.Figure):
         ctx.new_path()
 
 
+_referenceString = "A"
+
+
+# Physical Text figure.
+# It's pretty much the same as Text, but the `size` parameter
+# controls the PHYSICAL size of the rendered text instead of the
+# pixel size. That means a PText figure will scale correctly as
+# the camera zooms.
+#
+# More precisely, `size` refers to the physical height the text
+# would have if the text string is the single letter "A".
 class PText(Text):
+
     def __init__(self, text="", pos=0,
         size=1, *args, **kwargs):
 
@@ -403,14 +415,25 @@ class PText(Text):
         self._font = value
         self._updateFontRatio()
 
-    def aspectRatioWH(self):
+    # Returns a dummy 2D version of the PText figure for use
+    # in calculating scale factors, ratios, etc. internally.
+    # size=64 is arbitrary and corresponds to dummy Text figure's
+    # size attribute. You can override it, but it's best not to make
+    # it too small.
+    def _makeDummy(self, size=64):
         # Create dummy non-physical Text figure to reference
         txt = Text()
         txt.text = self.text
         txt.font = self._font
         txt.bold = self.bold
         txt.italic = self.italic
-        txt.size = 64  # Arbitrarily chosen dummy size
+        txt.size = size
+
+        return txt
+
+    def aspectRatioWH(self):
+        # Create dummy non-physical Text figure to reference
+        txt = self._makeDummy()
 
         width, height = txt.pixelDimensions()
         return width/height
@@ -421,10 +444,13 @@ class PText(Text):
     def _updateFontRatio(self):
         self._fontRatio = self._getFontRatio(self._font)
 
+    # Computes the ratio of size/pixelHeight for a given font.
+    # Used to convert between pixelHeight and fontsize when
+    # constructing a Text figure from a PText figure.
     @staticmethod
     def _getFontRatio(font):
         txt = Text()
-        txt.text = "A"
+        txt.text = _referenceString
         txt.font = font
         # txt.bold = self.bold
         # txt.italic = self.italic
@@ -476,12 +502,17 @@ class PText(Text):
     #
     # Note this ignores the "transform" and prescale tweenables.
     def width(self, view=None, ctx=None):
-        return self.aspectRatioWH()*self.size
+        return self.aspectRatioWH()*self.height()
 
     # Returns the physical height of the text's bounding box.
     # It is equal to the `size` attribute.
     def height(self, view=None, ctx=None):
-        return self.size
+        txt = self._makeDummy()
+        heightSelf = txt.pixelHeight()
+        txt.text = _referenceString
+        heightA = txt.pixelHeight()
+
+        return self.size*(heightSelf/heightA)
 
     # Returns the corresponding fontsize (i.e. the value of the
     # `size` attribute in the 2D Text class) for this PText figure
