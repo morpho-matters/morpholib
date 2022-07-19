@@ -1385,6 +1385,8 @@ FancyMultiPtext = FancyMultiPText
 # Special class used to render 3D paragraphs.
 # Mainly for internal use by the paragraph3d() function
 class SpaceParagraph(FancyMultiText):
+    _baseMultiFigure = FancyMultiText
+
     def __init__(self, text="", *args, **kwargs):
 
         if isinstance(text, FancyMultiText):
@@ -1430,7 +1432,8 @@ class SpaceParagraph(FancyMultiText):
             pos3d = orient @ (self.pos - focus) + focus
 
         # Create equivalent 2D FancyMultiText object
-        txt = FancyMultiText()
+        # txt = FancyMultiText()
+        txt = self._baseMultiFigure()
         txt._updateFrom(self)
         del txt._state["_pos"]
         del txt._state["_orient"]
@@ -1460,6 +1463,11 @@ class SpaceParagraph(FancyMultiText):
     def draw(self, camera, ctx):
         # Use default SpaceFigure draw()
         morpho.SpaceFigure.draw(self, camera, ctx)
+
+
+class SpaceParagraphPhys(SpaceParagraph):
+    _baseMultiFigure = FancyMultiPText
+
 
 # Takes a collection of Text figures and returns a MultiText figure
 # that concatenates all the individual Text figures.
@@ -1700,20 +1708,31 @@ def paragraphPhys(textarray, *args, **kwargs):
 # You also have to specify an `orient` rotation matrix, as space
 # paragraphs cannot be non-orientable. It defaults to the identity.
 def paragraph3d(textarray, view, windowShape,
-    pos=0, orient=None, *args, **kwargs):
+    pos=0, orient=None, *args, _use_paragraphPhys=False, **kwargs):
 
-    # Create 2d paragraph (FancyMultiText)
-    parag = paragraph(textarray, view, windowShape, 0, *args, **kwargs)
+    # Create 2d paragraph
+    if _use_paragraphPhys:
+        parag = paragraphPhys(textarray, 0, *args, **kwargs)
+    else:
+        parag = paragraph(textarray, view, windowShape, 0, *args, **kwargs)
 
     # Handle default orient
     if orient is None:
         orient = np.eye(3)
 
     # Turn it into a SpaceParagraph
-    spaceParag = SpaceParagraph(parag)
+    if _use_paragraphPhys:
+        spaceParag = SpaceParagraphPhys(parag)
+    else:
+        spaceParag = SpaceParagraph(parag)
     spaceParag.set(pos=pos, orient=orient)
 
     return spaceParag
+
+def paragraph3dPhys(textarray, *args, **kwargs):
+    return paragraph3d(
+        textarray, None, None, *args, _use_paragraphPhys=True, **kwargs
+        )
 
 
 # class TextGroup(MultiText):
