@@ -1631,7 +1631,7 @@ def conformText(textarray):
 def paragraph(textarray, view, windowShape,
     pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0,
     *, flush=0, align=None, gap=None, rotation=0,
-    background=(1,1,1), backAlpha=0, backPad=0):
+    background=(1,1,1), backAlpha=0, backPad=0, **kwargs):
 
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):
@@ -1641,6 +1641,12 @@ def paragraph(textarray, view, windowShape,
         textarray = [[Text("")]]
     else:
         textarray = conformText(textarray)
+
+    # Apply any kwargs to the component figures
+    if len(kwargs) > 0:
+        for row in textarray:
+            for fig in row:
+                fig.set(**kwargs)
 
     physical = isinstance(textarray[0][0], PText)
     if physical:
