@@ -1496,10 +1496,11 @@ class SpaceParagraphPhys(SpaceParagraph):
     _baseMultiFigure = FancyMultiPText
 
 
-# Takes a collection of Text figures and returns a MultiText figure
-# that concatenates all the individual Text figures.
-# This is basically a cheap and dirty way to implement something like
-# a variable-style Text figure.
+# Takes a collection of Text figures and returns a FancyMultiText
+# figure that concatenates all the individual Text figures.
+#
+# This function has been mostly obsoleted by the paragraph()
+# function. You should probably use that one instead.
 #
 # NOTE: This function makes copies of the individual Text figures
 # to construct the MultiText figure. The originals are not affected.
