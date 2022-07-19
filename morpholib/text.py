@@ -1205,10 +1205,22 @@ class FancyMultiText(MultiText):
     # first component figure, it treats the attribute as a new attribute
     # to be assigned to self.
     def __setattr__(self, name, value):
-        # Set the attribute as normal if the MultiFigure is not active yet, or
-        # it's a concrete attribute of the main class,
+        # Set the attribute as normal if the MultiFigure is not active yet,
+        # or it's a concrete attribute of the main class,
         # or it's a tweenable in the main class.
-        if not self._active or name in dir(self) or name in self._state.keys():
+        try:
+            # Attempt to access attribute `name` according to
+            # both of the Figure class's getattrs.
+            # This should handle getting both regular attributes
+            # and tweenables / intangible attributes
+            try:
+                morpho.Figure.__getattribute__(self, name)
+            except AttributeError:
+                morpho.Figure.__getattr__(self, name)
+            selfHasName = True
+        except AttributeError:
+            selfHasName = False
+        if not self._active or selfHasName:
             # super().__setattr__(name, value)
             morpho.Figure.__setattr__(self, name, value)
         # If the figure list is empty, just set the attribute to self
