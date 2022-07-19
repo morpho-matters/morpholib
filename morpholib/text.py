@@ -497,7 +497,10 @@ class PText(Text):
     # perfectly accurate.
     def dimensions(self, view=None, ctx=None):
         # return (self.aspectRatioWH()*self.size, self.size)
-        return (self.width(), self.height())
+        height = self.height()
+        width = self.aspectRatioWH()*height
+
+        return (width, height)
 
     # Returns (estimated) physical width of the text's bounding box
     #
@@ -506,7 +509,8 @@ class PText(Text):
     #
     # Note this ignores the "transform" and prescale tweenables.
     def width(self, view=None, ctx=None):
-        return self.aspectRatioWH()*self.height()
+        # return self.aspectRatioWH()*self.height()
+        return self.dimensions()[0]
 
     # Returns the physical height of the text's bounding box.
     # It is equal to the `size` attribute.
