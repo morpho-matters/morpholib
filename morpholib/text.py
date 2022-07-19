@@ -800,6 +800,8 @@ class MultiText(morpho.MultiFigure):
             reverseMethod=Text.tweenPivot(-angle, *args, **kwargs)
             )
 
+# Physical version of the MultiText class.
+# See MultiText and PText for more info.
 class MultiPText(MultiText):
     _baseFigure = PText
 
@@ -958,6 +960,8 @@ class SpaceText(Text):
 
 Spacetext = SpaceText  # Synonym
 
+# 3D version of PText.
+# See PText and SpaceText for more info.
 class SpacePText(PText, SpaceText):
     _baseFigure = PText
 
@@ -1006,6 +1010,8 @@ class SpaceMultiText(MultiText):
 SpaceMultitext = Spacemultitext = SpaceMultiText  # Synonyms
 
 
+# 3D version of MultiPText class.
+# See MultiPText and SpaceMultiText for more info.
 class SpaceMultiPText(SpaceMultiText):
     _baseFigure = SpacePText
 
@@ -1360,6 +1366,8 @@ class FancyMultiText(MultiText):
         return pivot
 
 
+# Fancy version of MultiPText.
+# See FancyMultiText and MultiPText for more info.
 class FancyMultiPText(FancyMultiText):
     _baseFigure = PText
 
@@ -1399,7 +1407,7 @@ FancyMultiPtext = FancyMultiPText
 
 
 # Special class used to render 3D paragraphs.
-# Mainly for internal use by the paragraph3d() function
+# Mainly for internal use by the paragraph3d() function.
 class SpaceParagraph(FancyMultiText):
     _baseMultiFigure = FancyMultiText
 
@@ -1481,6 +1489,9 @@ class SpaceParagraph(FancyMultiText):
         morpho.SpaceFigure.draw(self, camera, ctx)
 
 
+# Physical version of SpaceParagraph.
+# Mainly for internal use by paragraph3dPhys().
+# See SpaceParagraph and PText for more info.
 class SpaceParagraphPhys(SpaceParagraph):
     _baseMultiFigure = FancyMultiPText
 
@@ -1697,6 +1708,11 @@ def paragraph(textarray, view, windowShape,
 
     return parag
 
+
+# Physical version of paragraph().
+# See paragraph() for more info.
+# Note that this function will auto-convert any non-physical
+# Text figures into PText figures on the fly.
 def paragraphPhys(textarray, *args, **kwargs):
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):
@@ -1750,3 +1766,6 @@ def paragraph3dPhys(textarray, *args, **kwargs):
         textarray, None, None, *args, _use_paragraphPhys=True, **kwargs
         )
 
+# Physical version of paragraph3d().
+# See paragraph3d() and paragraphPhys() for more info.
+paragraph3dphys = paragraph3dPhys
