@@ -1610,6 +1610,8 @@ def conformText(textarray):
 # INPUTS
 # textarray = List of lists of Text figures where each sublist
 #             represents a single row of the paragraph.
+#             Alternatively can be a string containing newlines
+#             which will be split into individual default Text figures.
 # view = viewbox of the layer this group will be in
 # windowShape = Tuple denoting pixel dimensions of the animation window
 #               (pixel width, pixel height)
@@ -1625,9 +1627,21 @@ def conformText(textarray):
 #        Default: 0 pixels
 # ygap = Pixel separation between adjacent rows in the paragraph.
 #        Default: 0 pixels
-# flush (keyword only) = Inter-row alignment.
-#            -1 = left-flush, 0 = center-flush, 1 = right-flush.
-#            Default: 0 (center-flush)
+# KEYWORD ONLY INPUTS
+# flush = Inter-row alignment.
+#         -1 = left-flush, 0 = center-flush, 1 = right-flush.
+#         Default: 0 (center-flush)
+# align = Specify both anchors at once as a tuple: (anchor_x, anchor_y)
+#         Overrides anchor_x and anchor_y if also specified.
+#         Default: None (use given anchor_x, anchor_y)
+# gap = Alias for xgap. Exists to match the `gap` arg in group()
+#       Overrides xgap if specified.
+#       Default: None (ignore and just use given xgap value)
+# rotation = Rotation angle of entire paragraph about anchor point
+#            Default: 0 radians
+# **kwargs = Any other keyword arguments will be applied to the
+#            every component Text figure:
+#            txt.set(**kwargs) for each txt in the textarray
 def paragraph(textarray, view, windowShape,
     pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0,
     *, flush=0, align=None, gap=None, rotation=0,
@@ -1639,6 +1653,9 @@ def paragraph(textarray, view, windowShape,
 
     if textarray is None:
         textarray = [[Text("")]]
+    elif isinstance(textarray, str):
+        stringlist = textarray.split("\n")
+        textarray = [[Text(string)] for string in stringlist]
     else:
         textarray = conformText(textarray)
 
@@ -1726,6 +1743,9 @@ def paragraphPhys(textarray, *args, **kwargs):
 
     if textarray is None:
         textarray = [[PText("")]]
+    elif isinstance(textarray, str):
+        stringlist = textarray.split("\n")
+        textarray = [[PText(string)] for string in stringlist]
     else:
         textarray = conformText(textarray)
 
