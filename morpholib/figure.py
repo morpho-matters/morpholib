@@ -249,7 +249,7 @@ class Figure(object):
         return new
 
     # Updates the standard "meta-settings" of the figure with those
-    # of thetarget figure. Mainly for use when converting one figure
+    # of the target figure. Mainly for use when converting one figure
     # type to another (e.g. SpaceText.toText() method)
     def _updateSettings(self, target):
         self.defaultTween = target.defaultTween
@@ -260,18 +260,36 @@ class Figure(object):
 
     # Copies over all tweenables, registered non-tweenables,
     # and meta-settings from the target figure over to self.
+    # Mainly for use when converting between figure types.
     #
     # If optional argument `copy` is set to False, the target
     # figure will not be internally copied, and the attributes
     # of the given target will be transferred directly to self.
-    def _updateFrom(self, target, copy=True):
+    #
+    # If optional argument `common` is set to True, self will
+    # only copy over attributes from the target that are in
+    # common with self. No new attributes will be added to self
+    # from the target.
+    def _updateFrom(self, target, *, copy=True, common=False):
         if copy:
             target = target.copy()
-        self._state.update(target._state)  # Copy over tweenables
-        # Copy non-tweenables
-        self._nontweenables.update(target._nontweenables)
-        for name in self._nontweenables:
-            setattr(self, name, getattr(target, name))
+
+        if common:
+            # Copy tweenables that are in common with self.
+            for name in self._state:
+                if name in target._state:
+                    self._state[name] = target._state[name]
+            # Copy common non-tweenables
+            for name in self._nontweenables:
+                if name in target._nontweenables:
+                    setattr(self, name, getattr(target, name))
+        else:
+            self._state.update(target._state)  # Copy over tweenables
+            # Copy non-tweenables
+            self._nontweenables.update(target._nontweenables)
+            for name in self._nontweenables:
+                setattr(self, name, getattr(target, name))
+
         self._updateSettings(target)  # Copy meta-settings
 
     # Update the state with a new set of tweenables.
