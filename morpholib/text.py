@@ -73,11 +73,13 @@ class Text(morpho.Figure):
             raise TypeError(f"Cannot convert MultiText to {type(self).__name__}")
         elif isinstance(text, Text):
             # text = text.text
-            self.__init__()
+            Text.__init__(self)
             self._updateFrom(text, common=True)
             if isinstance(text, SpaceText):
                 self.pos = complex(*text._pos[:2])
             return
+        elif isinstance(text, morpho.Figure):
+            raise TypeError(f"Cannot convert {type(text).__name__} to {type(self).__name__}")
 
 
         if type(color) is tuple:
@@ -387,19 +389,7 @@ class PText(Text):
     def __init__(self, text="", pos=0,
         size=1, *args, **kwargs):
 
-        if isinstance(text, MultiText):
-            text = text.figures[0]
-        elif isinstance(text, Text):
-            # Generic init
-            super().__init__()
-
-            # Copy over tweenables, nontweenables, meta-settings
-            # from text figure
-            self._updateFrom(text)
-        else:
-            # `_font` attribute will be implicitly set
-            # within the super init call.
-            super().__init__(text, pos, size, *args, **kwargs)
+        super().__init__(text, pos, size, *args, **kwargs)
 
         # del self._nontweenables["text"]
         self._nontweenables.remove("font")
