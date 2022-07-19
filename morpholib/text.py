@@ -1134,8 +1134,8 @@ class FancyMultiText(MultiText):
         #     return
         if isinstance(text, MultiText):
             # text = text.figures
-            super().__init__(text.figures, *args, **kwargs)
-            self._updateSettings(text)  # copy its meta-settings
+            super().__init__()
+            self._updateFrom(text)
         else:
             super().__init__(text, *args, **kwargs)
 
