@@ -78,7 +78,7 @@ class Text(morpho.Figure):
             if isinstance(text, SpaceText):
                 self.pos = complex(*text._pos[:2])
             return
-        elif isinstance(text, morpho.Figure):
+        elif not isinstance(text, str):
             raise TypeError(f"Cannot convert {type(text).__name__} to {type(self).__name__}")
 
 
@@ -821,7 +821,7 @@ class SpaceText(Text):
 
     _baseFigure = Text
 
-    def __init__(self, text=None, pos=None,
+    def __init__(self, text="", pos=None,
         size=64, font=None,
         bold=False, italic=False,
         anchor_x=0, anchor_y=0,
