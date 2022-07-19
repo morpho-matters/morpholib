@@ -66,18 +66,26 @@ class Text(morpho.Figure):
         background=(1,1,1), backAlpha=0, backPad=0,
         *, align=None):
 
-        super().__init__()
-
         # Handle Text figure derivative inputs for text.
-        # Just extract the "text" attribute.
-        if isinstance(text, Text) or isinstance(text, MultiText) \
-            or isinstance(text, SpaceMultiText):
-            text = text.text
+        if isinstance(text, PText):
+            raise TypeError(f"Cannot convert PText to {type(self).__name__}")
+        elif isinstance(text, MultiText):
+            raise TypeError(f"Cannot convert MultiText to {type(self).__name__}")
+        elif isinstance(text, Text):
+            # text = text.text
+            self.__init__()
+            self._updateFrom(text, common=True)
+            if isinstance(text, SpaceText):
+                self.pos = complex(*text._pos[:2])
+            return
+
 
         if type(color) is tuple:
             color = list(color)
         elif type(color) is not list:
             raise TypeError("Unsupported color input")
+
+        super().__init__()
 
         # Take last three coords of color.
         color = list(color[:3])
