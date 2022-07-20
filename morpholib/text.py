@@ -1456,9 +1456,9 @@ class SpaceParagraph(FancyMultiText):
         # Create equivalent 2D FancyMultiText object
         # txt = FancyMultiText()
         txt = self._baseMultiFigure()
-        txt._updateFrom(self)
-        del txt._state["_pos"]
-        del txt._state["_orient"]
+        txt._updateFrom(self, common=True)
+        # del txt._state["_pos"]
+        # del txt._state["_orient"]
         # txt.text = self.text
         txt.pos = (pos3d[0] + 1j*pos3d[1]).tolist()
         txt.zdepth = pos3d[2]
