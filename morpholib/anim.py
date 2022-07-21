@@ -580,8 +580,11 @@ def SkitParameters(params=None, /, **kwargs):
         raise TypeError("No parameters supplied.")
 
     def decorator(subSkit):
+        origInit = subSkit.__init__
         def newInit(self, **kwargs):
-            super(subSkit, self).__init__()
+            # Do basic init
+            # super(subSkit, self).__init__()
+            origInit(self)
 
             # Check if any keyword arguments were given that are not
             # valid parameters
