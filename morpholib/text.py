@@ -335,18 +335,20 @@ class Text(morpho.Figure):
             # are not proportional to each other.
             par = morpho.pixelAspectRatioWH(view, ctx)
             if abs(par-1) > 1e-9:
+                # Construct 2D rotation matrix
                 c = math.cos(self.rotation)
                 s = math.sin(self.rotation)
+                R = np.array([[c, -s],[s, c]], dtype=float)
 
                 # S represents the linear transformation that converts
-                # pixel coordinates to physical coordinates. Since
-                # S is diagonal, conjugating with it is easy, just
+                # pixel coordinates to physical coordinates.
+                # We have to conjugate our rotation by it because
+                # text rotations happen in pixel space.
+                # Since S is diagonal, conjugating with it is easy, just
                 # multiply element-wise by parmat:
                 # S.M.S^-1 = parmat*M
                 parmat = np.array([[1, 1/par],[par, 1]], dtype=float)
-                SRSinv = parmat*np.array([[c, -s],[s, c]], dtype=float)  # Conjugated rotation
-                STSinv = parmat*self.transform  # Conjugated transform matrix
-                rect.transform = STSinv @ SRSinv
+                rect.transform = parmat*(self.transform @ R)
             else:
                 rect.rotation = self.rotation
                 rect.transform = self.transform
