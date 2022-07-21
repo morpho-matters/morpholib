@@ -330,8 +330,26 @@ class Text(morpho.Figure):
             rect.width = 0
             rect.fill = self.background
             rect.alpha = self.backAlpha*self.alpha
-            rect.rotation = self.rotation
-            rect.transform = self.transform
+
+            # Do something special if the viewbox and window shape
+            # are not proportional to each other.
+            par = morpho.pixelAspectRatioWH(view, ctx)
+            if abs(par-1) > 1e-9:
+                c = math.cos(self.rotation)
+                s = math.sin(self.rotation)
+
+                # S represents the linear transformation that converts
+                # pixel coordinates to physical coordinates. Since
+                # S is diagonal, conjugating with it is easy, just
+                # multiply element-wise by parmat:
+                # S.M.S^-1 = parmat*M
+                parmat = np.array([[1, 1/par],[par, 1]], dtype=float)
+                SRSinv = parmat*np.array([[c, -s],[s, c]], dtype=float)  # Conjugated rotation
+                STSinv = parmat*self.transform  # Conjugated transform matrix
+                rect.transform = STSinv @ SRSinv
+            else:
+                rect.rotation = self.rotation
+                rect.transform = self.transform
             rect.draw(camera, ctx)
 
         ctx.save()
@@ -341,7 +359,7 @@ class Text(morpho.Figure):
         ctx.translate(x,y)
 
         # Apply transformation matrix if necessary
-        if not np.array_equal(self.transform, np.identity(2)):
+        if not np.array_equal(self.transform, I2):
             # Define cairo matrix
             xx, xy, yx, yy = self.transform.flatten()
             mat = cairo.Matrix(xx, yx, xy, yy)
