@@ -285,6 +285,27 @@ class Text(morpho.Figure):
     def height(self, view, ctx):
         return self.dimensions(view, ctx)[1]
 
+    # Returns a special transform matrix to attach to the
+    # bounding box figure, which handles rendering Text
+    # bounding boxes in a non-square coordinate system.
+    # par = pixel aspect ratio. Can be computed from
+    #       morpho.pixelAspectRatioWH(view, ctx)
+    def _specialBoxTransform(self, par):
+        # Construct 2D rotation matrix
+        c = math.cos(self.rotation)
+        s = math.sin(self.rotation)
+        R = np.array([[c, -s],[s, c]], dtype=float)
+
+        # S represents the linear transformation that converts
+        # pixel coordinates to physical coordinates.
+        # We have to conjugate our rotation by it because
+        # text rotations happen in pixel space.
+        # Since S is diagonal, conjugating with it is easy, just
+        # multiply element-wise by parmat:
+        # S.M.S^-1 = parmat*M
+        parmat = np.array([[1, 1/par],[par, 1]], dtype=float)
+        return parmat*(self.transform @ R)
+
     def draw(self, camera, ctx):
         # Do nothing if size less than 1.
         if self.size < 1:
@@ -335,20 +356,7 @@ class Text(morpho.Figure):
             # are not proportional to each other.
             par = morpho.pixelAspectRatioWH(view, ctx)
             if abs(par-1) > 1e-9:
-                # Construct 2D rotation matrix
-                c = math.cos(self.rotation)
-                s = math.sin(self.rotation)
-                R = np.array([[c, -s],[s, c]], dtype=float)
-
-                # S represents the linear transformation that converts
-                # pixel coordinates to physical coordinates.
-                # We have to conjugate our rotation by it because
-                # text rotations happen in pixel space.
-                # Since S is diagonal, conjugating with it is easy, just
-                # multiply element-wise by parmat:
-                # S.M.S^-1 = parmat*M
-                parmat = np.array([[1, 1/par],[par, 1]], dtype=float)
-                rect.transform = parmat*(self.transform @ R)
+                rect._transform = self._specialBoxTransform(par)
             else:
                 rect.rotation = self.rotation
                 rect.transform = self.transform
