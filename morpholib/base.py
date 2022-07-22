@@ -520,9 +520,12 @@ I2 = np.eye(2)
 # where R and T are the rotation and transform matrices.
 def parconj(par, rotation=0, transform=I2, *, inverse=False):
     # Construct 2D rotation matrix
-    c = math.cos(rotation)
-    s = math.sin(rotation)
-    R = np.array([[c, -s],[s, c]], dtype=float)
+    if rotation == 0:
+        R = I2
+    else:
+        c = math.cos(rotation)
+        s = math.sin(rotation)
+        R = np.array([[c, -s],[s, c]], dtype=float)
 
     # S represents the linear transformation that converts
     # pixel coordinates to physical coordinates.
