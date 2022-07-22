@@ -607,7 +607,7 @@ class PText(Text):
         # If in a non-square view, distort the txt figure accordingly
         par = morpho.pixelAspectRatioWH(view, ctx)
         if abs(par-1) > 1e-9:
-            txt._transform = np.array([[par, 0], [0, 1]]) @ txt._transform
+            txt._transform = np.array([[par, 0], [0, 1]], dtype=float) @ txt._transform
 
         return txt
 

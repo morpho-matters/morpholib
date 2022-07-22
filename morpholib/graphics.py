@@ -394,7 +394,7 @@ class Image(morpho.Figure):
         T = self._transform
         premat = T @ scale_xy @ R
         # Aspect Ratio matrix
-        aspectScale = np.array([[aspectScale_x, 0], [0, aspectScale_y]])
+        aspectScale = np.array([[aspectScale_x, 0], [0, aspectScale_y]], dtype=float)
         # Total transformation matrix
         mat = aspectScale @ premat
 
