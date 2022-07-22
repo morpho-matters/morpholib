@@ -384,14 +384,29 @@ class Image(morpho.Figure):
             aspectScale_y = self.height/self.imageHeight
 
         # Calculate total transformation matrix
-        rot = cmath.exp(self.rotation*1j)  # Rotation factor
-        xcol = rot*aspectScale_x
-        ycol = rot*aspectScale_y*1j
-        mat = self.transform @ np.array(
-            [[self.scale_x*xcol.real, self.scale_x*ycol.real],
-             [self.scale_y*xcol.imag, self.scale_y*ycol.imag]],
-            dtype=float
-            )
+        # Rotation matrix
+        s = math.sin(self.rotation)
+        c = math.cos(self.rotation)
+        R = np.array([[c, -s], [s, c]], dtype=float)
+        # Scale matrix
+        scale_xy = np.array([[self.scale_x, 0], [0, self.scale_y]], dtype=float)
+        # Transform matrix
+        T = self._transform
+        premat = T @ scale_xy @ R
+        # Aspect Ratio matrix
+        aspectScale = np.array([[aspectScale_x, 0], [0, aspectScale_y]])
+        # Total transformation matrix
+        mat = aspectScale @ premat
+
+        # # Calculate total transformation matrix
+        # rot = cmath.exp(self.rotation*1j)  # Rotation factor
+        # xcol = rot*aspectScale_x
+        # ycol = rot*aspectScale_y*1j
+        # mat = self.transform @ np.array(
+        #     [[self.scale_x*xcol.real, self.scale_x*ycol.real],
+        #      [self.scale_y*xcol.imag, self.scale_y*ycol.imag]],
+        #     dtype=float
+        #     )
 
         # Check if the image has been distorted too thin.
         # Specifically, is the thinnest height of the parallelogram
@@ -403,36 +418,35 @@ class Image(morpho.Figure):
             return
 
         if self.backAlpha > 0:
-            if not self.physical:
-                # Temporarily change width and height to physical units
-                # so that the bounding box is computed correctly.
-                widthOrig = self.width
-                heightOrig = self.height
-                self._width *= view_width / ctx.get_target().get_width()
-                self._height *= view_height / ctx.get_target().get_height()
-
             # Construct background rectangle and draw it
+            rectTransform = premat
             box = self.relbox(pad=self.backPad)
+            if not self.physical:
+                w1 = morpho.physicalWidth(1, view, ctx)
+                h1 = morpho.physicalHeight(1, view, ctx)
+                a,b,c,d = box
+                box = [a*w1, b*w1, c*h1, d*h1]
+
+                # If in a non-square view, conjugate the premat
+                par = morpho.pixelAspectRatioWH(view, ctx)
+                if abs(par-1) > 1e-9:
+                    rectTransform = morpho.parconj(par, transform=premat)
+
             rect = morpho.grid.rect(box)
             rect.origin = self.pos
             rect.width = 0
             rect.fill = self.background
             rect.alpha = self.backAlpha*self.alpha
-            rect.rotation = self.rotation
+            # rect.rotation = self.rotation
 
-            # Calculate scaling matrices if non-identity
-            transform = self.transform
-            if self.scale_x != 1 or self.scale_y != 1:
-                scaleMat = morpho.array([[self.scale_x,0], [0,self.scale_y]])
-                transform = transform @ scaleMat
+            # # Calculate scaling matrices if non-identity
+            # transform = self.transform
+            # if self.scale_x != 1 or self.scale_y != 1:
+            #     scaleMat = morpho.array([[self.scale_x,0], [0,self.scale_y]])
+            #     transform = transform @ scaleMat
 
-            rect.transform = transform
+            rect._transform = rectTransform
             rect.draw(camera, ctx)
-
-            if not self.physical:
-                # Restore original width and height
-                self._width = widthOrig
-                self._height = heightOrig
 
         ctx.save()
         ctx.translate(X,Y)
