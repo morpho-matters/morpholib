@@ -13,6 +13,7 @@ names are all lowercase letters.
 '''
 
 from morpholib.tools.basics import tau, argShift, argShiftArray, arcCenter, arcCenterArray
+import math
 import numpy as np
 import cairo
 cr = cairo
@@ -499,6 +500,43 @@ def pixelAspectRatioWH(view, ctx):
     return (WIDTH*height) / (width*HEIGHT)
 
 I2 = np.eye(2)
+
+# Returns the special transformation matrix that compensates
+# for rotations and transformations in a non-square view.
+#
+# INPUTS
+# par = Pixel aspect ratio as computed by
+#       morpho.pixelAspectRatioWH()
+# rotation = Rotation in radians. Default: 0.
+# transform = Local transformation matrix. Default: I2
+# inverse (keyword-only) = Boolean indicating whether the
+#           inverse transformation should be returned.
+#           Default: False
+#
+# More precisely, if S represents the matrix that locally
+# transforms pixel coords to physical coords
+# according to the par, this function returns
+# S @ R @ T @ S.inv
+# where R and T are the rotation and transform matrices.
+def parconj(par, rotation=0, transform=I2, *, inverse=False):
+    # Construct 2D rotation matrix
+    c = math.cos(rotation)
+    s = math.sin(rotation)
+    R = np.array([[c, -s],[s, c]], dtype=float)
+
+    # S represents the linear transformation that converts
+    # pixel coordinates to physical coordinates.
+    # Since S is diagonal, conjugating with it is easy, just
+    # multiply element-wise by parmat:
+    # S.M.S^-1 = parmat*M
+    parmat = np.array([[1, 1/par],[par, 1]], dtype=float)
+    if inverse:
+        if np.array_equal(transform, I2):
+            return parmat*R.T
+        else:
+            return parmat*np.linalg.inv(transform @ R)
+    else:
+        return parmat*(transform @ R)
 
 # Apply the values of the given transformation parameters to the
 # given cairo context. Generally should be used AFTER

@@ -291,20 +291,7 @@ class Text(morpho.Figure):
     # par = pixel aspect ratio. Can be computed from
     #       morpho.pixelAspectRatioWH(view, ctx)
     def _specialBoxTransform(self, par):
-        # Construct 2D rotation matrix
-        c = math.cos(self.rotation)
-        s = math.sin(self.rotation)
-        R = np.array([[c, -s],[s, c]], dtype=float)
-
-        # S represents the linear transformation that converts
-        # pixel coordinates to physical coordinates.
-        # We have to conjugate our rotation by it because
-        # text rotations happen in pixel space.
-        # Since S is diagonal, conjugating with it is easy, just
-        # multiply element-wise by parmat:
-        # S.M.S^-1 = parmat*M
-        parmat = np.array([[1, 1/par],[par, 1]], dtype=float)
-        return parmat*(self.transform @ R)
+        return morpho.parconj(par, self.rotation, self._transform)
 
     def draw(self, camera, ctx):
         # Do nothing if size less than 1.
