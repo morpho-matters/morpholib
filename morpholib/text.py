@@ -604,6 +604,11 @@ class PText(Text):
         # txt.size = self._fontRatio*self.pixelHeight(view, ctx)
         txt.size = self.fontsize(view, ctx)
 
+        # If in a non-square view, distort the txt figure accordingly
+        par = morpho.pixelAspectRatioWH(view, ctx)
+        if abs(par-1) > 1e-9:
+            txt._transform = np.array([[par, 0], [0, 1]]) @ txt._transform
+
         return txt
 
     def draw(self, camera, ctx):
