@@ -1996,9 +1996,9 @@ class SpaceMathGrid(morpho.SpaceFrame):
 # hsteps, vsteps = Number of internal steps to take inside a single grid line.
 #                  This is analogous to "steps" in the morpho.grid.line() function.
 #                  Higher values mean a higher resolution grid, but possibly slower
-#                  render time.
+#                  render time. By default, they are both 1, and you probably
+#                  shouldn't increase it unless you intend to morph the grid.
 #                  hsteps refers to horizontal lines, vsteps to vertical lines.
-#                  Default: 50 steps (equivalently: 51 vertices per grid line)
 # hnodes, vnodes = Number of internal vertices per grid line.
 #                  Default: None (meaning use hsteps and/or vsteps instead),
 #                  but if specified, it overrides hsteps and/or vsteps.
@@ -2012,7 +2012,7 @@ class SpaceMathGrid(morpho.SpaceFrame):
 # hmidWidth, vmidWidth = Thickness of minor grid lines (in pixels). Default: 1
 # BGgrid = Boolean indicating whether to draw a dimmer static background grid.
 #          Useful when doing morphing animations that alter the grid.
-#          Default: True
+#          Default: False
 # axes = Boolean indicating whether to draw axes. Default: True
 # axesColor = Color of axes if drawn. Default: (1,1,1) (white)
 # xaxisWidth, yaxisWidth = Thickness of axes (in pixels). Default: 5
@@ -2030,14 +2030,14 @@ class SpaceMathGrid(morpho.SpaceFrame):
 def mathgrid(*,
     view=(-5,5, -5,5),
     dx=1, dy=1,
-    hsteps=50, vsteps=50,
+    hsteps=1, vsteps=1,
     hnodes=None, vnodes=None,
     hcolor=(0,0,1), vcolor=(0,0,1), alpha=1,
     hmidColor=None, vmidColor=None,
     hwidth=3, vwidth=3,
     hmidlines=True, vmidlines=True,
     hmidWidth=1, vmidWidth=1,
-    BGgrid=True, axes=True, axesColor=(1,1,1),
+    BGgrid=False, axes=True, axesColor=(1,1,1),
     xaxisWidth=5, yaxisWidth=5,
     axesStatic=True, polar=False,
     tweenMethod=Path.tweenLinear,
@@ -2086,7 +2086,7 @@ mathGrid = mathgrid  # Alternate camel-case name.
 def mathgrid3d(*,
     view=(-5,5, -5,5),
     dx=1, dy=1,
-    hsteps=50, vsteps=50,
+    hsteps=1, vsteps=1,
     hnodes=None, vnodes=None,
     hcolor=(0,0,1), vcolor=(0,0,1), alpha=1,
     hmidColor=None, vmidColor=None,
@@ -2128,7 +2128,7 @@ def mathgrid3d(*,
 def wireframe(*,
     view=(-5,5, -5,5),
     dx=1, dy=1,
-    hsteps=50, vsteps=50,
+    hsteps=1, vsteps=1,
     hnodes=None, vnodes=None,
     hcolor=(0,0,1), vcolor=(0,0,1), alpha=1,
     hmidColor=None, vmidColor=None,
@@ -2164,14 +2164,14 @@ def wireframe(*,
 def standardGrid(*,
     view=(-5,5, -5,5),
     nhorz=11, nvert=11,
-    hsteps=50, vsteps=50,
+    hsteps=1, vsteps=1,
     hnodes=None, vnodes=None,
     hcolor=(0,0,1), vcolor=(0,0,1), alpha=1,
     hmidColor=None, vmidColor=None,
     hwidth=3, vwidth=3,
     hmidlines=True, vmidlines=True,
     hmidWidth=1, vmidWidth=1,
-    BGgrid=True, axes=True, axesColor=(1,1,1),
+    BGgrid=False, axes=True, axesColor=(1,1,1),
     xaxisWidth=5, yaxisWidth=5,
     axesStatic=True, polar=False,
     tweenMethod=Path.tweenLinear,
