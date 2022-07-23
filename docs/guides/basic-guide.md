@@ -426,7 +426,8 @@ Let's do another example this time using a grid. First we'll make a standard gri
 ```python
 grid = morpho.grid.mathgrid(
     view=[-5,5, -5,5],  # read this as [xmin, xmax, ymin, ymax]
-    dx=1, dy=1  # Distance between major x and y tick marks
+    dx=1, dy=1,  # Distance between major x and y tick marks
+    hsteps=50, vsteps=50  # Steps contained in each grid line
     )
 ```
 
@@ -447,6 +448,7 @@ grid.newendkey(60, fgrid)
 movie = morpho.Animation(grid)
 movie.play()
 ```
+> **Note:** Make sure you include `hsteps=50` and `vsteps=50` when calling `mathgrid()` in this case. This creates about 50 intermediate vertices within each grid line which are needed to see the grid lines turn into curves after applying the transformation. Omitting these options means the grid lines will remain straight during the transformation. However, if you don't intend to morph a grid into a curvy grid, you can omit `hsteps` and `vsteps`.
 
 ## Layers, Camera, and Animation
 

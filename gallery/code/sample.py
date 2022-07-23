@@ -4,6 +4,7 @@ morpho.importAll()
 
 def main():
     grid0 = morpho.grid.mathgrid(
+        hsteps=50, vsteps=50, BGgrid=True,
         tweenMethod=morpho.grid.Path.tweenSpiral,
         transition=morpho.transition.quadease
         )
