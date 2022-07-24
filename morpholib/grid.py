@@ -1999,23 +1999,31 @@ class SpaceMathGrid(morpho.SpaceFrame):
 #                  render time.
 #                  hsteps refers to horizontal lines, vsteps to vertical lines.
 #                  Default: 50 steps (equivalently: 51 vertices per grid line)
+#                  You can also specify `steps` to set both to the same value.
 # hnodes, vnodes = Number of internal vertices per grid line.
 #                  Default: None (meaning use hsteps and/or vsteps instead),
 #                  but if specified, it overrides hsteps and/or vsteps.
 #                  Mathematically they relate as: nodes = steps + 1
+#                  You can also specify `nodes` to set both to the same value.
 # hcolor, vcolor = Color of the respective grid lines. Default: (0,0,1) (blue)
+#                  You can also specify `color` to set both to the same value.
 # hmidColor, vmidColor = Color of minor grid lines.
 #       Default: None (meaning it will brighten the major color by 50%)
+#       You can also specify `midColor` to set both to the same value.
 # hwidth, vwidth = Thickness of major grid lines (in pixels). Default: 3
+#                  You can also specify `width` to set both to the same value.
 # hmidlines, vmidlines = How many minor grid lines between major grid lines.
-#                        Default: 1
+#               Default: 1
+#               You can also specify `midlines` to set both to the same value.
 # hmidWidth, vmidWidth = Thickness of minor grid lines (in pixels). Default: 1
+#               You can also specify `midWidth` to set both to the same value.
 # BGgrid = Boolean indicating whether to draw a dimmer static background grid.
 #          Useful when doing morphing animations that alter the grid.
 #          Default: True
 # axes = Boolean indicating whether to draw axes. Default: True
 # axesColor = Color of axes if drawn. Default: (1,1,1) (white)
 # xaxisWidth, yaxisWidth = Thickness of axes (in pixels). Default: 5
+#           You can also specify `axisWidth` to set both to the same value.
 # axesStatic = Boolean indicating whether axis paths should be static or not.
 # polar = Deprecated. Should always be set to False. Will remove some day.
 # tweenMethod = Tween method to be assigned to all constitutent paths in the
@@ -2030,19 +2038,39 @@ class SpaceMathGrid(morpho.SpaceFrame):
 def mathgrid(*,
     view=(-5,5, -5,5),
     dx=1, dy=1,
-    hsteps=50, vsteps=50,
-    hnodes=None, vnodes=None,
-    hcolor=(0,0,1), vcolor=(0,0,1), alpha=1,
-    hmidColor=None, vmidColor=None,
-    hwidth=3, vwidth=3,
-    hmidlines=True, vmidlines=True,
-    hmidWidth=1, vmidWidth=1,
+    hsteps=50, vsteps=50, steps=None,
+    hnodes=None, vnodes=None, nodes=None,
+    hcolor=(0,0,1), vcolor=(0,0,1), color=None, alpha=1,
+    hmidColor=None, vmidColor=None, midColor=None,
+    hwidth=3, vwidth=3, width=None,
+    hmidlines=True, vmidlines=True, midlines=None,
+    hmidWidth=1, vmidWidth=1, midWidth=None,
     BGgrid=True, axes=True, axesColor=(1,1,1),
-    xaxisWidth=5, yaxisWidth=5,
+    xaxisWidth=5, yaxisWidth=5, axisWidth=None,
     axesStatic=True, polar=False,
     tweenMethod=Path.tweenLinear,
     transition=None,
     optimize=True):
+
+    # Handle orientation-agnostic keyword inputs
+    if steps is not None:
+        hsteps = vsteps = steps
+    if nodes is not None:
+        hnodes = vnodes = nodes
+    if color is not None:
+        hcolor = color[:]
+        vcolor = color[:]
+    if midColor is not None:
+        hmidColor = midColor[:]
+        vmidColor = midColor[:]
+    if width is not None:
+        hwidth = vwidth = width
+    if midlines is not None:
+        hmidlines = vmidlines = midlines
+    if midWidth is not None:
+        hmidWidth = vmidWidth = midWidth
+    if axisWidth is not None:
+        xaxisWidth = yaxisWidth = axisWidth
 
     # # hnodes and vnodes override hsteps and vsteps if specified.
     # if hnodes is not None:
