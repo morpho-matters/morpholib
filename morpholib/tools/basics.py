@@ -77,6 +77,30 @@ def truncate(num, ndigits):
     decshift = 10**ndigits
     return int(num*decshift)/decshift
 
+def _rounder(x, roundfunc):
+    # Convert to np.array if needed
+    array = np.array(x) if not isinstance(x, np.ndarray) else x
+    array = np.sign(array)*roundfunc(np.abs(array))
+    array = np.array(array, dtype=int)  # Convert to int array
+    if isinstance(x, np.ndarray):
+        return array
+    else:
+        return array.tolist()
+
+# Rounds the input away from zero.
+# Supports lists and np.arrays as input.
+#   roundOut(1.1) --> 2
+#   roundOut(-1.1) --> -2
+def roundOut(x):
+    return _rounder(x, np.ceil)
+
+# Rounds the input toward zero.
+# Supports lists and np.arrays as input.
+#   roundIn(1.9) --> 1
+#   roundIn(-1.9) --> -1
+def roundIn(x):
+    return _rounder(x, np.floor)
+
 # If a float is equal to an int, converts it into an int.
 def squeezeFloat(number):
     try:
