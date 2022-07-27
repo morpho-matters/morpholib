@@ -1545,12 +1545,16 @@ def group(textfigs, view, windowShape,
     widths = []
     heights = []
 
+    # `physical` boolean says whether the underlying
+    # figures in textfigs are PText or regular Text.
     if physical:
         camctx = ()
     else:
         camctx = (view, windowShape)
 
-    if not physical or not physicalGap:
+    # `physicalGap` indicates whether the gap parameter
+    # is already in physical units or not.
+    if not physicalGap:
         # Convert gap to physical units
         gap = morpho.physicalWidth(gap, *camctx)
 
