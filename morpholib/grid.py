@@ -3784,8 +3784,12 @@ def ellipse_old(z0, a, b, dTheta=5, phase=0, polar=False):
 
 # Return a generic polygon figure in the shape of the given box.
 # Box is specified as [xmin, xmax, ymin, ymax]
-def rect(box):
+def rect(box, pad=0):
     a,b,c,d = box
+    a -= pad
+    b += pad
+    c -= pad
+    d += pad
     SW = a + c*1j
     NW = a + d*1j
     NE = b + d*1j
