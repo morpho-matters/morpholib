@@ -1988,9 +1988,27 @@ class SpaceMathGrid(morpho.SpaceFrame):
     actions = MathGrid.actions.copy()
 
 
+# Returns a single Path figure that represents the axes for
+# the given viewbox.
+#
+# INPUTS
+# view = Bounding box for the axes ([xmin,xmax,ymin,ymax]).
+#        Default: [-5,5, -5,5]
+# KEYWORD-ONLY INPUTS
+# width = Axes width (in pixels). Default: 5
+# color = Axes color (RGB tuple). Default: (0,0,0) black
+# alpha = Axes opacity. Default: 1 (opaque)
+def axes(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
+    xmin,xmax,ymin,ymax = view
+    path = mo.grid.Path([xmin,xmax, ymin*1j, ymax*1j]).set(
+        width=width, color=color, deadends={1}
+        )
+    return path
+
+
 # Construct a grid-like frame figure.
 #
-# ARGUMENTS (keyword-only)
+# INPUTS (keyword-only)
 # view = Bounding box of the grid ([xmin,xmax,ymin,ymax]). Default: [-5,5, -5,5]
 # dx,dy = Grid spacing in physical units. Default: 1
 # hsteps, vsteps = Number of internal steps to take inside a single grid line.
@@ -3134,7 +3152,7 @@ def handleColorTypeCasting(colorfunc):
 # Helper function sets up a basic rectangular Quadmesh in the xy-plane, which
 # can then be manipulated with fimage().
 #
-# ARGUMENTS
+# INPUTS
 # view = Bounding box of the quadmesh ([xmin,xmax,ymin,ymax]). Default: [-5,5, -5,5]
 # dx,dy = Horizontal or vertical spacing between vertices (physical units).
 #         Default: 1
