@@ -51,7 +51,8 @@ def crossout_old(box, time=30, width=3, color=(1,0,0), view=None):
 #            point, or are in absolute physical coordinates of the layer.
 #            Default: False (absolute coordinates)
 def crossoutPath(box, time=30, width=3, color=(1,0,0),
-    transition=None, origin=0, relative=False, *, duration=None):
+    transition=None, origin=0, relative=False,
+    *, duration=None, **kwargs):
 
     # "duration" is a dominant alias for the "time" parameter
     if duration is not None:
@@ -67,6 +68,7 @@ def crossoutPath(box, time=30, width=3, color=(1,0,0),
     path.transition = transition if transition is not None else morpho.transition.default
     path.origin = mean(box[:2]) + 1j*mean(box[2:]) if relative else 0
     path.origin += origin
+    path.set(**kwargs)
 
     path = morpho.Actor(path)
     path.newkey(time).end = 1
@@ -94,7 +96,7 @@ crossout = crossoutPath
 #            Default: False (absolute coordinates)
 def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
     CCW=True, steps=75, transition=None, origin=0, relative=False,
-    *, duration=None):
+    *, duration=None, **kwargs):
 
     # "duration" is a dominant alias for the "time" parameter
     if duration is not None:
@@ -117,6 +119,7 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
         path.transition = morpho.transition.default
     else:
         path.transition = transition
+    path.set(**kwargs)  # Set any other attributes
 
     path = morpho.Actor(path)
     path.newkey(time)
@@ -140,7 +143,7 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
 #              Default: morpho.transition.default
 # origin = origin point of path (complex number). Default: 0
 def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
-    transition=None, origin=0, *, duration=None):
+    transition=None, origin=0, *, duration=None, **kwargs):
 
     # "duration" is a dominant alias for the "time" parameter
     if duration is not None:
@@ -182,6 +185,7 @@ def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
     #     path.transition = lambda t: constTrans(morpho.transition.default(t))
     path.transition = lambda t: constTrans(transition(t))
     path.end = 0
+    path.set(**kwargs)  # Set any other attributes
 
     path = morpho.Actor(path)
     path.newkey(time)
