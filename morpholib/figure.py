@@ -250,9 +250,16 @@ class Figure(object):
 
     # Updates the standard "meta-settings" of the figure with those
     # of the target figure. Mainly for use when converting one figure
-    # type to another (e.g. SpaceText.toText() method)
-    def _updateSettings(self, target):
-        self.defaultTween = target.defaultTween
+    # type to another (e.g. SpaceText.toText() method).
+    #
+    # By default, this method doesn't update self's tween method
+    # with the target's because tween methods are often strongly
+    # tied to the given figure's type, but to force transferral
+    # of the target's tween method, set the optional kwarg
+    # `includeTweenMethod` to True.
+    def _updateSettings(self, target, *, includeTweenMethod=False):
+        if includeTweenMethod:
+            self.defaultTween = target.defaultTween
         self.transition = target.transition
         self.visible = target.visible
         self.static = target.static
@@ -270,7 +277,9 @@ class Figure(object):
     # only copy over attributes from the target that are in
     # common with self. No new attributes will be added to self
     # from the target.
-    def _updateFrom(self, target, *, copy=True, common=False):
+    def _updateFrom(self, target, *, copy=True, common=False,
+        includeTweenMethod=False):
+
         if copy:
             target = target.copy()
 
@@ -290,7 +299,8 @@ class Figure(object):
             for name in self._nontweenables:
                 setattr(self, name, getattr(target, name))
 
-        self._updateSettings(target)  # Copy meta-settings
+        # Copy meta-settings
+        self._updateSettings(target, includeTweenMethod=includeTweenMethod)
 
     # Update the state with a new set of tweenables.
     def update(self, tweenables):
