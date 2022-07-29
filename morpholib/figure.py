@@ -240,7 +240,8 @@ class Figure(object):
             except Exception:  # Upon failure, just reassign and hope for the best.
                 setattr(new, name, value)  # NOT redundant!
 
-        # The following 5 lines could be replaced with _updateSettings()
+        # The following 5 lines could be replaced with
+        # new._updateSettings(self, includeTweenMethod=True)
         new.defaultTween = self.defaultTween
         new.transition = self.transition
         new.static = self.static
