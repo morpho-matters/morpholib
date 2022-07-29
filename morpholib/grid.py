@@ -463,6 +463,19 @@ class Path(morpho.Figure):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
+    # Setting `tipSize` property sets both `headSize` and `tailSize
+    # to the same value.
+    @property
+    def tipSize(self):
+        if self.headSize != self.tailSize:
+            raise ValueError("headSize and tailSize are different!")
+        return self.headSize
+
+    @tipSize.setter
+    def tipSize(self, value):
+        self.headSize = value
+        self.tailSize = value
+
     # Applies all of the transformation attributes
     # origin, rotation, transform
     # to the actual seq list itself and then
