@@ -313,7 +313,7 @@ class Spline(morpho.Figure):
     # Optionally also specify inhandle and outhandle which default to inf.
     # Also optionally specify where to insert the node in the sequence.
     # By default, places it after the current final node.
-    def newNode(self, point, inhandle=oo, outhandle=oo, beforeIndex=oo):
+    def newNode_old(self, point, inhandle=oo, outhandle=oo, beforeIndex=oo):
         beforeIndex = min(beforeIndex, self.length())
         if beforeIndex < 0:
             beforeIndex = beforeIndex % self.length()
@@ -324,6 +324,40 @@ class Spline(morpho.Figure):
             # self._data = np.vstack((self.data, [point,inhandle,outhandle]))
             self._data = np.insert(self.data, beforeIndex, [point,inhandle,outhandle], axis=0)
         return self
+
+
+    # Creates a new node at the specified point.
+    # Optionally also specify relative inhandle and outhandle
+    # which default to inf (i.e. copy its counterpart).
+    # Absolute coordinates can be set for in/outhandle by setting
+    # the optional keyword argument `relHandles` to False.
+    # Also optionally specify where to insert the node in the sequence
+    # by setting the `beforeIndex` parameter.
+    # By default, places it after the current final node.
+    def newNode(self, point, inhandle=oo, outhandle=oo,
+        beforeIndex=oo, *, relHandles=True):
+
+        # Compute raw index value
+        beforeIndex = min(beforeIndex, self.length())
+        if beforeIndex < 0:
+            beforeIndex = beforeIndex % self.length()
+
+        # Sanitize inhandle and outhandle values
+        if isbadnum(inhandle):
+            inhandle = oo
+        if isbadnum(outhandle):
+            outhandle = oo
+
+        if relHandles:
+            inhandle = point + inhandle
+            outhandle = point + outhandle
+
+        if self.length() == 0:
+            self._data = np.array([[point, inhandle, outhandle]], dtype=complex)
+        else:
+            self._data = np.insert(self.data, beforeIndex, [point,inhandle,outhandle], axis=0)
+        return self
+
 
     # Deletes the node at the specified index. The dangling nodes on
     # either side will then be connected assuming they aren't prevented
@@ -980,7 +1014,8 @@ class Spline(morpho.Figure):
         crossCommitHandles(data1, data2)
 
         # Interpolate using spiral tween method
-        data12 = morpho.spiralInterpArray(data1, data2, t)
+        with np.errstate(all="ignore"):  # Suppress numpy warnings
+            data12 = morpho.spiralInterpArray(data1, data2, t)
         nan2inf(data12)
 
         tw._data = data12
@@ -1006,7 +1041,8 @@ class Spline(morpho.Figure):
             crossCommitHandles(data1, data2)
 
             # Interpolate using pivot tween method
-            data12 = morpho.pivotInterpArray(data1, data2, t, angle=angle)
+            with np.errstate(all="ignore"):  # Suppress numpy warnings
+                data12 = morpho.pivotInterpArray(data1, data2, t, angle=angle)
             nan2inf(data12)
 
             tw._data = data12
