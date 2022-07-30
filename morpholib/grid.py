@@ -1329,6 +1329,19 @@ def growIn(path, duration=30, atFrame=None):
     path2 = path.newendkey(duration)
     path2.set(start=start, end=end, headSize=headSize, tailSize=tailSize)
 
+@Path.action
+def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
+    if atFrame is None:
+        atFrame = path.lastID()
+
+    path.newkey(atFrame)
+    path1 = path.newendkey(duration)
+    path1.set(headSize=0, tailSize=0, visible=False)
+    if reverse:
+        path1.start = 1
+    else:
+        path1.end = 0
+
 
 class Track(Path):
     '''Path with tick marks - like a train track: --|--|--|--
@@ -1947,6 +1960,23 @@ def growIn(grid, duration=30, atFrame=None):
         path.static = False
         path.end = 0
 # MathGrid_growIn = growIn
+
+@MathGrid.action
+def shrinkOut(grid, duration=30, atFrame=None, *, reverse=False):
+    if atFrame is None:
+        atFrame = grid.lastID()
+
+    grid0 = grid.newkey(atFrame)
+    for path in grid0.figures:
+        path.static = False
+
+    grid1 = grid.newendkey(duration)
+    for path in grid1.figures:
+        path.set(headSize=0, tailSize=0, visible=False)
+        if reverse:
+            path.start = 1
+        else:
+            path.end = 0
 
 @MathGrid.action
 def fadeIn(grid, duration=30, atFrame=None, jump=0, alpha=1):
@@ -3455,6 +3485,19 @@ def growIn(arrow, duration=30, atFrame=None):
     arrow1.set(head=arrow0.tail, headSize=0, tailSize=0, visible=True)
     arrow2 = arrow.newendkey(duration)
     arrow2.set(head=head, headSize=headSize, tailSize=tailSize)
+
+@Arrow.action
+def shrinkOut(arrow, duration=30, atFrame=None, *, reverse=False):
+    if atFrame is None:
+        atFrame = arrow.lastID()
+
+    arrow.newkey(atFrame)
+    arrow1 = arrow.newendkey(duration)
+    arrow1.set(headSize=0, tailSize=0, visible=False)
+    if reverse:
+        arrow1.tail = arrow1.head
+    else:
+        arrow1.head = arrow1.tail
 
 # OBSOLETE!
 # Instead, use Arrow with tail set at 0, translate it with origin, and use

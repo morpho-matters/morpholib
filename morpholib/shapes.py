@@ -1067,6 +1067,19 @@ def growIn(spline, duration=30, atFrame=None):
     spline2 = spline.newendkey(duration)
     spline2.set(start=start, end=end)
 
+@Spline.action
+def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
+    if atFrame is None:
+        atFrame = spline.lastID()
+
+    spline.newkey(atFrame)
+    spline1 = spline.newendkey(duration)
+    spline1.visible = False
+    if reverse:
+        spline1.start = 1
+    else:
+        spline1.end = 0
+
 
 # Space version of Spline figure. See "Spline" for more info.
 class SpaceSpline(Spline):
