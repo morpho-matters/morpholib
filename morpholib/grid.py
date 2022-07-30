@@ -3798,19 +3798,31 @@ def spaceLine_old(v1, v2, steps=50):
 # angle = arc angle (in radians) measured CCW from p to q. Defaults to pi.
 # steps = Number of steps to use in constructing the path.
 #         By default it tries to make adjacent nodes about 5 degs apart.
-def arc(p,q, angle=pi, steps=None):
+#
+# If optional keyword input `relative` is set to True, the arc
+# will be positioned using the `origin` attribute, where `origin`
+# will receive the arc's centerpoint.
+def arc(p,q, angle=pi, steps=None, *, relative=False):
     if steps is None:
         steps = round(72*abs(angle)/tau)
     steps = max(1, steps)  # Must have at least one step
+
+    # Initialize path
+    path = Path()
 
     c = arcCenter(p, q, angle)
 
     # Compute tweened value based on pivot
     ts = np.arange(0,steps+1, dtype=float)/steps
-    seq = (p-c)*np.exp(ts*angle*1j) + c
+    seq = (p-c)*np.exp(ts*angle*1j)
+    if relative:
+        path.origin = c
+    else:
+        seq += c
     seq = seq.tolist()
+    path.seq = seq
 
-    return Path(seq)
+    return path
 
 # Generates a generic polygon in the shape of an ellipse centered
 # at the complex number z0 with semi-width a and
@@ -3820,7 +3832,10 @@ def arc(p,q, angle=pi, steps=None):
 # Defaults to 2pi/72 (so 72 steps for a full ellipse; equiv 5 degs).
 # Optionally specify starting phase (in radians).
 # Measured CCW from positive real axis. Defaults to 0 rad.
-def ellipse(z0, a, b=None, dTheta=tau/72, phase=0):
+#
+# If optional keyword input `relative` is set to True, the ellipse
+# will be centered using the `origin` attribute.
+def ellipse(z0, a, b=None, dTheta=tau/72, phase=0, *, relative=False):
     if b is None:
         b = a
 
@@ -3839,7 +3854,10 @@ def ellipse(z0, a, b=None, dTheta=tau/72, phase=0):
 
     # Stretch it into an ellipse and move it
     poly = poly.fimage(lambda z: mat(a,0,0,b)*z)
-    poly = poly.fimage(lambda z: z + z0)
+    if relative:
+        poly.origin = z0
+    else:
+        poly = poly.fimage(lambda z: z + z0)
     return poly
 
 # Older version of the ellipse() function which returns a path figure instead
@@ -3869,7 +3887,10 @@ def ellipse_old(z0, a, b, dTheta=5, phase=0, polar=False):
 
 # Return a generic polygon figure in the shape of the given box.
 # Box is specified as [xmin, xmax, ymin, ymax]
-def rect(box, pad=0):
+#
+# If optional keyword input `relative` is set to True, the rect
+# will be centered using the `origin` attribute.
+def rect(box, pad=0, *, relative=False):
     a,b,c,d = box
     a -= pad
     b += pad
@@ -3880,8 +3901,18 @@ def rect(box, pad=0):
     NE = b + d*1j
     SE = b + c*1j
 
-    # return Polygon([SW, NW, NE, SE])
-    return Polygon([NW, SW, SE, NE])
+    corners = [NW, SW, SE, NE]
+
+    # Initialize polygon
+    poly = Polygon()
+
+    if relative:
+        center = (a+b)/2 + 1j*(c+d)/2
+        corners = [corner-center for corner in corners]
+        poly.origin = center
+
+    poly.vertices = corners
+    return poly
 
 # Given a list of complex numbers and a (possibly non-integer)
 # index t, linearly interpolates the sequence to give a point on the
