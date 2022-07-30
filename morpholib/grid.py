@@ -1317,7 +1317,7 @@ class Path(morpho.Figure):
 # The starting point is always the initial node in the sequence.
 # See also: morpho.actions.fadeIn()
 @Path.action
-def growIn(path, duration=30, atFrame=None):
+def growIn(path, duration=30, atFrame=None, *, reverse=False):
     if atFrame is None:
         atFrame = path.lastID()
 
@@ -1325,7 +1325,11 @@ def growIn(path, duration=30, atFrame=None):
     start, end, headSize, tailSize = path0.start, path0.end, path0.headSize, path0.tailSize
     path0.visible = False
     path1 = path.newkey(atFrame)
-    path1.set(start=0, end=0, headSize=0, tailSize=0, visible=True)
+    path1.set(headSize=0, tailSize=0, visible=True)
+    if reverse:
+        path1.set(start=1, end=1)
+    else:
+        path1.set(start=0, end=0)
     path2 = path.newendkey(duration)
     path2.set(start=start, end=end, headSize=headSize, tailSize=tailSize)
 
@@ -1946,7 +1950,7 @@ class MathGrid(morpho.Frame):
     pass
 
 @MathGrid.action
-def growIn(grid, duration=30, atFrame=None):
+def growIn(grid, duration=30, atFrame=None, *, reverse=False):
     if atFrame is None:
         atFrame = grid.lastID()
 
@@ -1958,7 +1962,10 @@ def growIn(grid, duration=30, atFrame=None):
 
     for path in grid1.figures:
         path.static = False
-        path.end = 0
+        if reverse:
+            path.start = 1
+        else:
+            path.end = 0
 # MathGrid_growIn = growIn
 
 @MathGrid.action
@@ -3474,7 +3481,7 @@ class Arrow(morpho.Figure):
 # Animates an arrow actor appearing by "growing in" from its tailpoint.
 # See also: morpho.actions.fadeIn()
 @Arrow.action
-def growIn(arrow, duration=30, atFrame=None):
+def growIn(arrow, duration=30, atFrame=None, *, reverse=False):
     if atFrame is None:
         atFrame = arrow.lastID()
 
@@ -3482,9 +3489,13 @@ def growIn(arrow, duration=30, atFrame=None):
     head, tail, headSize, tailSize = arrow0.head, arrow0.tail, arrow0.headSize, arrow0.tailSize
     arrow0.visible = False
     arrow1 = arrow.newkey(atFrame)
-    arrow1.set(head=arrow0.tail, headSize=0, tailSize=0, visible=True)
+    arrow1.set(headSize=0, tailSize=0, visible=True)
+    if reverse:
+        arrow1.set(tail=arrow0.head)
+    else:
+        arrow1.set(head=arrow0.tail)
     arrow2 = arrow.newendkey(duration)
-    arrow2.set(head=head, headSize=headSize, tailSize=tailSize)
+    arrow2.set(head=head, tail=tail, headSize=headSize, tailSize=tailSize)
 
 @Arrow.action
 def shrinkOut(arrow, duration=30, atFrame=None, *, reverse=False):

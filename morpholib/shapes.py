@@ -1055,7 +1055,7 @@ class Spline(morpho.Figure):
 # The starting point is always the initial node in the sequence.
 # See also: morpho.actions.fadeIn()
 @Spline.action
-def growIn(spline, duration=30, atFrame=None):
+def growIn(spline, duration=30, atFrame=None, *, reverse=False):
     if atFrame is None:
         atFrame = spline.lastID()
 
@@ -1063,7 +1063,11 @@ def growIn(spline, duration=30, atFrame=None):
     start, end = spline0.start, spline0.end
     spline0.visible = False
     spline1 = spline.newkey(atFrame)
-    spline1.set(start=0, end=0, visible=True)
+    spline1.visible = True
+    if reverse:
+        spline1.set(start=1, end=1)
+    else:
+        spline1.set(start=0, end=0)
     spline2 = spline.newendkey(duration)
     spline2.set(start=start, end=end)
 
