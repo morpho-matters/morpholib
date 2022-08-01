@@ -205,6 +205,8 @@ class Image(morpho.Figure):
             self.imageSurface = cr.ImageSurface.create_from_png(source)
         elif isinstance(source, Image) or isinstance(source, MultiImage):
             self.imageSurface = source.imageSurface
+        elif isinstance(source, cairo.ImageSurface):
+            self.imageSurface = source
         else:
             raise TypeError("Unrecognized source for image!")
 
