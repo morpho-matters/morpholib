@@ -1403,6 +1403,9 @@ class Track(Path):
             self.rotation = path.rotation
             self._transform = path._transform.copy()
 
+            self.interp = path.interp
+            self.deadends = path.deadends.copy()
+
             # # Make ticks have zero width intially so the track looks
             # # identical to the given Path figure.
             # # Actually, maybe nevermind. This could conflict with
@@ -1431,6 +1434,9 @@ class Track(Path):
         backpath.origin = self.origin
         backpath.rotation = self.rotation
         backpath._transform = self._transform
+
+        backpath.interp = self.interp
+        backpath.deadends = self.deadends
 
         return backpath
 
