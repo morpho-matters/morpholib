@@ -64,6 +64,27 @@ def parseHexColor(string, normalize=True):
     else:
         return (R,G,B)
 
+def ARGB32(RGBA):
+    array = np.array(RGBA, dtype=float)
+    if array.ndim == 1:
+        array.shape = (1, -1)
+    # Premultiply by alpha
+    array[:,:3] *= array[:,3]
+
+    # Convert into ints
+    array = np.array(np.round(255*array), dtype="uint32")
+
+    # Convert into an array of ARGB values
+    A = array[:,3] << 24
+    R = array[:,2] << 16
+    G = array[:,1] << 8
+    B = array[:,0]
+
+    ARGB = A+R+G+B
+    return ARGB.squeeze()
+
+
+
 # Converts RGB triple into HSV triple.
 # Both input and output triples have components in the range [0,1].
 def rgb2hsv(rgb):
