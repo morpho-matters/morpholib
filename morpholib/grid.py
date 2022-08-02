@@ -2057,9 +2057,67 @@ class SpaceMathGrid(morpho.SpaceFrame):
 def axes(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
     xmin,xmax,ymin,ymax = view
     path = mo.grid.Path([xmin,xmax, ymin*1j, ymax*1j]).set(
-        width=width, color=color, deadends={1}
+        width=width, color=color, alpha=alpha, deadends={1}
         )
     return path
+
+def mathaxes(*,
+    view=(-5,5, -5,5), axis="xy",
+    xcolor=(0,0,0), ycolor=(0,0,0), color=None, alpha=1,
+    xtickLength=0, ytickLength=0, tickLength=None,
+    xtickWidth=None, ytickWidth=None, tickWidth=None,
+    dx=1, dy=1,
+    xwidth=3, ywidth=3, width=None,
+    tweenMethod=Path.tweenLinear,
+    transition=None):
+
+    # Handle orientation-agnostic keyword inputs
+    if color is not None:
+        xcolor = color[:]
+        ycolor = color[:]
+    if tickLength is not None:
+        xtickLength = ytickLength = tickLength
+    if tickWidth is not None:
+        xtickWidth = ytickWidth = tickWidth
+    if width is not None:
+        xwidth = ywidth = width
+
+    if xtickWidth is None:
+        xtickWidth = xwidth/2
+    if ytickWidth is None:
+        ytickWidth = ywidth/2
+
+    axis = axis.lower()
+
+    frm = MathGrid()
+
+    xmin, xmax, ymin, ymax = view
+    if "x" in axis:
+        xaxis = mo.grid.Path([xmin, xmax]).set(
+            width=xwidth, color=xcolor, alpha=alpha
+            )
+        frm.append(xaxis)
+
+        if xtickLength != 0:
+            xsteps = int((xmax-xmin) / dx + 1.0e-6)  # +epsilon to account for floating pt error
+            radius = xtickLength / 2
+            nodes = np.linspace(xmin, xmax, xsteps)
+            lownodes = nodes - radius*1j
+            lownodes = lownodes.tolist()
+            highnodes = nodes + radius*1j
+            highnodes = highnodes.tolist()
+            xticks = mo.grid.Path(mo.flattenList([[lownodes[n], highnodes[n]] for n in range(len(lownodes))]))
+            xticks.deadends = {n+1 for n in range(0,len(xticks.seq),2)}
+            pass
+            pass
+            # Continue work here...
+            # xticks.set(width=)
+
+    if "y" in axis:
+        yaxis = mo.grid.Path([ymin*1j, ymax*1j]).set(
+            width=ywidth, color=ycolor, alpha=alpha
+            )
+        frm.append(yaxis)
 
 
 # Construct a grid-like frame figure.
