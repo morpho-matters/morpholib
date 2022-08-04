@@ -1668,7 +1668,8 @@ def conformText(textarray):
 def paragraph(textarray, view, windowShape,
     pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0,
     *, flush=0, align=None, gap=None, rotation=0,
-    background=(1,1,1), backAlpha=0, backPad=0, **kwargs):
+    background=(1,1,1), backAlpha=0, backPad=0, zdepth=0,
+    **kwargs):
 
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):
@@ -1751,6 +1752,7 @@ def paragraph(textarray, view, windowShape,
     parag.backAlpha = backAlpha
     parag.backPad = backPad
     parag.recenter(*camctx)
+    parag.zdepth = zdepth
 
     return parag
 
