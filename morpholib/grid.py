@@ -539,8 +539,9 @@ class Path(morpho.Figure):
 
     # Applies interpSeqLinear() to uniformly add nodes to the given
     # path IN PLACE.
-    def insertNodesUniformly(self, numNodes):
-        self.seq = insertNodesUniformlyTo(self.seq, numNodes)
+    # See `morpho.grid.insertNodesUniformlyTo()` for more info.
+    def insertNodesUniformly(self, *args, **kwargs):
+        self.seq = insertNodesUniformlyTo(self.seq, *args, **kwargs)
         return self
 
     # Returns the interpolated position along the path corresponding to the
@@ -4013,6 +4014,11 @@ def interpSeqLinear(seq, t):
 # Applies interpSeqLinear() to uniformly add nodes to the given
 # list of complex numbers and returns a new list containing
 # the additional interpolated nodes.
+#
+# Optionally specify a segment (a,b) where 0 <= a < b <= 1
+# to insert the nodes only on a subsegment of the path.
+# 0 = path beginning; 1 = path end.
+#
 # If optional argument close = True, then the first item in the
 # sequence is temporarily appended to the end before interpolation
 # occurs. After interpolation, the copy of the first item is
@@ -4020,7 +4026,7 @@ def interpSeqLinear(seq, t):
 # This is useful for interpolating loops like polygon vertex lists
 # because the it will insert vertices between the final and first
 # vertices. By default, close = False.
-def insertNodesUniformlyTo(seq, numNodes, trange=(0,1), *, close=False):
+def insertNodesUniformlyTo(seq, numNodes, segment=(0,1), *, close=False):
     # If path closure should be done, append seq[0] to the end
     # of a copy of seq
     if close:
@@ -4029,7 +4035,7 @@ def insertNodesUniformlyTo(seq, numNodes, trange=(0,1), *, close=False):
 
     newseq = seq[:]
     len_seq = len(seq)
-    t1, t2 = trange
+    t1, t2 = segment
     a = t1*(len_seq-1)
     b = t2*(len_seq-1)
     dt = (b-a)/(numNodes+1)
