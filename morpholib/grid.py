@@ -4020,16 +4020,22 @@ def interpSeqLinear(seq, t):
 # This is useful for interpolating loops like polygon vertex lists
 # because the it will insert vertices between the final and first
 # vertices. By default, close = False.
-def insertNodesUniformlyTo(seq, numNodes, close=False):
+def insertNodesUniformlyTo(seq, numNodes, trange=(0,1), *, close=False):
     # If path closure should be done, append seq[0] to the end
     # of a copy of seq
     if close:
         seq = list(seq)  # Create a copy as a list
         seq.append(seq[0])
+
     newseq = seq[:]
     len_seq = len(seq)
+    t1, t2 = trange
+    a = t1*(len_seq-1)
+    b = t2*(len_seq-1)
+    dt = (b-a)/(numNodes+1)
     for n in range(numNodes):
-        t = (n+1)/(numNodes+1)*(len_seq-1)
+        # t = (n+1)/(numNodes+1)*(len_seq-1)
+        t = mo.lerp0(a+dt, b-dt, n, start=0, end=numNodes-1)
         node = interpSeqLinear(seq, t)
         # +n because each insertion shifts all later indices up by 1.
         newseq.insert(int(t)+1+n, node)
