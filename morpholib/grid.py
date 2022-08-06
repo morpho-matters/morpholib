@@ -3377,6 +3377,8 @@ class Arrow(morpho.Figure):
         # self.dash = []
 
         # Initialize internal path figure
+        # Todo: This could probably be replaced with
+        # self._updateInternalPath()
         self.path = Path([tail, head])
         self.path.color = self.color
         self.path.alpha = self.alpha
@@ -3468,6 +3470,26 @@ class Arrow(morpho.Figure):
     def midpoint(self):
         return (self.head + self.tail) / 2
 
+    def _updateInternalPath(self):
+        # Update and draw the internal path figure.
+        self.path.seq = [self.tail, self.head]
+        self.path.color = self.color
+        self.path.alpha = self.alpha
+        self.path.width = self.width
+        self.path.headSize = self.headSize
+        self.path.tailSize = self.tailSize
+        self.path.outlineWidth = self.outlineWidth
+        self.path.outlineColor = self.outlineColor
+        self.path.outlineAlpha = self.outlineAlpha
+        self.path.origin = self.origin
+        self.path.rotation = self.rotation
+        self.path.transform = self.transform
+        self.path.dash = self.dash
+
+    def toPath(self):
+        self._updateInternalPath()
+        return self.path.copy()
+
 
     # TODO FOR FUTURE:
     # Handling of transparency needs to be fixed.
@@ -3483,20 +3505,7 @@ class Arrow(morpho.Figure):
         if self.head == self.tail:
             return
 
-        # Update and draw the internal path figure.
-        self.path.seq = [self.tail, self.head]
-        self.path.color = self.color
-        self.path.alpha = self.alpha
-        self.path.width = self.width
-        self.path.headSize = self.headSize
-        self.path.tailSize = self.tailSize
-        self.path.outlineWidth = self.outlineWidth
-        self.path.outlineColor = self.outlineColor
-        self.path.outlineAlpha = self.outlineAlpha
-        self.path.origin = self.origin
-        self.path.rotation = self.rotation
-        self.path.transform = self.transform
-        self.path.dash = self.dash
+        self._updateInternalPath()
         self.path.draw(camera, ctx)
 
 
@@ -3661,6 +3670,14 @@ class SpaceArrow(Arrow):
     def tail(self, value):
         self._tail = morpho.matrix.array(value)
 
+    def _updateInternalPath(self):
+        raise NotImplementedError
+
+    def toPath(self):
+        path = SpacePath()
+        path._updateFrom(self, common=True)
+        path.seq = [self.tail.copy(), self.head.copy()]
+        return path
 
     # zdepth is taken to be that of the midpoint of the head and tail.
     def primitives(self, camera): # orient=np.identity(3), focus=np.zeros(3)):
