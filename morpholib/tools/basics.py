@@ -282,3 +282,16 @@ def boxCorners(box, initCorner="NW", CCW=True):
     corners = corners[i:] + corners[:i]
 
     return corners
+
+# Converts minutes with seconds into just seconds.
+# minsec(m,s) --> 60*m + s
+#
+# If given only a single decimal number as input, it treats
+# it as (minutes).(seconds) and converts it to seconds.
+# Example: minsec(2.05) --> 125 (within rounding error)
+def minsec(mins, secs=None, /):
+    if secs is None:
+        value = mins
+        mins = int(value)
+        secs = (value-mins)/0.6 * 60
+    return 60*mins + secs
