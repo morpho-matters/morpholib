@@ -2094,7 +2094,7 @@ class SpaceMathGrid(morpho.SpaceFrame):
 # width = Axes width (in pixels). Default: 5
 # color = Axes color (RGB tuple). Default: (0,0,0) black
 # alpha = Axes opacity. Default: 1 (opaque)
-def axes(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
+def axesPath(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
     xmin,xmax,ymin,ymax = view
     path = mo.grid.Path([xmin,xmax, ymin*1j, ymax*1j]).set(
         width=width, color=color, alpha=alpha, deadends={1}
