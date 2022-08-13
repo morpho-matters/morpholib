@@ -1952,6 +1952,45 @@ def optimizePathList(paths):
 
 ### GRIDS ###
 
+# Mainly for internal use.
+# It's basically a two-node Track but where tickGap is interpreted
+# in physical units, designed to make axes with physical tickmarks.
+# It's designed to only work for a two node vertex sequence, but
+# it can actually handle more, but it may look wrong when rendered
+# in a non-proportional viewspace.
+class Axis(Track):
+    def draw(self, camera, ctx):
+        # Compute the physical direction unit vector of the axis.
+        vector = self.seq[1] - self.seq[0]
+        # Apply transformations if needed
+        if self.rotation != 0:
+            vector *= cmath.exp(self.rotation*1j)
+        if not np.array_equal(self._transform, I2):
+            mat = morpho.matrix.Mat(self._transform)
+            vector = mat*vector
+        unit = vector/abs(vector)
+        u,v = unit.real, unit.imag
+
+        # Compute the horizontal and vertical scale factors
+        # that convert physical width or height to pixel units.
+        Sx = mo.pixelWidth(1, camera.view, ctx)
+        Sy = mo.pixelHeight(1, camera.view, ctx)
+
+        # Temporarily modify self.tickGap to the pixel value and use
+        # Track.draw() to render it before reverting tickGap back to
+        # its original value.
+        origGap = self.tickGap
+        # If the viewbox is (essentially) square with the window shape,
+        # don't use the fancy formula.
+        if abs(Sx-Sy)/max(Sx,Sy) < 1e-9:
+            self.tickGap = self.tickGap*Sx
+        else:
+            self.tickGap = self.tickGap*math.sqrt((Sx*u)**2 + (Sy*v)**2)
+        Track.draw(self, camera, ctx)
+        self.tickGap = origGap
+
+
+
 # Special Frame figure for mathgrids
 class MathGrid(morpho.Frame):
     pass
