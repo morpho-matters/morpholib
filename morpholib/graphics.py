@@ -1,6 +1,7 @@
 
 import morpholib as morpho
 import morpholib.anim
+import morpholib.color
 from morpholib.tools.basics import *
 
 import cairo
@@ -872,3 +873,48 @@ class SpaceMultiImage(MultiImage):
     #     self.images[0].orientable = value
 
 SpaceMultimage = SpaceMultImage = SpaceMultiImage  # Synonyms
+
+
+class RasterMap(morpho.Figure):
+    def __init__(self, array=None, view=None, alpha=1):
+        if array is None:
+            array = np.array([1,1,1]).reshape(1,1,3)
+        if view is None:
+            view = [0,1,0,1]
+
+        super().__init__()
+
+        self.Tweenable("_array", morpho.array(array), tags=["nparray"])
+        self.Tweenable("view", view, tags=["scalar", "list"])
+        self.Tweenable("alpha", alpha, tags=["scalar"])
+
+        self.NonTweenable("_surface", None)
+
+        self._updateSurface()
+
+    @property
+    def array(self):
+        return self._array
+
+    @array.setter
+    def array(self, value):
+        self._array = morpho.array(value)
+        self._updateSurface()
+
+    def _updateSurface(self):
+        colorLength = self._array.shape[2]
+        data = morpho.color.ARGB32(self._array.reshape(-1, colorLength))
+        data.shape = self._array.shape[:2] + (-1,)
+
+        self._surface = cairo.ImageSurface.create_for_data(
+            data, cairo.FORMAT_ARGB32, data.shape[1], data.shape[0]
+            )
+
+    def draw(self, camera, ctx):
+        img = Image(self._surface)
+        img.unlink()
+        img.align = [-1,-1]
+        img.pos = self.view[0] + self.view[2]*1j
+        img.width = self.view[1] - self.view[0]
+        img.height = self.view[3] - self.view[2]
+        img.draw(camera, ctx)
