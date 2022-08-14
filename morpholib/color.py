@@ -64,21 +64,28 @@ def parseHexColor(string, normalize=True):
     else:
         return (R,G,B)
 
+# Converts an array of RGBA values (N x 4) into an array
+# of ARGB ints with alpha premultiplied in.
+# Can also be an array of RGB values (N x 3) in which case
+# the alpha column will be assumed to be uniformly equal to 1.
 def ARGB32(RGBA):
     array = np.array(RGBA, dtype=float)
     if array.ndim == 1:
         array.shape = (1, -1)
+    # If alpha column is missing, append it as a column of ones
+    if array.shape[1] == 3:
+        array = np.concatenate((array, np.ones((array.shape[0], 1))), axis=1)
     # Premultiply by alpha
-    array[:,:3] *= array[:,3]
+    array[:,:3] *= array[:,3:]
 
     # Convert into ints
     array = np.array(np.round(255*array), dtype="uint32")
 
     # Convert into an array of ARGB values
     A = array[:,3] << 24
-    R = array[:,2] << 16
+    R = array[:,0] << 16
     G = array[:,1] << 8
-    B = array[:,0]
+    B = array[:,2]
 
     ARGB = A+R+G+B
     return ARGB.squeeze()
