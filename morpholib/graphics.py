@@ -888,6 +888,13 @@ class RasterMap(morpho.Figure):
         self.Tweenable("view", view, tags=["scalar", "list"])
         self.Tweenable("alpha", alpha, tags=["scalar"])
 
+        # Transformation tweenables
+        self.Tweenable("origin", 0, tags=["complex", "nofimage"])
+        # self.Tweenable("rotation", 0, tags=["scalar"])
+        # self.Tweenable("_transform", np.eye(2), tags=["nparray"])
+        # self.Tweenable("scale_x", 1, tags=["scalar"])
+        # self.Tweenable("scale_y", 1, tags=["scalar"])
+
         # self.NonTweenable("_surface", None)
 
         # self._updateSurface()
@@ -901,6 +908,14 @@ class RasterMap(morpho.Figure):
         self._array = morpho.array(value)
         # self._updateSurface()
 
+    # @property
+    # def transform(self):
+    #     return self._transform
+
+    # @transform.setter
+    # def transform(self, value):
+    #     self._transform = morpho.matrix.array(value)
+
     def _createSurface(self):
         colorLength = self._array.shape[2]
         data = morpho.color.ARGB32(self._array.reshape(-1, colorLength))
@@ -910,14 +925,20 @@ class RasterMap(morpho.Figure):
             data, cairo.FORMAT_ARGB32, data.shape[1], data.shape[0]
             )
 
-    def draw(self, camera, ctx):
+    def _createImage(self):
         surface = self._createSurface()
         img = Image(surface)
         img.unlink()
         img.align = [-1,-1]
-        img.pos = self.view[0] + self.view[2]*1j
+        img.pos = self.view[0] + self.view[2]*1j + self.origin
         img.width = self.view[1] - self.view[0]
         img.height = self.view[3] - self.view[2]
+        img.alpha = self.alpha
+
+        return img
+
+    def draw(self, camera, ctx):
+        img = self._createImage()
         img.draw(camera, ctx)
 
     # ### TWEEN METHODS ###
