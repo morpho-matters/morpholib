@@ -888,9 +888,9 @@ class RasterMap(morpho.Figure):
         self.Tweenable("view", view, tags=["scalar", "list"])
         self.Tweenable("alpha", alpha, tags=["scalar"])
 
-        self.NonTweenable("_surface", None)
+        # self.NonTweenable("_surface", None)
 
-        self._updateSurface()
+        # self._updateSurface()
 
     @property
     def array(self):
@@ -899,22 +899,79 @@ class RasterMap(morpho.Figure):
     @array.setter
     def array(self, value):
         self._array = morpho.array(value)
-        self._updateSurface()
+        # self._updateSurface()
 
-    def _updateSurface(self):
+    def _createSurface(self):
         colorLength = self._array.shape[2]
         data = morpho.color.ARGB32(self._array.reshape(-1, colorLength))
         data.shape = self._array.shape[:2] + (-1,)
 
-        self._surface = cairo.ImageSurface.create_for_data(
+        return cairo.ImageSurface.create_for_data(
             data, cairo.FORMAT_ARGB32, data.shape[1], data.shape[0]
             )
 
     def draw(self, camera, ctx):
-        img = Image(self._surface)
+        surface = self._createSurface()
+        img = Image(surface)
         img.unlink()
         img.align = [-1,-1]
         img.pos = self.view[0] + self.view[2]*1j
         img.width = self.view[1] - self.view[0]
         img.height = self.view[3] - self.view[2]
         img.draw(camera, ctx)
+
+    # ### TWEEN METHODS ###
+
+    # def tweenLinear(self, other, t, *args, **kwargs):
+    #     tw = super().tweenLinear(other, t, *args, **kwargs)
+    #     tw._updateSurface()
+    #     return tw
+
+    # def tweenSpiral(self, other, t, *args, **kwargs):
+    #     tw = super().tweenSpiral(other, t, *args, **kwargs)
+    #     tw._updateSurface()
+    #     return tw
+
+    # @classmethod
+    # def tweenPivot(cls, angle=tau/2, *args, **kwargs):
+    #     superpivot = super().tweenPivot(angle, *args, **kwargs)
+    #     def pivot(self, other, t):
+    #         tw = superpivot(self, other, t)
+    #         tw._updateSurface()
+    #         return tw
+    #     return pivot
+
+def colorPattern(colorfunc, view, res=(100,100), alpha=1,
+    *, vectorized=False):
+
+    # Create position array
+    xmin, xmax, ymin, ymax = view
+    xres, yres = res
+    if xres < 2 or yres < 2:
+        raise ValueError("Resolution values must be > 1")
+    dx = (xmax-xmin)/(xres-1) # if xres > 1 else (xmax-xmin)
+    dy = (ymax-ymin)/(yres-1) # if yres > 1 else (ymax-ymin)
+    array = np.mgrid[xmin:xmax+dx/2:dx, ymin:ymax+dy/2:dy]
+    zarray = array[0] + 1j*array[1]
+    # print(zarray.shape)
+    # assert zarray.shape == res
+
+    # Reorient the array because otherwise x- and y-directions
+    # will be swapped and the top and bottom will be swapped.
+    zarray = np.flip(zarray.T, axis=0)
+
+    if vectorized:
+        raise NotImplementedError
+    else:
+        zlist = zarray.reshape(-1).tolist()
+        colorDim = len(colorfunc(zlist[0]))
+        # Initialize colorArray
+        colorArray = np.zeros((len(zlist), colorDim))
+        for n,z in enumerate(zlist):
+            colorArray[n] = colorfunc(z)
+        colorArray.shape = zarray.shape + (colorDim,)
+
+    # Create RasterMap
+    raster = RasterMap(colorArray, view, alpha)
+    return raster
+
