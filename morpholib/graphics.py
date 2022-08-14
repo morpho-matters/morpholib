@@ -964,11 +964,14 @@ class RasterMap(morpho.Figure):
     #         return tw
     #     return pivot
 
-def colorPattern(colorfunc, view, res=(100,100), alpha=1,
-    *, vectorized=False):
+def colorPattern(colorfunc, domain, res=(100,100), alpha=1,
+    *, view=None, vectorized=False):
+
+    if view is None:
+        view = domain[:]
 
     # Create position array
-    xmin, xmax, ymin, ymax = view
+    xmin, xmax, ymin, ymax = domain
     xres, yres = res
     if xres < 2 or yres < 2:
         raise ValueError("Resolution values must be > 1")
