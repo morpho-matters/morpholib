@@ -875,12 +875,26 @@ class SpaceMultiImage(MultiImage):
 SpaceMultimage = SpaceMultImage = SpaceMultiImage  # Synonyms
 
 
+# A rectangular box of color specified with a numpy array.
+# Note that this class should rarely be invoked directly.
+# Use colorPattern() or morpho.graphics.heatmap() instead.
+#
+# TWEENABLES
+# array = 3D array of shape (width x height x (3 or 4)) which
+#         encodes RGB[A] data. Default: [[[1,1,1]]]
+#         The color data can be either normalized RGB or RGBA,
+#         but when tweening between multiple raster maps, the
+#         scheme must be consistent!
+# view = Box of the complex plane in which to draw the raster map.
+#        Specified as [xmin,xmax,ymin,ymax]. Default: (0,1,0,1)
+# alpha = Opacity. Default: 1 (opaque)
+# origin = Translation value (complex number). Default: 0.
 class RasterMap(morpho.Figure):
-    def __init__(self, array=None, view=None, alpha=1):
+    def __init__(self, array=None, view=(0,1,0,1), alpha=1):
         if array is None:
             array = np.array([1,1,1]).reshape(1,1,3)
-        if view is None:
-            view = [0,1,0,1]
+        # if view is None:
+        #     view = [0,1,0,1]
 
         super().__init__()
 
@@ -964,6 +978,31 @@ class RasterMap(morpho.Figure):
     #         return tw
     #     return pivot
 
+# Creates a RasterMap figure (i.e. box of color) via a
+# color function that maps positions in the complex plane
+# to RGB[A] colors.
+#
+# INPUTS
+# colorfunc = Function that maps complex number positions
+#             to normalized RGB[A] tuples. Although both RGB and
+#             RGBA are supported, you must stick to a consistent
+#             scheme if tweening between multiple color patterns.
+# domain = Box of the complex plane on which to evaluate the
+#          color function. Specified as [xmin,xmax,ymin,ymax]
+# res = Pixel resolution of the pattern (xres, yres).
+#       Default: (100,100)
+# alpha = Opacity. Default: 1 (opaque)
+# KEYWORD-ONLY INPUTS
+# view = Box of the complex plane on which to DRAW the color pattern.
+#        By default, it's the same as the `domain` box.
+# vectorized = Boolean indicating whether `colorfunc` should be
+#       treated as vectorized. By default it's False, but if set to
+#       True, it will input all of the complex number positions into
+#       color function all at once as one big complex-valued numpy
+#       vector and will expect an output array of shape (N x (3 or 4))
+#       where N is the element count of the massive input vector.
+#       Using this option can potentially speed up creating the
+#       color pattern.
 def colorPattern(colorfunc, domain, res=(100,100), alpha=1,
     *, view=None, vectorized=False):
 
