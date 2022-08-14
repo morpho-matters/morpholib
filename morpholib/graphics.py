@@ -930,6 +930,8 @@ class RasterMap(morpho.Figure):
         img = Image(surface)
         img.unlink()
         img.align = [-1,-1]
+        # center = mean([self.view[0]+self.view[2]*1j, self.view[1]+self.view[3]*1j])
+        # img.pos = center + self.origin
         img.pos = self.view[0] + self.view[2]*1j + self.origin
         img.width = self.view[1] - self.view[0]
         img.height = self.view[3] - self.view[2]
@@ -972,6 +974,12 @@ def colorPattern(colorfunc, view, res=(100,100), alpha=1,
         raise ValueError("Resolution values must be > 1")
     dx = (xmax-xmin)/(xres-1) # if xres > 1 else (xmax-xmin)
     dy = (ymax-ymin)/(yres-1) # if yres > 1 else (ymax-ymin)
+
+    # Note: I think you could also have implemented this by
+    # adding a column linspace to a row linspace. Numpy broadcasting
+    # would (I think) result in this creating a cartesian addition
+    # of the two. Something to consider if you ever want to change
+    # this implementation.
     array = np.mgrid[xmin:xmax+dx/2:dx, ymin:ymax+dy/2:dy]
     zarray = array[0] + 1j*array[1]
     # print(zarray.shape)
@@ -982,7 +990,8 @@ def colorPattern(colorfunc, view, res=(100,100), alpha=1,
     zarray = np.flip(zarray.T, axis=0)
 
     if vectorized:
-        raise NotImplementedError
+        colorArray = colorfunc(zarray.reshape(-1))
+        colorArray.shape = zarray.shape + (-1,)
     else:
         zlist = zarray.reshape(-1).tolist()
         colorDim = len(colorfunc(zlist[0]))
