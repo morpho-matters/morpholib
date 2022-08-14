@@ -539,8 +539,9 @@ class Path(morpho.Figure):
 
     # Applies interpSeqLinear() to uniformly add nodes to the given
     # path IN PLACE.
-    def insertNodesUniformly(self, numNodes):
-        self.seq = insertNodesUniformlyTo(self.seq, numNodes)
+    # See `morpho.grid.insertNodesUniformlyTo()` for more info.
+    def insertNodesUniformly(self, *args, **kwargs):
+        self.seq = insertNodesUniformlyTo(self.seq, *args, **kwargs)
         return self
 
     # Returns the interpolated position along the path corresponding to the
@@ -1403,6 +1404,9 @@ class Track(Path):
             self.rotation = path.rotation
             self._transform = path._transform.copy()
 
+            self.interp = path.interp
+            self.deadends = path.deadends.copy()
+
             # # Make ticks have zero width intially so the track looks
             # # identical to the given Path figure.
             # # Actually, maybe nevermind. This could conflict with
@@ -1431,6 +1435,9 @@ class Track(Path):
         backpath.origin = self.origin
         backpath.rotation = self.rotation
         backpath._transform = self._transform
+
+        backpath.interp = self.interp
+        backpath.deadends = self.deadends
 
         return backpath
 
@@ -1945,6 +1952,45 @@ def optimizePathList(paths):
 
 ### GRIDS ###
 
+# Mainly for internal use.
+# It's basically a two-node Track but where tickGap is interpreted
+# in physical units, designed to make axes with physical tickmarks.
+# It's designed to only work for a two node vertex sequence, but
+# it can actually handle more, but it may look wrong when rendered
+# in a non-proportional viewspace.
+class Axis(Track):
+    def draw(self, camera, ctx):
+        # Compute the physical direction unit vector of the axis.
+        vector = self.seq[1] - self.seq[0]
+        # Apply transformations if needed
+        if self.rotation != 0:
+            vector *= cmath.exp(self.rotation*1j)
+        if not np.array_equal(self._transform, I2):
+            mat = morpho.matrix.Mat(self._transform)
+            vector = mat*vector
+        unit = vector/abs(vector)
+        u,v = unit.real, unit.imag
+
+        # Compute the horizontal and vertical scale factors
+        # that convert physical width or height to pixel units.
+        Sx = mo.pixelWidth(1, camera.view, ctx)
+        Sy = mo.pixelHeight(1, camera.view, ctx)
+
+        # Temporarily modify self.tickGap to the pixel value and use
+        # Track.draw() to render it before reverting tickGap back to
+        # its original value.
+        origGap = self.tickGap
+        # If the viewbox is (essentially) square with the window shape,
+        # don't use the fancy formula.
+        if abs(Sx-Sy)/max(Sx,Sy) < 1e-9:
+            self.tickGap = self.tickGap*Sx
+        else:
+            self.tickGap = self.tickGap*math.sqrt((Sx*u)**2 + (Sy*v)**2)
+        Track.draw(self, camera, ctx)
+        self.tickGap = origGap
+
+
+
 # Special Frame figure for mathgrids
 class MathGrid(morpho.Frame):
     pass
@@ -2048,12 +2094,70 @@ class SpaceMathGrid(morpho.SpaceFrame):
 # width = Axes width (in pixels). Default: 5
 # color = Axes color (RGB tuple). Default: (0,0,0) black
 # alpha = Axes opacity. Default: 1 (opaque)
-def axes(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
+def axesPath(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
     xmin,xmax,ymin,ymax = view
     path = mo.grid.Path([xmin,xmax, ymin*1j, ymax*1j]).set(
-        width=width, color=color, deadends={1}
+        width=width, color=color, alpha=alpha, deadends={1}
         )
     return path
+
+def mathaxes(*,
+    view=(-5,5, -5,5), axis="xy",
+    xcolor=(0,0,0), ycolor=(0,0,0), color=None, alpha=1,
+    xtickLength=0, ytickLength=0, tickLength=None,
+    xtickWidth=None, ytickWidth=None, tickWidth=None,
+    dx=1, dy=1,
+    xwidth=3, ywidth=3, width=None,
+    tweenMethod=Path.tweenLinear,
+    transition=None):
+
+    # Handle orientation-agnostic keyword inputs
+    if color is not None:
+        xcolor = color[:]
+        ycolor = color[:]
+    if tickLength is not None:
+        xtickLength = ytickLength = tickLength
+    if tickWidth is not None:
+        xtickWidth = ytickWidth = tickWidth
+    if width is not None:
+        xwidth = ywidth = width
+
+    if xtickWidth is None:
+        xtickWidth = xwidth/2
+    if ytickWidth is None:
+        ytickWidth = ywidth/2
+
+    axis = axis.lower()
+
+    frm = MathGrid()
+
+    xmin, xmax, ymin, ymax = view
+    if "x" in axis:
+        xaxis = mo.grid.Path([xmin, xmax]).set(
+            width=xwidth, color=xcolor, alpha=alpha
+            )
+        frm.append(xaxis)
+
+        if xtickLength != 0:
+            xsteps = int((xmax-xmin) / dx + 1.0e-6)  # +epsilon to account for floating pt error
+            radius = xtickLength / 2
+            nodes = np.linspace(xmin, xmax, xsteps)
+            lownodes = nodes - radius*1j
+            lownodes = lownodes.tolist()
+            highnodes = nodes + radius*1j
+            highnodes = highnodes.tolist()
+            xticks = mo.grid.Path(mo.flattenList([[lownodes[n], highnodes[n]] for n in range(len(lownodes))]))
+            xticks.deadends = {n+1 for n in range(0,len(xticks.seq),2)}
+            pass
+            pass
+            # Continue work here...
+            # xticks.set(width=)
+
+    if "y" in axis:
+        yaxis = mo.grid.Path([ymin*1j, ymax*1j]).set(
+            width=ywidth, color=ycolor, alpha=alpha
+            )
+        frm.append(yaxis)
 
 
 # Construct a grid-like frame figure.
@@ -3313,6 +3417,8 @@ class Arrow(morpho.Figure):
         # self.dash = []
 
         # Initialize internal path figure
+        # Todo: This could probably be replaced with
+        # self._updateInternalPath()
         self.path = Path([tail, head])
         self.path.color = self.color
         self.path.alpha = self.alpha
@@ -3404,6 +3510,26 @@ class Arrow(morpho.Figure):
     def midpoint(self):
         return (self.head + self.tail) / 2
 
+    def _updateInternalPath(self):
+        # Update and draw the internal path figure.
+        self.path.seq = [self.tail, self.head]
+        self.path.color = self.color
+        self.path.alpha = self.alpha
+        self.path.width = self.width
+        self.path.headSize = self.headSize
+        self.path.tailSize = self.tailSize
+        self.path.outlineWidth = self.outlineWidth
+        self.path.outlineColor = self.outlineColor
+        self.path.outlineAlpha = self.outlineAlpha
+        self.path.origin = self.origin
+        self.path.rotation = self.rotation
+        self.path.transform = self.transform
+        self.path.dash = self.dash
+
+    def toPath(self):
+        self._updateInternalPath()
+        return self.path.copy()
+
 
     # TODO FOR FUTURE:
     # Handling of transparency needs to be fixed.
@@ -3419,20 +3545,7 @@ class Arrow(morpho.Figure):
         if self.head == self.tail:
             return
 
-        # Update and draw the internal path figure.
-        self.path.seq = [self.tail, self.head]
-        self.path.color = self.color
-        self.path.alpha = self.alpha
-        self.path.width = self.width
-        self.path.headSize = self.headSize
-        self.path.tailSize = self.tailSize
-        self.path.outlineWidth = self.outlineWidth
-        self.path.outlineColor = self.outlineColor
-        self.path.outlineAlpha = self.outlineAlpha
-        self.path.origin = self.origin
-        self.path.rotation = self.rotation
-        self.path.transform = self.transform
-        self.path.dash = self.dash
+        self._updateInternalPath()
         self.path.draw(camera, ctx)
 
 
@@ -3597,6 +3710,14 @@ class SpaceArrow(Arrow):
     def tail(self, value):
         self._tail = morpho.matrix.array(value)
 
+    def _updateInternalPath(self):
+        raise NotImplementedError
+
+    def toPath(self):
+        path = SpacePath()
+        path._updateFrom(self, common=True)
+        path.seq = [self.tail.copy(), self.head.copy()]
+        return path
 
     # zdepth is taken to be that of the midpoint of the head and tail.
     def primitives(self, camera): # orient=np.identity(3), focus=np.zeros(3)):
@@ -3932,6 +4053,11 @@ def interpSeqLinear(seq, t):
 # Applies interpSeqLinear() to uniformly add nodes to the given
 # list of complex numbers and returns a new list containing
 # the additional interpolated nodes.
+#
+# Optionally specify a segment (a,b) where 0 <= a < b <= 1
+# to insert the nodes only on a subsegment of the path.
+# 0 = path beginning; 1 = path end.
+#
 # If optional argument close = True, then the first item in the
 # sequence is temporarily appended to the end before interpolation
 # occurs. After interpolation, the copy of the first item is
@@ -3939,16 +4065,22 @@ def interpSeqLinear(seq, t):
 # This is useful for interpolating loops like polygon vertex lists
 # because the it will insert vertices between the final and first
 # vertices. By default, close = False.
-def insertNodesUniformlyTo(seq, numNodes, close=False):
+def insertNodesUniformlyTo(seq, numNodes, segment=(0,1), *, close=False):
     # If path closure should be done, append seq[0] to the end
     # of a copy of seq
     if close:
         seq = list(seq)  # Create a copy as a list
         seq.append(seq[0])
+
     newseq = seq[:]
     len_seq = len(seq)
+    t1, t2 = segment
+    a = t1*(len_seq-1)
+    b = t2*(len_seq-1)
+    dt = (b-a)/(numNodes+1)
     for n in range(numNodes):
-        t = (n+1)/(numNodes+1)*(len_seq-1)
+        # t = (n+1)/(numNodes+1)*(len_seq-1)
+        t = mo.lerp0(a+dt, b-dt, n, start=0, end=numNodes-1)
         node = interpSeqLinear(seq, t)
         # +n because each insertion shifts all later indices up by 1.
         newseq.insert(int(t)+1+n, node)

@@ -1285,6 +1285,9 @@ class FancyMultiText(MultiText):
 
     # Returns the physical bounding box of the entire text group as
     # [xmin, xmax, ymin, ymax]
+    # Note that this is with respect to the group's LOCAL origin,
+    # meaning this method does not take the `pos` attribute into
+    # account.
     def totalBox(self, view, ctx, pad=0):
         boxes = [fig.box(view, ctx, pad) for fig in self.figures]
         left = min(box[0] for box in boxes)

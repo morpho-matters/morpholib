@@ -412,7 +412,7 @@ class RiemannRect(morpho.Figure):
 
     def __init__(self, width=1, height=1, pos=0,
         color=(0,0,0), fill=(1,0,0), alpha=1, align=0,
-        strokeWeight=3):
+        strokeWeight=3, *, alphaFill=1):
         # Construct a default figure
         super().__init__()
 
@@ -427,6 +427,8 @@ class RiemannRect(morpho.Figure):
 
         # Initialize tweenables
         self.update([width, height, pos, color, fill, alpha, align, strokeWeight])
+
+        self.Tweenable("alphaFill", alphaFill, tags=["scalar"])
 
         # Initialize polygon reference figure
         self.polygon = morpho.grid.Polygon(
@@ -448,6 +450,7 @@ class RiemannRect(morpho.Figure):
         self.polygon.color = self.color[:]
         self.polygon.fill = self.fill[:]
         self.polygon.alpha = self.alpha
+        self.polygon.alphaFill = self.alphaFill
 
     # Again, not sure this is needed because generic copy()
     # will call the constructor thereby initializing a new
@@ -550,7 +553,8 @@ class RiemannDisk(morpho.Figure):
 # align = 0 => midpoints
 def RiemannSum(func, interval, rectCount, align=-1,
     color=(0,0,0), fill=(1, 0.3, 0.3), strokeWeight=3,
-    transition=morpho.transitions.slow_fast_slow):
+    transition=morpho.transitions.slow_fast_slow,
+    *, alphaFill=1):
 
     a,b = interval
     dx = (b-a)/rectCount
@@ -561,7 +565,8 @@ def RiemannSum(func, interval, rectCount, align=-1,
         rect = RiemannRect(
             width=dx, height=func(x), pos=x,
             color=list(color), fill=list(fill),
-            align=align, strokeWeight=strokeWeight
+            align=align, strokeWeight=strokeWeight,
+            alphaFill=alphaFill
             )
         rect.transition = transition
         frame.figures.append(rect)
