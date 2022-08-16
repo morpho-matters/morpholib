@@ -264,6 +264,23 @@ def interpVectors(x, xp, fp, left=None, right=None):
     else:
         return np.interp(x, xp, fp, left=left, right=right)
 
+def positionArray(domain, res):
+    xmin, xmax, ymin, ymax = domain
+    xres, yres = res
+    if xres < 2 or yres < 2:
+        raise ValueError("Resolution values must be > 1")
+    dx = (xmax-xmin)/(xres-1) # if xres > 1 else (xmax-xmin)
+    dy = (ymax-ymin)/(yres-1) # if yres > 1 else (ymax-ymin)
+
+    # Note: I think you could also have implemented this by
+    # adding a column linspace to a row linspace. Numpy broadcasting
+    # would (I think) result in this creating a cartesian addition
+    # of the two. Something to consider if you ever want to change
+    # this implementation.
+    array = np.mgrid[xmin:xmax+dx/2:dx, ymin:ymax+dy/2:dy]
+    zarray = array[0] + 1j*array[1]
+    return zarray
+
 # Opposite of array(). Takes an iterable and converts it to a
 # standard python list of python floats. Useful for turning
 # numpy arrays back into native python types.

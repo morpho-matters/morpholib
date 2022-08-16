@@ -1010,20 +1010,7 @@ def colorPattern(colorfunc, domain, res=(100,100), alpha=1,
         view = domain[:]
 
     # Create position array
-    xmin, xmax, ymin, ymax = domain
-    xres, yres = res
-    if xres < 2 or yres < 2:
-        raise ValueError("Resolution values must be > 1")
-    dx = (xmax-xmin)/(xres-1) # if xres > 1 else (xmax-xmin)
-    dy = (ymax-ymin)/(yres-1) # if yres > 1 else (ymax-ymin)
-
-    # Note: I think you could also have implemented this by
-    # adding a column linspace to a row linspace. Numpy broadcasting
-    # would (I think) result in this creating a cartesian addition
-    # of the two. Something to consider if you ever want to change
-    # this implementation.
-    array = np.mgrid[xmin:xmax+dx/2:dx, ymin:ymax+dy/2:dy]
-    zarray = array[0] + 1j*array[1]
+    zarray = morpho.matrix.positionArray(domain, res)
     # print(zarray.shape)
     # assert zarray.shape == res
 
@@ -1046,4 +1033,10 @@ def colorPattern(colorfunc, domain, res=(100,100), alpha=1,
     # Create RasterMap
     raster = RasterMap(colorArray, view, alpha)
     return raster
+
+# def heatmap(heatfunc, gradient, interval, domain, res=(100,100), alpha=1,
+#     *, view=None, vectorized=False):
+
+#     def colorfunc(z):
+
 
