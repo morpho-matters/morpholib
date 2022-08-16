@@ -239,6 +239,31 @@ def vector3d(v):
 
     return v
 
+# An extension of numpy.interp() that can handle fp as a list
+# of vectors instead of a list of scalars. However, I believe
+# scipy.interp1() fulfills this role, so this function will
+# probably be obsolete if/when scipy is ever added as a
+# dependency to Morpho.
+#
+# Note: the individual vectors in fp should not have a very
+# large number of components. This function is designed for
+# relatively low-dimension fp vectors.
+def interpVectors(x, xp, fp, left=None, right=None):
+    try:
+        ndim = len(fp[0])
+        isvector = True
+    except TypeError:
+        isvector = False
+
+    if isvector:
+        fmat = np.array(fp) if not isinstance(fp, np.ndarray) else fp
+        interpMat = np.zeros((len(x), ndim))
+        for j in range(ndim):
+            interpMat[:,j] = np.interp(x, xp, fmat[:,j], left=left, right=right)
+        return interpMat
+    else:
+        return np.interp(x, xp, fp, left=left, right=right)
+
 # Opposite of array(). Takes an iterable and converts it to a
 # standard python list of python floats. Useful for turning
 # numpy arrays back into native python types.

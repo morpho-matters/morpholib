@@ -3,6 +3,7 @@ Classes and functions having to do with color.
 '''
 
 import morpholib as morpho
+import morpholib.matrix
 from morpholib import numTween
 from morpholib.tools.basics import listfloor, listceil
 
@@ -240,9 +241,15 @@ class Gradient(morpho.Figure):
         return len(self.data)
 
     # Returns the interpolated gradient value at the specified x in [0,1]
+    # x can optionally be a 1D numpy array in which case the gradient is
+    # evaluated on each x element-wise and the result is returned as a
+    # matrix where each row corresponds to an x value.
     def value(self, x):
         if len(self.data) == 0:
             raise KeyError("This gradient has no keys. Cannot interpolate an empty gradient.")
+
+        if isinstance(x, np.ndarray):
+            return self._valueArray(x)
 
         keylist = sorted(list(self.data.keys()))
 
@@ -269,6 +276,16 @@ class Gradient(morpho.Figure):
                 return type(keyval)(map(morpho.numTween, keyval, keyval2, ((x-key)/(key2-key),)*len(keyval)))
             else:
                 return morpho.numTween(keyval, keyval2, x, start=key, end=key2)
+
+    def _valueArray(self, x):
+        # Extract the keypoints and unzip them into two separate lists
+        # of the keys and values
+        pairs = list(self.data.items())
+        pairs.sort()
+        xp, fp = zip(*pairs)
+
+        return morpho.matrix.interpVectors(x, xp, fp)
+
 
     # Generates a new Gradient which is a segment between the values [a,b] of the
     # current gradient.
