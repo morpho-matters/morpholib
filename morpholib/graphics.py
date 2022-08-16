@@ -998,7 +998,7 @@ class RasterMap(morpho.Figure):
 # vectorized = Boolean indicating whether `colorfunc` should be
 #       treated as vectorized. By default it's False, but if set to
 #       True, it will input all of the complex number positions into
-#       color function all at once as one big complex-valued numpy
+#       the color function all at once as one big complex-valued numpy
 #       vector and will expect an output array of shape (N x (3 or 4))
 #       where N is the element count of the massive input vector.
 #       Using this option can potentially speed up creating the
@@ -1034,9 +1034,40 @@ def colorPattern(colorfunc, domain, res=(100,100), alpha=1,
     raster = RasterMap(colorArray, view, alpha)
     return raster
 
-# def heatmap(heatfunc, gradient, interval, domain, res=(100,100), alpha=1,
-#     *, view=None, vectorized=False):
+# Creates a color pattern of a heatmap.
+# See also: colorPattern()
+#
+# INPUTS
+# heatfunc = Function mapping complex positions to scalars.
+# gradient = Color gradient to use for the heatmap.
+# interval = 2-tuple specifying the range of the heatfunc values
+#            to color.
+# domain = Box of the complex plane on which to evaluate the
+#          heatfunc. Specified as [xmin,xmax,ymin,ymax]
+# res = Pixel resolution of the pattern (xres, yres).
+#       Default: (100,100)
+# alpha = Opacity. Default: 1 (opaque)
+# KEYWORD-ONLY INPUTS
+# view = Box of the complex plane on which to DRAW the color pattern.
+#        By default, it's the same as the `domain` box.
+# vectorized = Boolean indicating whether `heatfunc` should be
+#       treated as vectorized. By default it's False, but if set to
+#       True, it will input all of the complex number positions into
+#       the heatmap all at once as one big complex-valued numpy
+#       vector and will expect an output vector of the same length.
+#       Using this option can potentially speed up creating the
+#       heatmap.
+def heatmap(heatfunc, gradient, interval, domain, res=(100,100), alpha=1,
+    *, view=None, vectorized=False):
 
-#     def colorfunc(z):
+    low, high = interval
+
+    if vectorized:
+        def colorfunc(zlist):
+            return gradient.value(morpho.lerp0(0, 1, heatfunc(zlist), start=low, end=high))
+    else:
+        def colorfunc(z):
+            return gradient.value(morpho.lerp(0, 1, heatfunc(z), start=low, end=high))
+    return colorPattern(colorfunc, domain, res, alpha, view=view, vectorized=vectorized)
 
 
