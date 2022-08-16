@@ -1960,6 +1960,12 @@ def optimizePathList(paths):
 # in a non-proportional viewspace.
 class Axis(Track):
     def draw(self, camera, ctx):
+        # Handle simple case with no tickmarks
+        if not(self.tickWidth > 0 and self.tickAlpha > 0 and \
+            self.tickStart < self.tickEnd):
+
+            Track.draw(self, camera, ctx)
+
         # Compute the physical direction unit vector of the axis.
         vector = self.seq[1] - self.seq[0]
         # Apply transformations if needed
@@ -2101,17 +2107,42 @@ def axesPath(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
         )
     return path
 
+# Returns a MathGrid of axes with possible tickmarks.
+#
+# INPUTS (all keyword-only)
+# view = Bounding box of the grid ([xmin,xmax,ymin,ymax]).
+#        Default: [-5,5, -5,5]
+# axis = String containing the axis types to include.
+#        Can be "x", "y", or "xy". Default "xy" (both axes)
+# xwidth, ywidth = Axis thickness (in pixels). Default: 5
+#       You can also specify `width` to set both to the same value.
+# xcolor, ycolor = Color of the respective axes. Default: (1,1,1) (white)
+#       You can also specify `color` to set both to the same value.
+# alpha = Opacity. Default 1 (opaque)
+# xtickLength, ytickLength = Length of tickmarks (in pixels).
+#       Default: 0 (don't draw tickmarks).
+#       You can also specify `tickLength` to set both to the same value.
+# xtickWidth, ytickWidth = Thickness of tickmarks (in pixels).
+#       Default: Half the axis thickness
+# dx, dy = Tickmark spacing. Default: 1.
+#          You can also specify `spacing` to set both to the same value.
+# tweenMethod = Tween method to use. Must be a Path-compatible
+#       tween method. Default: Axis.tweenLinear
+# transition = Transition function to assign to all axes
+#       Default: None (meaning it uses morpho.transition.default)
 def mathaxes(*,
     view=(-5,5, -5,5), axis="xy",
-    xcolor=(0,0,0), ycolor=(0,0,0), color=None, alpha=1,
+    xwidth=5, ywidth=5, width=None,
+    xcolor=(1,1,1), ycolor=(1,1,1), color=None, alpha=1,
     xtickLength=0, ytickLength=0, tickLength=None,
     xtickWidth=None, ytickWidth=None, tickWidth=None,
-    dx=1, dy=1,
-    xwidth=3, ywidth=3, width=None,
-    tweenMethod=Path.tweenLinear,
+    dx=1, dy=1, spacing=None,
+    tweenMethod=Axis.tweenLinear,
     transition=None):
 
     # Handle orientation-agnostic keyword inputs
+    if spacing is not None:
+        dx = dy = spacing
     if color is not None:
         xcolor = color[:]
         ycolor = color[:]
@@ -2126,6 +2157,8 @@ def mathaxes(*,
         xtickWidth = xwidth/2
     if ytickWidth is None:
         ytickWidth = ywidth/2
+    if transition is None:
+        transition = morpho.transition.default
 
     axis = axis.lower()
 
@@ -2133,31 +2166,24 @@ def mathaxes(*,
 
     xmin, xmax, ymin, ymax = view
     if "x" in axis:
-        xaxis = mo.grid.Path([xmin, xmax]).set(
-            width=xwidth, color=xcolor, alpha=alpha
+        xaxis = mo.grid.Axis([xmin, xmax]).set(
+            width=xwidth, color=xcolor, alpha=alpha,
+            tickLength=xtickLength, tickWidth=xtickWidth,
+            tickGap=dx, tickColor=xcolor[:],
+            transition=transition
             )
-        frm.append(xaxis)
-
-        if xtickLength != 0:
-            xsteps = int((xmax-xmin) / dx + 1.0e-6)  # +epsilon to account for floating pt error
-            radius = xtickLength / 2
-            nodes = np.linspace(xmin, xmax, xsteps)
-            lownodes = nodes - radius*1j
-            lownodes = lownodes.tolist()
-            highnodes = nodes + radius*1j
-            highnodes = highnodes.tolist()
-            xticks = mo.grid.Path(mo.flattenList([[lownodes[n], highnodes[n]] for n in range(len(lownodes))]))
-            xticks.deadends = {n+1 for n in range(0,len(xticks.seq),2)}
-            pass
-            pass
-            # Continue work here...
-            # xticks.set(width=)
+        frm.figures.append(xaxis)
 
     if "y" in axis:
-        yaxis = mo.grid.Path([ymin*1j, ymax*1j]).set(
-            width=ywidth, color=ycolor, alpha=alpha
+        yaxis = mo.grid.Axis([ymin*1j, ymax*1j]).set(
+            width=ywidth, color=ycolor, alpha=alpha,
+            tickLength=ytickLength, tickWidth=ytickWidth,
+            tickGap=dy, tickColor=ycolor[:],
+            transition=transition
             )
-        frm.append(yaxis)
+        frm.figures.append(yaxis)
+
+    return frm
 
 
 # Construct a grid-like frame figure.
@@ -2165,6 +2191,7 @@ def mathaxes(*,
 # INPUTS (keyword-only)
 # view = Bounding box of the grid ([xmin,xmax,ymin,ymax]). Default: [-5,5, -5,5]
 # dx,dy = Grid spacing in physical units. Default: 1
+#         You can also specify `spacing` to set both to the same value.
 # hsteps, vsteps = Number of internal steps to take inside a single grid line.
 #                  This is analogous to "steps" in the morpho.grid.line() function.
 #                  Higher values mean a higher resolution grid, but possibly slower
@@ -2209,7 +2236,7 @@ def mathaxes(*,
 # bools, which then means how many midlines to place.
 def mathgrid(*,
     view=(-5,5, -5,5),
-    dx=1, dy=1,
+    dx=1, dy=1, spacing=None,
     hsteps=50, vsteps=50, steps=None,
     hnodes=None, vnodes=None, nodes=None,
     hcolor=(0,0,1), vcolor=(0,0,1), color=None, alpha=1,
@@ -2225,6 +2252,8 @@ def mathgrid(*,
     optimize=True):
 
     # Handle orientation-agnostic keyword inputs
+    if spacing is not None:
+        dx = dy = spacing
     if steps is not None:
         hsteps = vsteps = steps
     if nodes is not None:
