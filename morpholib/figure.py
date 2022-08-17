@@ -1168,6 +1168,10 @@ class Actor(object):
     # firstkey = myactor.key[0]
     # Also can replace keys:
     # myactor.key[0] = newfig
+    # Segments of actors can also be extracted with this syntax:
+    # myactor.key[i:j]
+    # which extracts a subactor starting from the i-th keyfigure
+    # and ending with the j-th keyfigure, inclusive.
     @property
     def key(self):
         return _KeyContainer(self)
@@ -1457,6 +1461,25 @@ class Actor(object):
     def rezero(self):
         self.shift(-self.firstID())
         return self
+
+    # Reverses the order of keyindices, making the actor
+    # play in reverse.
+    # This is done in place to the actor, and the actor's position
+    # in its timeline is unaffected.
+    #
+    # However, note that this method does not modify any keyfigure's
+    # transition or tween method, so the actor may not play
+    # perfectly in reverse depending on the nature of these settings.
+    def reverse(self):
+        if len(self.keys()) <= 1:
+            return
+        newTimeline = {}
+        start = self.firstID()
+        end = self.lastID()
+        for keyID, keyfig in self.timeline.items():
+            newTimeline[start+end-keyID] = keyfig
+        self.timeline = newTimeline
+        self.update()
 
     # Compresses or expands keyIDs so as to slow down or speed up playback.
     # Optionally specify parameter "center" which denotes an index that
@@ -1793,6 +1816,19 @@ class _KeyContainer(object):
         self.actor = actor
 
     def __getitem__(self, i):
+        # Handle slice
+        if isinstance(i, slice):
+            start = i.start
+            stop = i.stop
+            step = i.step
+            if step is not None:
+                raise TypeError("Slice steps are not supported for actor slicing.")
+            if start is None:
+                start = 0
+            if stop is None:
+                stop = -1
+            return self.actor.segment(self.actor.keyID[start], self.actor.keyID[stop])
+
         return self.actor._keyno(i)
 
     def __setitem__(self, i, value):
