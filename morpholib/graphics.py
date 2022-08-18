@@ -1039,11 +1039,12 @@ def colorPattern(colorfunc, domain, res=(100,100), alpha=1,
 #
 # INPUTS
 # heatfunc = Function mapping complex positions to scalars.
-# gradient = Color gradient to use for the heatmap.
-# interval = 2-tuple specifying the range of the heatfunc values
-#            to color.
 # domain = Box of the complex plane on which to evaluate the
 #          heatfunc. Specified as [xmin,xmax,ymin,ymax]
+# interval = 2-tuple specifying the range of the heatfunc values
+#            to color with the gradient.
+# gradient = Color gradient to use for the heatmap.
+#       Default: morpho.color.heatmap()
 # res = Pixel resolution of the pattern (xres, yres).
 #       Default: (100,100)
 # alpha = Opacity. Default: 1 (opaque)
@@ -1057,8 +1058,11 @@ def colorPattern(colorfunc, domain, res=(100,100), alpha=1,
 #       vector and will expect an output vector of the same length.
 #       Using this option can potentially speed up creating the
 #       heatmap.
-def heatmap(heatfunc, gradient, interval, domain, res=(100,100), alpha=1,
+def heatmap(heatfunc, domain, interval, gradient=None, res=(100,100), alpha=1,
     *, view=None, vectorized=False):
+
+    if gradient is None:
+        gradient = morpho.color.heatmap()
 
     low, high = interval
 
