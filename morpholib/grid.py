@@ -1982,18 +1982,32 @@ class Axis(Track):
         Sx = mo.pixelWidth(1, camera.view, ctx)
         Sy = mo.pixelHeight(1, camera.view, ctx)
 
-        # Temporarily modify self.tickGap to the pixel value and use
-        # Track.draw() to render it before reverting tickGap back to
-        # its original value.
-        origGap = self.tickGap
         # If the viewbox is (essentially) square with the window shape,
         # don't use the fancy formula.
         if abs(Sx-Sy)/max(Sx,Sy) < 1e-9:
-            self.tickGap = self.tickGap*Sx
+            scale = Sx
+            # self.tickGap = self.tickGap*Sx
         else:
-            self.tickGap = self.tickGap*math.sqrt((Sx*u)**2 + (Sy*v)**2)
+            scale = math.sqrt((Sx*u)**2 + (Sy*v)**2)
+            # self.tickGap = self.tickGap*math.sqrt((Sx*u)**2 + (Sy*v)**2)
+
+        # Temporarily modify self.tickGap to the pixel value and use
+        # Track.draw() to render it before reverting tickGap back to
+        # its original value.
+        # Also temporarily adjust some other attributes to handle
+        # centering the tickmarks.
+        origGap = self.tickGap
+        origOrigin = self.origin
+        origEnd = self.seq[1]
+        self.tickGap = self.tickGap*scale
+        shift = 0.5*self.tickWidth/scale*unit
+        self.origin = self.origin - shift
+        self.seq[1] = self.seq[1] + shift
         Track.draw(self, camera, ctx)
+        # Restore original values
         self.tickGap = origGap
+        self.origin = origOrigin
+        self.seq[1] = origEnd
 
 
 
