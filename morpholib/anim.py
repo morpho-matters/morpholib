@@ -73,7 +73,13 @@ class MaskConfigurationError(Exception):
 
 
 # Frame class. Groups figures together for simultaneous drawing.
-# Syntax: myframe = Frame(list_of_figures)
+# Syntax: myframe = Frame(list_of_figures, **kwargs)
+#
+# Note that arbitrary keyword arguments can be supplied to the
+# Frame constructor, in which case they will be interpreted as
+# name-subfigure pairs and will be appended to the end of the
+# given figure list, but the associated names will be registered.
+# See `Frame.setName()` for more info.
 #
 # TWEENABLES
 # figures = List of figures in the frame. For tweening to work,
@@ -90,12 +96,14 @@ class MaskConfigurationError(Exception):
 # propagate down to the figures in the figures list. When tweening a frame,
 # the individual transition functions of each figure are used.
 class Frame(morpho.Figure):
-    def __init__(self, figures=None):
+    def __init__(self, figures=None, /, **kwargs):
         # By default, do what the superclass does.
         # morpho.Figure.__init__(self)
         super().__init__()
 
         if figures is None: figures = []
+        figures.extend(kwargs.values())
+
         figures = morpho.Tweenable(
             name="figures", tags=["figures", "notween"], value=figures)
         # background = morpho.Tweenable(
@@ -108,6 +116,8 @@ class Frame(morpho.Figure):
 
         # dict maps name strings to figure list index positions.
         self.NonTweenable("_names", {})
+
+        self.setName(**kwargs)
 
         # Position of the frame in an animation's timeline.
         # It is in units of "frames" where 0 is the first frame, etc.
