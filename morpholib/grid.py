@@ -2123,6 +2123,10 @@ def axesPath(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
 
 # Returns a MathGrid of axes with possible tickmarks.
 #
+# The individual paths can also be accessed as named subfigures:
+#   axes = mathaxes(...)
+#   axes.xaxis, axes.yaxis
+#
 # INPUTS (all keyword-only)
 # view = Bounding box of the grid ([xmin,xmax,ymin,ymax]).
 #        Default: [-5,5, -5,5]
@@ -2187,6 +2191,7 @@ def mathaxes(*,
             transition=transition
             )
         frm.figures.append(xaxis)
+        frm.setName(xaxis=xaxis)
 
     if "y" in axis:
         yaxis = mo.grid.Axis([ymin*1j, ymax*1j]).set(
@@ -2196,6 +2201,7 @@ def mathaxes(*,
             transition=transition
             )
         frm.figures.append(yaxis)
+        frm.setName(yaxis=yaxis)
 
     return frm
 
