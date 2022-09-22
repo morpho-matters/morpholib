@@ -106,6 +106,9 @@ class Frame(morpho.Figure):
         # Attach tweenable attributes
         self.update([figures])
 
+        # dict maps name strings to figure list index positions.
+        self.NonTweenable("_names", {})
+
         # Position of the frame in an animation's timeline.
         # It is in units of "frames" where 0 is the first frame, etc.
         # self.index = index
@@ -134,6 +137,40 @@ class Frame(morpho.Figure):
     # Append the figure list of other to self in place.
     def merge(self, other):
         self.figures.extend(other.figures)
+
+    def setName(self, figure, name):
+        if isinstance(figure, morpho.Figure):
+            try:
+                figure = self.figures.index(figure)
+            except ValueError:
+                raise ValueError("Given figure is not in the Frame's figure list.")
+        elif not isinstance(figure, int):
+            raise TypeError(f"`figure` must be Figure or int, not `{type(figure).__name__}`")
+
+        self._names[name] = figure
+
+    def getName(self, name):
+        return self.figures[self._names[name]]
+
+    def __getattr__(self, name):
+        # First try using the superclass's built-in getattr()
+        try:
+            return morpho.Figure.__getattr__(self, name)
+        except AttributeError:
+            pass
+
+        # If you got to this point in the code, it means the
+        # superclass's getattr() failed.
+
+        # Search the `_names` dict if the given name is in it
+        try:
+            return self.figures[self._names[name]]
+        except KeyError:
+            # This line should DEFINITELY throw an error,
+            # since to get to this point in the code,
+            # AttributeError must have been thrown above.
+            morpho.Figure.__getattr__(self, name)
+
 
     # Draw all visible figures in the figure list.
     def draw(self, camera, ctx, *args, **kwargs):
