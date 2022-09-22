@@ -145,7 +145,23 @@ class Frame(morpho.Figure):
     #     return self.defaultTween==other.defaultTween
 
     # Append the figure list of other to self in place.
+    # Also adds in the named subfigures of other into self's registry,
+    # but skips any duplicate names so that self's names are
+    # not overwritten.
     def merge(self, other):
+        # if not self._names.keys().isdisjoint(other._names.keys()):
+        #     raise MergeError("Frame to merge shares names with self.")
+
+        # Append other's name registry to self's (skipping duplicate names),
+        # but shift the index values by the number of names in self's
+        # registry.
+        N = len(self.figures)
+        for name, index in other._names.items():
+            # Skip any duplicate names found in other's registry
+            if name not in self._names:
+                self._names[name] = index + N
+
+        # Extend the figure list
         self.figures.extend(other.figures)
 
     # Allows you to give a name to a figure in the Frame that can
