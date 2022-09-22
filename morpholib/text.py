@@ -1191,7 +1191,7 @@ class FancyMultiText(MultiText):
         # which should grab any valid attribute returns in the
         # main class.
         try:
-            return morpho.Figure.__getattr__(self, name)
+            return morpho.Frame.__getattr__(self, name)
         except AttributeError:
             pass
 
@@ -1206,7 +1206,7 @@ class FancyMultiText(MultiText):
             # in the protected clause above. However, this time
             # I WANT the error to be thrown!
             # return super().__getattr__(name)
-            return morpho.Figure.__getattr__(self, name)
+            return morpho.Frame.__getattr__(self, name)
 
         # Go thru the (non-empty) figure list and get the common
         # value of attribute `name` if it exists AND is the same

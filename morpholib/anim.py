@@ -313,7 +313,7 @@ class MultiFigure(Frame):
             # # replacing it with morpho.Figure.__getattr__(self, name).
             # # Same goes for the super() call a few lines down.
             # return super().__getattr__(name)
-            return morpho.Figure.__getattr__(self, name)
+            return morpho.Frame.__getattr__(self, name)
         except AttributeError:
             pass
 
@@ -328,7 +328,7 @@ class MultiFigure(Frame):
             # in the protected clause above. However, this time
             # I WANT the error to be thrown!
             # return super().__getattr__(name)
-            return morpho.Figure.__getattr__(self, name)
+            return morpho.Frame.__getattr__(self, name)
 
         # Try to find the attribute in the first member figure
         # and if found, return it.
