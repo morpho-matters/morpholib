@@ -138,16 +138,37 @@ class Frame(morpho.Figure):
     def merge(self, other):
         self.figures.extend(other.figures)
 
-    def setName(self, figure, name):
-        if isinstance(figure, morpho.Figure):
-            try:
-                figure = self.figures.index(figure)
-            except ValueError:
-                raise ValueError("Given figure is not in the Frame's figure list.")
-        elif not isinstance(figure, int):
-            raise TypeError(f"`figure` must be Figure or int, not `{type(figure).__name__}`")
+    # Allows you to give a name to a figure in the Frame that can
+    # be referenced later using attribute access syntax.
+    # This name mapping will persist even for a copy made of the
+    # Frame figure.
+    #
+    # EXAMPLE:
+    # frm = Frame([pt, path, poly])
+    # frm.setName(pt=pt, path=path, poly=poly)
+    #
+    # Or equivalently, you can use the figure list stack index:
+    # frm.setName(pt=0, path=1, poly=2)
+    #
+    # Then you can modify a subfigure with this syntax:
+    # frm.path.width = 4
+    # frm.poly.fill = [1,1,0]
+    #
+    # When the Frame is turned into an actor, it enables subfigure
+    # manipulation after creating new keyfigures:
+    # frm.newendkey(30)
+    # frm.last().pt.pos = 3+3j
+    def setName(self, **kwargs):
+        for name, figure in kwargs.items():
+            if isinstance(figure, morpho.Figure):
+                try:
+                    figure = self.figures.index(figure)
+                except ValueError:
+                    raise ValueError("Given figure is not in the Frame's figure list.")
+            elif not isinstance(figure, int):
+                raise TypeError(f"`figure` must be Figure or int, not `{type(figure).__name__}`")
 
-        self._names[name] = figure
+            self._names[name] = figure
 
     def getName(self, name):
         return self.figures[self._names[name]]
