@@ -16,7 +16,7 @@ from morpholib.tools.ktimer import tic, toc
 # Backward compatibility because these functions used to live in anim.py
 from morpholib import screenCoords, physicalCoords, \
     pixelWidth, physicalWidth, pixelHeight, physicalHeight, \
-    setupContext, clearContext, cairoJointStyle
+    setupContext, clearContext, cairoJointStyle, object_hasattr
 
 import math, cmath
 import numpy as np
@@ -218,6 +218,16 @@ class Frame(morpho.Figure):
             # since to get to this point in the code,
             # AttributeError must have been thrown above.
             morpho.Figure.__getattr__(self, name)
+
+    # Modified setattr() method for Frame checks if the given
+    # name is in the list of subfigure names and if it is,
+    # replaces the subfigure with the given `value`.
+    # Otherwise, just sets an attribute like any other Figure.
+    def __setattr__(self, name, value):
+        if object_hasattr(self, "_names") and name in self._names:
+            self.figures[self._names[name]] = value
+        else:
+            morpho.Figure.__setattr__(self, name, value)
 
 
     # Draw all visible figures in the figure list.
