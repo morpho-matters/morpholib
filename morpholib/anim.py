@@ -196,6 +196,7 @@ class Frame(morpho.Figure):
 
             self._names[name] = figure
 
+    # Returns the subfigure of the given name.
     def getName(self, name):
         return self.figures[self._names[name]]
 
