@@ -5,6 +5,8 @@ import morpholib.tools.color, morpholib.anim
 from morpholib.matrix import mat
 from morpholib.tools.basics import *
 
+from morpholib import object_hasattr
+
 import pyglet as pg
 pyglet = pg
 import cairo
@@ -2766,7 +2768,7 @@ class Polygon(morpho.Figure):
         path.width = self.width
 
         # Transformation tweenables (FUTURE)
-        path.origin = self.origin if "copy" not in dir(self.origin) else self.origin.copy()
+        path.origin = self.origin if not object_hasattr(self.origin, "copy") else self.origin.copy()
         if "rotation" in self._state:
             path.rotation = self.rotation
         if "_transform" in self._state:

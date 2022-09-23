@@ -514,7 +514,8 @@ class StateStruct(object):
         # the _state attribute
         names, figures = self._state
 
-        if name in dir(self):
+        # if name in dir(self):
+        if object_hasattr(self, name):
             object.__setattr__(self, name, value)
         elif name in names:
             for fig in figures:
@@ -1901,7 +1902,8 @@ class SpaceLayer(Layer):
         if self.poolPrimitives:
             primlist = []  # This list "pools" together all primitives across all figures
             for fig in figlist[:]:
-                if "primitives" in dir(fig):
+                # if "primitives" in dir(fig):
+                if object_hasattr(fig, "primitives"):
                     primlist.extend(fig.primitives(cam))
                     figlist.remove(fig)
 

@@ -7,6 +7,8 @@ import morpholib.matrix
 from morpholib import numTween
 from morpholib.tools.basics import listfloor, listceil
 
+from morpholib import object_hasattr
+
 import math, cairo
 import numpy as np
 from numbers import Number
@@ -222,7 +224,8 @@ class Gradient(morpho.Figure):
         # Go thru the data dict and make copies of each individual value (if needed)
         for key in new.data:
             value = new.data[key]
-            if "copy" in dir(value):
+            # if "copy" in dir(value):
+            if object_hasattr(value, "copy"):
                 new.data[key] = value.copy()
 
         # Copy the non-tweenable attributes manually
@@ -461,14 +464,14 @@ def handleGradients(gradTweenableNames):
                     othercopy_state_name = self._state[name].value.copy()
                     for key in othercopy_state_name.data:
                         value = other._state[name].value
-                        othercopy_state_name[key] = value.copy() if "copy" in dir(value) else value
+                        othercopy_state_name[key] = value.copy() if object_hasattr(value, "copy") else value
                     tw._state[name].value = self._state[name].value.tweenLinear(othercopy_state_name, t)
                 # other is gradient but not self
                 elif isinstance(other._state[name].value, Gradient):
                     selfcopy_state_name = other._state[name].value.copy()
                     for key in selfcopy_state_name.data:
                         value = self._state[name].value
-                        selfcopy_state_name[key] = value.copy() if "copy" in dir(value) else value
+                        selfcopy_state_name[key] = value.copy() if object_hasattr(value, "copy") else value
                     tw._state[name].value = selfcopy_state_name.tweenLinear(other._state[name].value, t)
                 # neither are gradients
                 else:
@@ -844,7 +847,7 @@ def handleGradientFills(gradFillTweenableNames):
                     # and set them to be the constant value of other.
                     for key in othercopy_state_name.gradient.data:
                         value = other._state[name].value
-                        othercopy_state_name.gradient[key] = value.copy() if "copy" in dir(value) else value
+                        othercopy_state_name.gradient[key] = value.copy() if object_hasattr(value, "copy") else value
                     # Apply tween method of the GradientFill class.
                     tw._state[name].value = self._state[name].value.tweenLinear(othercopy_state_name, t)
                 # other is gradient fill but not self
@@ -854,7 +857,7 @@ def handleGradientFills(gradFillTweenableNames):
                     # and set them to be the constant value of other.
                     for key in selfcopy_state_name.gradient.data:
                         value = self._state[name].value
-                        selfcopy_state_name.gradient[key] = value.copy() if "copy" in dir(value) else value
+                        selfcopy_state_name.gradient[key] = value.copy() if object_hasattr(value, "copy") else value
                     tw._state[name].value = selfcopy_state_name.tweenLinear(other._state[name].value, t)
                 # neither are gradients
                 else:

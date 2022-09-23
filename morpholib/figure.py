@@ -177,7 +177,8 @@ class Figure(object):
     # Set attributes as normal unless it is the name of a tweenable.
     def __setattr__(self, name, value):
         # If the given attribute name already exists, proceed normally.
-        if name in dir(self):
+        # if name in dir(self):
+        if object_hasattr(self, name):
             object.__setattr__(self, name, value)
         # Else if the given name is a tweenable's name, modify the tweenable's
         # value instead of setting a new attribute.
@@ -1860,3 +1861,13 @@ class _KeyIDContainer(object):
 # Thanks to Alex Martelli on StackOverflow
 # https://stackoverflow.com/a/952952
 def flattenList(L): return [item for sublist in L for item in sublist]
+
+# Checks if `obj` has `name` as an attribute.
+# Equivalent to hasattr(), but it does the check
+# using the `object` class's __getattribute__() method.
+def object_hasattr(obj, name):
+    try:
+        object.__getattribute__(obj, name)
+    except AttributeError:
+        return False
+    return True

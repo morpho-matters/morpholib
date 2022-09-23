@@ -4,6 +4,8 @@ import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
 from morpholib.matrix import mat
 
+from morpholib import object_hasattr
+
 # Polygon and SpacePolygon can be accessed from the shapes
 # submodule as well as grid.
 from morpholib.grid import Polygon, SpacePolygon, Spacepolygon
@@ -924,7 +926,7 @@ class Spline(morpho.Figure):
         path.end = self.end
         path.color = self.color[:]
         path.alphaEdge = self.alphaEdge
-        path.fill = self.fill.copy() if "copy" in dir(self.fill) else self.fill
+        path.fill = self.fill.copy() if object_hasattr(self.fill, "copy") else self.fill
         path.alphaFill = self.alphaFill
         path.alpha = self.alpha
         path.width = self.width
@@ -1361,7 +1363,7 @@ class SpaceSpline(Spline):
         path.end = self.end
         path.color = self.color[:]
         path.alphaEdge = self.alphaEdge
-        path.fill = self.fill.copy() if "copy" in dir(self.fill) else self.fill
+        path.fill = self.fill.copy() if object_hasattr(self.fill, "copy") else self.fill
         path.alphaFill = self.alphaFill
         path.alpha = self.alpha
         path.width = self.width
