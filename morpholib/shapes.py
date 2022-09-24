@@ -1384,7 +1384,8 @@ class SpaceSpline(Spline):
     # Translates the spline by the value of the "origin" attribute
     # and then resets the "origin" attribute to (0,0,0).
     def commitTransforms(self):
-        self._data += self.origin
+        with np.errstate(all="ignore"):  # Suppress numpy warnings
+            self._data += self.origin
         self.origin = np.array([0,0,0], dtype=float)
         return self
 
