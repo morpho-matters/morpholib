@@ -854,7 +854,6 @@ class Camera(morpho.Figure):
 
         return X + 1j*Y
 
-
     # Given a position described in normalized coordinates for this camera's
     # viewbox, this method returns the physical position it corresponds to in
     # that viewbox window.
@@ -874,6 +873,12 @@ class Camera(morpho.Figure):
         y = Y*height + c
 
         return x + 1j*y
+
+    # Converts position coordinates from one camera system to another.
+    # Given complex position `pos`, this method returns the
+    # corresponding complex position in the camera system of `other`.
+    def convertCoords(self, other, pos):
+        return other.physicalCoords(self.normalizedCoords(pos))
 
     # Given a physical width, returns the corresponding width in the
     # normalized coordinate system.
@@ -902,6 +907,18 @@ class Camera(morpho.Figure):
     def physicalHeight(self, height):
         a,b,c,d = self.view
         return height*(d-c)
+
+    # Converts physical width from one camera system to another.
+    # Given `width`, this method returns the corresponding width
+    # in the camera system of `other`.
+    def convertWidth(self, other, width):
+        return other.physicalWidth(self.normalizedWidth(width))
+
+    # Converts physical height from one camera system to another.
+    # Given `height`, this method returns the corresponding height
+    # in the camera system of `other`.
+    def convertHeight(self, other, height):
+        return other.physicalHeight(self.normalizedHeight(height))
 
     # NOT IMPLEMENTED YET!
     # Converts a box [xmin,xmax,ymin,ymax] in physical coordinates
@@ -1191,6 +1208,8 @@ class Layer(object):
             self.camera = morpho.Actor(Camera)
             self.camera.newkey(0)
             self.camera.time(0).view = view
+        elif isinstance(view, Camera):
+            self.camera = morpho.Actor(view)
         elif isinstance(view, morpho.Actor) and issubclass(view.figureType, Camera):
             self.camera = view
         else:
