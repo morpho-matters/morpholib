@@ -655,18 +655,19 @@ class Spline(morpho.Figure):
     # resets the transformation attributes.
     def commitTransforms(self):
         # Rotate all points
-        self._data *= cmath.exp(self.rotation*1j)
+        with np.errstate(all="ignore"):  # Suppress numpy warnings
+            self._data *= cmath.exp(self.rotation*1j)
 
-        # Perform linear transformation
-        mat = morpho.matrix.Mat(self._transform)
-        for i in range(self.length()):
-            for j in range(3):
-                z = self._data[i,j]
-                if not isbadnum(z):
-                    self._data[i,j] = mat*z
+            # Perform linear transformation
+            mat = morpho.matrix.Mat(self._transform)
+            for i in range(self.length()):
+                for j in range(3):
+                    z = self._data[i,j]
+                    if not isbadnum(z):
+                        self._data[i,j] = mat*z
 
-        # Translate
-        self._data += self.origin
+            # Translate
+            self._data += self.origin
 
         # Convert any possible nans that were produced into infs.
         nan2inf(self._data)
