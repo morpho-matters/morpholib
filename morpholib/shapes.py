@@ -194,10 +194,31 @@ class Spline(morpho.Figure):
     # Returns or sets the position of the node of given index.
     # Usage: myspline.node(n) -> position of nth node
     #        myspline.node(n, value) sets nth node position to value
-    def node(self, index, value=None):
+    #
+    # If setting a node, you can optionally supply inhandle and
+    # outhandle values as well:
+    #   myspline.node(n, node, inhandle, outhandle)
+    # and optionally make them absolute by passing False to
+    # relHandles:
+    #   myspline.node(n, node, inhandle, outhandle, relHandles=False)
+    def node(self, index, value=None, inhandle=None, outhandle=None,
+        *, relHandles=True):
+
         if value is None:
             return self.data[index, 0].tolist()
+
         self.data[index, 0] = value
+        if inhandle is not None:
+            if relHandles:
+                self.inhandleRel(index, inhandle)
+            else:
+                self.inhandle(index, inhandle)
+        if outhandle is not None:
+            if relHandles:
+                self.outhandleRel(index, outhandle)
+            else:
+                self.outhandle(index, outhandle)
+
         return self
 
     # Returns or sets the position of the inward handle
@@ -1188,10 +1209,31 @@ class SpaceSpline(Spline):
     # Returns or sets the position of the node of given index.
     # Usage: myspline.node(n) -> position of nth node
     #        myspline.node(n, value) sets nth node position to value
-    def node(self, index, value=None):
+    #
+    # If setting a node, you can optionally supply inhandle and
+    # outhandle values as well:
+    #   myspline.node(n, node, inhandle, outhandle)
+    # and optionally make them absolute by passing False to
+    # relHandles:
+    #   myspline.node(n, node, inhandle, outhandle, relHandles=False)
+    def node(self, index, value=None, inhandle=None, outhandle=None,
+        *, relHandles=True):
+
         if value is None:
             return self.data[index, 0, :].copy()
+
         self.data[index, 0, :] = morpho.array(value)
+        if inhandle is not None:
+            if relHandles:
+                self.inhandleRel(index, inhandle)
+            else:
+                self.inhandle(index, inhandle)
+        if outhandle is not None:
+            if relHandles:
+                self.outhandleRel(index, outhandle)
+            else:
+                self.outhandle(index, outhandle)
+
         return self
 
     # Returns or sets the position of the inward handle
