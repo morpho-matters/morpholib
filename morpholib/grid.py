@@ -563,6 +563,57 @@ class Path(morpho.Figure):
 
         return morpho.numTween0(self.seq[index], self.seq[index+1], T-index)
 
+    # Returns a segment of a path between parameters a and b,
+    # where a,b = 0 means path start and a,b = 1 means path end.
+    def segment(self, a, b):
+        if not(0 <= a < b <= 1):
+            raise ValueError("Segment endpoints must satisfy 0 <= a < b <= 1")
+        # Compute fractional index values
+        maxIndex = len(self.seq)-1
+        A = a*maxIndex
+        B = b*maxIndex
+
+        # Round the fractional indices if they are super close
+        # to an integer.
+        tol = 1e-9
+        if abs(A-round(A)) < tol:
+            A = round(A)
+        if abs(B-round(B)) < tol:
+            B = round(B)
+
+        subpath = self.copy()
+        subpath.seq = subpath.seq[math.floor(A):math.ceil(B)+1]
+        if A != int(A):
+            subpath.seq[0] = self.positionAt(a)
+        if B != int(B):
+            subpath.seq[-1] = self.positionAt(b)
+
+        # Handle splitting a gradient color
+        if isinstance(subpath.color, morpho.color.Gradient):
+            subpath.color = subpath.color.segment(a,b)
+            subpath.color.normalize()
+
+        return subpath
+
+    def __getitem__(self, t):
+        # Handle slice
+        if isinstance(t, slice):
+            if t.step is not None:
+                raise TypeError("Slice steps are not supported for path slicing.")
+
+            a = t.start
+            b = t.stop
+
+            if a is None:
+                a = 0
+            if b is None:
+                b = 1
+
+            return self.segment(a,b)
+        else:
+            return self.positionAt(t)
+
+
     # Returns the physical length of the path
     # NOTE: ignores deadends and pretends all nodes are connected!
     # Also ignores the transform attribute.
