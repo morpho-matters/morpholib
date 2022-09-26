@@ -1186,7 +1186,7 @@ class SpaceSpline(Spline):
 
             # Convert data into empty 3D array of real floats
             # with same shape as data (just with 3 new slots)
-            print(data.shape)
+            # print(data.shape)
             Nrows, Ncols = data.shape
             data3d = np.zeros((Nrows, Ncols, 3))
 
