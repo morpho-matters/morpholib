@@ -526,13 +526,50 @@ class Spline(morpho.Figure):
         return self
 
 
-    # NOT IMPLEMENTED!
+    # NOT IMPLEMENTED YET!
     # Extract a subspline.
-    # a and b are indices, but can also be non-integers.
-    # Actually, not sure if I want to implement this.
-    # Gonna keep it low priority for now.
-    def sub(self, a, b):
+    # a and b are parameters in the range [0,1]
+    def segment(self, a, b):
         raise NotImplementedError
+        if not(0 <= a < b <= 1):
+            raise ValueError("Segment endpoints must satisfy 0 <= a < b <= 1")
+
+        # The below is a good start, but it doesn't work at least
+        # in the case where both cut points are between the
+        # same two nodes. It's tricky because each split at a cut
+        # point modifies the handles of the surrounding two nodes
+        # which can change the physical point on the spline that
+        # the other cut point corresponds to. I haven't worked out
+        # yet how to adjust the parameter value after a split to
+        # ensure it stays in its original position (it's harder
+        # than merely adding 1 to it!), so for now, I'm
+        # abandoning implementing this feature.
+
+        subspline = self.copy()
+
+        # Calculate fractional indices
+        segCount = subspline.length() - 1
+        A = a*segCount
+        B = b*segCount
+
+        # Round fractional indices if very close to an int
+        tol = 1e-9
+        if abs(A-round(A)) < tol:
+            A = round(A)
+        if abs(B-round(B)) < tol:
+            B = round(B)
+
+        # Split at first endpoint
+        subspline.splitAtIndex(A)
+
+        # Increment B index if a new node was added.
+        B += subspline.length() - self.length()
+        subspline.splitAtIndex(B)
+
+        # Slice the data array
+        subspline._data = subspline._data[math.ceil(A):math.ceil(B)+1]
+
+        return subspline
 
 
     # Inserts the specified number of additional nodes to the
