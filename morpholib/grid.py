@@ -611,7 +611,7 @@ class Path(morpho.Figure):
 
             return self.segment(a,b)
         else:
-            return self.positionAt(t)
+            raise TypeError("Paths can only be sliced, not subscripted.")
 
 
     # Returns the physical length of the path
