@@ -1302,6 +1302,34 @@ class FancyMultiText(MultiText):
         box = self.totalBox(view, ctx)
         return mean(box[:2]) + 1j*mean(box[2:])
 
+    # Mainly for internal use by the box() method.
+    # Takes the box outputted by totalBox() and adjusts
+    # it according to the global position and alignment of the
+    # text group so that it now encloses the actual bounding
+    # box of the text group in absolute coordinates.
+    def _alignBox(self, box, *, pad=0):
+        left, right, bottom, top = box
+        width = right - left
+        height = top - bottom
+
+        offset_x = self.pos.real - self.anchor_x*width/2
+        offset_y = self.pos.imag - self.anchor_y*height/2
+        left += offset_x
+        right += offset_x
+        bottom += offset_y
+        top += offset_y
+
+        return [left-pad, right+pad, bottom-pad, top+pad]
+
+    # Returns the physical bounding box of the whole text group as
+    # [xmin, xmax, ymin, ymax]
+    # and takes into account the global position and alignment
+    # properties, but ignores transformation properties.
+    def box(self, view, ctx, pad=0):
+        box = self.totalBox(view, ctx, pad=0)
+        return self._alignBox(box, pad=pad)
+
+
     # Moves the text group so that its total center is at the origin.
     # This makes it so the alignment respects the `pos` attribute.
     def recenter(self, view, ctx):
@@ -1410,6 +1438,14 @@ class FancyMultiPText(FancyMultiText):
     def totalCenter(self, view=None, ctx=None):
         box = self.totalBox()
         return mean(box[:2]) + 1j*mean(box[2:])
+
+    # Returns the physical bounding box of the whole text group as
+    # [xmin, xmax, ymin, ymax]
+    # and takes into account the global position and alignment
+    # properties, but ignores transformation properties.
+    def box(self, pad=0):
+        box = self.totalBox(pad=0)
+        return self._alignBox(box, pad=pad)
 
     # Moves the text group so that its total center is at the origin.
     # This makes it so the alignment respects the `pos` attribute.
