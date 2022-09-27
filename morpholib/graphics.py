@@ -9,6 +9,8 @@ cr = cairo
 
 import numpy as np
 
+I2 = np.identity(2)
+
 ### CLASSES ###
 
 # Draws a PNG image on the screen.
@@ -378,13 +380,35 @@ class Image(morpho.Figure):
         # self.sprite.scale_y *= self.scale_y
         # self.sprite.opacity = int(255*self.alpha)
 
-        # Aspect ratio scale factors
+        # Aspect ratio scale factors.
+        # A1 matrix converts the raw image box in its native
+        # pixel space into physical box, and
+        # A2 matrix converts the physical box the image takes up
+        # into the actual pixel box the image will take up
+        # on screen where it's rendered.
+        # Thus when combined, they convert an image box in its
+        # native pixel space, to a pixel box on the particular
+        # viewing window.
+        #
+        # A1 should be applied BEFORE any transformations to
+        # the physical image (e.g. rotations, scales, transforms)
+        # and then A2 is applied AFTERWARD to handle final
+        # physical-to-screenpixel rendering.
         if self.physical:
-            aspectScale_x = self.width/self.imageWidth * ctx.get_target().get_width() / view_width  #* self.scale_x
-            aspectScale_y = self.height/self.imageHeight * ctx.get_target().get_height() / view_height  #* self.scale_y
+            # aspectScale_x = self.width/self.imageWidth * ctx.get_target().get_width() / view_width  #* self.scale_x
+            # aspectScale_y = self.height/self.imageHeight * ctx.get_target().get_height() / view_height  #* self.scale_y
+            a1_x = self.width/self.imageWidth
+            a1_y = self.height/self.imageHeight
+            a2_x = ctx.get_target().get_width() / view_width
+            a2_y = ctx.get_target().get_height() / view_height
+
+            A1 = np.array([[a1_x, 0], [0, a1_y]], dtype=float)
+            A2 = np.array([[a2_x, 0], [0, a2_y]], dtype=float)
         else:
             aspectScale_x = self.width/self.imageWidth
             aspectScale_y = self.height/self.imageHeight
+            A1 = np.array([[aspectScale_x, 0], [0, aspectScale_y]], dtype=float)
+            A2 = I2
 
         # Calculate total transformation matrix
         # Rotation matrix
@@ -397,9 +421,10 @@ class Image(morpho.Figure):
         T = self._transform
         premat = T @ scale_xy @ R
         # Aspect Ratio matrix
-        aspectScale = np.array([[aspectScale_x, 0], [0, aspectScale_y]], dtype=float)
+        # aspectScale = np.array([[aspectScale_x, 0], [0, aspectScale_y]], dtype=float)
         # Total transformation matrix
-        mat = aspectScale @ premat
+        # mat = aspectScale @ premat
+        mat = A2 @ premat @ A1
 
         # # Calculate total transformation matrix
         # rot = cmath.exp(self.rotation*1j)  # Rotation factor
