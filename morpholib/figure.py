@@ -1616,10 +1616,16 @@ class Actor(object):
     # Inserts the given actor into self.
     # By default it appends it to the end, but this can be changed
     # with the optional argument afterFrame.
-    def insert(self, actor, afterFrame=None):
+    # Optionally, the keyword-only argument `atFrame` can be set
+    # instead, which will insert the actor BEFORE the specified frame.
+    def insert(self, actor, afterFrame=None, *, atFrame=None):
         # Check type compatibility
         if actor.figureType is not self.figureType:
             raise TypeError("Can't insert actor of different figure type!")
+
+        # atFrame overwrites afterFrame if specified.
+        if atFrame is not None:  # and afterFrame is None:
+            afterFrame = atFrame - 1
 
         # afterFrame defaults to maxkeyID, or zero in case self is
         # an empty actor.
