@@ -174,6 +174,13 @@ def rotationVector(mat):
 
     return (rho/s, math.atan2(s,c))
 
+# Returns the 2D rotation matrix associated with the
+# input angle.
+def rotation2d(angle):
+    c = math.cos(angle)
+    s = math.sin(angle)
+
+    return np.array([[c, -s], [s, c]], dtype=float)
 
 # Tweens two 3D rotation matrices (orient matrices).
 def orientTween(A, B, t, start=0, end=1):
@@ -202,6 +209,14 @@ def orientTween1(A, B, t, start=0, end=1):
         t = (t - start)/(end - start)
     return rotation(u, theta*t) @ A
 
+
+# Returns the 2D scaling matrix associated with the input
+# scale factor. Optionally, two scale factors can be
+# inputted, (horizontal scale, vertical scale)
+def scale2d(x, y=None):
+    if y is None:
+        y = x
+    return np.array([[x, 0], [0, y]], dtype=float)
 
 
 # Given a vector-like thing (tuple, list, complex number, np.array),
