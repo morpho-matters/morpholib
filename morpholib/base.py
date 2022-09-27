@@ -516,7 +516,7 @@ I2 = np.eye(2)
 # More precisely, if S represents the matrix that locally
 # transforms pixel coords to physical coords
 # according to the par, this function returns
-# S @ R @ T @ S.inv
+# S @ T @ R @ S.inv
 # where R and T are the rotation and transform matrices.
 def parconj(par, rotation=0, transform=I2, *, inverse=False):
     # Construct 2D rotation matrix
