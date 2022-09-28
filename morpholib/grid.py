@@ -566,8 +566,15 @@ class Path(morpho.Figure):
     # Returns a segment of a path between parameters a and b,
     # where a,b = 0 means path start and a,b = 1 means path end.
     def segment(self, a, b):
+        if a == b:
+            raise ValueError("Segment endpoints cannot be the same.")
+
+        reverse = not(a <= b)
+        if reverse:
+            a,b = b,a
+
         if not(0 <= a < b <= 1):
-            raise ValueError("Segment endpoints must satisfy 0 <= a < b <= 1")
+            raise ValueError("Segment endpoints must satisfy 0 <= a != b <= 1")
         # Compute fractional index values
         maxIndex = len(self.seq)-1
         A = a*maxIndex
@@ -590,8 +597,17 @@ class Path(morpho.Figure):
 
         # Handle splitting a gradient color
         if isinstance(subpath.color, morpho.color.Gradient):
+            # Paths assume the gradients are normalized,
+            # so the following line is commented out.
+            # subpath.color.normalize()
             subpath.color = subpath.color.segment(a,b)
             subpath.color.normalize()
+            if reverse:
+                subpath.color.reverse()
+
+        # Reverse order if needed
+        if reverse:
+            subpath.seq.reverse()
 
         return subpath
 
