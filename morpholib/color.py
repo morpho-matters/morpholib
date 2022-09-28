@@ -300,6 +300,10 @@ class Gradient(morpho.Figure):
         if b is None:
             b = keylist[-1]
 
+        reverse = not(a <= b)
+        if reverse:
+            a,b = b,a
+
         segdata = {}
         segdata[a] = self.value(a)
         start = listceil(keylist, a)
@@ -308,7 +312,11 @@ class Gradient(morpho.Figure):
             segdata[x] = self.data[x]
         segdata[b] = self.value(b)
 
-        return Gradient(segdata).copy()  # To handle needing to make copies of lists, etc.
+        gradseg = Gradient(segdata).copy()
+        if reverse:
+            gradseg.reverse()
+
+        return gradseg  # To handle needing to make copies of lists, etc.
 
     # Normalizes the gradient parameter space so that the lowest parameter is 0
     # and the highest parameter is 1. Does nothing if the gradient has fewer than 2
@@ -316,12 +324,30 @@ class Gradient(morpho.Figure):
     def normalize(self):
         if len(self.data) < 2:
             return
-        newdata = {}
         start = min(self.data)
         end = max(self.data)
+        # Do nothing if already normalized
+        if start == 0 and end == 1:
+            return self
+        newdata = {}
         for x in self.data.keys():
             newdata[morpho.numTween(0, 1, x, start, end)] = self.data[x]
         self.data = newdata
+        return self
+
+    # Reverses the gradient's parameter space IN PLACE.
+    # e.g. in a normalized gradient parameter space 0 <= x <= 1,
+    # this will replace each parameter key x with 1-x.
+    def reverse(self):
+        if len(self.data) < 2:
+            return
+        newdata = {}
+        low = min(self.data.keys())
+        high = max(self.data.keys())
+        for x in self.data.keys():
+            newdata[morpho.numTween0(high, low, x, start=low, end=high)] = self.data[x]
+        self.data = newdata
+        return self
 
     def verify(self):
         for key in self.data:
