@@ -566,15 +566,19 @@ class Path(morpho.Figure):
     # Returns a segment of a path between parameters a and b,
     # where a,b = 0 means path start and a,b = 1 means path end.
     def segment(self, a, b):
-        if a == b:
-            raise ValueError("Segment endpoints cannot be the same.")
-
         reverse = not(a <= b)
         if reverse:
             a,b = b,a
 
-        if not(0 <= a < b <= 1):
-            raise ValueError("Segment endpoints must satisfy 0 <= a != b <= 1")
+        if not(0 <= a <= b <= 1):
+            raise ValueError("Segment endpoints must satisfy 0 <= a,b <= 1")
+
+        subpath = self.copy()
+        if a == b:
+            # raise ValueError("Segment endpoints cannot be the same.")
+            subpath.seq = [self.positionAt(a)]
+            return subpath
+
         # Compute fractional index values
         maxIndex = len(self.seq)-1
         A = a*maxIndex
@@ -588,7 +592,6 @@ class Path(morpho.Figure):
         if abs(B-round(B)) < tol:
             B = round(B)
 
-        subpath = self.copy()
         subpath.seq = subpath.seq[math.floor(A):math.ceil(B)+1]
         if A != int(A):
             subpath.seq[0] = self.positionAt(a)
@@ -612,22 +615,22 @@ class Path(morpho.Figure):
         return subpath
 
     def __getitem__(self, t):
-        # Handle slice
-        if isinstance(t, slice):
-            if t.step is not None:
-                raise TypeError("Slice steps are not supported for path slicing.")
+        # Handle singleton subscript
+        if not isinstance(t, slice):
+            t = slice(t,t)
 
-            a = t.start
-            b = t.stop
+        if t.step is not None:
+            raise TypeError("Slice steps are not supported for path slicing.")
 
-            if a is None:
-                a = 0
-            if b is None:
-                b = 1
+        a = t.start
+        b = t.stop
 
-            return self.segment(a,b)
-        else:
-            raise TypeError("Paths can only be sliced, not subscripted.")
+        if a is None:
+            a = 0
+        if b is None:
+            b = 1
+
+        return self.segment(a,b)
 
 
     # Returns the physical length of the path
