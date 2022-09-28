@@ -5,6 +5,7 @@ Various helper functions for dealing with cubic Bezier curves.
 # import math, cmath
 import numpy as np
 from morpholib.base import lerp0, bezierInterp
+from morpholib.tools import polyroots
 
 # Splits the cubic Bezier curve described by p0...p3 at the
 # parameter value t (in interval [0,1]), and returns the control
@@ -43,26 +44,46 @@ def splitBezier(p0, p1, p2, p3, t):
 # Usually the list will just contain a single solution,
 # but it could contain two (self-intersecting curve)
 # or none (given point not on the curve).
-def invertBezier2d(p0, p1, p2, p3, z):
+def invertBezier2d(p0, p1, p2, p3, z, *, tol=1e-9):
+    if np.allclose([p0, p1, p2, p3], p0):
+        raise ValueError("Cannot invert a constant Bezier curve!")
+
     # Calculate coefficients of the polynomial equation
     # bezier(t) - z = 0
     coeffs = np.array([
-        p3 - 3*p2 + 3*p1 - p0,
-        3*(p2 - 2*p1 + p0),
+        p0 - z,
         3*(p1 - p0),
-        p0 - z
+        3*(p2 - 2*p1 + p0),
+        p3 - 3*p2 + 3*p1 - p0
         ])
 
+    coeffs_x = coeffs.real
+    coeffs_y = coeffs.imag
+
+    verticalCurve = np.allclose(coeffs_x, 0)
+    horizontalCurve = np.allclose(coeffs_y, 0)
+    # If one of the coeff lists is zero
+    # (meaning it's a horizontal or vertical curve),
+    # rotate all points by 45 degrees and try again.
+    if horizontalCurve or verticalCurve:
+        p0 = (1+1j)*p0
+        p1 = (1+1j)*p1
+        p2 = (1+1j)*p2
+        p3 = (1+1j)*p3
+        z = (1+1j)*z
+        return invertBezier2d(p0, p1, p2, p3, z)
+
+
     # Solve for the roots
-    txlist = np.roots(coeffs.real).tolist()
-    tylist = np.roots(coeffs.imag).tolist()
+    txlist = polyroots(coeffs.real).tolist()
+    tylist = polyroots(coeffs.imag).tolist()
 
     # Filter out any common real roots
-    tol = 1e-9
     solns = []
     for tx in txlist:
         # Skip the tx solutions that are obviously non-real
-        if abs(tx.imag) > tol:
+        # or are out of the range [0,1]
+        if abs(tx.imag) > tol or not(0 <= tx.real <= 1):
             continue
         for ty in tylist:
             if abs(tx - ty) < tol:

@@ -249,6 +249,16 @@ def compose(*funcs):
 def compose2(f,g):
     return lambda *args, **kwargs: f(g(*args, **kwargs))
 
+
+# Finds the roots of the polynomial defined as a list of
+# coefficients in ascending order of degree.
+# e.g. [-4, 0, 1] represents the polynomial -4 + x^2
+# The answer is returned as a numpy array.
+def polyroots(coeffs):
+    polynom = np.polynomial.Polynomial(coeffs)
+    return polynom.roots()
+
+
 # Given a standard viewbox [xmin,xmax, ymin,ymax],
 # returns the corners of the box as a list of complex numbers.
 # Useful for passing into a Path or Polygon figure's seq or vertices.
