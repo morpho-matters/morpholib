@@ -413,7 +413,9 @@ class MultiFigure(Frame):
         self._active = True
 
         # Prevent the `origin` tweenable inherited from the Frame
-        # class from being jumped in an actor action like fadeOut()
+        # class from being jumped in an actor action like fadeOut().
+        # Jumping will instead be handled by individually jumping
+        # each subfigure in the multifigure.
         self._state["origin"].tags.add("nojump")
 
     # NOT IMPLEMENTED!!!
