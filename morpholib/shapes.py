@@ -525,27 +525,32 @@ class Spline(morpho.Figure):
         self._data = np.insert(self._data, index+1, [p,pin,pout], axis=0)
         return self
 
+    # Reverses the direction of the spline IN PLACE.
+    def reverse(self):
+        # Reverse node order
+        self._data = self._data[::-1,:]
+        # Swap inhandles and outhandles
+        self._data[:, [2,1]] = self._data[:, [1,2]]
+        return self
 
-    # NOT IMPLEMENTED YET!
+    # EXPERIMENTAL! USE AT OWN RISK!
     # Extract a subspline.
     # a and b are parameters in the range [0,1]
     def segment(self, a, b):
-        raise NotImplementedError
-        if not(0 <= a < b <= 1):
-            raise ValueError("Segment endpoints must satisfy 0 <= a < b <= 1")
+        # raise NotImplementedError
+        reverse = not(a <= b)
+        if reverse:
+            a,b = b,a
 
-        # The below is a good start, but it doesn't work at least
-        # in the case where both cut points are between the
-        # same two nodes. It's tricky because each split at a cut
-        # point modifies the handles of the surrounding two nodes
-        # which can change the physical point on the spline that
-        # the other cut point corresponds to. I haven't worked out
-        # yet how to adjust the parameter value after a split to
-        # ensure it stays in its original position (it's harder
-        # than merely adding 1 to it!), so for now, I'm
-        # abandoning implementing this feature.
+        if not(0 <= a <= b <= 1):
+            raise ValueError("Segment endpoints must satisfy 0 <= a,b <= 1")
 
         subspline = self.copy()
+
+        # Handle singleton case
+        if a == b:
+            subspline.data = np.array([[self.positionAt(a), oo, oo]], dtype=complex)
+            return subspline
 
         # Calculate fractional indices
         segCount = subspline.length() - 1
@@ -562,6 +567,13 @@ class Spline(morpho.Figure):
         # Split at first endpoint
         subspline.splitAtIndex(A)
 
+        # Adjust parameter value of B based on newly added
+        # A node if B is in the second piece of the A split.
+        int_A = int(A)
+        int_B = int(B)
+        if A != int_A and int_A == int_B:
+            B = int_B + (B-A)/(int_A+1-A)
+
         # Increment B index if a new node was added.
         B += subspline.length() - self.length()
         subspline.splitAtIndex(B)
@@ -569,7 +581,14 @@ class Spline(morpho.Figure):
         # Slice the data array
         subspline._data = subspline._data[math.ceil(A):math.ceil(B)+1]
 
+        if reverse:
+            subspline.reverse()
+
         return subspline
+
+    # Inherits the Path class's __getitem__()
+    def __getitem__(self, t):
+        return morpho.grid.Path.__getitem__(self, t)
 
 
     # Inserts the specified number of additional nodes to the
