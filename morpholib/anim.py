@@ -332,6 +332,50 @@ class Frame(morpho.Figure):
 blankFrame = Frame()
 blankFrame.static = True
 
+@Frame.action
+def fadeIn(frame, duration=30, atFrame=None, jump=0, alpha=1):
+    if atFrame is None:
+        atFrame = frame.lastID()
+
+    frame0 = frame.last()
+    frame0.visible = False
+    frame1 = frame.newkey(atFrame)
+    frame1.visible = True
+    frame2 = frame.newendkey(duration)
+
+    for n,fig in enumerate(frame1.figures):
+        fig.static = False
+        actor = morpho.Actor(fig)
+        actor.fadeIn(duration=duration, jump=jump, alpha=alpha)
+        frame1.figures[n] = actor.first()
+        frame2.figures[n] = actor.last()
+
+@Frame.action
+def fadeOut(frame, duration=30, atFrame=None, jump=0):
+    if atFrame is None:
+        atFrame = frame.lastID()
+
+    frame0 = frame.last()
+    frame1 = frame.newkey(atFrame)
+    frame2 = frame.newendkey(duration)
+    frame2.visible = False
+
+    for n,fig in enumerate(frame1.figures):
+        fig.static = False
+        actor = morpho.Actor(fig)
+        actor.fadeOut(duration=duration, jump=jump)
+        frame1.figures[n] = actor.first()
+        frame2.figures[n] = actor.last()
+
+@Frame.action
+def rollback(frame, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = frame.lastID()
+
+    frame1 = frame.newkey(atFrame)
+    for path in frame1.figures:
+        path.static = False
+    frame.newendkey(duration, frame.first().copy()).visible = False
 
 # Base class for so-called "multifigures" which allow for groupings
 # of figures all of the same class that can be tweened even if one group
