@@ -1158,6 +1158,7 @@ class FancyMultiText(MultiText):
             super().__init__(text, *args, **kwargs)
 
         self.Tweenable("pos", 0, tags=["complex", "position"])
+        del self._state["origin"]  # Remove origin tweenable
         self.Tweenable("anchor_x", 0, tags=["scalar"])
         self.Tweenable("anchor_y", 0, tags=["scalar"])
         self.Tweenable("alpha", 1, tags=["scalar"])
@@ -1413,6 +1414,18 @@ class FancyMultiText(MultiText):
             return tw
 
         return pivot
+
+@FancyMultiText.action
+def fadeIn(*args, **kwargs):
+    return morpho.Figure.actions["fadeIn"](*args, **kwargs)
+
+@FancyMultiText.action
+def fadeOut(*args, **kwargs):
+    return morpho.Figure.actions["fadeOut"](*args, **kwargs)
+
+@FancyMultiText.action
+def rollback(*args, **kwargs):
+    return morpho.Figure.actions["rollback"](*args, **kwargs)
 
 
 # Fancy version of MultiPText.
@@ -1674,9 +1687,13 @@ def conformText(textarray):
 #             represents a single row of the paragraph.
 #             Alternatively can be a string containing newlines
 #             which will be split into individual default Text figures.
-# view = viewbox of the layer this group will be in
+# view = viewbox of the layer this group will be in.
+#        Can also be a Camera actor or Layer object, in which case
+#        the latest viewbox is used.
 # windowShape = Tuple denoting pixel dimensions of the animation window
 #               (pixel width, pixel height)
+#               Can also be specified as an Animation object, in which
+#               case the `windowShape` attribute is extracted and used.
 # pos = Position of the text group (complex number). Default: 0
 # anchor_x = Overall horizontal position alignment parameter.
 #            -1 = left-aligned, 0 = center-aligned, 1 = right-aligned.
@@ -1726,6 +1743,17 @@ def paragraph(textarray, view, windowShape,
         for row in textarray:
             for fig in row:
                 fig.set(**kwargs)
+
+    # Handle Layer/Camera/Animation type inputs to
+    # view and windowShape.
+    if isinstance(view, morpho.Layer):
+        view = view.camera.last().view
+    elif isinstance(view, morpho.Actor):
+        view = view.last().view
+    elif isinstance(view, morpho.anim.Camera):
+        view = view.view
+    if isinstance(windowShape, morpho.Animation):
+        windowShape = windowShape.windowShape
 
     physical = isinstance(textarray[0][0], PText)
     if physical:
