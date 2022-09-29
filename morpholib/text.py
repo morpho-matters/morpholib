@@ -1158,7 +1158,7 @@ class FancyMultiText(MultiText):
             super().__init__(text, *args, **kwargs)
 
         self.Tweenable("pos", 0, tags=["complex", "position"])
-        del self._state["origin"]  # Remove origin tweenable
+        # del self._state["origin"]  # Remove origin tweenable
         self.Tweenable("anchor_x", 0, tags=["scalar"])
         self.Tweenable("anchor_y", 0, tags=["scalar"])
         self.Tweenable("alpha", 1, tags=["scalar"])

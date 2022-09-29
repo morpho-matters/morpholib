@@ -412,6 +412,11 @@ class MultiFigure(Frame):
         # modified setattr() method.
         self._active = True
 
+        # Prevent the `origin` tweenable inherited from the Frame
+        # class from being jumped in an actor action like fadeOut()
+        self._state["origin"].tags.add("nojump")
+
+    # NOT IMPLEMENTED!!!
     # Returns a StateStruct encapsulating all the tweenables
     # of all the figures in the MultiFigure.
     # Main example use case:
