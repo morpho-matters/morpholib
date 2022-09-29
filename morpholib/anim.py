@@ -86,6 +86,7 @@ class MaskConfigurationError(Exception):
 #           the figures list of both Frames must have corresponding
 #           figure types. e.g. Frame([point, path]) can only tween with
 #           another Frame([point, path]).
+# origin = Translation value (complex number). Default: 0.
 #
 # Note that tweening a frame via tween() will tween the frame's
 # attributes along with its underlying figure list, but calling
@@ -104,15 +105,15 @@ class Frame(morpho.Figure):
         if figures is None: figures = []
         figures.extend(kwargs.values())
 
-        figures = morpho.Tweenable(
-            name="figures", tags=["figures", "notween"], value=figures)
+        self.Tweenable("figures", figures, tags=["figures", "notween"])
+        self.Tweenable("origin", 0, tags=["complex", "nofimage"])
         # background = morpho.Tweenable(
         #     name="background", tags=["vector"], value=[0,0,0])
         # view = morpho.Tweenable(
         #     name="view", tags=["view"], value=[-5,5, -5,5])
 
-        # Attach tweenable attributes
-        self.update([figures])
+        # # Attach tweenable attributes
+        # self.update([figures])
 
         # dict maps name strings to figure list index positions.
         self.NonTweenable("_names", {})
@@ -229,14 +230,44 @@ class Frame(morpho.Figure):
         else:
             morpho.Figure.__setattr__(self, name, value)
 
+    # Applies the origin translation of the Frame to the given
+    # cairo context and returns a SavePoint object, thus enabling
+    # context manager syntax:
+    #
+    #   with self._pushTranslation(camera, ctx):
+    #       ...
+    def _pushTranslation(self, camera, ctx):
+        savept = morpho.SavePoint(ctx)
+
+        # If origin is zero, don't do anything
+        if self.origin == 0:
+            return savept
+
+        a,b,c,d = camera.view
+
+        surface = ctx.get_target()
+        WIDTH = surface.get_width()
+        HEIGHT = surface.get_height()
+
+        scale_x = WIDTH/(b-a)
+        scale_y = HEIGHT/(d-c)
+        dx, dy = self.origin.real, self.origin.imag
+
+        ctx.scale(scale_x, scale_y)
+        ctx.translate(dx, dy)
+        ctx.scale(1/scale_x, 1/scale_y)
+
+        return savept
+
 
     # Draw all visible figures in the figure list.
     def draw(self, camera, ctx, *args, **kwargs):
         figlist = sorted(self.figures, key=lambda fig: fig.zdepth)
 
-        for fig in figlist:
-            if fig.visible:
-                fig.draw(camera, ctx, *args, **kwargs)
+        with self._pushTranslation(camera, ctx):
+            for fig in figlist:
+                if fig.visible:
+                    fig.draw(camera, ctx, *args, **kwargs)
 
     # Copies the frame. Supplying False to the optional arg "deep"
     # means the resulting frame copy will not make copies of the
