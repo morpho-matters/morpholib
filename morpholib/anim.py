@@ -3302,6 +3302,33 @@ class Animation(object):
         # If at the end of the animation, clicking restarts it.
         @self.window.event
         def on_mouse_press(X, Y, button, modifiers, mation=self):
+            # Print mouse coordinates if a locater layer is specified.
+            if mation.locaterLayer is not None:
+                # Search the layer list if given an int
+                if isinstance(mation.locaterLayer, int) or isinstance(mation.locaterLayer, float):
+                    view = mation.layers[int(mation.locaterLayer)].viewtime(mation.currentIndex)
+                else:
+                    # Treat it as an actual layer object
+                    view = mation.locaterLayer.viewtime(mation.currentIndex)
+
+                z = physicalCoords(X, Y, view, mation.context)
+
+                # Round the real and imag components of z if needed.
+                if self.clickRound is not None:
+                    x,y = z.real, z.imag
+                    x = round(x, self.clickRound)
+                    y = round(y, self.clickRound)
+                    z = x + y*1j
+
+                # Copy to the clipboard if needed
+                if self.clickCopy:
+                    pyperclip.copy(str(z))
+
+                print((z.real, z.imag))
+
+                # sign = " + " if z.imag >= 0 else " - "
+                # print(z.real, sign, abs(z.imag), "j", sep="")
+
             # Replay animation if clicked after animation finishes
             if not mation.active:
                 mation.active = True
@@ -3330,33 +3357,6 @@ class Animation(object):
                 mation.resume()
             else:
                 mation.pause()
-
-            # Print mouse coordinates if a locater layer is specified.
-            if mation.locaterLayer is not None:
-                # Search the layer list if given an int
-                if isinstance(mation.locaterLayer, int) or isinstance(mation.locaterLayer, float):
-                    view = mation.layers[int(mation.locaterLayer)].viewtime(mation.currentIndex)
-                else:
-                    # Treat it as an actual layer object
-                    view = mation.locaterLayer.viewtime(mation.currentIndex)
-
-                z = physicalCoords(X, Y, view, mation.context)
-
-                # Round the real and imag components of z if needed.
-                if self.clickRound is not None:
-                    x,y = z.real, z.imag
-                    x = round(x, self.clickRound)
-                    y = round(y, self.clickRound)
-                    z = x + y*1j
-
-                # Copy to the clipboard if needed
-                if self.clickCopy:
-                    pyperclip.copy(str(z))
-
-                print((z.real, z.imag))
-
-                # sign = " + " if z.imag >= 0 else " - "
-                # print(z.real, sign, abs(z.imag), "j", sep="")
 
             tic()  # Reset runtime timer
 
