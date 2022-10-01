@@ -1056,7 +1056,8 @@ SpaceMultiPtext = SpacemultiPText = SpacemultiPtext = SpaceMultiPText
 #            instead of rounding. Default: False (round, don't truncate)
 class Number(morpho.Figure):
     def __init__(self, number=0.0, decimal=0, leftDigits=0, rightDigits=0, truncate=False):
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         number = morpho.Tweenable("number", number, tags=["scalar"])
         self.update([number])

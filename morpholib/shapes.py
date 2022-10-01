@@ -118,7 +118,8 @@ class Spline(morpho.Figure):
             #     ], dtype=complex)
             data = np.array([], dtype=complex)
 
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         _data = morpho.Tweenable(name="_data", value=np.array(data, dtype=complex), tags=["nparray"])
         start = morpho.Tweenable(name="start", value=0, tags=["scalar"])

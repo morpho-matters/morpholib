@@ -45,7 +45,8 @@ class Point(morpho.Figure):
         alpha=1):
 
         # Construct a default figure.
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         # Set parameters
 
@@ -404,9 +405,14 @@ def handleDash(tweenmethod):
 #            to speed up rendering.
 class Path(morpho.Figure):
     def __init__(self, seq=None, width=3, color=(1,1,1), alpha=1):
-        if seq is None: seq = [0,1]
+        if seq is None:
+            seq = [0,1]
+        # Convert to list if not list
+        elif not isinstance(seq, list):
+            seq = list(seq)
 
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         seq = morpho.Tweenable(name="seq", value=seq, tags=["complex", "list"])
         start = morpho.Tweenable(name="start", value=0, tags=["scalar"])
@@ -2701,10 +2707,13 @@ class Polygon(morpho.Figure):
         elif not isinstance(fill, list) and not isinstance(fill, morpho.color.QuadGrad):
             raise TypeError("Unsupported fill input")
 
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         if vertices is None:
             vertices = []
+        elif not isinstance(vertices, list):
+            vertices = list(vertices)
         elif isinstance(vertices, Path):
             vertices = vertices.seq.copy()
 
@@ -3116,7 +3125,8 @@ class Quadmesh(morpho.Figure):
         elif type(fill2) is not list and fill2 is not None:
             raise TypeError("Unsupported fill2 input")
 
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         if array is None:
             array = np.zeros((2,2,3))
