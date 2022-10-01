@@ -3324,10 +3324,12 @@ class Animation(object):
                 if self.clickCopy:
                     pyperclip.copy(str(z))
 
-                print((z.real, z.imag))
+                # print((z.real, z.imag))
 
                 # sign = " + " if z.imag >= 0 else " - "
                 # print(z.real, sign, abs(z.imag), "j", sep="")
+                sign = "+" if z.imag >= 0 else ""
+                print(f"({z.real} {sign}{z.imag}j)")
 
             # Replay animation if clicked after animation finishes
             if not mation.active:
