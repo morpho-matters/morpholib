@@ -1001,18 +1001,19 @@ class Spline(morpho.Figure):
         path = path.fimage(self.positionAt)
 
         # Match other tweenables
-        path.start = self.start
-        path.end = self.end
-        path.color = self.color[:]
-        path.alphaEdge = self.alphaEdge
-        path.fill = self.fill.copy() if object_hasattr(self.fill, "copy") else self.fill
-        path.alphaFill = self.alphaFill
-        path.alpha = self.alpha
-        path.width = self.width
-        path.origin = self.origin
-        path.rotation = self.rotation
-        path._transform = self._transform.copy()
-        path._updateSettings(self)
+        # path.start = self.start
+        # path.end = self.end
+        # path.color = self.color[:]
+        # path.alphaEdge = self.alphaEdge
+        # path.fill = self.fill.copy() if object_hasattr(self.fill, "copy") else self.fill
+        # path.alphaFill = self.alphaFill
+        # path.alpha = self.alpha
+        # path.width = self.width
+        # path.origin = self.origin
+        # path.rotation = self.rotation
+        # path._transform = self._transform.copy()
+        # path._updateSettings(self)
+        path._updateFrom(self, common=True)
 
         return path
 
