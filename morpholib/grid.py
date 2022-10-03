@@ -922,6 +922,9 @@ class Path(morpho.Figure):
                     dash[i] += adjust
                     adjust *= -1
 
+                if any(step < 0 for step in dash):
+                    raise ValueError("Path outline cannot be drawn because of too short dash steps. Ensure all dash steps >= 2*outlineWidth.")
+
                 back.dash = dash
 
             # I'm changing back.draw() to Path.draw(back) because
