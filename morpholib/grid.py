@@ -922,8 +922,17 @@ class Path(morpho.Figure):
                     dash[i] += adjust
                     adjust *= -1
 
-                if any(step < 0 for step in dash):
-                    raise ValueError("Path outline cannot be drawn because of too short dash steps. Ensure all dash steps >= 2*outlineWidth.")
+                # if any(step < 0 for step in dash):
+                #     raise ValueError("Path outline cannot be drawn because of too short dash steps. Ensure all dash steps >= 2*outlineWidth.")
+
+                # Check for negative dash steps and adjust accordingly
+                for i in range(1, len(dash), 2):
+                    # Only need to check odd indices since those are the ones
+                    # that are reduced.
+                    step = dash[i]
+                    if step < 0:
+                        dash[i-1] += step
+                        dash[i] = 0
 
                 back.dash = dash
 
