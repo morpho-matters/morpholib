@@ -96,6 +96,8 @@ class MaskConfigurationError(Exception):
 # Also note that the transition function supplied to a frame will NOT
 # propagate down to the figures in the figures list. When tweening a frame,
 # the individual transition functions of each figure are used.
+# The transition of the Frame figure itself really only applies to its
+# own `origin` tweenable.
 class Frame(morpho.Figure):
     def __init__(self, figures=None, /, **kwargs):
         # By default, do what the superclass does.
