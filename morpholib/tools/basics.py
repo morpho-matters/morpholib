@@ -64,6 +64,7 @@ def sgn(x):
 # Equivalent to min(max(x,low), high)
 def constrain(x, low, high):
     return min(max(x, low), high)
+clamp = constrain  # Alternate name
 
 # Computes the mean of a vector-like thing.
 def mean(a):
