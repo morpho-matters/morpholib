@@ -1061,6 +1061,17 @@ def rollback(self, *args, **kwargs):
     morpho.actions.rollback(self, *args, **kwargs)
     return None
 
+# Causes the actor to vanish and reappear the specified
+# number of times for the specifed total duration.
+@Figure.action
+def blink(actor, duration=15, atFrame=None, *, times=1):
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    for n in range(2*times):
+        fig = actor.newkey(atFrame + n*duration/(2*times-1))
+        fig.visible = not fig.visible  # Toggle visibility
+
 
 # Base class for certain space figures.
 class SpaceFigure(Figure):
