@@ -20,6 +20,31 @@ del mation
 # and its derivatives.
 defaultFont = "Times New Roman"
 
+### DECORATORS ###
+
+# Decorator allows a method to extract the needed
+# `view` and `ctx` parameters from Layer/Camera/Animation
+# inputs allowing for syntax like
+#   mytext.width(my_layer_or_camera, my_animation)
+# whereby `view` will be taken as the latest viewbox in the
+# layer and `windowShape` will be taken from the corresponding
+# attribute in the animation object.
+def typecastViewCtx(method):
+    def wrapper(self, view, ctx, *args, **kwargs):
+        # Handle Layer/Camera/Animation type inputs to
+        # view and ctx.
+        if isinstance(view, morpho.Layer):
+            view = view.camera.last().view
+        elif isinstance(view, morpho.Actor):
+            view = view.last().view
+        elif isinstance(view, morpho.anim.Camera):
+            view = view.view
+        if isinstance(ctx, morpho.Animation):
+            ctx = ctx.windowShape
+
+        return method(self, view, ctx, *args, **kwargs)
+    return wrapper
+
 ### CLASSES ###
 
 '''
@@ -194,6 +219,7 @@ class Text(morpho.Figure):
     # returns tuple (width, height) representing the text's physical
     # width and height.
     # Note this ignores the "transform" and prescale tweenables.
+    @typecastViewCtx
     def dimensions(self, view, ctx):
         if isinstance(view, morpho.anim.Camera):
             view = view.view
@@ -208,6 +234,7 @@ class Text(morpho.Figure):
     # Mainly of use internally to draw the background box.
     # Note: Ignores rotation and transform, but includes
     # the prescale factors
+    @typecastViewCtx
     def box(self, view, ctx, pad=0):
         width, height = self.dimensions(view, ctx)
         # Modify by prescale factors
@@ -223,6 +250,7 @@ class Text(morpho.Figure):
 
     # Same as box(), but the coordinates are relative to
     # the text's position.
+    @typecastViewCtx
     def relbox(self, view, ctx, pad=0):
         width, height = self.dimensions(view, ctx)
         # Modify by prescale factors
@@ -239,6 +267,7 @@ class Text(morpho.Figure):
     # Returns the four corners of the text's bounding box
     # plus any optional padding. The sequence of the corners is
     # NW, SW, SE, NE.
+    @typecastViewCtx
     def corners(self, view, ctx, pad=0):
         a,b,c,d = self.box(view, ctx, pad)
 
@@ -251,6 +280,7 @@ class Text(morpho.Figure):
 
     # Same as corners(), but the coordinates are relative to wherever
     # the text's physical position is.
+    @typecastViewCtx
     def relcorners(self, view, ctx, pad=0):
         a,b,c,d = self.relbox(view, ctx, pad)
 
@@ -263,6 +293,7 @@ class Text(morpho.Figure):
 
     # Returns the visual centerpoint of the text, ignoring
     # the transformation attributes.
+    @typecastViewCtx
     def center(self, view, ctx):
         return mean(self.corners(view, ctx))
 
@@ -277,11 +308,13 @@ class Text(morpho.Figure):
 
     # Returns the physical width of the text.
     # Same as mytext.dimensions(view, ctx)[0]
+    @typecastViewCtx
     def width(self, view, ctx):
         return self.dimensions(view, ctx)[0]
 
     # Returns the physical height of the text.
     # Same as mytext.dimensions(view, ctx)[1]
+    @typecastViewCtx
     def height(self, view, ctx):
         return self.dimensions(view, ctx)[1]
 
@@ -479,6 +512,7 @@ class PText(Text):
     # Returns the dimensions (in pixels) of the text as a pair
     # (textWidth, textHeight).
     # Note: This ignores the transform attribute.
+    @typecastViewCtx
     def pixelDimensions(self, view, ctx):
         # aspectRatioWH = self.aspectRatioWH()
         # textHeight = morpho.pixelHeight(self.size, view, ctx)
@@ -490,11 +524,13 @@ class PText(Text):
         return (textWidth, textHeight)
 
     # Returns the width of the text in pixels.
+    @typecastViewCtx
     def pixelWidth(self, view, ctx):
         aspectRatioWH = self.aspectRatioWH()
         return morpho.pixelWidth(aspectRatioWH*self.width(), view, ctx)
 
     # Returns the height of the text in pixels.
+    @typecastViewCtx
     def pixelHeight(self, view, ctx):
         return morpho.pixelHeight(self.height(), view, ctx)
 
@@ -538,6 +574,7 @@ class PText(Text):
     # Returns the corresponding fontsize (i.e. the value of the
     # `size` attribute in the 2D Text class) for this PText figure
     # given the viewbox and ctx/windowShape.
+    @typecastViewCtx
     def fontsize(self, view, ctx):
         # return self._fontRatio*self.pixelHeight(view, ctx)
         return self._fontRatio*morpho.pixelHeight(self.size, view, ctx)
@@ -591,6 +628,7 @@ class PText(Text):
         return mean(self.corners())
 
     # Returns equivalent non-physical Text object
+    @typecastViewCtx
     def makeText(self, view, ctx):
         txt = Text()
         txt._updateFrom(self)
@@ -1290,6 +1328,7 @@ class FancyMultiText(MultiText):
     # Note that this is with respect to the group's LOCAL origin,
     # meaning this method does not take the `pos` attribute into
     # account.
+    @typecastViewCtx
     def totalBox(self, view, ctx, pad=0):
         boxes = [fig.box(view, ctx, pad) for fig in self.figures]
         left = min(box[0] for box in boxes)
@@ -1300,6 +1339,7 @@ class FancyMultiText(MultiText):
         return [left, right, bottom, top]
 
     # Returns the center of the text group's bounding box.
+    @typecastViewCtx
     def totalCenter(self, view, ctx):
         box = self.totalBox(view, ctx)
         return mean(box[:2]) + 1j*mean(box[2:])
@@ -1327,6 +1367,7 @@ class FancyMultiText(MultiText):
     # [xmin, xmax, ymin, ymax]
     # and takes into account the global position and alignment
     # properties, but ignores transformation properties.
+    @typecastViewCtx
     def box(self, view, ctx, pad=0):
         box = self.totalBox(view, ctx, pad=0)
         return self._alignBox(box, pad=pad)
@@ -1334,6 +1375,7 @@ class FancyMultiText(MultiText):
 
     # Moves the text group so that its total center is at the origin.
     # This makes it so the alignment respects the `pos` attribute.
+    @typecastViewCtx
     def recenter(self, view, ctx):
         center = self.totalCenter(view, ctx)
         for fig in self.figures:
