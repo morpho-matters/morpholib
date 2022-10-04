@@ -105,6 +105,29 @@ class Point(morpho.Figure):
         ctx.set_line_width(self.strokeWeight)
         ctx.stroke()
 
+@Point.action
+def growIn(point, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = point.lastID()
+
+    point0 = point.last()
+    size = point0.size
+    point0.visible = False
+    point1 = point.newkey(atFrame)
+    point1.set(size=0, visible=True)
+    point2 = point.newendkey(duration)
+    point2.set(size=size)
+
+@Point.action
+def shrinkOut(point, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = point.lastID()
+
+    point.newkey(atFrame)
+    point1 = point.newendkey(duration)
+    point1.set(size=0, visible=False)
+
+
 # DEPRECATED!
 # Polar Point class. Identical to the Point class except it adds
 # an attribute called "wind" which represents winding number about
