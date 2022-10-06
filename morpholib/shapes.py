@@ -928,11 +928,14 @@ class Spline(morpho.Figure):
         # ctx.restore()
 
         # Set line width & color & alpha
-        ctx.set_line_width(self.width)
-        ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
-        ctx.set_dash(self.dash)
-        ctx.stroke()
-        ctx.set_dash([])
+        if self.width < 0.5:  # Don't stroke if width is too small
+            ctx.new_path()
+        else:
+            ctx.set_line_width(self.width)
+            ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
+            ctx.set_dash(self.dash)
+            ctx.stroke()
+            ctx.set_dash([])
 
         # Restore original data array if splits occurred
         if needSplits:

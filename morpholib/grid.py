@@ -1243,11 +1243,14 @@ class Path(morpho.Figure):
             ctx.restore()
 
             # Set line width & color & alpha
-            ctx.set_line_width(self.width)
-            ctx.set_source_rgba(*RGBA_start)
-            ctx.set_dash(self.dash)
-            ctx.stroke()
-            ctx.set_dash([])  # Remove dash pattern and restore to solid strokes
+            if self.width < 0.5:  # Don't stroke if width is too small
+                ctx.new_path()
+            else:
+                ctx.set_line_width(self.width)
+                ctx.set_source_rgba(*RGBA_start)
+                ctx.set_dash(self.dash)
+                ctx.stroke()
+                ctx.set_dash([])  # Remove dash pattern and restore to solid strokes
 
         # Handle actually drawing head and tail now.
         # The delay is so that the triangles are drawn in front
@@ -2907,9 +2910,9 @@ class Polygon(morpho.Figure):
 
         ### EDGE ###
 
-        # Do nothing if edge width is zero, or alphaEdge is zero,
+        # Do nothing if edge width is tiny, or alphaEdge is zero,
         # or if the gradient fill was used for the stroke.
-        if self.width == 0 or self.alphaEdge == 0 or self._strokeGradient:
+        if self.width < 0.5 or self.alphaEdge == 0 or self._strokeGradient:
             ctx.new_path()
             return
 
