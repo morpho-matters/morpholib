@@ -249,7 +249,7 @@ class Gradient(morpho.Figure):
 
             return self.segment(a,b)
         else:
-            return self.data[key]
+            return self.value(key)
 
     def __setitem__(self, key, value):
         self.data[key] = value
@@ -274,11 +274,11 @@ class Gradient(morpho.Figure):
 
         # If the given parameter is a key in the dict, just return the value
         if x in keylist:
-            return self[x]
+            return self.data[x]
 
         # Compute the latest key
         k = listfloor(keylist, x)
-        if k == -1: return self[keylist[0]]
+        if k == -1: return self.data[keylist[0]]
         key = keylist[k]
 
         # Grab latest value
@@ -288,7 +288,7 @@ class Gradient(morpho.Figure):
             return keyval
         else:
             key2 = keylist[k+1]
-            keyval2 = self[key2]
+            keyval2 = self.data[key2]
             if isinstance(keyval, list) or isinstance(keyval, tuple):
                 return type(keyval)(map(morpho.numTween, keyval, keyval2, ((x-key)/(key2-key),)*len(keyval)))
             else:
