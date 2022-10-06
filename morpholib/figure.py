@@ -1303,9 +1303,13 @@ class Actor(object):
     # However, a figure can be optionally supplied when called.
     # Note that the given index value is automatically rounded to the
     # nearest int!
-    # "seamless" is a currently not implemented optional argument that
-    # may be implemented (or deprecated) in the future. Ignore for now.
-    def newkey(self, f, figure=None, seamless=False):
+    #
+    # "seamless" is a currently experimental optional argument that
+    # is useful when creating a new key between two existing keyframes.
+    # If set to True, it modifies the transition functions of the
+    # surrounding keyfigures to ensure the insertion of the
+    # intermediate new keyfigure doesn't modify the original animation.
+    def newkey(self, f, figure=None, *, seamless=False):
         f = round(f)
         if type(f) is not int:
             raise TypeError("Index is NOT an int.")
@@ -1336,11 +1340,16 @@ class Actor(object):
         self.timeline[f] = figure
         self.update()
 
-        # FUTURE: Adjust transition of previous keyfig so as the
+        # Adjust transition of previous keyfig so that the
         # insertion of a new keyfigure does not modify the playback
         # of the animation.
-        if seamless:
-            raise NotImplementedError
+        if seamless and self.firstID() < f < self.lastID():
+            # raise NotImplementedError
+            keyfig1 = self.prevkey(f)
+            a,b = self.prevkeyID(f), self.nextkeyID(f)
+            func1, func2 = morpho.transitions.split(keyfig1.transition, (f-a)/(b-a))
+            keyfig1.transition = func1
+            figure.transition = func2
 
         return figure
 
@@ -1352,7 +1361,7 @@ class Actor(object):
         f = self.lastID() + df
         if f == -oo:
             raise IndexError("Actor has no keyframes! End key is undefined.")
-        return self.newkey(f, figure, seamless)
+        return self.newkey(f, figure, seamless=seamless)
 
     # # Adds the given figure to the timeline at the specified index.
     # # Throws error if the given index is already a keyID.
