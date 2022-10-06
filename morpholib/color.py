@@ -247,7 +247,7 @@ class Gradient(morpho.Figure):
             if b is None:
                 b = 1
 
-            return self.segment(a,b)
+            return self.segment(a,b, normalize=True)
         else:
             return self.value(key)
 
@@ -306,7 +306,7 @@ class Gradient(morpho.Figure):
 
     # Generates a new Gradient which is a segment between the values [a,b] of the
     # current gradient.
-    def segment(self, a, b=None):
+    def segment(self, a, b=None, *, normalize=False):
         if len(self.data) == 0:
             return Gradient()
 
@@ -329,6 +329,8 @@ class Gradient(morpho.Figure):
         gradseg = Gradient(segdata).copy()
         if reverse:
             gradseg.reverse()
+        if normalize:
+            gradseg.normalize()
 
         return gradseg  # To handle needing to make copies of lists, etc.
 
