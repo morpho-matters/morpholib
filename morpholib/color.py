@@ -235,7 +235,21 @@ class Gradient(morpho.Figure):
 
 
     def __getitem__(self, key):
-        return self.data[key]
+        if isinstance(key, slice):
+            if key.step is not None:
+                raise TypeError("Slice steps are not supported for gradient slicing.")
+
+            a = key.start
+            b = key.stop
+
+            if a is None:
+                a = 0
+            if b is None:
+                b = 1
+
+            return self.segment(a,b)
+        else:
+            return self.data[key]
 
     def __setitem__(self, key, value):
         self.data[key] = value
