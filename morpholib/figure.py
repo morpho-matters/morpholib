@@ -1337,19 +1337,21 @@ class Actor(object):
         elif type(figure) is not self.figureType:
             raise TypeError("Given figure is not of actor's figure type.")
 
-        self.timeline[f] = figure
-        self.update()
-
         # Adjust transition of previous keyfig so that the
         # insertion of a new keyfigure does not modify the playback
-        # of the animation.
-        if seamless and self.firstID() < f < self.lastID():
+        # of the animation. But only do this if the index is a
+        # genuinely new index that is in the middle of the timeline
+        if seamless and self.firstID() < f < self.lastID() and f not in self.timeline:
             # raise NotImplementedError
             keyfig1 = self.prevkey(f)
             a,b = self.prevkeyID(f), self.nextkeyID(f)
             func1, func2 = morpho.transitions.split(keyfig1.transition, (f-a)/(b-a))
             keyfig1.transition = func1
             figure.transition = func2
+
+        # Add the figure to the timeline
+        self.timeline[f] = figure
+        self.update()
 
         return figure
 
