@@ -1298,18 +1298,24 @@ class Actor(object):
 
 
     # Creates a new keyfigure at index f and returns it.
-    # Be default it sets the keyfig to be the tweened version
-    # or possibly a blank figure if outside the tweening window.
-    # However, a figure can be optionally supplied when called.
-    # Note that the given index value is automatically rounded to the
-    # nearest int!
+    # If f is ahead of the last keyframe, the new keyfigure
+    # will be a copy of the latest keyfigure. If f is before
+    # the first keyfigure (or the timeline is empty), the
+    # new keyfigure will be the default figure for the actor's
+    # figure type. If f is between the first and last
+    # keyframes, the new keyfigure will be determined by
+    # tweening. This behavior can be overridden by passing
+    # a figure as a second argument to newkey(), in which
+    # case the given figure will be used as the new keyfigure.
     #
-    # "seamless" is a currently experimental optional argument that
-    # is useful when creating a new key between two existing keyframes.
-    # If set to True, it modifies the transition functions of the
-    # surrounding keyfigures to ensure the insertion of the
-    # intermediate new keyfigure doesn't modify the original animation.
-    def newkey(self, f, figure=None, *, seamless=False):
+    # In the case of creating a new intermediate keyfigure,
+    # newkey() will by default modify the transition functions
+    # of the new keyfigure and the previous keyfigure in
+    # order to maintain a seamless tween between the original
+    # two neighboring keyfigures. This behavior can be
+    # disabled by passing in the keyword argument
+    # `seamless=False`
+    def newkey(self, f, figure=None, *, seamless=True):
         f = round(f)
         if type(f) is not int:
             raise TypeError("Index is NOT an int.")
@@ -1356,7 +1362,8 @@ class Actor(object):
         return figure
 
     # Create a new key df-many frames after the current final key.
-    def newendkey(self, df, figure=None, seamless=False):
+    # See newkey() for more info.
+    def newendkey(self, df, figure=None, seamless=True):
         df = round(df)
         if not isinstance(df, int):
             raise TypeError("Cannot make newkey at non-integer frame index.")
@@ -1587,14 +1594,14 @@ class Actor(object):
         subactor = Actor(self.figureType)
         for i in range(a,b+1):
             keyID = keyIDs[i]
-            subactor.newkey(keyID, self.time(keyID).copy())
+            subactor.newkey(keyID, self.time(keyID).copy(), seamless=False)
 
         # Make extra keys at the start and end times on the subactor
         if edgeInterp == "boundary only":
             if start not in self.timeline and start > self.firstID():
-                subactor.newkey(start, self.time(start))
+                subactor.newkey(start, self.time(start), seamless=False)
             if end not in self.timeline and len(self.timeline) > 0:
-                subactor.newkey(end, self.time(end))
+                subactor.newkey(end, self.time(end), seamless=False)
 
         # Make extra keys in the padding between [start,end] and
         # the subactor so far.
@@ -1602,12 +1609,12 @@ class Actor(object):
             if a < len(self.timeline):
                 keyID = keyIDs[a]
                 for t in range(start, keyID):
-                    subactor.newkey(t, self.time(t))
+                    subactor.newkey(t, self.time(t), seamless=False)
 
             if b >= 0:
                 keyID = keyIDs[b]
                 for t in range(keyID+1, end+1):
-                    subactor.newkey(t, self.time(t))
+                    subactor.newkey(t, self.time(t), seamless=False)
 
         elif edgeInterp != "none":
             raise ValueError('Unrecognized edgeInterp method: "' + edgeInterp + '"')
@@ -1661,7 +1668,7 @@ class Actor(object):
 
         start = actor.firstID()
         for keyID in actor.timeline:
-            self.newkey(keyID-start+afterFrame+1, actor.timeline[keyID])
+            self.newkey(keyID-start+afterFrame+1, actor.timeline[keyID], seamless=False)
 
     # Alternate name for insert() is paste()
     # paste = insert
