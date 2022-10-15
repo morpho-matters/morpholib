@@ -1548,10 +1548,8 @@ class Track(Path):
         backpath.end = min(self.tickEnd, self.end)
         # Prevent negative dash steps
         gap = self.tickGap-self.tickWidth
-        if gap >= 0:
+        if gap > 0:
             backpath.dash = [self.tickWidth, gap]
-        else:
-            backpath.dash = []
 
         backpath.origin = self.origin
         backpath.rotation = self.rotation
