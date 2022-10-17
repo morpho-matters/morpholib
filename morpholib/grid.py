@@ -2160,6 +2160,18 @@ class Axis(Track):
         self.seq[1] = origEnd
 
 
+class SpaceAxis(SpaceTrack):
+    def primitives(self, camera):
+        track = SpaceTrack.primitives(self, camera)[0]
+        axis = Axis()
+        axis._updateFrom(track, copy=True, common=True)
+
+        # Scale tick spacing based on how much the axis has
+        # shrunk due to foreshortening.
+        axis.tickGap *= abs(axis.seq[1]-axis.seq[0]) / np.linalg.norm(self.seq[1]-self.seq[0]).tolist()
+
+        return [axis]
+
 
 # Special Frame figure for mathgrids
 class MathGrid(morpho.Frame):
