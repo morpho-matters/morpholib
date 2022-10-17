@@ -235,7 +235,21 @@ class Gradient(morpho.Figure):
 
 
     def __getitem__(self, key):
-        return self.data[key]
+        if isinstance(key, slice):
+            if key.step is not None:
+                raise TypeError("Slice steps are not supported for gradient slicing.")
+
+            a = key.start
+            b = key.stop
+
+            if a is None:
+                a = 0
+            if b is None:
+                b = 1
+
+            return self.segment(a,b, normalize=True)
+        else:
+            return self.value(key)
 
     def __setitem__(self, key, value):
         self.data[key] = value
@@ -260,11 +274,11 @@ class Gradient(morpho.Figure):
 
         # If the given parameter is a key in the dict, just return the value
         if x in keylist:
-            return self[x]
+            return self.data[x]
 
         # Compute the latest key
         k = listfloor(keylist, x)
-        if k == -1: return self[keylist[0]]
+        if k == -1: return self.data[keylist[0]]
         key = keylist[k]
 
         # Grab latest value
@@ -274,7 +288,7 @@ class Gradient(morpho.Figure):
             return keyval
         else:
             key2 = keylist[k+1]
-            keyval2 = self[key2]
+            keyval2 = self.data[key2]
             if isinstance(keyval, list) or isinstance(keyval, tuple):
                 return type(keyval)(map(morpho.numTween, keyval, keyval2, ((x-key)/(key2-key),)*len(keyval)))
             else:
@@ -292,7 +306,7 @@ class Gradient(morpho.Figure):
 
     # Generates a new Gradient which is a segment between the values [a,b] of the
     # current gradient.
-    def segment(self, a, b=None):
+    def segment(self, a, b=None, *, normalize=False):
         if len(self.data) == 0:
             return Gradient()
 
@@ -315,6 +329,8 @@ class Gradient(morpho.Figure):
         gradseg = Gradient(segdata).copy()
         if reverse:
             gradseg.reverse()
+        if normalize:
+            gradseg.normalize()
 
         return gradseg  # To handle needing to make copies of lists, etc.
 

@@ -2697,10 +2697,20 @@ class Animation(object):
             layer.speedUp(factor, center=0, useOffset=True, ignoreMask=False)
 
         newDelays = {}
+        drift = 0  # Cumulative round-off error of delay frames.
         for keyID in self.delays:
             delay = self.delays[keyID]
             newID = round(keyID/factor)
             newDelay = round(delay/factor) if delay != oo else oo
+
+            # Update drift value and then correct newDelay if drift
+            # is now more than half a frame.
+            if delay != oo:
+                drift += round(delay/factor) - delay/factor
+                if abs(drift) > 0.5:
+                    correction = -round(drift)
+                    newDelay += correction
+                    drift += correction
 
             # The complication is because dropping frame rates could cause
             # a collision among keyIDs. Add them instead of replacing!
