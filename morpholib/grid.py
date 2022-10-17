@@ -464,7 +464,8 @@ class Path(morpho.Figure):
         # How to interpolate between the points given in the seq.
         # For now, the only interp method is "linear", which  means
         # connect successive points in the seq by straight lines.
-        self.interp = "linear"
+        # self.interp = "linear"
+        self.NonTweenable("interp", "linear")
 
         # The dash pattern for this line. The format is identical to how
         # pycairo handles dash patterns: each item in the list is how long
@@ -476,15 +477,17 @@ class Path(morpho.Figure):
         # self.dash = []
 
         # Set of indices that represent where a path should terminate.
-        self.deadends = set()
+        # self.deadends = set()
+        self.NonTweenable("deadends", set())
 
-    # Returns a (deep-ish) copy of the path
-    def copy(self):
-        C = morpho.Figure.copy(self)
-        C.interp = self.interp
-        C.deadends = self.deadends.copy()
-        # C.dash = self.dash.copy() if not isinstance(self.dash, tuple) else self.dash
-        return C
+    # # Returns a (deep-ish) copy of the path
+    # def copy(self):
+    #     # C = morpho.Figure.copy(self)
+    #     C = super().copy()
+    #     C.interp = self.interp
+    #     C.deadends = self.deadends.copy()
+    #     # C.dash = self.dash.copy() if not isinstance(self.dash, tuple) else self.dash
+    #     return C
 
     @property
     def transform(self):
@@ -1565,43 +1568,6 @@ class Track(Path):
 
 TickPath = Track  # Alternate name
 
-
-class SpaceTrack(SpacePath, Track):
-    def __init__(seq=None, width=3, color=(1,1,1), alpha=1,
-        tickWidth=None, tickColor=None, tickAlpha=1,
-        tickLength=15, tickGap=35):
-
-        super().__init__(seq, width, color, alpha)
-
-        # Set default tick width and color based on the
-        # given values for path width and color
-        if tickWidth is None:
-            tickWidth = width/2
-        if tickColor is None:
-            tickColor = color[:]
-
-        # Override default values
-        self.tickWidth = tickWidth
-        self.tickColor = tickColor
-        self.tickAlpha = tickAlpha
-        self.tickLength = tickLength
-        self.tickGap = tickGap
-
-
-    def primitives(self, camera):
-        # Compute primitive 2D path
-        path = SpacePath.primitives(self, camera)[0]
-        # Turn it into a 2D Track figure
-        track = Track(path)
-        # Override its default values with those of self
-        # (e.g. tickWidth, tickColor, etc.)
-        track._updateFrom(self, common=True)
-        return [track]
-
-
-
-
-
 # DEPRECATED!
 # Polar Path class. Identical to the Path class except it adds
 # an attribute called "wind" which represents winding number about
@@ -2077,6 +2043,41 @@ class SpacePath(Path):
     tweenSpiral = tweenLinear
 
 Spacepath = SpacePath  # Synonym for SpacePath
+
+
+class SpaceTrack(SpacePath, Track):
+    def __init__(self, seq=None, width=3, color=(1,1,1), alpha=1,
+        tickWidth=None, tickColor=None, tickAlpha=1,
+        tickLength=15, tickGap=35):
+
+        super().__init__(seq, width, color, alpha)
+
+        # Set default tick width and color based on the
+        # given values for path width and color
+        if tickWidth is None:
+            tickWidth = width/2
+        if tickColor is None:
+            tickColor = color[:]
+
+        # Override default values
+        self.tickWidth = tickWidth
+        self.tickColor = tickColor
+        self.tickAlpha = tickAlpha
+        self.tickLength = tickLength
+        self.tickGap = tickGap
+
+
+    def primitives(self, camera):
+        # Compute primitive 2D path
+        path = SpacePath.primitives(self, camera)[0]
+        # Turn it into a 2D Track figure
+        track = Track()
+        track.seq = path.seq  # No need to copy it.
+        # Override its default values with those of self
+        # (e.g. tickWidth, tickColor, etc.)
+        track._updateFrom(self, copy=False, common=True)
+        return [track]
+
 
 # NOTE: FOR INTERNAL USE ONLY! NOT WELL-MAINTAINED. USE AT OWN RISK!
 # Optimize a list of path figures in the sense of concatenating
