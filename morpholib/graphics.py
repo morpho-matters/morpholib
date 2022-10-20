@@ -48,7 +48,8 @@ I2 = np.identity(2)
 class Image(morpho.Figure):
     def __init__(self, source=None):
 
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         self.newSource(source)
 

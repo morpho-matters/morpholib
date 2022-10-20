@@ -5,6 +5,8 @@ import morpholib.tools.color, morpholib.anim
 from morpholib.matrix import mat
 from morpholib.tools.basics import *
 
+from morpholib import object_hasattr
+
 import pyglet as pg
 pyglet = pg
 import cairo
@@ -43,7 +45,8 @@ class Point(morpho.Figure):
         alpha=1):
 
         # Construct a default figure.
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         # Set parameters
 
@@ -101,6 +104,29 @@ class Point(morpho.Figure):
         ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
         ctx.set_line_width(self.strokeWeight)
         ctx.stroke()
+
+@Point.action
+def growIn(point, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = point.lastID()
+
+    point0 = point.last()
+    size = point0.size
+    point0.visible = False
+    point1 = point.newkey(atFrame)
+    point1.set(size=0, visible=True)
+    point2 = point.newendkey(duration)
+    point2.set(size=size)
+
+@Point.action
+def shrinkOut(point, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = point.lastID()
+
+    point.newkey(atFrame)
+    point1 = point.newendkey(duration)
+    point1.set(size=0, visible=False)
+
 
 # DEPRECATED!
 # Polar Point class. Identical to the Point class except it adds
@@ -402,9 +428,14 @@ def handleDash(tweenmethod):
 #            to speed up rendering.
 class Path(morpho.Figure):
     def __init__(self, seq=None, width=3, color=(1,1,1), alpha=1):
-        if seq is None: seq = [0,1]
+        if seq is None:
+            seq = [0,1]
+        # Convert to list if not list
+        elif not isinstance(seq, list):
+            seq = list(seq)
 
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         seq = morpho.Tweenable(name="seq", value=seq, tags=["complex", "list"])
         start = morpho.Tweenable(name="start", value=0, tags=["scalar"])
@@ -560,6 +591,76 @@ class Path(morpho.Figure):
             return self.seq[index]
 
         return morpho.numTween0(self.seq[index], self.seq[index+1], T-index)
+
+    # Returns a segment of a path between parameters a and b,
+    # where a,b = 0 means path start and a,b = 1 means path end.
+    def segment(self, a, b):
+        reverse = not(a <= b)
+        if reverse:
+            a,b = b,a
+
+        if not(0 <= a <= b <= 1):
+            raise ValueError("Segment endpoints must satisfy 0 <= a,b <= 1")
+
+        subpath = self.copy()
+        if a == b:
+            # raise ValueError("Segment endpoints cannot be the same.")
+            subpath.seq = [self.positionAt(a)]
+            return subpath
+
+        # Compute fractional index values
+        maxIndex = len(self.seq)-1
+        A = a*maxIndex
+        B = b*maxIndex
+
+        # Round the fractional indices if they are super close
+        # to an integer.
+        tol = 1e-9
+        if abs(A-round(A)) < tol:
+            A = round(A)
+        if abs(B-round(B)) < tol:
+            B = round(B)
+
+        subpath.seq = subpath.seq[math.floor(A):math.ceil(B)+1]
+        if A != int(A):
+            subpath.seq[0] = self.positionAt(a)
+        if B != int(B):
+            subpath.seq[-1] = self.positionAt(b)
+
+        # Handle splitting a gradient color
+        if isinstance(subpath.color, morpho.color.Gradient):
+            # Paths assume the gradients are normalized,
+            # so the following line is commented out.
+            # subpath.color.normalize()
+            subpath.color = subpath.color.segment(a,b)
+            subpath.color.normalize()
+            if reverse:
+                subpath.color.reverse()
+
+        # Reverse order if needed
+        if reverse:
+            subpath.seq.reverse()
+
+        return subpath
+
+    def __getitem__(self, t):
+        # Handle singleton subscript
+        if not isinstance(t, slice):
+            t = slice(t,t)
+
+        if t.step is not None:
+            raise TypeError("Slice steps are not supported for path slicing.")
+
+        a = t.start
+        b = t.stop
+
+        if a is None:
+            a = 0
+        if b is None:
+            b = 1
+
+        return self.segment(a,b)
+
 
     # Returns the physical length of the path
     # NOTE: ignores deadends and pretends all nodes are connected!
@@ -843,6 +944,18 @@ class Path(morpho.Figure):
                 for i in range(len(dash)):
                     dash[i] += adjust
                     adjust *= -1
+
+                # if any(step < 0 for step in dash):
+                #     raise ValueError("Path outline cannot be drawn because of too short dash steps. Ensure all dash steps >= 2*outlineWidth.")
+
+                # Check for negative dash steps and adjust accordingly
+                for i in range(1, len(dash), 2):
+                    # Only need to check odd indices since those are the ones
+                    # that are reduced.
+                    step = dash[i]
+                    if step < 0:
+                        dash[i-1] += step
+                        dash[i] = 0
 
                 back.dash = dash
 
@@ -1130,11 +1243,14 @@ class Path(morpho.Figure):
             ctx.restore()
 
             # Set line width & color & alpha
-            ctx.set_line_width(self.width)
-            ctx.set_source_rgba(*RGBA_start)
-            ctx.set_dash(self.dash)
-            ctx.stroke()
-            ctx.set_dash([])  # Remove dash pattern and restore to solid strokes
+            if self.width < 0.5:  # Don't stroke if width is too small
+                ctx.new_path()
+            else:
+                ctx.set_line_width(self.width)
+                ctx.set_source_rgba(*RGBA_start)
+                ctx.set_dash(self.dash)
+                ctx.stroke()
+                ctx.set_dash([])  # Remove dash pattern and restore to solid strokes
 
         # Handle actually drawing head and tail now.
         # The delay is so that the triangles are drawn in front
@@ -1430,7 +1546,10 @@ class Track(Path):
         backpath.width = self.tickLength
         backpath.start = max(self.tickStart, self.start)
         backpath.end = min(self.tickEnd, self.end)
-        backpath.dash = [self.tickWidth, self.tickGap-self.tickWidth]
+        # Prevent negative dash steps
+        gap = self.tickGap-self.tickWidth
+        if gap > 0:
+            backpath.dash = [self.tickWidth, gap]
 
         backpath.origin = self.origin
         backpath.rotation = self.rotation
@@ -2051,52 +2170,6 @@ def shrinkOut(grid, duration=30, atFrame=None, *, reverse=False):
         else:
             path.end = 0
 
-@MathGrid.action
-def fadeIn(grid, duration=30, atFrame=None, jump=0, alpha=1):
-    if atFrame is None:
-        atFrame = grid.lastID()
-
-    grid0 = grid.last()
-    grid0.visible = False
-    grid1 = grid.newkey(atFrame)
-    grid1.visible = True
-    grid2 = grid.newendkey(duration)
-
-    for n,path in enumerate(grid1.figures):
-        path.static = False
-        actor = morpho.Actor(path)
-        actor.fadeIn(duration=duration, jump=jump, alpha=alpha)
-        grid1.figures[n] = actor.first()
-        grid2.figures[n] = actor.last()
-
-@MathGrid.action
-def fadeOut(grid, duration=30, atFrame=None, jump=0):
-    if atFrame is None:
-        atFrame = grid.lastID()
-
-    grid0 = grid.last()
-    grid1 = grid.newkey(atFrame)
-    grid2 = grid.newendkey(duration)
-    grid2.visible = False
-
-    for n,path in enumerate(grid1.figures):
-        path.static = False
-        actor = morpho.Actor(path)
-        actor.fadeOut(duration=duration, jump=jump)
-        grid1.figures[n] = actor.first()
-        grid2.figures[n] = actor.last()
-
-@MathGrid.action
-def rollback(grid, duration=30, atFrame=None):
-    if atFrame is None:
-        atFrame = grid.lastID()
-
-    grid1 = grid.newkey(atFrame)
-    for path in grid1.figures:
-        path.static = False
-    grid.newendkey(duration, grid.first().copy()).visible = False
-# MathGrid_rollback = rollback
-
 
 # Special SpaceFrame figure for 3D mathgrids
 class SpaceMathGrid(morpho.SpaceFrame):
@@ -2122,6 +2195,10 @@ def axesPath(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
     return path
 
 # Returns a MathGrid of axes with possible tickmarks.
+#
+# The individual paths can also be accessed as named subfigures:
+#   axes = mathaxes(...)
+#   axes.xaxis, axes.yaxis
 #
 # INPUTS (all keyword-only)
 # view = Bounding box of the grid ([xmin,xmax,ymin,ymax]).
@@ -2187,6 +2264,7 @@ def mathaxes(*,
             transition=transition
             )
         frm.figures.append(xaxis)
+        frm.setName(xaxis=xaxis)
 
     if "y" in axis:
         yaxis = mo.grid.Axis([ymin*1j, ymax*1j]).set(
@@ -2196,6 +2274,7 @@ def mathaxes(*,
             transition=transition
             )
         frm.figures.append(yaxis)
+        frm.setName(yaxis=yaxis)
 
     return frm
 
@@ -2669,10 +2748,13 @@ class Polygon(morpho.Figure):
         elif not isinstance(fill, list) and not isinstance(fill, morpho.color.QuadGrad):
             raise TypeError("Unsupported fill input")
 
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         if vertices is None:
             vertices = []
+        elif not isinstance(vertices, list):
+            vertices = list(vertices)
         elif isinstance(vertices, Path):
             vertices = vertices.seq.copy()
 
@@ -2760,7 +2842,7 @@ class Polygon(morpho.Figure):
         path.width = self.width
 
         # Transformation tweenables (FUTURE)
-        path.origin = self.origin if "copy" not in dir(self.origin) else self.origin.copy()
+        path.origin = self.origin if not object_hasattr(self.origin, "copy") else self.origin.copy()
         if "rotation" in self._state:
             path.rotation = self.rotation
         if "_transform" in self._state:
@@ -2831,9 +2913,9 @@ class Polygon(morpho.Figure):
 
         ### EDGE ###
 
-        # Do nothing if edge width is zero, or alphaEdge is zero,
+        # Do nothing if edge width is tiny, or alphaEdge is zero,
         # or if the gradient fill was used for the stroke.
-        if self.width == 0 or self.alphaEdge == 0 or self._strokeGradient:
+        if self.width < 0.5 or self.alphaEdge == 0 or self._strokeGradient:
             ctx.new_path()
             return
 
@@ -3084,7 +3166,8 @@ class Quadmesh(morpho.Figure):
         elif type(fill2) is not list and fill2 is not None:
             raise TypeError("Unsupported fill2 input")
 
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         if array is None:
             array = np.zeros((2,2,3))

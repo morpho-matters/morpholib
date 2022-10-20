@@ -91,3 +91,20 @@ step = jump = instant  # Alternate name
 # in the code by calling
 # morpho.transitions.default = newtransition
 default = uniform
+
+# Splits a monotonic transition function that maps [0,1] onto [0,1]
+# into two transition functions that are normalized to work as
+# regular transition functions.
+def split(func, t):
+    if not(0 < t < 1):
+        raise ValueError("t must be strictly between 0 and 1.")
+
+    y = func(t)
+
+    def func1(s):
+        return func(morpho.lerp0(0,t, s))/y
+
+    def func2(s):
+        return (func(morpho.lerp0(t,1, s))-y)/(1-y)
+
+    return func1, func2

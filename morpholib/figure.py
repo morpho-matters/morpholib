@@ -177,7 +177,8 @@ class Figure(object):
     # Set attributes as normal unless it is the name of a tweenable.
     def __setattr__(self, name, value):
         # If the given attribute name already exists, proceed normally.
-        if name in dir(self):
+        # if name in dir(self):
+        if object_hasattr(self, name):
             object.__setattr__(self, name, value)
         # Else if the given name is a tweenable's name, modify the tweenable's
         # value instead of setting a new attribute.
@@ -1060,6 +1061,17 @@ def rollback(self, *args, **kwargs):
     morpho.actions.rollback(self, *args, **kwargs)
     return None
 
+# Causes the actor to vanish and reappear the specified
+# number of times for the specifed total duration.
+@Figure.action
+def blink(actor, duration=15, atFrame=None, *, times=1):
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    for n in range(2*times):
+        fig = actor.newkey(atFrame + n*duration/(2*times-1))
+        fig.visible = not fig.visible  # Toggle visibility
+
 
 # Base class for certain space figures.
 class SpaceFigure(Figure):
@@ -1286,14 +1298,24 @@ class Actor(object):
 
 
     # Creates a new keyfigure at index f and returns it.
-    # Be default it sets the keyfig to be the tweened version
-    # or possibly a blank figure if outside the tweening window.
-    # However, a figure can be optionally supplied when called.
-    # Note that the given index value is automatically rounded to the
-    # nearest int!
-    # "seamless" is a currently not implemented optional argument that
-    # may be implemented (or deprecated) in the future. Ignore for now.
-    def newkey(self, f, figure=None, seamless=False):
+    # If f is ahead of the last keyframe, the new keyfigure
+    # will be a copy of the latest keyfigure. If f is before
+    # the first keyfigure (or the timeline is empty), the
+    # new keyfigure will be the default figure for the actor's
+    # figure type. If f is between the first and last
+    # keyframes, the new keyfigure will be determined by
+    # tweening. This behavior can be overridden by passing
+    # a figure as a second argument to newkey(), in which
+    # case the given figure will be used as the new keyfigure.
+    #
+    # In the case of creating a new intermediate keyfigure,
+    # newkey() will by default modify the transition functions
+    # of the new keyfigure and the previous keyfigure in
+    # order to maintain a seamless tween between the original
+    # two neighboring keyfigures. This behavior can be
+    # disabled by passing in the keyword argument
+    # `seamless=False`
+    def newkey(self, f, figure=None, *, seamless=True):
         f = round(f)
         if type(f) is not int:
             raise TypeError("Index is NOT an int.")
@@ -1321,26 +1343,34 @@ class Actor(object):
         elif type(figure) is not self.figureType:
             raise TypeError("Given figure is not of actor's figure type.")
 
+        # Adjust transition of previous keyfig so that the
+        # insertion of a new keyfigure does not modify the playback
+        # of the animation. But only do this if the index is a
+        # genuinely new index that is in the middle of the timeline
+        if seamless and self.firstID() < f < self.lastID() and f not in self.timeline:
+            # raise NotImplementedError
+            keyfig1 = self.prevkey(f)
+            a,b = self.prevkeyID(f), self.nextkeyID(f)
+            func1, func2 = morpho.transitions.split(keyfig1.transition, (f-a)/(b-a))
+            keyfig1.transition = func1
+            figure.transition = func2
+
+        # Add the figure to the timeline
         self.timeline[f] = figure
         self.update()
-
-        # FUTURE: Adjust transition of previous keyfig so as the
-        # insertion of a new keyfigure does not modify the playback
-        # of the animation.
-        if seamless:
-            raise NotImplementedError
 
         return figure
 
     # Create a new key df-many frames after the current final key.
-    def newendkey(self, df, figure=None, seamless=False):
+    # See newkey() for more info.
+    def newendkey(self, df, figure=None, seamless=True):
         df = round(df)
         if not isinstance(df, int):
             raise TypeError("Cannot make newkey at non-integer frame index.")
         f = self.lastID() + df
         if f == -oo:
             raise IndexError("Actor has no keyframes! End key is undefined.")
-        return self.newkey(f, figure, seamless)
+        return self.newkey(f, figure, seamless=seamless)
 
     # # Adds the given figure to the timeline at the specified index.
     # # Throws error if the given index is already a keyID.
@@ -1564,14 +1594,14 @@ class Actor(object):
         subactor = Actor(self.figureType)
         for i in range(a,b+1):
             keyID = keyIDs[i]
-            subactor.newkey(keyID, self.time(keyID).copy())
+            subactor.newkey(keyID, self.time(keyID).copy(), seamless=False)
 
         # Make extra keys at the start and end times on the subactor
         if edgeInterp == "boundary only":
             if start not in self.timeline and start > self.firstID():
-                subactor.newkey(start, self.time(start))
+                subactor.newkey(start, self.time(start), seamless=False)
             if end not in self.timeline and len(self.timeline) > 0:
-                subactor.newkey(end, self.time(end))
+                subactor.newkey(end, self.time(end), seamless=False)
 
         # Make extra keys in the padding between [start,end] and
         # the subactor so far.
@@ -1579,12 +1609,12 @@ class Actor(object):
             if a < len(self.timeline):
                 keyID = keyIDs[a]
                 for t in range(start, keyID):
-                    subactor.newkey(t, self.time(t))
+                    subactor.newkey(t, self.time(t), seamless=False)
 
             if b >= 0:
                 keyID = keyIDs[b]
                 for t in range(keyID+1, end+1):
-                    subactor.newkey(t, self.time(t))
+                    subactor.newkey(t, self.time(t), seamless=False)
 
         elif edgeInterp != "none":
             raise ValueError('Unrecognized edgeInterp method: "' + edgeInterp + '"')
@@ -1615,10 +1645,16 @@ class Actor(object):
     # Inserts the given actor into self.
     # By default it appends it to the end, but this can be changed
     # with the optional argument afterFrame.
-    def insert(self, actor, afterFrame=None):
+    # Optionally, the keyword-only argument `atFrame` can be set
+    # instead, which will insert the actor BEFORE the specified frame.
+    def insert(self, actor, afterFrame=None, *, atFrame=None):
         # Check type compatibility
         if actor.figureType is not self.figureType:
             raise TypeError("Can't insert actor of different figure type!")
+
+        # atFrame overwrites afterFrame if specified.
+        if atFrame is not None:  # and afterFrame is None:
+            afterFrame = atFrame - 1
 
         # afterFrame defaults to maxkeyID, or zero in case self is
         # an empty actor.
@@ -1632,7 +1668,7 @@ class Actor(object):
 
         start = actor.firstID()
         for keyID in actor.timeline:
-            self.newkey(keyID-start+afterFrame+1, actor.timeline[keyID])
+            self.newkey(keyID-start+afterFrame+1, actor.timeline[keyID], seamless=False)
 
     # Alternate name for insert() is paste()
     # paste = insert
@@ -1860,3 +1896,13 @@ class _KeyIDContainer(object):
 # Thanks to Alex Martelli on StackOverflow
 # https://stackoverflow.com/a/952952
 def flattenList(L): return [item for sublist in L for item in sublist]
+
+# Checks if `obj` has `name` as an attribute.
+# Equivalent to hasattr(), but it does the check
+# using the `object` class's __getattribute__() method.
+def object_hasattr(obj, name):
+    try:
+        object.__getattribute__(obj, name)
+    except AttributeError:
+        return False
+    return True

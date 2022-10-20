@@ -16,7 +16,7 @@ from morpholib.tools.ktimer import tic, toc
 # Backward compatibility because these functions used to live in anim.py
 from morpholib import screenCoords, physicalCoords, \
     pixelWidth, physicalWidth, pixelHeight, physicalHeight, \
-    setupContext, clearContext, cairoJointStyle
+    setupContext, clearContext, cairoJointStyle, object_hasattr
 
 import math, cmath
 import numpy as np
@@ -73,13 +73,20 @@ class MaskConfigurationError(Exception):
 
 
 # Frame class. Groups figures together for simultaneous drawing.
-# Syntax: myframe = Frame(list_of_figures)
+# Syntax: myframe = Frame(list_of_figures, **kwargs)
+#
+# Note that arbitrary keyword arguments can be supplied to the
+# Frame constructor, in which case they will be interpreted as
+# name-subfigure pairs and will be appended to the end of the
+# given figure list, but the associated names will be registered.
+# See `Frame.setName()` for more info.
 #
 # TWEENABLES
 # figures = List of figures in the frame. For tweening to work,
 #           the figures list of both Frames must have corresponding
 #           figure types. e.g. Frame([point, path]) can only tween with
 #           another Frame([point, path]).
+# origin = Translation value (complex number). Default: 0.
 #
 # Note that tweening a frame via tween() will tween the frame's
 # attributes along with its underlying figure list, but calling
@@ -89,22 +96,31 @@ class MaskConfigurationError(Exception):
 # Also note that the transition function supplied to a frame will NOT
 # propagate down to the figures in the figures list. When tweening a frame,
 # the individual transition functions of each figure are used.
+# The transition of the Frame figure itself really only applies to its
+# own `origin` tweenable.
 class Frame(morpho.Figure):
-    def __init__(self, figures=None):
+    def __init__(self, figures=None, /, **kwargs):
         # By default, do what the superclass does.
         # morpho.Figure.__init__(self)
         super().__init__()
 
         if figures is None: figures = []
-        figures = morpho.Tweenable(
-            name="figures", tags=["figures", "notween"], value=figures)
+        figures.extend(kwargs.values())
+
+        self.Tweenable("figures", figures, tags=["figures", "notween"])
+        self.Tweenable("origin", 0, tags=["complex", "nofimage"])
         # background = morpho.Tweenable(
         #     name="background", tags=["vector"], value=[0,0,0])
         # view = morpho.Tweenable(
         #     name="view", tags=["view"], value=[-5,5, -5,5])
 
-        # Attach tweenable attributes
-        self.update([figures])
+        # # Attach tweenable attributes
+        # self.update([figures])
+
+        # dict maps name strings to figure list index positions.
+        self.NonTweenable("_names", {})
+
+        self.setName(**kwargs)
 
         # Position of the frame in an animation's timeline.
         # It is in units of "frames" where 0 is the first frame, etc.
@@ -132,16 +148,128 @@ class Frame(morpho.Figure):
     #     return self.defaultTween==other.defaultTween
 
     # Append the figure list of other to self in place.
+    # Also adds in the named subfigures of other into self's registry,
+    # but skips any duplicate names so that self's names are
+    # not overwritten.
     def merge(self, other):
+        # if not self._names.keys().isdisjoint(other._names.keys()):
+        #     raise MergeError("Frame to merge shares names with self.")
+
+        # Append other's name registry to self's (skipping duplicate names),
+        # but shift the index values by the number of names in self's
+        # registry.
+        N = len(self.figures)
+        for name, index in other._names.items():
+            # Skip any duplicate names found in other's registry
+            if name not in self._names:
+                self._names[name] = index + N
+
+        # Extend the figure list
         self.figures.extend(other.figures)
+
+    # Allows you to give a name to a figure in the Frame that can
+    # be referenced later using attribute access syntax.
+    # This name mapping will persist even for a copy made of the
+    # Frame figure.
+    #
+    # EXAMPLE:
+    # frm = Frame([pt, path, poly])
+    # frm.setName(pt=pt, path=path, poly=poly)
+    #
+    # Or equivalently, you can use the figure list stack index:
+    # frm.setName(pt=0, path=1, poly=2)
+    #
+    # Then you can modify a subfigure with this syntax:
+    # frm.path.width = 4
+    # frm.poly.fill = [1,1,0]
+    #
+    # When the Frame is turned into an actor, it enables subfigure
+    # manipulation after creating new keyfigures:
+    # frm.newendkey(30)
+    # frm.last().pt.pos = 3+3j
+    def setName(self, **kwargs):
+        for name, figure in kwargs.items():
+            if isinstance(figure, morpho.Figure):
+                try:
+                    figure = self.figures.index(figure)
+                except ValueError:
+                    raise ValueError("Given figure is not in the Frame's figure list.")
+            elif not isinstance(figure, int):
+                raise TypeError(f"`figure` must be Figure or int, not `{type(figure).__name__}`")
+
+            self._names[name] = figure
+
+    # Returns the subfigure of the given name.
+    def getName(self, name):
+        return self.figures[self._names[name]]
+
+    def __getattr__(self, name):
+        # First try using the superclass's built-in getattr()
+        try:
+            return morpho.Figure.__getattr__(self, name)
+        except AttributeError:
+            pass
+
+        # If you got to this point in the code, it means the
+        # superclass's getattr() failed.
+
+        # Search the `_names` dict if the given name is in it
+        try:
+            return self.figures[self._names[name]]
+        except KeyError:
+            # This line should DEFINITELY throw an error,
+            # since to get to this point in the code,
+            # AttributeError must have been thrown above.
+            morpho.Figure.__getattr__(self, name)
+
+    # Modified setattr() method for Frame checks if the given
+    # name is in the list of subfigure names and if it is,
+    # replaces the subfigure with the given `value`.
+    # Otherwise, just sets an attribute like any other Figure.
+    def __setattr__(self, name, value):
+        if object_hasattr(self, "_names") and name in self._names:
+            self.figures[self._names[name]] = value
+        else:
+            morpho.Figure.__setattr__(self, name, value)
+
+    # Applies the origin translation of the Frame to the given
+    # cairo context and returns a SavePoint object, thus enabling
+    # context manager syntax:
+    #
+    #   with self._pushTranslation(camera, ctx):
+    #       ...
+    def _pushTranslation(self, camera, ctx):
+        savept = morpho.SavePoint(ctx)
+
+        # If origin is zero, don't do anything
+        if self.origin == 0:
+            return savept
+
+        a,b,c,d = camera.view
+
+        surface = ctx.get_target()
+        WIDTH = surface.get_width()
+        HEIGHT = surface.get_height()
+
+        scale_x = WIDTH/(b-a)
+        scale_y = HEIGHT/(d-c)
+        dx, dy = self.origin.real, self.origin.imag
+
+        ctx.scale(scale_x, scale_y)
+        ctx.translate(dx, dy)
+        ctx.scale(1/scale_x, 1/scale_y)
+
+        return savept
+
 
     # Draw all visible figures in the figure list.
     def draw(self, camera, ctx, *args, **kwargs):
         figlist = sorted(self.figures, key=lambda fig: fig.zdepth)
 
-        for fig in figlist:
-            if fig.visible:
-                fig.draw(camera, ctx, *args, **kwargs)
+        with self._pushTranslation(camera, ctx):
+            for fig in figlist:
+                if fig.visible:
+                    fig.draw(camera, ctx, *args, **kwargs)
 
     # Copies the frame. Supplying False to the optional arg "deep"
     # means the resulting frame copy will not make copies of the
@@ -206,6 +334,50 @@ class Frame(morpho.Figure):
 blankFrame = Frame()
 blankFrame.static = True
 
+@Frame.action
+def fadeIn(frame, duration=30, atFrame=None, jump=0, alpha=1):
+    if atFrame is None:
+        atFrame = frame.lastID()
+
+    frame0 = frame.last()
+    frame0.visible = False
+    frame1 = frame.newkey(atFrame)
+    frame1.visible = True
+    frame2 = frame.newendkey(duration)
+
+    for n,fig in enumerate(frame1.figures):
+        fig.static = False
+        actor = morpho.Actor(fig)
+        actor.fadeIn(duration=duration, jump=jump, alpha=alpha)
+        frame1.figures[n] = actor.first()
+        frame2.figures[n] = actor.last()
+
+@Frame.action
+def fadeOut(frame, duration=30, atFrame=None, jump=0):
+    if atFrame is None:
+        atFrame = frame.lastID()
+
+    frame0 = frame.last()
+    frame1 = frame.newkey(atFrame)
+    frame2 = frame.newendkey(duration)
+    frame2.visible = False
+
+    for n,fig in enumerate(frame1.figures):
+        fig.static = False
+        actor = morpho.Actor(fig)
+        actor.fadeOut(duration=duration, jump=jump)
+        frame1.figures[n] = actor.first()
+        frame2.figures[n] = actor.last()
+
+@Frame.action
+def rollback(frame, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = frame.lastID()
+
+    frame1 = frame.newkey(atFrame)
+    for path in frame1.figures:
+        path.static = False
+    frame.newendkey(duration, frame.first().copy()).visible = False
 
 # Base class for so-called "multifigures" which allow for groupings
 # of figures all of the same class that can be tweened even if one group
@@ -242,6 +414,13 @@ class MultiFigure(Frame):
         # modified setattr() method.
         self._active = True
 
+        # Prevent the `origin` tweenable inherited from the Frame
+        # class from being jumped in an actor action like fadeOut().
+        # Jumping will instead be handled by individually jumping
+        # each subfigure in the multifigure.
+        self._state["origin"].tags.add("nojump")
+
+    # NOT IMPLEMENTED!!!
     # Returns a StateStruct encapsulating all the tweenables
     # of all the figures in the MultiFigure.
     # Main example use case:
@@ -276,7 +455,7 @@ class MultiFigure(Frame):
             # # replacing it with morpho.Figure.__getattr__(self, name).
             # # Same goes for the super() call a few lines down.
             # return super().__getattr__(name)
-            return morpho.Figure.__getattr__(self, name)
+            return morpho.Frame.__getattr__(self, name)
         except AttributeError:
             pass
 
@@ -291,7 +470,7 @@ class MultiFigure(Frame):
             # in the protected clause above. However, this time
             # I WANT the error to be thrown!
             # return super().__getattr__(name)
-            return morpho.Figure.__getattr__(self, name)
+            return morpho.Frame.__getattr__(self, name)
 
         # Try to find the attribute in the first member figure
         # and if found, return it.
@@ -419,7 +598,8 @@ class StateStruct(object):
         # the _state attribute
         names, figures = self._state
 
-        if name in dir(self):
+        # if name in dir(self):
+        if object_hasattr(self, name):
             object.__setattr__(self, name, value)
         elif name in names:
             for fig in figures:
@@ -758,7 +938,6 @@ class Camera(morpho.Figure):
 
         return X + 1j*Y
 
-
     # Given a position described in normalized coordinates for this camera's
     # viewbox, this method returns the physical position it corresponds to in
     # that viewbox window.
@@ -778,6 +957,12 @@ class Camera(morpho.Figure):
         y = Y*height + c
 
         return x + 1j*y
+
+    # Converts position coordinates from one camera system to another.
+    # Given complex position `pos`, this method returns the
+    # corresponding complex position in the camera system of `other`.
+    def convertCoords(self, other, pos):
+        return other.physicalCoords(self.normalizedCoords(pos))
 
     # Given a physical width, returns the corresponding width in the
     # normalized coordinate system.
@@ -806,6 +991,18 @@ class Camera(morpho.Figure):
     def physicalHeight(self, height):
         a,b,c,d = self.view
         return height*(d-c)
+
+    # Converts physical width from one camera system to another.
+    # Given `width`, this method returns the corresponding width
+    # in the camera system of `other`.
+    def convertWidth(self, other, width):
+        return other.physicalWidth(self.normalizedWidth(width))
+
+    # Converts physical height from one camera system to another.
+    # Given `height`, this method returns the corresponding height
+    # in the camera system of `other`.
+    def convertHeight(self, other, height):
+        return other.physicalHeight(self.normalizedHeight(height))
 
     # NOT IMPLEMENTED YET!
     # Converts a box [xmin,xmax,ymin,ymax] in physical coordinates
@@ -1095,6 +1292,8 @@ class Layer(object):
             self.camera = morpho.Actor(Camera)
             self.camera.newkey(0)
             self.camera.time(0).view = view
+        elif isinstance(view, Camera):
+            self.camera = morpho.Actor(view)
         elif isinstance(view, morpho.Actor) and issubclass(view.figureType, Camera):
             self.camera = view
         else:
@@ -1806,7 +2005,8 @@ class SpaceLayer(Layer):
         if self.poolPrimitives:
             primlist = []  # This list "pools" together all primitives across all figures
             for fig in figlist[:]:
-                if "primitives" in dir(fig):
+                # if "primitives" in dir(fig):
+                if object_hasattr(fig, "primitives"):
                     primlist.extend(fig.primitives(cam))
                     figlist.remove(fig)
 
@@ -2497,10 +2697,20 @@ class Animation(object):
             layer.speedUp(factor, center=0, useOffset=True, ignoreMask=False)
 
         newDelays = {}
+        drift = 0  # Cumulative round-off error of delay frames.
         for keyID in self.delays:
             delay = self.delays[keyID]
             newID = round(keyID/factor)
             newDelay = round(delay/factor) if delay != oo else oo
+
+            # Update drift value and then correct newDelay if drift
+            # is now more than half a frame.
+            if delay != oo:
+                drift += round(delay/factor) - delay/factor
+                if abs(drift) > 0.5:
+                    correction = -round(drift)
+                    newDelay += correction
+                    drift += correction
 
             # The complication is because dropping frame rates could cause
             # a collision among keyIDs. Add them instead of replacing!
@@ -3104,6 +3314,35 @@ class Animation(object):
         # If at the end of the animation, clicking restarts it.
         @self.window.event
         def on_mouse_press(X, Y, button, modifiers, mation=self):
+            # Print mouse coordinates if a locater layer is specified.
+            if mation.locaterLayer is not None:
+                # Search the layer list if given an int
+                if isinstance(mation.locaterLayer, int) or isinstance(mation.locaterLayer, float):
+                    view = mation.layers[int(mation.locaterLayer)].viewtime(mation.currentIndex)
+                else:
+                    # Treat it as an actual layer object
+                    view = mation.locaterLayer.viewtime(mation.currentIndex)
+
+                z = physicalCoords(X, Y, view, mation.context)
+
+                # Round the real and imag components of z if needed.
+                if self.clickRound is not None:
+                    x,y = z.real, z.imag
+                    x = round(x, self.clickRound)
+                    y = round(y, self.clickRound)
+                    z = x + y*1j
+
+                # Copy to the clipboard if needed
+                if self.clickCopy:
+                    pyperclip.copy(str(z))
+
+                # print((z.real, z.imag))
+
+                # sign = " + " if z.imag >= 0 else " - "
+                # print(z.real, sign, abs(z.imag), "j", sep="")
+                sign = "+" if z.imag >= 0 else ""
+                print(f"({z.real} {sign}{z.imag}j)")
+
             # Replay animation if clicked after animation finishes
             if not mation.active:
                 mation.active = True
@@ -3132,33 +3371,6 @@ class Animation(object):
                 mation.resume()
             else:
                 mation.pause()
-
-            # Print mouse coordinates if a locater layer is specified.
-            if mation.locaterLayer is not None:
-                # Search the layer list if given an int
-                if isinstance(mation.locaterLayer, int) or isinstance(mation.locaterLayer, float):
-                    view = mation.layers[int(mation.locaterLayer)].viewtime(mation.currentIndex)
-                else:
-                    # Treat it as an actual layer object
-                    view = mation.locaterLayer.viewtime(mation.currentIndex)
-
-                z = physicalCoords(X, Y, view, mation.context)
-
-                # Round the real and imag components of z if needed.
-                if self.clickRound is not None:
-                    x,y = z.real, z.imag
-                    x = round(x, self.clickRound)
-                    y = round(y, self.clickRound)
-                    z = x + y*1j
-
-                # Copy to the clipboard if needed
-                if self.clickCopy:
-                    pyperclip.copy(str(z))
-
-                print((z.real, z.imag))
-
-                # sign = " + " if z.imag >= 0 else " - "
-                # print(z.real, sign, abs(z.imag), "j", sep="")
 
             tic()  # Reset runtime timer
 

@@ -7,6 +7,8 @@ import morpholib.matrix
 from morpholib import numTween
 from morpholib.tools.basics import listfloor, listceil
 
+from morpholib import object_hasattr
+
 import math, cairo
 import numpy as np
 from numbers import Number
@@ -222,7 +224,8 @@ class Gradient(morpho.Figure):
         # Go thru the data dict and make copies of each individual value (if needed)
         for key in new.data:
             value = new.data[key]
-            if "copy" in dir(value):
+            # if "copy" in dir(value):
+            if object_hasattr(value, "copy"):
                 new.data[key] = value.copy()
 
         # Copy the non-tweenable attributes manually
@@ -232,7 +235,21 @@ class Gradient(morpho.Figure):
 
 
     def __getitem__(self, key):
-        return self.data[key]
+        if isinstance(key, slice):
+            if key.step is not None:
+                raise TypeError("Slice steps are not supported for gradient slicing.")
+
+            a = key.start
+            b = key.stop
+
+            if a is None:
+                a = 0
+            if b is None:
+                b = 1
+
+            return self.segment(a,b, normalize=True)
+        else:
+            return self.value(key)
 
     def __setitem__(self, key, value):
         self.data[key] = value
@@ -257,11 +274,11 @@ class Gradient(morpho.Figure):
 
         # If the given parameter is a key in the dict, just return the value
         if x in keylist:
-            return self[x]
+            return self.data[x]
 
         # Compute the latest key
         k = listfloor(keylist, x)
-        if k == -1: return self[keylist[0]]
+        if k == -1: return self.data[keylist[0]]
         key = keylist[k]
 
         # Grab latest value
@@ -271,7 +288,7 @@ class Gradient(morpho.Figure):
             return keyval
         else:
             key2 = keylist[k+1]
-            keyval2 = self[key2]
+            keyval2 = self.data[key2]
             if isinstance(keyval, list) or isinstance(keyval, tuple):
                 return type(keyval)(map(morpho.numTween, keyval, keyval2, ((x-key)/(key2-key),)*len(keyval)))
             else:
@@ -289,13 +306,17 @@ class Gradient(morpho.Figure):
 
     # Generates a new Gradient which is a segment between the values [a,b] of the
     # current gradient.
-    def segment(self, a, b=None):
+    def segment(self, a, b=None, *, normalize=False):
         if len(self.data) == 0:
             return Gradient()
 
         keylist = sorted(list(self.data.keys()))
         if b is None:
             b = keylist[-1]
+
+        reverse = not(a <= b)
+        if reverse:
+            a,b = b,a
 
         segdata = {}
         segdata[a] = self.value(a)
@@ -305,7 +326,13 @@ class Gradient(morpho.Figure):
             segdata[x] = self.data[x]
         segdata[b] = self.value(b)
 
-        return Gradient(segdata).copy()  # To handle needing to make copies of lists, etc.
+        gradseg = Gradient(segdata).copy()
+        if reverse:
+            gradseg.reverse()
+        if normalize:
+            gradseg.normalize()
+
+        return gradseg  # To handle needing to make copies of lists, etc.
 
     # Normalizes the gradient parameter space so that the lowest parameter is 0
     # and the highest parameter is 1. Does nothing if the gradient has fewer than 2
@@ -313,12 +340,30 @@ class Gradient(morpho.Figure):
     def normalize(self):
         if len(self.data) < 2:
             return
-        newdata = {}
         start = min(self.data)
         end = max(self.data)
+        # Do nothing if already normalized
+        if start == 0 and end == 1:
+            return self
+        newdata = {}
         for x in self.data.keys():
             newdata[morpho.numTween(0, 1, x, start, end)] = self.data[x]
         self.data = newdata
+        return self
+
+    # Reverses the gradient's parameter space IN PLACE.
+    # e.g. in a normalized gradient parameter space 0 <= x <= 1,
+    # this will replace each parameter key x with 1-x.
+    def reverse(self):
+        if len(self.data) < 2:
+            return
+        newdata = {}
+        low = min(self.data.keys())
+        high = max(self.data.keys())
+        for x in self.data.keys():
+            newdata[morpho.numTween0(high, low, x, start=low, end=high)] = self.data[x]
+        self.data = newdata
+        return self
 
     def verify(self):
         for key in self.data:
@@ -461,14 +506,14 @@ def handleGradients(gradTweenableNames):
                     othercopy_state_name = self._state[name].value.copy()
                     for key in othercopy_state_name.data:
                         value = other._state[name].value
-                        othercopy_state_name[key] = value.copy() if "copy" in dir(value) else value
+                        othercopy_state_name[key] = value.copy() if object_hasattr(value, "copy") else value
                     tw._state[name].value = self._state[name].value.tweenLinear(othercopy_state_name, t)
                 # other is gradient but not self
                 elif isinstance(other._state[name].value, Gradient):
                     selfcopy_state_name = other._state[name].value.copy()
                     for key in selfcopy_state_name.data:
                         value = self._state[name].value
-                        selfcopy_state_name[key] = value.copy() if "copy" in dir(value) else value
+                        selfcopy_state_name[key] = value.copy() if object_hasattr(value, "copy") else value
                     tw._state[name].value = selfcopy_state_name.tweenLinear(other._state[name].value, t)
                 # neither are gradients
                 else:
@@ -844,7 +889,7 @@ def handleGradientFills(gradFillTweenableNames):
                     # and set them to be the constant value of other.
                     for key in othercopy_state_name.gradient.data:
                         value = other._state[name].value
-                        othercopy_state_name.gradient[key] = value.copy() if "copy" in dir(value) else value
+                        othercopy_state_name.gradient[key] = value.copy() if object_hasattr(value, "copy") else value
                     # Apply tween method of the GradientFill class.
                     tw._state[name].value = self._state[name].value.tweenLinear(othercopy_state_name, t)
                 # other is gradient fill but not self
@@ -854,7 +899,7 @@ def handleGradientFills(gradFillTweenableNames):
                     # and set them to be the constant value of other.
                     for key in selfcopy_state_name.gradient.data:
                         value = self._state[name].value
-                        selfcopy_state_name.gradient[key] = value.copy() if "copy" in dir(value) else value
+                        selfcopy_state_name.gradient[key] = value.copy() if object_hasattr(value, "copy") else value
                     tw._state[name].value = selfcopy_state_name.tweenLinear(other._state[name].value, t)
                 # neither are gradients
                 else:

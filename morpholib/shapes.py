@@ -4,6 +4,8 @@ import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
 from morpholib.matrix import mat
 
+from morpholib import object_hasattr
+
 # Polygon and SpacePolygon can be accessed from the shapes
 # submodule as well as grid.
 from morpholib.grid import Polygon, SpacePolygon, Spacepolygon
@@ -116,7 +118,8 @@ class Spline(morpho.Figure):
             #     ], dtype=complex)
             data = np.array([], dtype=complex)
 
-        morpho.Figure.__init__(self)
+        # morpho.Figure.__init__(self)
+        super().__init__()
 
         _data = morpho.Tweenable(name="_data", value=np.array(data, dtype=complex), tags=["nparray"])
         start = morpho.Tweenable(name="start", value=0, tags=["scalar"])
@@ -192,10 +195,31 @@ class Spline(morpho.Figure):
     # Returns or sets the position of the node of given index.
     # Usage: myspline.node(n) -> position of nth node
     #        myspline.node(n, value) sets nth node position to value
-    def node(self, index, value=None):
+    #
+    # If setting a node, you can optionally supply inhandle and
+    # outhandle values as well:
+    #   myspline.node(n, node, inhandle, outhandle)
+    # and optionally make them absolute by passing False to
+    # relHandles:
+    #   myspline.node(n, node, inhandle, outhandle, relHandles=False)
+    def node(self, index, value=None, inhandle=None, outhandle=None,
+        *, relHandles=True):
+
         if value is None:
             return self.data[index, 0].tolist()
+
         self.data[index, 0] = value
+        if inhandle is not None:
+            if relHandles:
+                self.inhandleRel(index, inhandle)
+            else:
+                self.inhandle(index, inhandle)
+        if outhandle is not None:
+            if relHandles:
+                self.outhandleRel(index, outhandle)
+            else:
+                self.outhandle(index, outhandle)
+
         return self
 
     # Returns or sets the position of the inward handle
@@ -502,14 +526,70 @@ class Spline(morpho.Figure):
         self._data = np.insert(self._data, index+1, [p,pin,pout], axis=0)
         return self
 
+    # Reverses the direction of the spline IN PLACE.
+    def reverse(self):
+        # Reverse node order
+        self._data = self._data[::-1,:]
+        # Swap inhandles and outhandles
+        self._data[:, [2,1]] = self._data[:, [1,2]]
+        return self
 
-    # NOT IMPLEMENTED!
+    # EXPERIMENTAL! USE AT OWN RISK!
     # Extract a subspline.
-    # a and b are indices, but can also be non-integers.
-    # Actually, not sure if I want to implement this.
-    # Gonna keep it low priority for now.
-    def sub(self, a, b):
-        raise NotImplementedError
+    # a and b are parameters in the range [0,1]
+    def segment(self, a, b):
+        # raise NotImplementedError
+        reverse = not(a <= b)
+        if reverse:
+            a,b = b,a
+
+        if not(0 <= a <= b <= 1):
+            raise ValueError("Segment endpoints must satisfy 0 <= a,b <= 1")
+
+        subspline = self.copy()
+
+        # Handle singleton case
+        if a == b:
+            subspline.data = np.array([[self.positionAt(a), oo, oo]], dtype=complex)
+            return subspline
+
+        # Calculate fractional indices
+        segCount = subspline.length() - 1
+        A = a*segCount
+        B = b*segCount
+
+        # Round fractional indices if very close to an int
+        tol = 1e-9
+        if abs(A-round(A)) < tol:
+            A = round(A)
+        if abs(B-round(B)) < tol:
+            B = round(B)
+
+        # Split at first endpoint
+        subspline.splitAtIndex(A)
+
+        # Adjust parameter value of B based on newly added
+        # A node if B is in the second piece of the A split.
+        int_A = int(A)
+        int_B = int(B)
+        if A != int_A and int_A == int_B:
+            B = int_B + (B-A)/(int_A+1-A)
+
+        # Increment B index if a new node was added.
+        B += subspline.length() - self.length()
+        subspline.splitAtIndex(B)
+
+        # Slice the data array
+        subspline._data = subspline._data[math.ceil(A):math.ceil(B)+1]
+
+        if reverse:
+            subspline.reverse()
+
+        return subspline
+
+    # Inherits the Path class's __getitem__()
+    def __getitem__(self, t):
+        return morpho.grid.Path.__getitem__(self, t)
 
 
     # Inserts the specified number of additional nodes to the
@@ -848,11 +928,14 @@ class Spline(morpho.Figure):
         # ctx.restore()
 
         # Set line width & color & alpha
-        ctx.set_line_width(self.width)
-        ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
-        ctx.set_dash(self.dash)
-        ctx.stroke()
-        ctx.set_dash([])
+        if self.width < 0.5:  # Don't stroke if width is too small
+            ctx.new_path()
+        else:
+            ctx.set_line_width(self.width)
+            ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
+            ctx.set_dash(self.dash)
+            ctx.stroke()
+            ctx.set_dash([])
 
         # Restore original data array if splits occurred
         if needSplits:
@@ -921,18 +1004,19 @@ class Spline(morpho.Figure):
         path = path.fimage(self.positionAt)
 
         # Match other tweenables
-        path.start = self.start
-        path.end = self.end
-        path.color = self.color[:]
-        path.alphaEdge = self.alphaEdge
-        path.fill = self.fill.copy() if "copy" in dir(self.fill) else self.fill
-        path.alphaFill = self.alphaFill
-        path.alpha = self.alpha
-        path.width = self.width
-        path.origin = self.origin
-        path.rotation = self.rotation
-        path._transform = self._transform.copy()
-        path._updateSettings(self)
+        # path.start = self.start
+        # path.end = self.end
+        # path.color = self.color[:]
+        # path.alphaEdge = self.alphaEdge
+        # path.fill = self.fill.copy() if object_hasattr(self.fill, "copy") else self.fill
+        # path.alphaFill = self.alphaFill
+        # path.alpha = self.alpha
+        # path.width = self.width
+        # path.origin = self.origin
+        # path.rotation = self.rotation
+        # path._transform = self._transform.copy()
+        # path._updateSettings(self)
+        path._updateFrom(self, common=True)
 
         return path
 
@@ -1187,10 +1271,31 @@ class SpaceSpline(Spline):
     # Returns or sets the position of the node of given index.
     # Usage: myspline.node(n) -> position of nth node
     #        myspline.node(n, value) sets nth node position to value
-    def node(self, index, value=None):
+    #
+    # If setting a node, you can optionally supply inhandle and
+    # outhandle values as well:
+    #   myspline.node(n, node, inhandle, outhandle)
+    # and optionally make them absolute by passing False to
+    # relHandles:
+    #   myspline.node(n, node, inhandle, outhandle, relHandles=False)
+    def node(self, index, value=None, inhandle=None, outhandle=None,
+        *, relHandles=True):
+
         if value is None:
             return self.data[index, 0, :].copy()
+
         self.data[index, 0, :] = morpho.array(value)
+        if inhandle is not None:
+            if relHandles:
+                self.inhandleRel(index, inhandle)
+            else:
+                self.inhandle(index, inhandle)
+        if outhandle is not None:
+            if relHandles:
+                self.outhandleRel(index, outhandle)
+            else:
+                self.outhandle(index, outhandle)
+
         return self
 
     # Returns or sets the position of the inward handle
@@ -1363,7 +1468,7 @@ class SpaceSpline(Spline):
         path.end = self.end
         path.color = self.color[:]
         path.alphaEdge = self.alphaEdge
-        path.fill = self.fill.copy() if "copy" in dir(self.fill) else self.fill
+        path.fill = self.fill.copy() if object_hasattr(self.fill, "copy") else self.fill
         path.alphaFill = self.alphaFill
         path.alpha = self.alpha
         path.width = self.width
