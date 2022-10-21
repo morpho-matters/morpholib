@@ -295,8 +295,9 @@ my_figure.tween(my_other_figure, 0.5)
 # Documentation TBD
 class Tween(object):
     def __init__(self, function, *, splitter=None):
-        if isinstance(function, Tween) and splitter is None:
-            splitter = function.splitter
+        if isinstance(function, Tween):
+            if splitter is None:
+                splitter = function.splitter
             function = function.function
 
         self.function = function
