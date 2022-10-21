@@ -306,6 +306,10 @@ class Tween(object):
     def __call__(self, *args, **kwargs):
         return self.function(*args, **kwargs)
 
+    def copy(self):
+        new = Tween(self.function, self.splitter)
+        return new
+
     def split(self, t):
         if self.splitter is None:
             return (self, self)
