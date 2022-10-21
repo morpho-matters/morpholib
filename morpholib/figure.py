@@ -1358,12 +1358,8 @@ class Actor(object):
             a,b = self.prevkeyID(f), self.nextkeyID(f)
             t_split = (f-a)/(b-a)
             # Split the tween method
-            try:
+            if isinstance(keyfig1.tweenMethod, morpho.Tween) and keyfig1.tweenMethod.splitter is not None:
                 tween1, tween2 = keyfig1.tweenMethod.split(keyfig1.transition(t_split))
-            except AttributeError:
-                # print("Split failed")
-                pass
-            else:
                 keyfig1.tweenMethod = tween1
                 figure.tweenMethod = tween2
             # Split the transition function
