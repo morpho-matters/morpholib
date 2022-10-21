@@ -294,11 +294,13 @@ my_figure.tween(my_other_figure, 0.5)
 
 # Documentation TBD
 class Tween(object):
-    def __init__(self, function, *, splitter=None, **kwargs):
+    def __init__(self, function, *, splitter=None):
+        if isinstance(function, Tween) and splitter is None:
+            splitter = function.splitter
+            function = function.function
+
         self.function = function
         self.splitter = splitter
-        for name, value in kwargs.items():
-            setattr(self, name, value)
 
     def __call__(self, *args, **kwargs):
         return self.function(*args, **kwargs)
@@ -307,6 +309,9 @@ class Tween(object):
         if self.splitter is None:
             return (self, self)
         return self.splitter(self, t)
+
+    def tweenMethod(self, tween=None):
+        return tweenMethod(tween, splitter=self.splitter)
 
 
 
@@ -320,13 +325,23 @@ class Tween(object):
 # is possible. e.g. checks the start and end figures are of the same class.
 # It also automatically enforces the rule
 # that t=0 returns self.copy() and t=1 returns other.copy()
-def tweenMethod(tween=None, *, splitter=None, **kwargs):
+def tweenMethod(tween=None, *, splitter=None):
+    # If no tween method to decorate, assume we're trying to
+    # modify the default behavior of tweenMethod(), so return
+    # the modified decorator.
     if tween is None:
         def decorator(tween):
-            return tweenMethod(tween, splitter=splitter, **kwargs)
+            return tweenMethod(tween, splitter=splitter)
         return decorator
 
-    # tween = Tween(tween, splitter=splitter, **kwargs)
+    # If decorating a Tween object, extract the underlying function
+    if isinstance(tween, Tween):
+        # If splitter is unspecified,
+        # use the given Tween object's splitter
+        if splitter is None:
+            splitter = tween.splitter
+        tween = tween.function
+
     def wrapper(self, other, t, *args, **kwargs):
         if type(self) is not type(other):
             raise TypeError("Tried to tween figures of different class!")
@@ -341,7 +356,7 @@ def tweenMethod(tween=None, *, splitter=None, **kwargs):
             twfig = tween(self, other, t, *args, **kwargs)
             twfig.visible = self.visible  # Inherits visibility of self
             return twfig
-    wrapper = Tween(wrapper, splitter=splitter, **kwargs)
+    wrapper = Tween(wrapper, splitter=splitter)
     return wrapper
 
 TweenMethod = tweenMethod  # Initial letter can optionally be uppercase.

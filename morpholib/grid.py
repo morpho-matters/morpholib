@@ -3708,10 +3708,11 @@ class Arrow(morpho.Figure):
     @classmethod
     def tweenPivot(cls, angle=tau/2):
         pivot = super().tweenPivot(angle)
+        splitter = pivot.splitter
 
         # Apply necessary decorators
         pivot = handleDash(pivot)
-        pivot = morpho.TweenMethod(pivot)
+        pivot = morpho.TweenMethod(pivot, splitter=splitter)
 
         return pivot
 
