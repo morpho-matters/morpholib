@@ -23,10 +23,6 @@ import numpy as np
 
 
 
-# def dummy():
-#     pass
-# function = type(dummy)
-
 ### CLASSES ###
 
 
@@ -907,7 +903,16 @@ class Figure(object):
     @classmethod
     def tweenPivot(cls, angle=tau/2, ignore=None):
 
-        @morpho.TweenMethod
+        def pivotSplit(pivotTween, t):
+            angle1 = t*angle
+            angle2 = (1-t)*angle
+
+            tween1 = cls.tweenPivot(angle1)
+            tween2 = cls.tweenPivot(angle2)
+
+            return (tween1, tween2)
+
+        @morpho.TweenMethod(splitter=pivotSplit)
         def pivot(self, other, t):
 
             # If angle is 0, then throw error
@@ -1351,7 +1356,18 @@ class Actor(object):
             # raise NotImplementedError
             keyfig1 = self.prevkey(f)
             a,b = self.prevkeyID(f), self.nextkeyID(f)
-            func1, func2 = morpho.transitions.split(keyfig1.transition, (f-a)/(b-a))
+            t_split = (f-a)/(b-a)
+            # Split the tween method
+            try:
+                tween1, tween2 = keyfig1.tweenMethod.split(keyfig1.transition(t_split))
+            except AttributeError:
+                # print("Split failed")
+                pass
+            else:
+                keyfig1.tweenMethod = tween1
+                figure.tweenMethod = tween2
+            # Split the transition function
+            func1, func2 = morpho.transitions.split(keyfig1.transition, t_split)
             keyfig1.transition = func1
             figure.transition = func2
 
