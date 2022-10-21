@@ -669,6 +669,7 @@ def Multi(imageMethod, reverseMethod=None):
     if reverseMethod is None:
         reverseMethod = imageMethod
 
+    @imageMethod.tweenMethod
     def wrapper(self, other, t, *args, **kwargs):
 
         diff = len(self.figures) - len(other.figures)
@@ -1451,6 +1452,9 @@ class FancyMultiText(MultiText):
         twMethod1 = Multi(Text.tweenPivot(angle),
             reverseMethod=Text.tweenPivot(-angle)
             )
+
+        pivotbase = morpho.Figure.tweenPivot.__func__(cls, angle)
+        @pivotbase.TweenMethod
         def pivot(self, other, t):
             tw = twMethod1(self, other, t)
             tw = morpho.Figure.tweenPivot(angle, ignore="figures")(tw, other, t)

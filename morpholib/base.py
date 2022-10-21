@@ -313,6 +313,9 @@ class Tween(object):
     def tweenMethod(self, tween=None):
         return tweenMethod(tween, splitter=self.splitter)
 
+    # Method alias
+    TweenMethod = tweenMethod
+
 
 
 

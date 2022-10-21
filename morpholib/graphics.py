@@ -705,6 +705,7 @@ def Multi(imageMethod, reverseMethod=None):
     if reverseMethod is None:
         reverseMethod = imageMethod
 
+    @imageMethod.tweenMethod
     def wrapper(self, other, t, *args, **kwargs):
         # if len(self.images) != len(other.images):
         #     raise Exception("Tweening between multi-images of differing image counts is currently not supported.")

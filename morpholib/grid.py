@@ -1326,7 +1326,7 @@ class Path(morpho.Figure):
 
     @classmethod
     def tweenPivot(cls, angle=tau/2):
-        pivot = super().tweenPivot(angle)
+        pivot = pivotbase = super().tweenPivot(angle)
         # Apply necessary decorators
         pivot = handlePathNodeInterp(pivot)
         pivot = morpho.color.handleGradientFills(["fill"])(pivot)
@@ -1336,7 +1336,7 @@ class Path(morpho.Figure):
         # be applied implicitly within super().tweenPivot() since
         # it calls Path.tweenLinear() which incorporates the
         # handleGradients decorator.
-        pivot = morpho.TweenMethod(pivot)
+        pivot = pivotbase.TweenMethod(pivot)
 
         return pivot
 
@@ -2943,12 +2943,12 @@ class Polygon(morpho.Figure):
 
     @classmethod
     def tweenPivot(cls, angle=tau/2):
-        pivot = super().tweenPivot(angle)
+        pivot = pivotbase = super().tweenPivot(angle)
         # Apply necessary decorators
         pivot = handlePolyVertexInterp(pivot)
         pivot = morpho.color.handleGradientFills(["fill"])(pivot)
         pivot = handleDash(pivot)
-        pivot = morpho.TweenMethod(pivot)
+        pivot = pivotbase.TweenMethod(pivot)
 
         return pivot
 
@@ -3707,12 +3707,11 @@ class Arrow(morpho.Figure):
 
     @classmethod
     def tweenPivot(cls, angle=tau/2):
-        pivot = super().tweenPivot(angle)
-        splitter = pivot.splitter
+        pivot = pivotbase = super().tweenPivot(angle)
 
         # Apply necessary decorators
         pivot = handleDash(pivot)
-        pivot = morpho.TweenMethod(pivot, splitter=splitter)
+        pivot = pivotbase.TweenMethod(pivot)
 
         return pivot
 

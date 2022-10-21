@@ -1111,7 +1111,9 @@ class Spline(morpho.Figure):
     @classmethod
     def tweenPivot(cls, angle=tau/2):
 
-        @morpho.TweenMethod
+        pivotbase = morpho.Figure.tweenPivot.__func__(cls, angle)
+
+        @pivotbase.TweenMethod
         @morpho.grid.handleDash
         @morpho.color.handleGradientFills(["fill"])
         @handleSplineNodeInterp
