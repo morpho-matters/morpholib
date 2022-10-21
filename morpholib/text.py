@@ -857,9 +857,9 @@ class MultiText(morpho.MultiFigure):
             reverseMethod=Text.tweenPivot(-angle, *args, **kwargs)
             )
 
-        # Assign splitter based on the Figure class's default
-        # pivot splitter but modified so that it uses this
-        # class's tweenPivot() method to create the submethods.
+        # These lines ensure the pivot tween splitter uses this
+        # class's specific tweenPivot() tween method maker to
+        # perform the split.
         pivotbase = morpho.Figure.tweenPivot.__func__(cls, angle)
         pivot = pivotbase.tweenMethod(pivot)
         return pivot
@@ -1460,6 +1460,9 @@ class FancyMultiText(MultiText):
             reverseMethod=Text.tweenPivot(-angle)
             )
 
+        # These lines ensure the pivot tween splitter uses this
+        # class's specific tweenPivot() tween method maker to
+        # perform the split.
         pivotbase = morpho.Figure.tweenPivot.__func__(cls, angle)
         @pivotbase.TweenMethod
         def pivot(self, other, t):
