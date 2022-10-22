@@ -2051,6 +2051,8 @@ class SpacePath(Path):
 Spacepath = SpacePath  # Synonym for SpacePath
 
 
+# 3D version of the Track class.
+# See `Track` and `SpacePath` for more info.
 class SpaceTrack(SpacePath, Track):
     def __init__(self, seq=None, width=3, color=(1,1,1), alpha=1,
         tickWidth=None, tickColor=None, tickAlpha=1,
@@ -2166,6 +2168,8 @@ class Axis(Track):
         self.seq[1] = origEnd
 
 
+# Mainly for internal use.
+# 3D version of the Axis class. See `Axis` for more info.
 class SpaceAxis(SpaceTrack):
     def primitives(self, camera):
         track = SpaceTrack.primitives(self, camera)[0]
