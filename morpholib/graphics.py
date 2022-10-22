@@ -848,9 +848,13 @@ class MultiImage(morpho.MultiFigure):
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):
-        return Multi(Image.tweenPivot(angle, *args, **kwargs),
+        pivot = Multi(Image.tweenPivot(angle, *args, **kwargs),
             reverseMethod=Image.tweenPivot(-angle, *args, **kwargs)
             )
+        # Enable splitting for this tween method
+        pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
+
+        return pivot
 
 # Alternative name
 MultImage = MultiImage

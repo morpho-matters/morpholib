@@ -23,10 +23,6 @@ import numpy as np
 
 
 
-# def dummy():
-#     pass
-# function = type(dummy)
-
 ### CLASSES ###
 
 
@@ -885,7 +881,6 @@ class Figure(object):
 
         return newfig
 
-
     # This is not *technically* a tween method, but rather a tween method generator.
     # Given an angle (in radians), it returns a tween method that results in a
     # "pivoting" motion of the figure. The higher the angle, the wider the arc it
@@ -907,7 +902,8 @@ class Figure(object):
     @classmethod
     def tweenPivot(cls, angle=tau/2, ignore=None):
 
-        @morpho.TweenMethod
+        # @morpho.TweenMethod(splitter=pivotSplit)
+        @pivotTweenMethod(cls.tweenPivot, angle, ignore)
         def pivot(self, other, t):
 
             # If angle is 0, then throw error
@@ -1090,6 +1086,43 @@ class SpaceFigure(Figure):
         # prim = primlist[0]
         # prim.draw(camera, ctx)
 
+### OTHER RELATED FUNCTIONS ###
+
+# Decorator generator returns a decorator that can be used on
+# a custom angle-specific pivot tween method. Mainly for use
+# in enabling custom tweenPivot() methods to be splittable.
+#
+# Example usage:
+#   @classmethod
+#   def tweenPivot(cls, angle=pi):
+#       @morpho.Figure.pivotTweenMethod(cls.tweenPivot, angle)
+#       def customPivot(self, other, t):
+#           ...
+#       return customPivot
+#
+# Any additional arguments passed to pivotTweenMethod() will be
+# passed to the methodGenerator as part of the splitter function.
+def pivotTweenMethod(methodGenerator, angle, *args, **kwargs):
+    # This decorator will be returned and should be used to
+    # decorate a custom angle-specific pivot tween method.
+    def decorator(pivotTween):
+        # This is the splitter function that will be attached
+        # to the provided angle-specific pivot tween method.
+        def pivotSplitter(t):
+            # Split the angles
+            angle1 = t*angle
+            angle2 = (1-t)*angle
+
+            # Generate the corresponding angle-specific
+            # pivot tween methods specific to the provided
+            # bound pivot tween method generator.
+            tween1 = methodGenerator(angle1, *args, **kwargs)
+            tween2 = methodGenerator(angle2, *args, **kwargs)
+
+            return (tween1, tween2)
+        pivotTween.splitter = pivotSplitter
+        return pivotTween
+    return decorator
 
 
 # A higher-level structure that collects figures of a common type and
@@ -1351,7 +1384,14 @@ class Actor(object):
             # raise NotImplementedError
             keyfig1 = self.prevkey(f)
             a,b = self.prevkeyID(f), self.nextkeyID(f)
-            func1, func2 = morpho.transitions.split(keyfig1.transition, (f-a)/(b-a))
+            t_split = (f-a)/(b-a)
+            # Split the tween method
+            if hasattr(keyfig1.tweenMethod, "splitter") and keyfig1.tweenMethod.splitter is not None:
+                tween1, tween2 = keyfig1.tweenMethod.splitter(keyfig1.transition(t_split))
+                keyfig1.tweenMethod = tween1
+                figure.tweenMethod = tween2
+            # Split the transition function
+            func1, func2 = morpho.transitions.split(keyfig1.transition, t_split)
             keyfig1.transition = func1
             figure.transition = func2
 

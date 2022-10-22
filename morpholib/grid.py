@@ -1332,11 +1332,8 @@ class Path(morpho.Figure):
         pivot = morpho.color.handleGradientFills(["fill"])(pivot)
         pivot = morpho.color.handleGradients(["color"])(pivot)
         pivot = handleDash(pivot)
-        # handleGradients decorator can be omitted because it will
-        # be applied implicitly within super().tweenPivot() since
-        # it calls Path.tweenLinear() which incorporates the
-        # handleGradients decorator.
-        pivot = morpho.TweenMethod(pivot)
+        # Enable splitting
+        pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
 
         return pivot
 
@@ -2948,7 +2945,8 @@ class Polygon(morpho.Figure):
         pivot = handlePolyVertexInterp(pivot)
         pivot = morpho.color.handleGradientFills(["fill"])(pivot)
         pivot = handleDash(pivot)
-        pivot = morpho.TweenMethod(pivot)
+        # Enable splitting
+        pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
 
         return pivot
 
@@ -3711,7 +3709,7 @@ class Arrow(morpho.Figure):
 
         # Apply necessary decorators
         pivot = handleDash(pivot)
-        pivot = morpho.TweenMethod(pivot)
+        pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
 
         return pivot
 

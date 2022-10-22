@@ -1111,7 +1111,7 @@ class Spline(morpho.Figure):
     @classmethod
     def tweenPivot(cls, angle=tau/2):
 
-        @morpho.TweenMethod
+        @morpho.pivotTweenMethod(cls.tweenPivot, angle)  # Enable splitting
         @morpho.grid.handleDash
         @morpho.color.handleGradientFills(["fill"])
         @handleSplineNodeInterp
