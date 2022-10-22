@@ -2087,6 +2087,10 @@ class Axis(Track):
 
         # Compute the physical direction unit vector of the axis.
         vector = self.seq[1] - self.seq[0]
+        # Don't draw a zero length axis.
+        if vector == 0:
+            return
+
         # Apply transformations if needed
         if self.rotation != 0:
             vector *= cmath.exp(self.rotation*1j)
