@@ -456,7 +456,7 @@ class Path(morpho.Figure):
         rotation = morpho.Tweenable("rotation", value=0, tags=["scalar"])
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
-        self.update([seq, start, end, color, alphaEdge, fill, alphaFill, alpha,
+        self.extendState([seq, start, end, color, alphaEdge, fill, alphaFill, alpha,
             width, headSize, tailSize, dash,
             outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform]
             )
@@ -464,7 +464,8 @@ class Path(morpho.Figure):
         # How to interpolate between the points given in the seq.
         # For now, the only interp method is "linear", which  means
         # connect successive points in the seq by straight lines.
-        self.interp = "linear"
+        # self.interp = "linear"
+        self.NonTweenable("interp", "linear")
 
         # The dash pattern for this line. The format is identical to how
         # pycairo handles dash patterns: each item in the list is how long
@@ -476,15 +477,17 @@ class Path(morpho.Figure):
         # self.dash = []
 
         # Set of indices that represent where a path should terminate.
-        self.deadends = set()
+        # self.deadends = set()
+        self.NonTweenable("deadends", set())
 
-    # Returns a (deep-ish) copy of the path
-    def copy(self):
-        C = morpho.Figure.copy(self)
-        C.interp = self.interp
-        C.deadends = self.deadends.copy()
-        # C.dash = self.dash.copy() if not isinstance(self.dash, tuple) else self.dash
-        return C
+    # # Returns a (deep-ish) copy of the path
+    # def copy(self):
+    #     # C = morpho.Figure.copy(self)
+    #     C = super().copy()
+    #     C.interp = self.interp
+    #     C.deadends = self.deadends.copy()
+    #     # C.dash = self.dash.copy() if not isinstance(self.dash, tuple) else self.dash
+    #     return C
 
     @property
     def transform(self):
@@ -1568,7 +1571,6 @@ class Track(Path):
 
 TickPath = Track  # Alternate name
 
-
 # DEPRECATED!
 # Polar Path class. Identical to the Path class except it adds
 # an attribute called "wind" which represents winding number about
@@ -2045,6 +2047,43 @@ class SpacePath(Path):
 
 Spacepath = SpacePath  # Synonym for SpacePath
 
+
+# 3D version of the Track class.
+# See `Track` and `SpacePath` for more info.
+class SpaceTrack(SpacePath, Track):
+    def __init__(self, seq=None, width=3, color=(1,1,1), alpha=1,
+        tickWidth=None, tickColor=None, tickAlpha=1,
+        tickLength=15, tickGap=35):
+
+        super().__init__(seq, width, color, alpha)
+
+        # Set default tick width and color based on the
+        # given values for path width and color
+        if tickWidth is None:
+            tickWidth = width/2
+        if tickColor is None:
+            tickColor = color[:]
+
+        # Override default values
+        self.tickWidth = tickWidth
+        self.tickColor = tickColor
+        self.tickAlpha = tickAlpha
+        self.tickLength = tickLength
+        self.tickGap = tickGap
+
+
+    def primitives(self, camera):
+        # Compute primitive 2D path
+        path = SpacePath.primitives(self, camera)[0]
+        # Turn it into a 2D Track figure
+        track = Track()
+        track.seq = path.seq  # No need to copy it.
+        # Override its default values with those of self
+        # (e.g. tickWidth, tickColor, etc.)
+        track._updateFrom(self, copy=False, common=True)
+        return [track]
+
+
 # NOTE: FOR INTERNAL USE ONLY! NOT WELL-MAINTAINED. USE AT OWN RISK!
 # Optimize a list of path figures in the sense of concatenating
 # paths that have identical styles.
@@ -2125,6 +2164,20 @@ class Axis(Track):
         self.origin = origOrigin
         self.seq[1] = origEnd
 
+
+# Mainly for internal use.
+# 3D version of the Axis class. See `Axis` for more info.
+class SpaceAxis(SpaceTrack):
+    def primitives(self, camera):
+        track = SpaceTrack.primitives(self, camera)[0]
+        axis = Axis()
+        axis._updateFrom(track, copy=True, common=True)
+
+        # Scale tick spacing based on how much the axis has
+        # shrunk due to foreshortening.
+        axis.tickGap *= abs(axis.seq[1]-axis.seq[0]) / np.linalg.norm(self.seq[1]-self.seq[0]).tolist()
+
+        return [axis]
 
 
 # Special Frame figure for mathgrids
@@ -2783,7 +2836,7 @@ class Polygon(morpho.Figure):
         rotation = morpho.Tweenable("rotation", value=0, tags=["scalar"])
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
-        self.update([vertices, color, alphaEdge,
+        self.extendState([vertices, color, alphaEdge,
             fill, alphaFill, alpha, width, dash,
             origin, rotation, _transform])
 
@@ -3187,7 +3240,7 @@ class Quadmesh(morpho.Figure):
         alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         width = morpho.Tweenable(name="width", value=width, tags=["size"])
 
-        self.update([_array, color, alphaEdge, fill, fill2, alphaFill, alpha, width])
+        self.extendState([_array, color, alphaEdge, fill, fill2, alphaFill, alpha, width])
 
         # Other attributes
         self.shading = False
@@ -3535,7 +3588,7 @@ class Arrow(morpho.Figure):
         rotation = morpho.Tweenable("rotation", value=0, tags=["scalar"])
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
-        self.update([tail, head, color, alpha, width, headSize, tailSize, dash,
+        self.extendState([tail, head, color, alpha, width, headSize, tailSize, dash,
             outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform])
 
         # self.dash = []
