@@ -705,7 +705,6 @@ def Multi(imageMethod, reverseMethod=None):
     if reverseMethod is None:
         reverseMethod = imageMethod
 
-    @imageMethod.tweenMethod
     def wrapper(self, other, t, *args, **kwargs):
         # if len(self.images) != len(other.images):
         #     raise Exception("Tweening between multi-images of differing image counts is currently not supported.")
@@ -852,12 +851,8 @@ class MultiImage(morpho.MultiFigure):
         pivot = Multi(Image.tweenPivot(angle, *args, **kwargs),
             reverseMethod=Image.tweenPivot(-angle, *args, **kwargs)
             )
-
-        # These lines ensure the pivot tween splitter uses this
-        # class's specific tweenPivot() tween method maker to
-        # perform the split.
-        pivotbase = morpho.Figure.tweenPivot.__func__(cls, angle)
-        pivot = pivotbase.tweenMethod(pivot)
+        # Enable splitting for this tween method
+        pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
 
         return pivot
 

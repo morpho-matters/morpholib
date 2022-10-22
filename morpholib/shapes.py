@@ -1111,15 +1111,7 @@ class Spline(morpho.Figure):
     @classmethod
     def tweenPivot(cls, angle=tau/2):
 
-        # This is the base Figure class's specific tweenPivot() method
-        # for this angle value but whose splitter is defined relative
-        # to THIS class ("cls").
-        # This tween method's TweenMethod() decorator will assign a
-        # pivot splitter that correctly references the tweenPivot()
-        # method for THIS class when performing the split.
-        pivotbase = morpho.Figure.tweenPivot.__func__(cls, angle)
-
-        @pivotbase.TweenMethod
+        @morpho.pivotTweenMethod(cls.tweenPivot, angle)  # Enable splitting
         @morpho.grid.handleDash
         @morpho.color.handleGradientFills(["fill"])
         @handleSplineNodeInterp
