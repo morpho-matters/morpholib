@@ -2219,6 +2219,12 @@ class MathGrid(morpho.Frame):
     def defaultTween(self):
         return self._defaultTween
 
+    # Special setter for the defaultTween attribute
+    # enables MathGrids to split subfigure tween methods.
+    # It works as normal, but if a numerical value is assigned
+    # to `defaultTween` instead of a function, it treats it
+    # as a t-split value and passes it to the splitters of
+    # the subfigure tween methods.
     @defaultTween.setter
     def defaultTween(self, value):
         if callable(value):
@@ -2235,13 +2241,15 @@ class MathGrid(morpho.Frame):
 
     ### TWEEN METHODS ###
 
-    def specialSplitter(t):
-        return (t, 1-t)
-
-    # Special tweenLinear() method uses the special splitter
-    # to handle splitting the subpath list when a split is
-    # needed.
-    @morpho.TweenMethod(splitter=specialSplitter)
+    # This is a hack to enable MathGrids to split the
+    # tween methods of their component figures.
+    # tweenLinear() is assigned a splitter that
+    # instead of returning two tween methods, returns
+    # two t-split values. When MathGrid figures are
+    # assigned these numerical values as tweenMethods,
+    # they will propagate the t-split values to the splitters
+    # of the subfigures.
+    @morpho.TweenMethod(splitter=lambda t: (t, 1-t))
     def tweenLinear(self, *args, **kwargs):
         return super().tweenLinear(*args, **kwargs)
 
