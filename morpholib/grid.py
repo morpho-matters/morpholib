@@ -2191,6 +2191,7 @@ class MathGrid(morpho.Frame):
         # hidden `_transition` attribute so that the `transition`
         # property works when super().__init__() is called.
         object.__setattr__(self, "_transition", morpho.transition.default)
+        object.__setattr__(self, "_defaultTween", type(self).tweenLinear)
         super().__init__(*args, **kwargs)
         # This assigns the Frame's transition to all component figures.
         self.transition = self._transition
@@ -2213,6 +2214,37 @@ class MathGrid(morpho.Frame):
                 fig.transition = value
         except KeyError:
             pass
+
+    @property
+    def defaultTween(self):
+        return self._defaultTween
+
+    @defaultTween.setter
+    def defaultTween(self, value):
+        if callable(value):
+            self._defaultTween = value
+        else:  # Assume value is a t_split value
+            # Don't actually change the tween method of the
+            # MathGrid object, but instead go thru the
+            # path list and split all the tween methods
+            # according to the given t_split value.
+            for fig in self.figures:
+                if hasattr(fig.tweenMethod, "splitter") and \
+                fig.tweenMethod.splitter is not None:
+                    fig.tweenMethod = fig.tweenMethod.splitter(value)[0]
+
+    ### TWEEN METHODS ###
+
+    def specialSplitter(t):
+        return (t, 1-t)
+
+    # Special tweenLinear() method uses the special splitter
+    # to handle splitting the subpath list when a split is
+    # needed.
+    @morpho.TweenMethod(splitter=specialSplitter)
+    def tweenLinear(self, *args, **kwargs):
+        return super().tweenLinear(*args, **kwargs)
+
 
 
 @MathGrid.action
