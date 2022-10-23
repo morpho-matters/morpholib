@@ -2186,7 +2186,34 @@ class SpaceAxis(SpaceTrack):
 
 # Special Frame figure for mathgrids
 class MathGrid(morpho.Frame):
-    pass
+    def __init__(self, *args, **kwargs):
+        # Bypass Figure class special setattr() method to set the
+        # hidden `_transition` attribute so that the `transition`
+        # property works when super().__init__() is called.
+        object.__setattr__(self, "_transition", morpho.transition.default)
+        super().__init__(*args, **kwargs)
+        # This assigns the Frame's transition to all component figures.
+        self.transition = self._transition
+
+    # transition property makes it so that setting the transition
+    # of the MathGrid as a whole propagates it down to the component
+    # figures.
+    @property
+    def transition(self):
+        return self._transition
+
+    @transition.setter
+    def transition(self, value):
+        self._transition = value
+        # The try clause here is because the transition property
+        # may be set before the figures tweenable has been setup
+        # e.g. in __init__()
+        try:
+            for fig in self._state["figures"].value:
+                fig.transition = value
+        except KeyError:
+            pass
+
 
 @MathGrid.action
 def growIn(grid, duration=30, atFrame=None, *, reverse=False):
@@ -2226,7 +2253,7 @@ def shrinkOut(grid, duration=30, atFrame=None, *, reverse=False):
 
 
 # Special SpaceFrame figure for 3D mathgrids
-class SpaceMathGrid(morpho.SpaceFrame):
+class SpaceMathGrid(MathGrid, morpho.SpaceFrame):
     # Just copy over the actions defined for MathGrid
     actions = MathGrid.actions.copy()
 
@@ -2329,6 +2356,8 @@ def mathaxes(*,
             )
         frm.figures.append(yaxis)
         frm.setName(yaxis=yaxis)
+
+    frm.transition = transition
 
     return frm
 
@@ -2696,6 +2725,7 @@ def standardGrid(*,
 
     # Assemble the frame!
     frm.figures = staticList + paths
+    frm.transition = transition
 
     # Optimize if necessary
     if optimize:

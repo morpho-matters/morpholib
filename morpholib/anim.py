@@ -626,7 +626,9 @@ class StateStruct(object):
 class SpaceFrame(Frame):
     def __init__(self, figures=None):
         if isinstance(figures, Frame):
-            super().__init__(figures.figures)
+            # super().__init__(figures.figures)
+            super().__init__()
+            self._updateFrom(figures, common=True)
         else:
             super().__init__(figures)
 
