@@ -2374,6 +2374,7 @@ def mathaxes(*,
             width=xwidth, color=xcolor, alpha=alpha,
             tickLength=xtickLength, tickWidth=xtickWidth,
             tickGap=dx, tickColor=xcolor[:],
+            tweenMethod=tweenMethod,
             transition=transition
             )
         frm.figures.append(xaxis)
@@ -2384,6 +2385,7 @@ def mathaxes(*,
             width=ywidth, color=ycolor, alpha=alpha,
             tickLength=ytickLength, tickWidth=ytickWidth,
             tickGap=dy, tickColor=ycolor[:],
+            tweenMethod=tweenMethod,
             transition=transition
             )
         frm.figures.append(yaxis)
