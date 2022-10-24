@@ -367,6 +367,13 @@ def tweenMethod(tween=None, *, splitter=None):
 
 TweenMethod = tweenMethod  # Initial letter can optionally be uppercase.
 
+# Returns boolean on whether the given tween method has
+# a splitter defined. It is equivalent to
+# hasattr(tweenMethod, "splitter") and tweenMethod.splitter is not None
+def tweenSplittable(tweenMethod):
+    return (hasattr(tweenMethod, "splitter") and \
+            tweenMethod.splitter is not None)
+
 # Converts complex coordinates into screen pixel coordinates
 # according to the screen dimensions and the shape of the cairo
 # context target surface.
