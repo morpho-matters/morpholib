@@ -79,22 +79,22 @@ def uniform(t):
     return t
 # uniform = lambda t: t
 
-# Instant transition. Makes the figure jump instantly from
-# initial to final keyfigure where t = 1 maps to the final
-# keyfigure, and all 0 <= t < 1 map to the initial keyfigure.
-def instant(t):
-    return int(t)
-step = jump = instant  # Alternate name
-# instant = lambda t: int(t)
+# # Instant transition. Makes the figure jump instantly from
+# # initial to final keyfigure where t = 1 maps to the final
+# # keyfigure, and all 0 <= t < 1 map to the initial keyfigure.
+# def instant(t):
+#     return int(t)
+# step = jump = instant  # Alternate name
+# # instant = lambda t: int(t)
 
 # Set default transition to uniform. This can be modified anywhere
 # in the code by calling
 # morpho.transitions.default = newtransition
 default = uniform
 
-# Splits a monotonic transition function that maps [0,1] onto [0,1]
-# into two transition functions that are normalized to work as
-# regular transition functions.
+# Splits a strictly increasing transition function that maps
+# [0,1] onto [0,1] into two transition functions that are
+# normalized to work as regular transition functions.
 def split(func, t):
     if not(0 < t < 1):
         raise ValueError("t must be strictly between 0 and 1.")
