@@ -79,13 +79,15 @@ def uniform(t):
     return t
 # uniform = lambda t: t
 
-# # Instant transition. Makes the figure jump instantly from
-# # initial to final keyfigure where t = 1 maps to the final
-# # keyfigure, and all 0 <= t < 1 map to the initial keyfigure.
-# def instant(t):
-#     return int(t)
-# step = jump = instant  # Alternate name
-# # instant = lambda t: int(t)
+# DEPRECATED! Set `static=True` instead!
+# Instant transition. Makes the figure jump instantly from
+# initial to final keyfigure where t = 1 maps to the final
+# keyfigure, and all 0 <= t < 1 map to the initial keyfigure.
+def instant(t):
+    raise NotImplementedError("instant() transition is deprecated. Use `static=True` or `tweenInstant()` instead.")
+    return int(t)
+step = jump = instant  # Alternate name
+# instant = lambda t: int(t)
 
 # Set default transition to uniform. This can be modified anywhere
 # in the code by calling
