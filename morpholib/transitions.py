@@ -49,6 +49,47 @@ droptoss = quadease  # Alternate name. Drop then a toss.
 # quadease = lambda t: drop(2*t)/2 if t < 0.5 else (1+toss(2*t-1))/2
 
 
+# Glide transition maker.
+# Returns a glide transition based on the inflection points
+# provided.
+# A glide transition is where an animation accelerates in,
+# moves at a constant speed for a while, then decelerates out.
+# The points at which one behavior switches to the next are
+# called inflection points.
+# The acceleration and deceleration follow a quadratic
+# trajectory.
+#
+# INPUTS (positional only)
+# a = First inflection: a number in the range [0,1].
+#     For example: a = 0.25 means acceleration phase will
+#     last until 25% of the transition is completed.
+# b = Second inflection. If unspecified, defaults to 1-a
+#     to make a symmetric glide. Must satisfy a <= b.
+#
+# Example usage:
+#   myfig.transition = morpho.transition.glide(0.2)
+#   myfig2.transition = morpho.transition.glide(0.1, 0.75)
+#
+# If a = b = 0, the transition will be identical to toss.
+# If a = b = 0.5, the transition will be identical to quadease.
+# If a = b = 1, the transition will be identical to drop.
+def glide(a, b=None, /):
+    if b is None:
+        b = 1-a
+    if not(0 <= a <= b <= 1):
+        raise ValueError("Invalid inflection value. Must have 0 <= a <= b <= 1")
+
+    m = 2/(b-a+1)
+    def glideTransition(t):
+        if t < a:
+            return m*t**2/(2*a)
+        elif t <= b:
+            return m*(t-a/2)
+        else:
+            return 0.5*m*(b-a+1 - (t-1)**2/(1-b))
+    return glideTransition
+
+
 halfpi = math.pi/2
 # sinetoss = lambda t: math.sin(halfpi*t)
 # sinedrop = lambda t: 1 - math.cos(halfpi*t)
