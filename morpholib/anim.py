@@ -774,14 +774,11 @@ def SkitParameters(params=None, /, **kwargs):
             if not kwSet.issubset(paramSet):
                 raise TypeError(f"Unexpected keyword argument(s): {kwSet-paramSet}")
 
-            state = []
             for varname in params:
                 if varname in kwargs:
-                    tweenable = morpho.Tweenable(varname, kwargs[varname], tags=["scalar"])
+                    self.Tweenable(varname, kwargs[varname], tags=["scalar"])
                 else:
-                    tweenable = morpho.Tweenable(varname, params[varname], tags=["scalar"])
-                state.append(tweenable)
-            self.update(state)
+                    self.Tweenable(varname, params[varname], tags=["scalar"])
 
         subSkit.__init__ = newInit
         return subSkit
