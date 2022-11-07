@@ -29,7 +29,7 @@ morpho.importAll()
 mo = morpho  # Allows the shorthand "mo" to be optionally used instead of "morpho"
 
 # Import particular transition functions into the main namespace
-from morpholib.transitions import uniform, quadease, drop, toss, sineease, step
+from morpholib.transitions import uniform, quadease, drop, toss, sineease
 # Import useful functions and constants into the main namespace
 from morpholib.tools.basics import *
 
