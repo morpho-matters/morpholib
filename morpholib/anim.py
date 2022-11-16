@@ -71,6 +71,63 @@ class MaskConfigurationError(Exception):
 
 ### CLASSES ###
 
+# Mainly for internal use.
+# Object created when the `sub` property is used in a Frame object.
+# Allows one to modify the attributes of the subfigures of a frame
+# all at once.
+class _SubAttributeManager(object):
+    def __init__(self, frame, /):
+        # Bypass native setattr() because it's overridden below.
+        object.__setattr__(self, "_subattrman_frame", frame)
+
+
+    def __getattr__(self, name):
+        frame = self._subattrman_frame
+
+        # Extract initial value for the attribute (if possible)
+        try:
+            commonValue = getattr(frame.figures[0], name)
+        except AttributeError:
+            raise AttributeError(f"Subfigures do not all possess attribute `{name}`")
+        except IndexError:
+            raise IndexError("Frame has no subfigures.")
+
+        # Convert tuple to list to facilitate possible
+        # cross-container comparisons later on.
+        # Also makes a copy of the list if it's already a list.
+        if isinstance(commonValue, (list, tuple)):
+            commonValue = list(commonValue)
+
+        # Check if the attribute is common to all the
+        # subfigures and having the same value
+        for subfigure in frame.figures:
+            try:
+                value = getattr(subfigure, name)
+            except AttributeError:
+                raise AttributeError(f"Subfigures do not all possess attribute `{name}`")
+
+            # Convert tuple to list so that cross-container comparison
+            # with commonValue will work
+            if isinstance(value, tuple) and isinstance(commonValue, list):
+                value = list(value)
+            # Check if they are unequal
+            if not isequal(value, commonValue):  # isequal() handles np.arrays too
+                raise ValueError(f"Subfigures do not have a common value for attribute `{name}`")
+
+        return commonValue
+
+
+    def __setattr__(self, name, value):
+        # Handle ordinary attribute sets if self possesses
+        # the attribute.
+        if object_hasattr(self, name):
+            object.__setattr__(self, name, value)
+
+        # Set every subfigure attribute
+        frame = self._subattrman_frame
+        for subfigure in frame.figures:
+            setattr(subfigure, name, value)
+
 
 # Frame class. Groups figures together for simultaneous drawing.
 # Syntax: myframe = Frame(list_of_figures, **kwargs)
@@ -87,6 +144,16 @@ class MaskConfigurationError(Exception):
 #           figure types. e.g. Frame([point, path]) can only tween with
 #           another Frame([point, path]).
 # origin = Translation value (complex number). Default: 0.
+#
+# If the frame consists of subfigures of exactly the same type, the
+# subfigure attributes can be set all at once using the "all" syntax:
+#   EXAMPLE: myframe.all.pos = 3+4j
+# However, in-place operations can't be depended on to work
+#   EXAMPLE: myframe.all.pos += 2j   # Doesn't dependably work
+# This can be used to access subfigure attributes as well, but will
+# throw an error if the value of the accessed subattribute is
+# different across different subfigures
+#   EXAMPLE: commonPosition = myframe.all.pos
 #
 # Note that tweening a frame via tween() will tween the frame's
 # attributes along with its underlying figure list, but calling
@@ -166,6 +233,10 @@ class Frame(morpho.Figure):
 
         # Extend the figure list
         self.figures.extend(other.figures)
+
+    @property
+    def all(self):
+        return _SubAttributeManager(self)
 
     # Allows you to give a name to a figure in the Frame that can
     # be referenced later using attribute access syntax.
@@ -420,27 +491,27 @@ class MultiFigure(Frame):
         # each subfigure in the multifigure.
         self._state["origin"].tags.add("nojump")
 
-    # NOT IMPLEMENTED!!!
-    # Returns a StateStruct encapsulating all the tweenables
-    # of all the figures in the MultiFigure.
-    # Main example use case:
-    # my_multifig.all().alpha = 0 changes all the subfigures'
-    # alpha attribute to 0.
-    # By default, the tweenables encapsulated are all the
-    # tweenables contained in the zeroth figure in the list,
-    # but this can be overridden, as well as exactly what figures
-    # should be encapsulated.
-    def all(self, tweenableNames=None, figures=None):
-        raise NotImplementedError
-        if len(self.figures) == 0:
-            raise IndexError("Multifigure has no subfigures.")
+    # # NOT IMPLEMENTED!!!
+    # # Returns a StateStruct encapsulating all the tweenables
+    # # of all the figures in the MultiFigure.
+    # # Main example use case:
+    # # my_multifig.all().alpha = 0 changes all the subfigures'
+    # # alpha attribute to 0.
+    # # By default, the tweenables encapsulated are all the
+    # # tweenables contained in the zeroth figure in the list,
+    # # but this can be overridden, as well as exactly what figures
+    # # should be encapsulated.
+    # def all(self, tweenableNames=None, figures=None):
+    #     raise NotImplementedError
+    #     if len(self.figures) == 0:
+    #         raise IndexError("Multifigure has no subfigures.")
 
-        if tweenableNames is None:
-            tweenableNames = list(self.figures[0]._state)
-        if figures is None:
-            figures = self.figures
+    #     if tweenableNames is None:
+    #         tweenableNames = list(self.figures[0]._state)
+    #     if figures is None:
+    #         figures = self.figures
 
-        return StateStruct(tweenableNames, figures)
+    #     return StateStruct(tweenableNames, figures)
 
 
     # If attempted to access a non-existent attribute,
