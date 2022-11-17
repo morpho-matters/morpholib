@@ -128,6 +128,11 @@ class _SubAttributeManager(object):
         for subfigure in frame.figures:
             setattr(subfigure, name, value)
 
+    def set(self, **kwargs):
+        for name, value in kwargs.items():
+            setattr(self, name, value)
+        return self._subattrman_frame
+
 
 # Frame class. Groups figures together for simultaneous drawing.
 # Syntax: myframe = Frame(list_of_figures, **kwargs)
