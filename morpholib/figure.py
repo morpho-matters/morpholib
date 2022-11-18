@@ -1403,7 +1403,7 @@ class Actor(object):
 
     # Create a new key df-many frames after the current final key.
     # See newkey() for more info.
-    def newendkey(self, df, figure=None, seamless=True):
+    def newendkey(self, df, figure=None, *, seamless=True):
         df = round(df)
         if not isinstance(df, int):
             raise TypeError("Cannot make newkey at non-integer frame index.")
