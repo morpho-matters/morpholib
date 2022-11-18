@@ -1177,6 +1177,7 @@ class Actor(object):
             raise TypeError("Actor() takes either a figure or a figure class.")
 
         self.visible = visible
+        self.owner = None
 
     # Updates the keyIDs list according to the timeline.
     # This method is mainly for internal use by other methods that may
@@ -1403,11 +1404,33 @@ class Actor(object):
 
     # Create a new key df-many frames after the current final key.
     # See newkey() for more info.
-    def newendkey(self, df, figure=None, *, seamless=True):
+    # Calling newendkey() without any arguments creates a new key
+    # at the end of the GLOBAL timeline.
+    # If optional keyword-only argument `glob` is set to True,
+    # the new key is created relative to the final frame of the
+    # global timeline. This is implicitly done when calling
+    # newendkey() argumentless.
+    def newendkey(self, df=None, figure=None, *, seamless=True, glob=False):
+        # If no df is given, treat it as a global call with df = 0
+        if df is None:
+            if self.owner is None:
+                raise TypeError("newendkey() cannot be called inputless on ownerless actors.")
+            glob = True
+            df = 0
+
+        # In global mode, use glastID() to find the last index
+        if glob:
+            lastID = self.glastID()
+            # Adjust by time offset because actor timeline is tied
+            # to the local timeline of the layer, but we're trying
+            # to specify a global time value here.
+            if self.owner is not None:
+                lastID -= self.owner.timeOffset
+        else:
+            lastID = self.lastID()
+
         df = round(df)
-        if not isinstance(df, int):
-            raise TypeError("Cannot make newkey at non-integer frame index.")
-        f = self.lastID() + df
+        f = lastID + df
         if f == -oo:
             raise IndexError("Actor has no keyframes! End key is undefined.")
         return self.newkey(f, figure, seamless=seamless)
@@ -1472,6 +1495,22 @@ class Actor(object):
         return max(self.timeline)
 
     # maxkeyID = lastkeyID = lastID  # Synonyms for lastID()
+
+    # Returns the first index in the global timeline.
+    # Requires the actor to be owned by a Layer.
+    def gfirstID(self):
+        if self.owner is None:
+            return self.firstID()
+        else:
+            return self.owner.gfirstID()
+
+    # Returns the last index in the global timeline.
+    # Requires the actor to be owned by a Layer.
+    def glastID(self):
+        if self.owner is None:
+            return self.lastID()
+        else:
+            return self.owner.glastID()
 
     def __len__(self):
         return max(self.lastID() - self.firstID() + 1, 0)
@@ -1792,6 +1831,19 @@ class Actor(object):
 
     # Alternate name for the time method.
     # frame = time
+
+    # Returns the current figure of the actor at the current time
+    # index on the global timeline. Only possible if the actor's
+    # owner is a Layer whose owner is an Animation object.
+    # Mainly for use in puppet Skits to extract the current figure
+    # state of the puppeteer actor at the current time index of
+    # the animation.
+    def now(self):
+        try:
+            currentIndex = self.owner.owner.currentIndex
+        except AttributeError:
+            raise TypeError("No global timeline to reference.")
+        return self.time(currentIndex - self.owner.timeOffset)
 
     # Should the final keyfigure persist after the final frame?
     # If set to True, to make an actor vanish, you will need to

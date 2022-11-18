@@ -1359,6 +1359,9 @@ class Layer(object):
                 actors[n] = morpho.Actor(actor)
         self.actors = actors
 
+        # Assign this layer as the `owner` attribute of each actor
+        self._updateOwnerships()
+
         if type(view) is tuple:
             self.camera = morpho.Actor(Camera)
             self.camera.newkey(0)
@@ -1379,6 +1382,7 @@ class Layer(object):
         self.start = start
         self.end = end
         self.mask = None
+        self.owner = None
 
         # Hidden attributes for rendering with masks.
         # These are NOT copied with the copy() method, but it shouldn't
@@ -1398,11 +1402,35 @@ class Layer(object):
     def view(self, value):
         self.camera = value
 
+    @property
+    def mask(self):
+        return self._mask
+
+    @mask.setter
+    def mask(self, value):
+        self._mask = value
+        self._updateMaskOwners()
+
+    # Assigns this layer to the `owner` attribute of all
+    # component actors.
+    def _updateOwnerships(self):
+        for actor in self.actors:
+            actor.owner = self
+
+    # Recursively goes thru the mask chain and updates each mask layer's
+    # owner to be self's owner.
+    def _updateMaskOwners(self):
+        if self.maskChainFormsLoop():
+            raise MaskConfigurationError("Cannot update mask ownerships because the mask chain loops.")
+        currentLayer = self.mask
+        while currentLayer is not None:
+            currentLayer.owner = self.owner
+            currentLayer = currentLayer.mask
 
     # Return a deep-ish copy of the layer by default.
     # Optionally specify deep=False to make a copy, but
     # none of the actors, the mask layer, or even the camera
-    # actor are copied.
+    # actor are copied, and the actor ownership will not be changed.
     def copy(self, deep=True):
         if deep:
             if self.maskChainFormsLoop():
@@ -1416,6 +1444,7 @@ class Layer(object):
                 end=self.end
                 )
             new.mask = self.mask.copy() if self.mask is not None else None
+            new._updateOwnerships()
         else:
             new = type(self)(
                 actors=self.actors[:],
@@ -1485,6 +1514,7 @@ class Layer(object):
                     actor.timeline = timeline
                     actor.update()
 
+                actor.owner = self
                 self.actors.insert(beforeActor, actor)
 
             # Handle combining mask layers
@@ -1520,12 +1550,25 @@ class Layer(object):
     # Convenience function. Behaves just like merge() except it always
     # merges at the maxkeyID of self.
     # If maxkeyID is -oo, then merges at frame 0.
-    def append(self, other, timeOffset=0, beforeActor=oo):
-        atFrame = self.lastID()
+    # If optional keyword-only argument `glob` is set to True,
+    # the object will be appended to the end of the global timeline.
+    # See also: `Layer.affix()`
+    def append(self, other, timeOffset=0, beforeActor=oo, *, glob=False):
+        atFrame = self.lastID() if not glob else self.glastID()
         if atFrame == -oo:
             atFrame = 0
+        if glob:
+            # Adjust by time offset so that local times coincides
+            # with global times.
+            atFrame -= self.timeOffset
         atFrame += timeOffset
         self.merge(other, atFrame, beforeActor)
+
+    # Equivalent to append() except that it appends at the
+    # end of the GLOBAL timeline.
+    # Equivalent to append(..., glob=True)
+    def affix(self, *args, **kwargs):
+        return self.append(*args, **kwargs, glob=True)
 
     # Returns the minimum key index across all actors (including the camera).
     # If all actors have empty timelines, it returns +oo.
@@ -1565,6 +1608,22 @@ class Layer(object):
             maxkey = max(maxkey, self.mask.lastID(ignoreMask=False) + self.mask.timeOffset - self.timeOffset)
 
         return maxkey + self.timeOffset if useOffset else maxkey
+
+    # Returns the first index in the global timeline.
+    # Requires the layer to be owned by an Animation.
+    def gfirstID(self):
+        if self.owner is None:
+            return self.firstID(useOffset=True, ignoreMask=False)
+        else:
+            return self.owner.gfirstID()
+
+    # Returns the last index in the global timeline.
+    # Requires the layer to be owned by an Animation.
+    def glastID(self):
+        if self.owner is None:
+            return self.lastID(useOffset=True, ignoreMask=False)
+        else:
+            return self.owner.glastID()
 
     # maxkeyID = lastkeyID = lastID  # Synonyms for lastID()
 
@@ -2193,6 +2252,8 @@ class Animation(object):
         else:
             raise TypeError("layers must be list/tuple of Layer objects or else a single actor.")
 
+        # Set this animation as the owner of all component layers
+        self._updateOwnerships()
 
         # Frame rate of the animation in frames per second (fps)
         self.frameRate = 30
@@ -2336,6 +2397,9 @@ class Animation(object):
         # Make copies of all the layers.
         ani.layers = [layer.copy(deep=deep) for layer in self.layers]
 
+        # Reassign ownerships
+        ani._updateOwnerships()
+
         # Copy other attributes
         ani.frameRate = self.frameRate
         ani.firstIndex = self.firstIndex
@@ -2363,6 +2427,13 @@ class Animation(object):
         #         layer.mask = ani.layers[self.layers.index(layer.mask)]
 
         return ani
+
+    # Assigns this Animation to the `owner` attribute of all
+    # component layers (and their masks).
+    def _updateOwnerships(self):
+        for layer in self.layers:
+            layer.owner = self
+            layer._updateMaskOwners()
 
     # Append the layers of other on top of self.
     # Optionally specify a frame offset which represents
@@ -2474,6 +2545,9 @@ class Animation(object):
                 self.delays[keyID] += other.delays[keyID]
             else:
                 self.delays[keyID] = other.delays[keyID]
+
+        # Update layer ownerships
+        self._updateOwnerships()
 
 
     # OBSOLETE
@@ -2594,6 +2668,12 @@ class Animation(object):
             atFrame = 0
         # self.merge(other, atFrame=self.lastID()+timeOffset, beforeLayer=beforeLayer)
         self.merge(other, atFrame+timeOffset, beforeLayer)
+
+    # Identical to append() for the Animation class.
+    # Exists for consistency with Layer.affix(), which behaves
+    # differently than Layer.append().
+    def affix(self, *args, **kwargs):
+        return self.append(*args, **kwargs)
 
     # Pretweens all layers. See Layer.pretween() and Actor.pretween() for more info.
     def pretween(self, ignoreMask=False):
@@ -2822,6 +2902,14 @@ class Animation(object):
     def lastID(self, ignoreMasks=False):
         return max(layer.lastID(useOffset=True, ignoreMask=ignoreMasks) for layer in self.layers) if len(self.layers) > 0 else 0
     # maxkeyID = lastkeyID = lastID  # Synonyms for lastID()
+
+    # Equivalent to mation.firstID(ignoreMasks=False)
+    def gfirstID(self):
+        return self.firstID(ignoreMasks=False)
+
+    # Equivalent to mation.lastID(ignoreMasks=False)
+    def glastID(self):
+        return self.lastID(ignoreMasks=False)
 
     # Return length of animation in units of frames.
     # Takes firstIndex and finalIndex into account and also
