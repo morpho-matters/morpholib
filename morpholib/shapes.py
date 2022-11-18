@@ -1670,11 +1670,14 @@ def SVGdata(string):
 #         Default: 1 (opaque)
 class Ellipse(morpho.Figure):
 
-    def __init__(self, pos=0, xradius=1, yradius=1,
+    def __init__(self, pos=0, xradius=1, yradius=None,
         strokeWeight=3, color=(1,1,1), fill=(1,0,0),
         alphaEdge=1, alphaFill=1, alpha=1):
 
         super().__init__()
+
+        if yradius is None:
+            yradius = xradius
 
         pos = morpho.Tweenable("pos", pos, tags=["complex", "position"])
         xradius = morpho.Tweenable("xradius", xradius, tags=["scalar"])
