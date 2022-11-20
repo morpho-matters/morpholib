@@ -1449,10 +1449,10 @@ class Actor(object):
     # Replace a keyfig with a different figure.
     # Throws error if specified keyID is not in the timeline.
     # (That's the only difference between it and newkey() )
-    def replacekey(self, f, figure):
+    def replacekey(self, f, figure, *args, **kwargs):
         if f not in self.timeline:
             raise KeyError("No keyfigure at given index.")
-        self.newkey(f, figure, seamless=False)
+        return self.newkey(f, figure, *args, **kwargs)
 
     # Changes the index of the keyfig at index old to index new.
     # Throws error if old is not a current key index.
