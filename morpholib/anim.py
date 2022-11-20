@@ -1558,7 +1558,7 @@ class Layer(object):
         if atFrame == -oo:
             atFrame = 0
         if glob:
-            # Adjust by time offset so that local times coincides
+            # Adjust by layer time offset so that local times coincide
             # with global times.
             atFrame -= self.timeOffset
         atFrame += timeOffset
