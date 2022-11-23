@@ -1838,12 +1838,25 @@ class Actor(object):
     # Mainly for use in puppet Skits to extract the current figure
     # state of the puppeteer actor at the current time index of
     # the animation.
+    # Also note that if now() returns a keyfigure, it will be
+    # copied before returned, so it is always safe to modify
+    # the attributes of a figure returned by now().
     def now(self):
         try:
             currentIndex = self.owner.owner.currentIndex
         except AttributeError:
             raise TypeError("No global timeline to reference.")
-        return self.time(currentIndex - self.owner.timeOffset)
+
+        f = currentIndex - self.owner.timeOffset
+        fig = self.time(f)
+
+        # If f is a keyframe, make a copy before returning
+        # the keyfigure.
+        if f in self.timeline:
+            return fig.copy()
+        else:
+            return fig
+
 
     # Should the final keyfigure persist after the final frame?
     # If set to True, to make an actor vanish, you will need to
