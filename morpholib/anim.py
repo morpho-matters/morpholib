@@ -755,9 +755,7 @@ class Skit(morpho.Figure):
     def __init__(self, *, t=0):
         super().__init__()
 
-        t = morpho.Tweenable("t", t, tags=["scalar"])
-
-        self.update([t])
+        self.Tweenable("t", t, tags=["scalar"])
 
     # Return a frame figure based on the t-value of the skit.
     # Generic skit just returns an empty frame.
