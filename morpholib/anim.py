@@ -1357,9 +1357,6 @@ class Layer(object):
                 actors[n] = morpho.Actor(actor)
         self.actors = actors
 
-        # Assign this layer as the `owner` attribute of each actor
-        self._updateOwnerships()
-
         if type(view) is tuple:
             self.camera = morpho.Actor(Camera)
             self.camera.newkey(0)
@@ -1374,6 +1371,9 @@ class Layer(object):
             self.camera = view
         else:
             raise TypeError("view must be list, tuple, or Camera actor.")
+
+        # Assign this layer as the `owner` attribute of each actor
+        self._updateOwnerships()
 
         self.timeOffset = timeOffset
         self.visible = visible
@@ -1410,10 +1410,11 @@ class Layer(object):
         self._updateMaskOwners()
 
     # Assigns this layer to the `owner` attribute of all
-    # component actors.
+    # component actors (and the camera actor).
     def _updateOwnerships(self):
         for actor in self.actors:
             actor.owner = self
+        self.camera.owner = self
 
     # Recursively goes thru the mask chain and updates each mask layer's
     # owner to be self's owner.
@@ -1442,7 +1443,7 @@ class Layer(object):
                 end=self.end
                 )
             new.mask = self.mask.copy() if self.mask is not None else None
-            new._updateOwnerships()
+            # new._updateOwnerships()
         else:
             new = type(self)(
                 actors=self.actors[:],
@@ -2045,6 +2046,8 @@ class SpaceLayer(Layer):
         else:
             raise TypeError("view must be list, tuple, or SpaceCamera actor.")
 
+        self.camera.owner = self
+
         # If set to True, when the layer is drawn, it makes use of the
         # primitives() method of any constituent space figures that have
         # that method. The primitives method returns a list of 2D figures
@@ -2071,32 +2074,8 @@ class SpaceLayer(Layer):
     # Optionally specify deep=False to make a copy, but
     # none of the actors or even the camera actor are copied.
     def copy(self, deep=True):
-        if deep:
-            new = type(self)(
-                actors=[actor.copy() for actor in self.actors],
-                view=self.camera.copy(),
-                # orient=self.orient.copy(),
-                # focus=self.focus.copy(),
-                timeOffset=self.timeOffset,
-                visible=self.visible,
-                start=self.start,
-                end=self.end,
-                poolPrimitives=self.poolPrimitives
-                )
-            new.mask = self.mask.copy() if self.mask is not None else None
-        else:
-            new = type(self)(
-                actors=self.actors[:],
-                view=self.camera,
-                # orient=self.camera.orient.copy(),
-                # focus=self.camera.focus.copy(),
-                timeOffset=self.timeOffset,
-                visible=self.visible,
-                start=self.start,
-                end=self.end,
-                poolPrimitives=self.poolPrimitives
-                )
-            new.mask = self.mask
+        new = super().copy(deep=deep)
+        new.poolPrimitives = self.poolPrimitives
         return new
 
 
