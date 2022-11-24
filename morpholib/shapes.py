@@ -1753,11 +1753,13 @@ class Ellipse(morpho.Figure):
 # alpha = Opacity. Default: 1 (opaque)
 class EllipticalArc(morpho.Figure):
 
-    def __init__(self, pos=0, xradius=1, yradius=None, theta0=0, theta1=tau,
+    def __init__(self, pos=0, xradius=1, yradius=None, theta0=0, theta1=None,
         strokeWeight=3, color=(1,1,1), alpha=1):
 
         if yradius is None:
             yradius = xradius
+        if theta1 is None:
+            theta1 = theta0 + tau
 
         super().__init__()
 
