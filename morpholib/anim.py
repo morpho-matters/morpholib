@@ -1409,6 +1409,15 @@ class Layer(object):
         self._mask = value
         self._updateMaskOwners()
 
+    @property
+    def camera(self):
+        return self._camera
+
+    @camera.setter
+    def camera(self, value):
+        self._camera = value
+        self._camera.owner = self
+
     # Assigns this layer to the `owner` attribute of all
     # component actors (and the camera actor).
     def _updateOwnerships(self):
@@ -2045,8 +2054,6 @@ class SpaceLayer(Layer):
             self.camera = view
         else:
             raise TypeError("view must be list, tuple, or SpaceCamera actor.")
-
-        self.camera.owner = self
 
         # If set to True, when the layer is drawn, it makes use of the
         # primitives() method of any constituent space figures that have
