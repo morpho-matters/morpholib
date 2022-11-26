@@ -1410,15 +1410,7 @@ class Actor(object):
     # the new key is created relative to the final frame of the
     # global timeline. This is implicitly done when calling
     # newendkey() argumentless.
-    # timeOffset is an optional keyword-only input that is added
-    # to df before applied. This is really only meant to be used
-    # when calling newendkey() without specifying df, so the
-    # timeOffset will be applied to whatever is the global final
-    # frame. For example,
-    #   myactor.newendkey(timeOffset=30)
-    # creates a new key 30 frames after the current global final
-    # frame.
-    def newendkey(self, df=None, figure=None, *, seamless=True, glob=False, timeOffset=0):
+    def newendkey(self, df=None, figure=None, *, seamless=True, glob=False):
         # If no df is given, treat it as a global call with df = 0
         if df is None:
             if self.owner is None:
@@ -1437,7 +1429,6 @@ class Actor(object):
         else:
             lastID = self.lastID()
 
-        df += timeOffset
         df = round(df)
         f = lastID + df
         if f == -oo:
