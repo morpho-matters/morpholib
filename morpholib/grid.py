@@ -721,6 +721,11 @@ class Path(morpho.Figure):
         L = self.arclength()
         return lambda t: self.s_inv(L*t)
 
+    # Returns the center of mass of all nodes in the Path.
+    # That is, returns mean(path.seq)
+    def center(self):
+        return mean(self.seq)
+
     # NOTE: FOR INTERNAL USE ONLY! NOT WELL-MAINTAINED. USE AT OWN RISK!
     # Returns boolean on whether a path has the same
     # color and width as another. This method is useful
