@@ -323,42 +323,42 @@ class Image(morpho.Figure):
 
         return [NW,SW,SE,NE]
 
-    @property
+    # @property
     def left(self):
         NW, SW, SE, NE = self.corners()
         return mean([NW,SW])
 
-    @property
+    # @property
     def right(self):
         NW, SW, SE, NE = self.corners()
         return mean([NE,SE])
 
-    @property
+    # @property
     def top(self):
         NW, SW, SE, NE = self.corners()
         return mean([NW,NE])
 
-    @property
+    # @property
     def bottom(self):
         NW, SW, SE, NE = self.corners()
         return mean([SW,SE])
 
-    @property
+    # @property
     def NW(self):
         NW, SW, SE, NE = self.corners()
         return NW
 
-    @property
+    # @property
     def NE(self):
         NW, SW, SE, NE = self.corners()
         return NE
 
-    @property
+    # @property
     def SW(self):
         NW, SW, SE, NE = self.corners()
         return SW
 
-    @property
+    # @property
     def SE(self):
         NW, SW, SE, NE = self.corners()
         return SE
