@@ -323,6 +323,47 @@ class Image(morpho.Figure):
 
         return [NW,SW,SE,NE]
 
+    @property
+    def left(self):
+        NW, SW, SE, NE = self.corners()
+        return mean([NW,SW])
+
+    @property
+    def right(self):
+        NW, SW, SE, NE = self.corners()
+        return mean([NE,SE])
+
+    @property
+    def top(self):
+        NW, SW, SE, NE = self.corners()
+        return mean([NW,NE])
+
+    @property
+    def bottom(self):
+        NW, SW, SE, NE = self.corners()
+        return mean([SW,SE])
+
+    @property
+    def NW(self):
+        NW, SW, SE, NE = self.corners()
+        return NW
+
+    @property
+    def NE(self):
+        NW, SW, SE, NE = self.corners()
+        return NE
+
+    @property
+    def SW(self):
+        NW, SW, SE, NE = self.corners()
+        return SW
+
+    @property
+    def SE(self):
+        NW, SW, SE, NE = self.corners()
+        return SE
+
+
     # Same as corners(), but the coordinates are relative to wherever
     # the image's physical position is.
     def relcorners(self, pad=0):
