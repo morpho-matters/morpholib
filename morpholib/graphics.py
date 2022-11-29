@@ -648,9 +648,9 @@ class SpaceImage(Image):
 
     def box(self, pad=0):
         align_x, align_y = self.align
-        a = self.pos[0] - self.scale_x*self.width/2*(align_x + 1)
+        a = self.pos[0].tolist() - self.scale_x*self.width/2*(align_x + 1)
         b = a + self.scale_x*self.width
-        c = self.pos[1] - self.scale_y*self.height/2*(align_y + 1)
+        c = self.pos[1].tolist() - self.scale_y*self.height/2*(align_y + 1)
         d = c + self.scale_y*self.height
 
         return [a-pad, b+pad, c-pad, d+pad]
