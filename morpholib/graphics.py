@@ -868,18 +868,6 @@ class MultiImage(morpho.MultiFigure):
                 newfig = fig.images[0].copy()
                 self.figures[n] = newfig
 
-    def all(self):
-        raise NotImplementedError
-        if len(self.figures) == 0:
-            raise IndexError("MultiImage has no component images.")
-
-        tweenableNames = list(self.figures[0]._state)
-        tweenableNames.extend(["width", "height"])
-        figures = self.figures
-
-        return super().all(tweenableNames, figures)
-
-
     # tween = morpho.Figure.tween
 
     ### TWEEN METHODS ###
