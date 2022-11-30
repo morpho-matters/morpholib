@@ -825,6 +825,9 @@ def Multi(imageMethod, reverseMethod=None):
     return wrapper
 
 
+selfmethods = ["rescaleAspectRatioWH", "scaleByWidth", "scaleByHeight",
+    "rescaleWidth", "rescaleHeight", "newSource", "link", "unlink"]
+
 # Image class that can support drawing multiple images at once. Useful for having
 # one image morph into another image.
 #
@@ -839,6 +842,7 @@ def Multi(imageMethod, reverseMethod=None):
 #
 # Bottom line: It's just like Image except you can tween between different
 # underlying image files.
+@morpho.MultiFigure._selfReturningMethods(Image, selfmethods)
 class MultiImage(morpho.MultiFigure):
 
     def __init__(self, source=None):
