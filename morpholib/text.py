@@ -2,6 +2,7 @@
 import morpholib as morpho
 import morpholib.anim, morpholib.grid
 from morpholib.tools.basics import *
+from morpholib.tools.internal import typecastViewCtx, BoundingBoxFigure
 
 import cairo
 cr = cairo
@@ -19,31 +20,6 @@ del mation
 # will be used as the default font for the Text class
 # and its derivatives.
 defaultFont = "Times New Roman"
-
-### DECORATORS ###
-
-# Decorator allows a method to extract the needed
-# `view` and `ctx` parameters from Layer/Camera/Animation
-# inputs allowing for syntax like
-#   mytext.width(my_layer_or_camera, my_animation)
-# whereby `view` will be taken as the latest viewbox in the
-# layer and `windowShape` will be taken from the corresponding
-# attribute in the animation object.
-def typecastViewCtx(method):
-    def wrapper(self, view, ctx, *args, **kwargs):
-        # Handle Layer/Camera/Animation type inputs to
-        # view and ctx.
-        if isinstance(view, morpho.Layer):
-            view = view.camera.last().view
-        elif isinstance(view, morpho.Actor):
-            view = view.last().view
-        elif isinstance(view, morpho.anim.Camera):
-            view = view.view
-        if isinstance(ctx, morpho.Animation):
-            ctx = ctx.windowShape
-
-        return method(self, view, ctx, *args, **kwargs)
-    return wrapper
 
 ### CLASSES ###
 
@@ -82,7 +58,7 @@ I2 = np.identity(2)
 # font = Font to use. Default: "Times New Roman"
 # bold = Boolean indicating whether to bold. Default: False
 # italic = Boolean indicating whether to use italics. Default: False
-class Text(morpho.Figure):
+class Text(BoundingBoxFigure):
     def __init__(self, text="", pos=0,
         size=64, font=None,
         bold=False, italic=False,
@@ -297,7 +273,6 @@ class Text(morpho.Figure):
     def center(self, view, ctx):
         return mean(self.corners(view, ctx))
 
-
     # Returns the width of the text in pixels.
     def pixelWidth(self):
         return self.pixelDimensions()[0]
@@ -421,7 +396,6 @@ class Text(morpho.Figure):
 
 
 _referenceString = "A"
-
 
 # Physical Text figure.
 # It's pretty much the same as Text, but the `size` parameter
@@ -859,7 +833,7 @@ MultiPtext = MultiPText
 
 # 3D version of the Text class.
 #
-# TWEENABLES that are not shared with Image
+# TWEENABLES that are not shared with Text
 # orient = Orientation of text relative to text position (3x3 np.array).
 #          Only used if "orientable" attribute is set to True.
 #          Default: np.eye(3) meaning text is oriented flat on xy-plane facing
@@ -1170,7 +1144,7 @@ def formatNumber(*args, **kwargs):
 # function, and you probably don't want to use it directly.
 # If you just want something like a morphable single Text
 # figure, use vanilla MultiText instead.
-class FancyMultiText(MultiText):
+class FancyMultiText(MultiText, BoundingBoxFigure):
     _manuallyJump = True
 
     def __init__(self, text="", *args, **kwargs):
@@ -1365,6 +1339,7 @@ class FancyMultiText(MultiText):
         box = self.totalBox(view, ctx, pad=0)
         return self._alignBox(box, pad=pad)
 
+    corners = Text.corners
 
     # Moves the text group so that its total center is at the origin.
     # This makes it so the alignment respects the `pos` attribute.
@@ -1497,6 +1472,8 @@ class FancyMultiPText(FancyMultiText):
     def box(self, pad=0):
         box = self.totalBox(pad=0)
         return self._alignBox(box, pad=pad)
+
+    corners = PText.corners
 
     # Moves the text group so that its total center is at the origin.
     # This makes it so the alignment respects the `pos` attribute.
