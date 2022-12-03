@@ -919,6 +919,10 @@ class SpaceText(Text):
     #     new.orientable = self.orientable
     #     return new
 
+    # box() method for SpaceText is currently unimplemented.
+    def box(self, *args, **kwargs):
+        raise NotImplementedError("box() method is currently unimplemented for SpaceText.")
+
     def toText(self):
         txt = self._baseFigure()
         txt._state.update(self.copy()._state)
@@ -1524,6 +1528,10 @@ class SpaceParagraph(FancyMultiText):
     @orient.setter
     def orient(self, value):
         self._orient = morpho.matrix.array(value)
+
+    # box() method for SpaceParagraph is currently unimplemented.
+    def box(self, *args, **kwargs):
+        raise NotImplementedError("box() method is currently unimplemented for SpaceParagraph.")
 
     def makeFrame(self, camera, ctx):
         raise NotImplementedError
