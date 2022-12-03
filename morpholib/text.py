@@ -2,7 +2,7 @@
 import morpholib as morpho
 import morpholib.anim, morpholib.grid
 from morpholib.tools.basics import *
-from morpholib.tools.internal import typecastViewCtx, BoundingBoxFigure
+from morpholib.tools.dev import typecastViewCtx, BoundingBoxFigure
 
 import cairo
 cr = cairo

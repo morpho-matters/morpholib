@@ -3,7 +3,7 @@ import morpholib as morpho
 import morpholib.anim
 import morpholib.color
 from morpholib.tools.basics import *
-from morpholib.tools.internal import BoundingBoxFigure
+from morpholib.tools.dev import BoundingBoxFigure
 
 import cairo
 cr = cairo
