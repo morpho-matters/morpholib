@@ -227,6 +227,9 @@ class Frame(morpho.Figure):
         # if not self._names.keys().isdisjoint(other._names.keys()):
         #     raise MergeError("Frame to merge shares names with self.")
 
+        if isinstance(other, morpho.Figure):
+            other = type(self)([other])
+
         # Append other's name registry to self's (skipping duplicate names),
         # but shift the index values by the number of names in self's
         # registry.
