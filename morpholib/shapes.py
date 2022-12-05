@@ -1704,6 +1704,23 @@ class Ellipse(morpho.Figure):
         self.xradius = value
         self.yradius = value
 
+    @property
+    def eccentricity(self):
+        a = self.xradius
+        b = self.yradius
+        if a < b:
+            a,b = b,a
+        return math.sqrt(1-(b/a)**2)
+
+    @property
+    def majorRadius(self):
+        return max(self.xradius, self.yradius)
+
+    @property
+    def minorRadius(self):
+        return min(self.xradius, self.yradius)
+
+
     # NOT IMPLEMENTED YET!!!
     def toPolygon(self, dTheta=tau/72):
         raise NotImplementedError
