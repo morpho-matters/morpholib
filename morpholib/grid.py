@@ -776,10 +776,10 @@ class Path(morpho.Figure):
         if maxIndex < 1 or self.start >= self.end:
             return
 
-        # If determinant of the transform matrix is too small,
-        # don't attempt to draw.
-        if abs(np.linalg.det(self.transform)) < 1e-6:
-            return
+        # # If determinant of the transform matrix is too small,
+        # # don't attempt to draw.
+        # if abs(np.linalg.det(self.transform)) < 1e-6:
+        #     return
 
         # Set initial transformation values to be identities
         origin = self.origin
@@ -790,6 +790,9 @@ class Path(morpho.Figure):
         if (self.rotation % tau) != 0:
             rot = cmath.exp(self.rotation*1j)
         if not np.allclose(self.transform, I2):
+            # If transform matrix is too distorted, don't draw.
+            if morpho.matrix.thinness2x2(self.transform) < 1e-6:
+                return
             mat = morpho.matrix.Mat(*self.transform.flatten().tolist())
             mat_inv = mat.inv
 
@@ -3044,10 +3047,10 @@ class Polygon(morpho.Figure):
 
         if len(self.vertices) < 2 or self.alpha == 0: return
 
-        # If determinant of the transform matrix is too small,
-        # don't attempt to draw.
-        if abs(np.linalg.det(self.transform)) < 1e-6:
-            return
+        # # If determinant of the transform matrix is too small,
+        # # don't attempt to draw.
+        # if abs(np.linalg.det(self.transform)) < 1e-6:
+        #     return
 
         view = camera.view
 
@@ -3061,6 +3064,10 @@ class Polygon(morpho.Figure):
             if self.origin != 0:
                 ctx.translate(self.origin.real, self.origin.imag)
             if not np.array_equal(self.transform, I2):
+                # If transform matrix is too distorted, don't draw.
+                if morpho.matrix.thinness2x2(self.transform) < 1e-6:
+                    return
+
                 xx, xy, yx, yy = self.transform.flatten().tolist()
                 # Order is MATLAB-style: top-down, then left-right. So the matrix
                 # specified below is:

@@ -414,7 +414,7 @@ class Spline(morpho.Figure):
         # Round to nearest node if within a billionth of it.
         tol = 1e-9
         if abs(T - round(T)) < tol:
-            T = round(T)
+            T = int(round(T))  # round(np.float) is still np.float
             return self.node(T)
 
         index = int(T)  # Latest preceding node index
@@ -753,9 +753,13 @@ class Spline(morpho.Figure):
         if maxIndex < 1 or self.start >= self.end or self.alpha == 0:
             return
 
-        # If determinant of the transform matrix is too small,
-        # don't attempt to draw.
-        if abs(np.linalg.det(self._transform)) < 1e-6:
+        # # If determinant of the transform matrix is too small,
+        # # don't attempt to draw.
+        # if abs(np.linalg.det(self._transform)) < 1e-6:
+        #     return
+
+        # If transform matrix is too distorted, don't draw.
+        if morpho.matrix.thinness2x2(self.transform) < 1e-6:
             return
 
         # Compute index bounds
@@ -949,9 +953,13 @@ class Spline(morpho.Figure):
         if self.data.shape[0] < 2:
             return
 
-        # If determinant of the transform matrix is too small,
-        # don't attempt to draw.
-        if abs(np.linalg.det(self.transform)) < 1e-6:
+        # # If determinant of the transform matrix is too small,
+        # # don't attempt to draw.
+        # if abs(np.linalg.det(self.transform)) < 1e-6:
+        #     return
+
+        # If transform matrix is too distorted, don't draw.
+        if morpho.matrix.thinness2x2(self.transform) < 1e-6:
             return
 
         # Draw each tangent
@@ -1739,9 +1747,13 @@ class Ellipse(morpho.Figure):
         if self.xradius == 0 or self.yradius == 0:
             return
 
-        # If determinant of the transform matrix is too small,
-        # don't attempt to draw.
-        if abs(np.linalg.det(self.transform)) < 1e-6:
+        # # If determinant of the transform matrix is too small,
+        # # don't attempt to draw.
+        # if abs(np.linalg.det(self.transform)) < 1e-6:
+        #     return
+
+        # If transform matrix is too distorted, don't draw.
+        if morpho.matrix.thinness2x2(self.transform) < 1e-6:
             return
 
         view = camera.view

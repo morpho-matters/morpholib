@@ -340,3 +340,15 @@ def thinHeight2x2(M):
         return 0
     else:
         return abs(det/max(np.linalg.norm(M[:,0]), np.linalg.norm(M[:,1])))
+
+# Returns a relative measure of how "thin" the matrix transformation is.
+# A number in the range [0,1].
+# It applies the matrix M to the unit square, and then returns the ratio
+# of the resulting parallelogram's height to its width, where "width"
+# is taken to mean the parallelogram's longest side length.
+def thinness2x2(M):
+    det = np.linalg.det(M)
+    if det == 0:
+        return 0
+    else:
+        return abs(det/max(np.linalg.norm(M[:,0]), np.linalg.norm(M[:,1]))**2)
