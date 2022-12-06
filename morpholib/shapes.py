@@ -1679,17 +1679,26 @@ class Ellipse(morpho.Figure):
         if yradius is None:
             yradius = xradius
 
-        pos = morpho.Tweenable("pos", pos, tags=["complex", "position"])
-        xradius = morpho.Tweenable("xradius", xradius, tags=["scalar"])
-        yradius = morpho.Tweenable("yradius", yradius, tags=["scalar"])
-        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
-        color = morpho.Tweenable("color", list(color), tags=["color"])
-        fill = morpho.Tweenable("fill", list(fill), tags=["color"])
-        alphaEdge = morpho.Tweenable("alphaEdge", alphaEdge, tags=["scalar"])
-        alphaFill = morpho.Tweenable("alphaFill", alphaFill, tags=["scalar"])
-        alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
+        self.Tweenable("pos", pos, tags=["complex", "position"])
+        self.Tweenable("xradius", xradius, tags=["scalar"])
+        self.Tweenable("yradius", yradius, tags=["scalar"])
+        self.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
+        self.Tweenable("color", list(color), tags=["color"])
+        self.Tweenable("fill", list(fill), tags=["color"])
+        self.Tweenable("alphaEdge", alphaEdge, tags=["scalar"])
+        self.Tweenable("alphaFill", alphaFill, tags=["scalar"])
+        self.Tweenable("alpha", alpha, tags=["scalar"])
+        self.Tweenable("rotation", 0, tags=["scalar"])
+        self.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
-        self.update([pos, xradius, yradius, strokeWeight, color, fill, alphaEdge, alphaFill, alpha])
+
+    @property
+    def transform(self):
+        return self._transform
+
+    @transform.setter
+    def transform(self, value):
+        self._transform = morpho.matrix.array(value)
 
     # Setting `radius` property sets both `xradius` and `yradius` to
     # the same value.
@@ -1726,24 +1735,53 @@ class Ellipse(morpho.Figure):
         raise NotImplementedError
 
     def draw(self, camera, ctx):
+        # Don't draw if radii values are zero.
+        if self.xradius == 0 or self.yradius == 0:
+            return
+
+        # If determinant of the transform matrix is too small,
+        # don't attempt to draw.
+        if abs(np.linalg.det(self.transform)) < 1e-6:
+            return
+
         view = camera.view
 
-        X,Y = morpho.screenCoords(self.pos, view, ctx)
+        # X,Y = morpho.screenCoords(self.pos, view, ctx)
 
-        ctx.save()
-        ctx.translate(X,Y)
-        WIDTH = morpho.pixelWidth(self.xradius, view, ctx)
-        HEIGHT = morpho.pixelHeight(self.yradius, view, ctx)
+        # ctx.save()
+        # ctx.translate(X,Y)
+        # WIDTH = morpho.pixelWidth(self.xradius, view, ctx)
+        # HEIGHT = morpho.pixelHeight(self.yradius, view, ctx)
 
-        # Zero is not allowed. Constrain to 0.1
-        WIDTH = max(WIDTH, 0.1)
-        HEIGHT = max(HEIGHT, 0.1)
+        # # Zero is not allowed. Constrain to 0.1
+        # WIDTH = max(WIDTH, 0.1)
+        # HEIGHT = max(HEIGHT, 0.1)
 
-        ctx.scale(WIDTH, HEIGHT)
+        with morpho.pushPhysicalCoords(view, ctx):
+            # Translate ellipse center to corresponding point
+            ctx.translate(self.pos.real, self.pos.imag)
 
-        ctx.move_to(1,0)
-        ctx.arc(0,0, 1, 0, tau)
-        ctx.restore()
+            # Apply transformation tweenables
+            if not np.array_equal(self.transform, I2):
+                xx, xy, yx, yy = self.transform.flatten().tolist()
+                # Order is MATLAB-style: top-down, then left-right. So the matrix
+                # specified below is:
+                # [[xx  xy]
+                #  [yx  yy]]
+                mat = cairo.Matrix(xx, yx, xy, yy)
+                # Apply to context
+                ctx.transform(mat)
+            if self.rotation != 0:
+                ctx.rotate(self.rotation)
+
+            # Stretch unit circle into the correct ellipse
+            # dimensions
+            ctx.scale(self.xradius, self.yradius)
+
+            # Draw unit circle
+            ctx.move_to(1,0)
+            ctx.arc(0,0, 1, 0, tau)
+        # ctx.restore()
 
         ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
         ctx.fill_preserve()
