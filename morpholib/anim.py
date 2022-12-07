@@ -1252,11 +1252,9 @@ class SpaceCamera(Camera):
 
         super().__init__()
 
-        view = morpho.Tweenable("view", view, tags=["view", "scalar", "list", "nolinear"])
-        _orient = morpho.Tweenable("_orient", orient, tags=["nparray", "orient"])
-        _focus = morpho.Tweenable("_focus", focus, tags=["nparray"])
-
-        self.update([view, _orient, _focus])
+        self.Tweenable("view", view, tags=["view", "scalar", "list"])
+        self.Tweenable("_orient", orient, tags=["nparray", "orient"])
+        self.Tweenable("_focus", focus, tags=["nparray"])
 
         self.defaultTween = type(self).tweenZoom
 
@@ -1281,12 +1279,12 @@ class SpaceCamera(Camera):
 
     ### TWEEN METHODS ###
 
-    @morpho.TweenMethod
-    def tweenZoom(self, other, t):
-        tw = super().tweenZoom(other, t)
-        tw = morpho.Figure.tweenLinear(tw, other, t)
+    # @morpho.TweenMethod
+    # def tweenZoom(self, other, t):
+    #     tw = Camera.tweenZoom(self, other, t)
+    #     tw = morpho.Figure.tweenLinear(tw, other, t)
 
-        return tw
+    #     return tw
 
 
     # @morpho.TweenMethod
@@ -2208,13 +2206,14 @@ class SpaceLayer(Layer):
         # NOTE: The "start" and "end" parameters of the masklayer are ignored
         # when drawing with masking!
         if self.mask is None or not self.mask.viewtime(f, returnCamera=True).visible:
-            # Draw all non-primitive figures
-            for fig in figlist:
-                fig.draw(cam, ctx)
-            # Draw all primitive 2D figures
-            if self.poolPrimitives:
-                frame = Frame(primlist)
-                frame.draw(cam, ctx)
+            with cam._pushRotation(ctx):  # Apply camera rotation
+                # Draw all non-primitive figures
+                for fig in figlist:
+                    fig.draw(cam, ctx)
+                # Draw all primitive 2D figures
+                if self.poolPrimitives:
+                    frame = Frame(primlist)
+                    frame.draw(cam, ctx)
         else:  # There is a mask, so draw with masking!
             # # Extract surface's width and height
             # surface = ctx.get_target()
@@ -2228,13 +2227,14 @@ class SpaceLayer(Layer):
 
             # Draw all figures to this intermediate surface:
 
-            # Draw all non-primitive figures
-            for fig in figlist:
-                fig.draw(cam, self._ctx1)
-            # Draw all primitive 2D figures
-            if self.poolPrimitives:
-                frame = Frame(primlist)
-                frame.draw(cam, self._ctx1)
+            with cam._pushRotation(self._ctx1):  # Apply camera rotation
+                # Draw all non-primitive figures
+                for fig in figlist:
+                    fig.draw(cam, self._ctx1)
+                # Draw all primitive 2D figures
+                if self.poolPrimitives:
+                    frame = Frame(primlist)
+                    frame.draw(cam, self._ctx1)
 
             # # Setup another intermediate context for the mask layer
             # # to be drawn on
