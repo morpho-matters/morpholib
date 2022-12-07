@@ -1930,6 +1930,41 @@ class EllipticalArc(morpho.Figure):
         ctx.set_line_width(self.strokeWeight)
         ctx.stroke()
 
+# Animates an e-arc actor appearing by "growing in" from a single point.
+# The starting point is always the initial node in the sequence.
+# See also: morpho.actions.fadeIn()
+@EllipticalArc.action
+def growIn(arc, duration=30, atFrame=None, *, reverse=False):
+    if atFrame is None:
+        atFrame = arc.lastID()
+
+    arc0 = arc.last()
+    theta0, theta1 = arc0.theta0, arc0.theta1
+    arc0.visible = False
+    arc1 = arc.newkey(atFrame)
+    arc1.set(visible=True)
+    if reverse:
+        arc1.set(theta0=theta1)
+    else:
+        arc1.set(theta1=theta0)
+    arc2 = arc.newendkey(duration)
+    arc2.set(theta0=theta0, theta1=theta1)
+
+@EllipticalArc.action
+def shrinkOut(arc, duration=30, atFrame=None, *, reverse=False):
+    if atFrame is None:
+        atFrame = arc.lastID()
+
+    arc0 = arc.last()
+    theta0, theta1 = arc0.theta0, arc0.theta1
+    arc.newkey(atFrame)
+    arc1 = arc.newendkey(duration)
+    arc1.set(visible=False)
+    if reverse:
+        arc1.theta0 = theta1
+    else:
+        arc1.theta1 = theta0
+
 
 # Creates a segment of an ellipse: a rectangle in polar coordinate space.
 # Parameters are essentially identical to EllipticalArc, but with new parameter
