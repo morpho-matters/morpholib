@@ -445,16 +445,27 @@ class SavePoint(object):
 # into actual pixel coordinates. In a nutshell, pushPhysicalCoords() applies
 # a transformation which has the effect of converting physical coords to pixel
 # coords. Therefore it should be the last transformation applied in your chain.
-def pushPhysicalCoords(view, ctx):
+#
+# Setting optional save=False means a SavePoint object will not be created
+# and so you will have to manually save the previous CTM.
+#
+# Setting invert=True transforms the CTM in the opposite way.
+# Useful if needing to conjugate a CTM transformation by the
+# physical coordinate transformation.
+def pushPhysicalCoords(view, ctx, *, save=True, invert=False):
     a,b,c,d = view
 
     surface = ctx.get_target()
     WIDTH = surface.get_width()
     HEIGHT = surface.get_height()
 
-    savept = SavePoint(ctx)
-    ctx.scale(WIDTH/(b-a), HEIGHT/(d-c))
-    ctx.translate(-a, -c)
+    savept = SavePoint(ctx) if save else None
+    if invert:
+        ctx.translate(a, c)
+        ctx.scale((b-a)/WIDTH, (d-c)/HEIGHT)
+    else:
+        ctx.scale(WIDTH/(b-a), HEIGHT/(d-c))
+        ctx.translate(-a, -c)
 
     return savept
 

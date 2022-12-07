@@ -919,11 +919,10 @@ class Camera(morpho.Figure):
         if view is None:
             view = [-5,5, -5,5]
 
-        morpho.Figure.__init__(self)
+        super().__init__()
 
-        view = morpho.Tweenable("view", view, tags=["view", "scalar", "list"])
-
-        self.update([view])
+        self.Tweenable("view", view, tags=["view", "scalar", "list"])
+        self.Tweenable("rotation", 0, tags=["scalar"])
 
         self.defaultTween = type(self).tweenZoom
 
@@ -975,6 +974,12 @@ class Camera(morpho.Figure):
         a,b,c,d = self.view
         self.view = [a+x, b+x, c+y, d+y]
 
+        return self
+
+    # Rotates the camera counter-clockwise by the given
+    # angle (in radians).
+    def rotate(self, angle):
+        self.rotation += angle
         return self
 
     # Rescales the width of the viewbox to make it match
@@ -1140,6 +1145,27 @@ class Camera(morpho.Figure):
         raise NotImplementedError
 
 
+    # Rotates the coordinate system by the camera's rotation
+    # value. Returns a SavePoint object that can be used with
+    # a `with` statement:
+    #
+    #   with mycamera._pushRotation(ctx):
+    #       ...
+    def _pushRotation(self, ctx):
+        savept = morpho.SavePoint(ctx)
+        if self.rotation != 0:
+            # Calculate quantities useful for performing camera rotation
+            center = self.center()
+            rot = cmath.exp(self.rotation*1j)
+            translation = (1-rot)*center
+
+            morpho.pushPhysicalCoords(self.view, ctx, save=False)
+            ctx.translate(translation.real, translation.imag)
+            ctx.rotate(self.rotation)
+            morpho.pushPhysicalCoords(self.view, ctx, save=False, invert=True)
+        return savept
+
+
     ### TWEEN METHODS ###
 
     # Primary tween method for the Camera class. Zooms in an exponential fashion
@@ -1149,7 +1175,8 @@ class Camera(morpho.Figure):
     # over several orders of magnitude, it goes thru them at a uniform speed.
     @morpho.TweenMethod
     def tweenZoom(self, other, t):
-        tw = self.copy()
+        # tw = self.copy()
+        tw = morpho.Figure.tweenLinear(self, other, t, ignore=("view",))
         if self.view == other.view:
             return tw
 
@@ -1223,7 +1250,7 @@ class SpaceCamera(Camera):
         # elif type(focus) in (int, float, complex):
         #     focus = np.array([focus.real, focus.imag, 0], dtype=float)
 
-        morpho.Figure.__init__(self)
+        super().__init__()
 
         view = morpho.Tweenable("view", view, tags=["view", "scalar", "list", "nolinear"])
         _orient = morpho.Tweenable("_orient", orient, tags=["nparray", "orient"])
@@ -2016,8 +2043,9 @@ class Layer(object):
         # when drawing with masking!
         if self.mask is None or not self.mask.viewtime(f, returnCamera=True).visible:
             # Draw all figures
-            for fig in figlist:
-                fig.draw(cam, ctx)
+            with cam._pushRotation(ctx):  # Apply camera rotation
+                for fig in figlist:
+                    fig.draw(cam, ctx)
         else:  # Layer has a mask, so draw with masking
             # # Extract surface's width and height
             # surface = ctx.get_target()
@@ -2029,9 +2057,10 @@ class Layer(object):
 
             self._setupInternalSubcontexts(ctx)
 
-            # Draw all figures to this intermediate surface:
-            for fig in figlist:
-                fig.draw(cam, self._ctx1)
+            with cam._pushRotation(self._ctx1):  # Apply camera rotation
+                # Draw all figures to this intermediate surface:
+                for fig in figlist:
+                    fig.draw(cam, self._ctx1)
 
             # # Setup another intermediate context for the mask layer
             # # to be drawn on
@@ -3513,12 +3542,14 @@ class Animation(object):
             if mation.locaterLayer is not None:
                 # Search the layer list if given an int
                 if isinstance(mation.locaterLayer, int) or isinstance(mation.locaterLayer, float):
-                    view = mation.layers[int(mation.locaterLayer)].viewtime(mation.currentIndex)
+                    cam = mation.layers[int(mation.locaterLayer)].viewtime(mation.currentIndex, returnCamera=True)
                 else:
                     # Treat it as an actual layer object
-                    view = mation.locaterLayer.viewtime(mation.currentIndex)
+                    cam = mation.locaterLayer.viewtime(mation.currentIndex, returnCamera=True)
+                view = cam.view
 
                 z = physicalCoords(X, Y, view, mation.context)
+                z *= cmath.exp(-1j*cam.rotation)  # Adjust by camera rotation
 
                 # Round the real and imag components of z if needed.
                 if self.clickRound is not None:
