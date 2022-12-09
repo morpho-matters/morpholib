@@ -1345,6 +1345,14 @@ class FancyMultiText(MultiText, BoundingBoxFigure):
 
     corners = Text.corners
 
+    def width(self, view, ctx):
+        a,b,c,d = self.box(view, ctx)
+        return b - a
+
+    def height(self, view, ctx):
+        a,b,c,d = self.box(view, ctx)
+        return d - c
+
     # Moves the text group so that its total center is at the origin.
     # This makes it so the alignment respects the `pos` attribute.
     @typecastViewCtx
@@ -1476,6 +1484,14 @@ class FancyMultiPText(FancyMultiText):
     def box(self, pad=0):
         box = self.totalBox(pad=0)
         return self._alignBox(box, pad=pad)
+
+    def width(self):
+        a,b,c,d = self.box()
+        return b - a
+
+    def height(self):
+        a,b,c,d = self.box()
+        return d - c
 
     corners = PText.corners
 
