@@ -1174,7 +1174,7 @@ class Camera(morpho.Figure):
     # It's usually better than tweenLinear(), because if you zoom the camera
     # over several orders of magnitude, it goes thru them at a uniform speed.
     @morpho.TweenMethod
-    def tweenZoom(self, other, t, *, multiplier=1):
+    def tweenZoom(self, other, t):
         # tw = self.copy()
         tw = morpho.Figure.tweenLinear(self, other, t, ignore=("view",))
         if self.view == other.view:
@@ -1209,9 +1209,6 @@ class Camera(morpho.Figure):
             tw.view[i0] = a
             tw.view[i1] = b
 
-        if multiplier != 1:
-            tw.zoomOut(multiplier)
-
         return tw
 
     # Generates a modified version of the tweenZoom() tween method
@@ -1236,7 +1233,7 @@ class Camera(morpho.Figure):
 
         @morpho.TweenMethod(splitter=splitter)
         def multzoom(self, other, t):
-            return self.tweenZoom(other, t, multiplier=multiplierFunc(t))
+            return self.tweenZoom(other, t).zoomOut(multiplierFunc(t))
         return multzoom
 
     # Generates a modified version of the tweenZoom() tween method
