@@ -1850,12 +1850,15 @@ class Actor(object):
         f = currentIndex - self.owner.timeOffset
         fig = self.time(f)
 
-        # If f is a keyframe, make a copy before returning
-        # the keyfigure.
-        if f in self.timeline:
-            return fig.copy()
-        else:
-            return fig
+        # Make a copy in case fig is a keyfigure.
+        # FUTURE: Maybe find a way to avoid making a copy
+        # of a non-keyfigure since non-keyfigures don't need
+        # to be copied, and they are the vast majority of cases
+        # when now() is called. Unfortunately it's more complicated
+        # than merely testing if f in self.timeline since there
+        # are other cases where time() returns a keyfigure
+        # e.g. if f > self.lastID()
+        return fig.copy()
 
 
     # Should the final keyfigure persist after the final frame?
