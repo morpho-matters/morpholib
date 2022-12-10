@@ -333,6 +333,12 @@ my_figure.tween(my_other_figure, 0.5)
 # is possible. e.g. checks the start and end figures are of the same class.
 # It also automatically enforces the rule
 # that t=0 returns self.copy() and t=1 returns other.copy()
+#
+# Optionally, a splitter function can be assigned to the tween method
+# which enables the tween method to be split into two submethods at
+# a given t-value. It's a function that takes a t-value as input
+# and returns a tuple of two tween methods. Splitters are used to
+# create a new keyfigure seamlessly between two existing keyfigures.
 def tweenMethod(tween=None, *, splitter=None):
     # If no tween method to decorate, assume we're trying to
     # modify the default behavior of tweenMethod(), so return

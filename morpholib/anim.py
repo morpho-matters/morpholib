@@ -1174,7 +1174,7 @@ class Camera(morpho.Figure):
     # It's usually better than tweenLinear(), because if you zoom the camera
     # over several orders of magnitude, it goes thru them at a uniform speed.
     @morpho.TweenMethod
-    def tweenZoom(self, other, t):
+    def tweenZoom(self, other, t, *, multiplier=1):
         # tw = self.copy()
         tw = morpho.Figure.tweenLinear(self, other, t, ignore=("view",))
         if self.view == other.view:
@@ -1209,7 +1209,51 @@ class Camera(morpho.Figure):
             tw.view[i0] = a
             tw.view[i1] = b
 
+        if multiplier != 1:
+            tw.zoomOut(multiplier)
+
         return tw
+
+    # Generates a modified version of the tweenZoom() tween method
+    # that multiplies the zoom amount by the given multiplier function.
+    # Syntax:
+    #   mycamera.tweenMethod = mycamera.tweenZoomWithMultiplier(multfunc)
+    @classmethod
+    def tweenZoomWithMultiplier(cls, multiplierFunc):
+        def splitter(tmid):
+            one_minus_tmid = 1 - tmid
+            M_tmid = multiplierFunc(tmid)
+            def mult1(t):
+                return multiplierFunc(tmid*t) / M_tmid**t
+
+            def mult2(t):
+                return multiplierFunc(tmid + one_minus_tmid*t)/M_tmid**(1-t)
+
+            multzoom1 = cls.tweenZoomWithMultiplier(mult1)
+            multzoom2 = cls.tweenZoomWithMultiplier(mult2)
+
+            return (multzoom1, multzoom2)
+
+        @morpho.TweenMethod(splitter=splitter)
+        def multzoom(self, other, t):
+            return self.tweenZoom(other, t, multiplier=multiplierFunc(t))
+        return multzoom
+
+    # Generates a modified version of the tweenZoom() tween method
+    # in which the camera is zoomed out by the given factor halfway
+    # thru the tween. For example, setting
+    #   mycamera.tweenMethod = mycamera.tweenZoomJump(2)
+    # will cause the camera to zoom out by a factor of 2 halfway
+    # thru a tween between adjacent keyframes. This is useful
+    # if you want to have the camera move from one point to another,
+    # but have it zoom out and then back in again as it's traveling.
+    @classmethod
+    def tweenZoomJump(cls, midscale=1):
+
+        def multiplierFunc(t):
+            return 4*t*(1-t)*(midscale-1) + 1
+
+        return cls.tweenZoomWithMultiplier(multiplierFunc)
 
 # Alternate name for the Camera class for backward compatibility.
 View = Camera
