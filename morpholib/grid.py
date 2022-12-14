@@ -421,11 +421,22 @@ def handleDash(tweenmethod):
 # rotation = Path rotation about origin point (radians). Default: 0
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
 #
-# OTHER ATTRIBUTES
+# NON-TWEENABLE ATTRIBUTES
 # deadends = Set of ints specifying indices of seq that are "deadends". Meaning
 #            no line segment will be drawn from the deadend index to the next index.
 #            This is mainly used under the hood by helper functions like mathgrid()
 #            to speed up rendering.
+# cyclic = Boolean indicating whether start and end parameters can take on
+#          values outside the interval [0,1] by interpreting them
+#          cyclically. If set to True, then, for example, setting
+#          start=0.75 and end=1.25 will draw the path along the parameter
+#          interval [0, 0.25]U[0.75, 1].
+#          If end < start, the path will not be drawn.
+#          If start is an integer, it will be cyclically taken as 0.
+#          If end is an integer, it will be cyclically taken as 1.
+#          Also note that cyclic paths may not combine very well with
+#          fills, so it's best to only use cyclic paths on non-filled
+#          paths. Default: False
 class Path(morpho.Figure):
     def __init__(self, seq=None, width=3, color=(1,1,1), alpha=1):
         if seq is None:
@@ -479,6 +490,13 @@ class Path(morpho.Figure):
         # Set of indices that represent where a path should terminate.
         # self.deadends = set()
         self.NonTweenable("deadends", set())
+
+        # Boolean indicates whether parameter values can be taken
+        # outside the range [0,1] and interpreted cyclically.
+        # Setting this to True means, for example, that setting
+        # start=0.75 and end=1.25 will draw the path on the t-interval
+        # [0, 0.25]U[0.75,1]
+        self.NonTweenable("cyclic", False)
 
     # # Returns a (deep-ish) copy of the path
     # def copy(self):
@@ -759,6 +777,57 @@ class Path(morpho.Figure):
         # This method is admittedly a mess. It should really be cleaned up and
         # streamlined, but I'm so scared of breaking it! There are so many cases
         # to test and the Path figure is a critically important figure.
+
+        # Handle non-trivial cyclic case
+        if self.cyclic and not(0 <= self.start <= 1 and 0 <= self.end <= 1):
+            diff = self.end - self.start
+            if diff <= 0:
+                return
+
+            # Store original start and end values so that
+            # start and end can be temporarily changed if needed.
+            start_orig = self.start
+            end_orig = self.end
+            if diff >= 1:
+                # Draw the entire path by temporarily setting
+                # start=0 and end=1 and redrawing
+                self.start = 0
+                self.end = 1
+                self.draw(camera, ctx)
+                self.start = start_orig
+                self.end = end_orig
+                return
+
+            # Calculate local versions of start and end relative
+            # to the interval [0,1]
+            start_local = self.start - math.floor(self.start)
+            # end_local is 1 if end is an integer
+            end_local = self.end - (math.ceil(self.end)-1)
+            if start_local > end_local:
+                # Draw a two-segment path
+
+                # Draw first path component
+                self.start = 0
+                self.end = end_local
+                self.draw(camera, ctx)
+
+                # Draw second path component
+                self.start = start_local
+                self.end = 1
+                self.draw(camera, ctx)
+
+                # Restore original values
+                self.start = start_orig
+                self.end = end_orig
+                return
+            else:
+                self.start = start_local
+                self.end = end_local
+                self.draw(camera, ctx)
+                self.start = start_orig
+                self.end = end_orig
+                return
+
 
         # Check bounds of start and end
         if not(0 <= self.start <= 1):
