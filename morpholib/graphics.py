@@ -315,6 +315,9 @@ class Image(BoundingBoxFigure):
     # plus any optional padding. The sequence of the corners is
     # NW, SW, SE, NE.
     def corners(self, pad=0):
+        # NOTE: This method should actually be removable
+        # since its behavior should be identical to the corners()
+        # method inherited from BoundingBoxFigure.
         a,b,c,d = self.box(pad)
 
         NW = a + d*1j

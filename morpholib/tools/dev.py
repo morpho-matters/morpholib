@@ -43,10 +43,29 @@ def typecastViewCtx(method):
 # In the future, this base class may be used to further refactor
 # repeated code shared among Image, Text and their subclasses.
 class BoundingBoxFigure(morpho.Figure):
-    # Should return a list of the 4 corners of the bounding box
-    # in the following order: NW, SW, SE, NE
-    def corners(self):
+    # Needs to be implemented in subclasses
+    def box(self, *args, **kwargs):
         pass
+
+    # Returns the four physical corners of the figure's
+    # bounding box as complex numbers in the order
+    # NW, SW, SE, NE.
+    # Takes the same parameters as box().
+    def corners(self, *args, **kwargs):
+        a,b,c,d = self.box(*args, **kwargs)
+
+        NW = a + d*1j
+        SW = a + c*1j
+        SE = b + c*1j
+        NE = b + d*1j
+
+        return [NW,SW,SE,NE]
+
+    # Returns the physical center of the figure's
+    # bounding box. Takes the same parameters as box().
+    def center(self, *args, **kwargs):
+        NW, SW, SE, NE = self.corners(*args, **kwargs)
+        return mean([NW, SE])
 
     # Returns the leftmost position in the middle of the
     # bounding box.

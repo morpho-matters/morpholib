@@ -245,6 +245,9 @@ class Text(BoundingBoxFigure):
     # NW, SW, SE, NE.
     @typecastViewCtx
     def corners(self, view, ctx, pad=0):
+        # NOTE: This method should actually be removable
+        # since its behavior should be identical to the corners()
+        # method inherited from BoundingBoxFigure.
         a,b,c,d = self.box(view, ctx, pad)
 
         NW = a + d*1j
@@ -572,6 +575,9 @@ class PText(Text):
     # Note: Since the physical width is merely estimated,
     # x-coordinates of the corners may be slightly off.
     def corners(self, pad=0):
+        # NOTE: This method should actually be removable
+        # since its behavior should be identical to the corners()
+        # method inherited from BoundingBoxFigure.
         a,b,c,d = self.box(pad)
 
         NW = a + d*1j
