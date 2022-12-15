@@ -426,17 +426,6 @@ def handleDash(tweenmethod):
 #            no line segment will be drawn from the deadend index to the next index.
 #            This is mainly used under the hood by helper functions like mathgrid()
 #            to speed up rendering.
-# cyclic = Boolean indicating whether start and end parameters can take on
-#          values outside the interval [0,1] by interpreting them
-#          cyclically. If set to True, then, for example, setting
-#          start=0.75 and end=1.25 will draw the path along the parameter
-#          interval [0, 0.25]U[0.75, 1].
-#          If end < start, the path will not be drawn.
-#          If start is an integer, it will be cyclically taken as 0.
-#          If end is an integer, it will be cyclically taken as 1.
-#          Also note that cyclic paths may not combine very well with
-#          fills, so it's best to only use cyclic paths on non-filled
-#          paths. Default: False
 class Path(morpho.Figure):
     def __init__(self, seq=None, width=3, color=(1,1,1), alpha=1):
         if seq is None:
@@ -490,13 +479,6 @@ class Path(morpho.Figure):
         # Set of indices that represent where a path should terminate.
         # self.deadends = set()
         self.NonTweenable("deadends", set())
-
-        # Boolean indicates whether parameter values can be taken
-        # outside the range [0,1] and interpreted cyclically.
-        # Setting this to True means, for example, that setting
-        # start=0.75 and end=1.25 will draw the path on the t-interval
-        # [0, 0.25]U[0.75,1]
-        self.NonTweenable("cyclic", False)
 
     # # Returns a (deep-ish) copy of the path
     # def copy(self):
@@ -778,8 +760,12 @@ class Path(morpho.Figure):
         # streamlined, but I'm so scared of breaking it! There are so many cases
         # to test and the Path figure is a critically important figure.
 
-        # Handle non-trivial cyclic case
-        if self.cyclic and not(0 <= self.start <= 1 and 0 <= self.end <= 1):
+        # Don't bother drawing an invisible path.
+        if self.alpha == 0:
+            return
+
+        # Handle out-of-bounds start and end
+        if not(0 <= self.start <= 1 and 0 <= self.end <= 1):
             diff = self.end - self.start
             if diff <= 0:
                 return
@@ -827,17 +813,6 @@ class Path(morpho.Figure):
                 self.start = start_orig
                 self.end = end_orig
                 return
-
-
-        # Check bounds of start and end
-        if not(0 <= self.start <= 1):
-            raise ValueError("start parameter must be in the range [0,1] (inclusive).")
-        if not(0 <= self.end <= 1):
-            raise ValueError("end parameter must be in the range [0,1] (inclusive).")
-
-        # Don't bother drawing an invisible path.
-        if self.alpha == 0:
-            return
 
         # Handle trivial length path and start >= end.
         len_seq = len(self.seq)
