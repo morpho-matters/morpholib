@@ -4,6 +4,7 @@ mo = morpho
 import morpholib.tools.color, morpholib.anim
 from morpholib.matrix import mat
 from morpholib.tools.basics import *
+from morpholib.tools.dev import drawOutOfBoundsStartEnd
 
 from morpholib import object_hasattr
 
@@ -766,53 +767,8 @@ class Path(morpho.Figure):
 
         # Handle out-of-bounds start and end
         if not(0 <= self.start <= 1 and 0 <= self.end <= 1):
-            diff = self.end - self.start
-            if diff <= 0:
-                return
-
-            # Store original start and end values so that
-            # start and end can be temporarily changed if needed.
-            start_orig = self.start
-            end_orig = self.end
-            if diff >= 1:
-                # Draw the entire path by temporarily setting
-                # start=0 and end=1 and redrawing
-                self.start = 0
-                self.end = 1
-                self.draw(camera, ctx)
-                self.start = start_orig
-                self.end = end_orig
-                return
-
-            # Calculate local versions of start and end relative
-            # to the interval [0,1]
-            start_local = self.start - math.floor(self.start)
-            # end_local is 1 if end is an integer
-            end_local = self.end - (math.ceil(self.end)-1)
-            if start_local > end_local:
-                # Draw a two-segment path
-
-                # Draw first path component
-                self.start = 0
-                self.end = end_local
-                self.draw(camera, ctx)
-
-                # Draw second path component
-                self.start = start_local
-                self.end = 1
-                self.draw(camera, ctx)
-
-                # Restore original values
-                self.start = start_orig
-                self.end = end_orig
-                return
-            else:
-                self.start = start_local
-                self.end = end_local
-                self.draw(camera, ctx)
-                self.start = start_orig
-                self.end = end_orig
-                return
+            drawOutOfBoundsStartEnd(self, camera, ctx)
+            return
 
         # Handle trivial length path and start >= end.
         len_seq = len(self.seq)

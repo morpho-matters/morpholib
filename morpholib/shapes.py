@@ -2,6 +2,7 @@
 import morpholib as morpho
 import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
+from morpholib.tools.dev import drawOutOfBoundsStartEnd
 from morpholib.matrix import mat
 
 from morpholib import object_hasattr
@@ -741,12 +742,6 @@ class Spline(morpho.Figure):
         if self.data.shape[0] < 2:
             return
 
-        # Check bounds of start and end
-        if not(0 <= self.start <= 1):
-            raise ValueError("start parameter must be in the range [0,1] (inclusive).")
-        if not(0 <= self.end <= 1):
-            raise ValueError("end parameter must be in the range [0,1] (inclusive).")
-
         # Handle trivial length path and start >= end.
         len_seq = self.length()
         maxIndex = len_seq - 1
@@ -760,6 +755,11 @@ class Spline(morpho.Figure):
 
         # If transform matrix is too distorted, don't draw.
         if morpho.matrix.thinness2x2(self.transform) < 1e-6:
+            return
+
+        # Handle out-of-bounds start and end
+        if not(0 <= self.start <= 1 and 0 <= self.end <= 1):
+            drawOutOfBoundsStartEnd(self, camera, ctx)
             return
 
         # Compute index bounds

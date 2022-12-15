@@ -2,6 +2,8 @@
 This submodule is mainly for internal use by the
 classes/functions of Morpho and probably should not
 be used by the regular end-user.
+
+An assortment of useful functions and classes.
 '''
 
 import morpholib as morpho
@@ -110,3 +112,52 @@ class BoundingBoxFigure(morpho.Figure):
     def southeast(self, *args, **kwargs):
         NW, SW, SE, NE = self.corners(*args, **kwargs)
         return SE
+
+# Draw a figure whose start or end attribute is outside the interval
+# [0,1] according to the cyclic rules.
+def drawOutOfBoundsStartEnd(fig, camera, ctx):
+    diff = fig.end - fig.start
+    if diff <= 0:
+        return
+
+    # Store original start and end values so that
+    # start and end can be temporarily changed if needed.
+    start_orig = fig.start
+    end_orig = fig.end
+    if diff >= 1:
+        # Draw the entire path by temporarily setting
+        # start=0 and end=1 and redrawing
+        fig.start = 0
+        fig.end = 1
+        fig.draw(camera, ctx)
+        fig.start = start_orig
+        fig.end = end_orig
+        return
+
+    # Calculate local versions of start and end relative
+    # to the interval [0,1]
+    start_local = fig.start - math.floor(fig.start)
+    # end_local is 1 if end is an integer
+    end_local = fig.end - (math.ceil(fig.end)-1)
+    if start_local > end_local:
+        # Draw a two-segment path
+
+        # Draw first path component
+        fig.start = 0
+        fig.end = end_local
+        fig.draw(camera, ctx)
+
+        # Draw second path component
+        fig.start = start_local
+        fig.end = 1
+        fig.draw(camera, ctx)
+
+        # Restore original values
+        fig.start = start_orig
+        fig.end = end_orig
+    else:
+        fig.start = start_local
+        fig.end = end_local
+        fig.draw(camera, ctx)
+        fig.start = start_orig
+        fig.end = end_orig
