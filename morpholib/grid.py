@@ -951,7 +951,7 @@ class Path(morpho.Figure):
             # to eliminate possible precision issues when calculating
             # tip direction.
             if shift < 0 and abs(-shift/diff_length-1) < 1e-9:
-                shift += 1e-9*diff_length
+                shift += 1e-8*diff_length
 
             # Reverse tip direction if the final node is going to be
             # shifted behind the penultimate node.
@@ -990,7 +990,7 @@ class Path(morpho.Figure):
             # to eliminate possible precision issues when calculating
             # tip direction.
             if shift < 0 and abs(-shift/diff_length-1) < 1e-9:
-                shift += 1e-9*diff_length
+                shift += 1e-8*diff_length
 
             # Reverse tip direction if the final node is going to be
             # shifted behind the penultimate node.
