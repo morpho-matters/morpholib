@@ -481,6 +481,9 @@ class Path(morpho.Figure):
         # self.deadends = set()
         self.NonTweenable("deadends", set())
 
+        self.NonTweenable("headExternal", False)
+        self.NonTweenable("tailExternal", False)
+
     # # Returns a (deep-ish) copy of the path
     # def copy(self):
     #     # C = morpho.Figure.copy(self)
@@ -510,6 +513,17 @@ class Path(morpho.Figure):
     def tipSize(self, value):
         self.headSize = value
         self.tailSize = value
+
+    @property
+    def tipExternal(self):
+        if self.headExternal != self.tailExternal:
+            raise ValueError("headExternal and tailExternal have different truth values.")
+        return self.headExternal
+
+    @tipExternal.setter
+    def tipExternal(self, value):
+        self.headExternal = value
+        self.tailExternal = value
 
     # Applies all of the transformation attributes
     # origin, rotation, transform
@@ -909,38 +923,82 @@ class Path(morpho.Figure):
             back.width += 2*self.outlineWidth
 
             # Handle head
-            diff = back.seq[-1] - back.seq[-2]
-            unit = diff/abs(diff) if diff != 0 else 1
+            diff = back.seq[-1] - back.seq[-2]  # Final segment vector
+            diff_length = abs(diff)
+            unit = diff/abs(diff) if diff != 0 else 1  # Endpoint direction vector
             UNIT = unit.real/xRatio + 1j*unit.imag/yRatio
-            UNIT = UNIT/abs(UNIT)
-            dL = self.outlineWidth*UNIT
+            UNIT = UNIT/abs(UNIT)  # Pixel space direction vector
+            dL = self.outlineWidth*UNIT  # Pixel outline thickness vector
             dX, dY = dL.real, dL.imag
             dx = morpho.physicalWidth(dX, view, ctx)
             dy = morpho.physicalHeight(dY, view, ctx)
-            dl = abs(dx + 1j*dy)
+            dl = abs(dx + 1j*dy)  # Outline thickness physical vector
             if headDraw:
                 sign = sgn(self.headSize)
                 back.headSize += 4*root3over2*self.outlineWidth*sign
-                back.seq[-1] += sign*2*dl*unit
+                if self.headExternal:
+                    shift = -sign*dl
+                else:
+                    shift = sign*2*dl
             else:
-                back.seq[-1] += dl*unit
+                shift = dl
+            # `shift` is the amount to shift the final node of the
+            # outline path so that the outline evenly covers the
+            # original path.
+
+            # If the final node will be shifted basically on top of
+            # the penultimate node, slightly perturb the shift value
+            # to eliminate possible precision issues when calculating
+            # tip direction.
+            if shift < 0 and abs(-shift/diff_length-1) < 1e-9:
+                shift += 1e-9*diff_length
+
+            # Reverse tip direction if the final node is going to be
+            # shifted behind the penultimate node.
+            if shift < 0 and abs(shift) > diff_length:
+                back.headSize *= -1
+
+            # Shift the final node by the shift amount.
+            back.seq[-1] += shift*unit
 
             # Handle tail
-            diff = back.seq[0] - back.seq[1]
-            unit = diff/abs(diff) if diff != 0 else 1
+            diff = back.seq[0] - back.seq[1]  # Initial segment vector
+            diff_length = abs(diff)
+            unit = diff/abs(diff) if diff != 0 else 1  # Startpoint direction vector
             UNIT = unit.real/xRatio + 1j*unit.imag/yRatio
-            UNIT = UNIT/abs(UNIT)
-            dL = self.outlineWidth*UNIT
+            UNIT = UNIT/abs(UNIT)  # Pixel space direction vector
+            dL = self.outlineWidth*UNIT  # Pixel outline thickness vector
             dX, dY = dL.real, dL.imag
             dx = morpho.physicalWidth(dX, view, ctx)
             dy = morpho.physicalHeight(dY, view, ctx)
-            dl = abs(dx + 1j*dy)
+            dl = abs(dx + 1j*dy)  # Outline thickness physical vector
             if tailDraw:
                 sign = sgn(self.tailSize)
                 back.tailSize += 4*root3over2*self.outlineWidth*sign
-                back.seq[0] += sign*2*dl*unit
+                if self.tailExternal:
+                    shift = -sign*dl
+                else:
+                    shift = sign*2*dl
             else:
-                back.seq[0] += dl*unit
+                shift = dl
+            # `shift` is the amount to shift the initial node of the
+            # outline path so that the outline evenly covers the
+            # original path.
+
+            # If the initial node will be shifted basically on top of
+            # the next node, slightly perturb the shift value
+            # to eliminate possible precision issues when calculating
+            # tip direction.
+            if shift < 0 and abs(-shift/diff_length-1) < 1e-9:
+                shift += 1e-9*diff_length
+
+            # Reverse tip direction if the final node is going to be
+            # shifted behind the penultimate node.
+            if shift < 0 and abs(shift) > diff_length:
+                back.tailSize *= -1
+
+            # Shift the initial node by the shift amount.
+            back.seq[0] += shift*unit
 
             # Dash adjustment
             if len(back.dash) > 0:
@@ -1039,26 +1097,27 @@ class Path(morpho.Figure):
             X,Y = morpho.screenCoords(head, view, ctx)
             # x,y = morpho.screenCoords(self.seq[final], view, ctx)
             pxlA = X + 1j*Y
+            if self.headExternal:
+                pxlA += root3over2*self.headSize*DIR
+                base = self.seq[final]
+            else:
+                # Adjust the final node temporarily to be located at the
+                # base of the arrowhead.
+                D_head = -self.headSize*root3over2*DIR
+                BASE = pxlA + D_head
+                base = morpho.physicalCoords(BASE.real, BASE.imag, view, ctx)
+
+                # Undo transforms
+                base = (mat_inv*(base - origin))/rot
+
+            oldHead = self.seq[final]
+            self.seq[final] = base
+
+            # Define the other two pixels and assemble them
             pxlB = pxlA + self.headSize*DIR*ccw150
             pxlC = pxlA + self.headSize*DIR*cw150
 
             headVertices = (pxlA, pxlB, pxlC)
-
-            # cairo_triangle(ctx, pxlA,pxlB,pxlC, RGBA_end)
-
-            # Adjust the final node temporarily to be located at the
-            # base of the arrowhead.
-            D_head = -self.headSize*root3over2*DIR
-            BASE = pxlA + D_head
-            base = morpho.physicalCoords(BASE.real, BASE.imag, view, ctx)
-
-            # Undo transforms
-            base = (mat_inv*(base - origin))/rot
-
-            # dhead = xRatio*D_head.real + yRatio*D_head.imag*1j
-            oldHead = self.seq[final]
-            self.seq[final] = base
-            # self.seq[final] += dhead
 
         if tailDraw:
             head = self.seq[init+1]
@@ -1079,26 +1138,27 @@ class Path(morpho.Figure):
             X,Y = morpho.screenCoords(tail, view, ctx)
             # x,y = morpho.anim.screenCoords(self.seq[init], view, ctx)
             pxlA = X + 1j*Y
+            if self.tailExternal:
+                pxlA -= root3over2*self.tailSize*DIR
+                base = self.seq[init]
+            else:
+                # Adjust the starting node temporarily to be located
+                # at the base of the arrowhead.
+                D_tail = self.tailSize*root3over2*DIR
+                BASE = pxlA + D_tail
+                base = morpho.physicalCoords(BASE.real, BASE.imag, view, ctx)
+
+                # Undo transforms
+                base = (mat_inv*(base - origin))/rot
+
+            oldTail = self.seq[init]
+            self.seq[init] = base
+
             pxlB = pxlA - self.tailSize*DIR*ccw150
             pxlC = pxlA - self.tailSize*DIR*cw150
 
+            # Define the other two pixels and assemble them
             tailVertices = (pxlA, pxlB, pxlC)
-
-            # cairo_triangle(ctx, pxlA,pxlB,pxlC, RGBA_start)
-
-            # Adjust the starting node temporarily to be located
-            # at the base of the arrowhead.
-            D_tail = self.tailSize*root3over2*DIR
-            BASE = pxlA + D_tail
-            base = morpho.physicalCoords(BASE.real, BASE.imag, view, ctx)
-
-            # Undo transforms
-            base = (mat_inv*(base - origin))/rot
-
-            # dtail = xRatio*D_tail.real + yRatio*D_tail.imag*1j
-            oldTail = self.seq[init]
-            self.seq[init] = base
-            # self.seq[init] += dtail
 
         # Initialize starting point
         zn = self.seq[init]
