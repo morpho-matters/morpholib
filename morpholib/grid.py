@@ -3797,11 +3797,16 @@ class Arrow(morpho.Figure):
         self.extendState([tail, head, color, alpha, width, headSize, tailSize, dash,
             outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform])
 
+        self.NonTweenable("headExternal", False)
+        self.NonTweenable("tailExternal", False)
+
         # self.dash = []
 
         # Initialize internal path figure
         # Todo: This could probably be replaced with
         # self._updateInternalPath()
+        # Actually, it may not be needed at all, as
+        # _updateInternalPath() is always called upon draw()
         self.path = Path([tail, head])
         self.path.color = self.color
         self.path.alpha = self.alpha
@@ -3839,6 +3844,16 @@ class Arrow(morpho.Figure):
         self.headSize = value
         self.tailSize = value
 
+    @property
+    def tipExternal(self):
+        if self.headExternal != self.tailExternal:
+            raise ValueError("headExternal and tailExternal have different truth values.")
+        return self.headExternal
+
+    @tipExternal.setter
+    def tipExternal(self, value):
+        self.headExternal = value
+        self.tailExternal = value
 
 
     # def copy(self):
@@ -3908,6 +3923,8 @@ class Arrow(morpho.Figure):
         self.path.rotation = self.rotation
         self.path.transform = self.transform
         self.path.dash = self.dash
+        self.path.headExternal = self.headExternal
+        self.path.tailExternal = self.tailExternal
 
     def toPath(self):
         self._updateInternalPath()
