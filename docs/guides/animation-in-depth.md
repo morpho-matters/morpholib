@@ -65,7 +65,7 @@ The code reveals how you set a tween method. You assign it to a figure's ``tween
 > mypoint.first().tweenMethod = mypoint.figureType.tweenSpiral
 > ```
 
-You can change the tween method for a grid as well, but the syntax is not so easy. The easiest way is to set it via a parameter in ``mathgrid()``
+You can change the tween method for a grid as well, but it's a little trickier because a mathgrid is a composite figure made up of subpaths. The easiest way is to set it via a parameter in ``mathgrid()`` when initially constructing the grid:
 
 ```python
 # Setup a standard grid, but with the spiral
@@ -82,7 +82,11 @@ movie = morpho.Animation(mygrid)
 movie.play()
 ```
 
-Unfortunately, it's not very easy to change the tween method of a grid after once setting it via ``mathgrid()``. In short, it's because a grid is a *composite* figure called a *Frame* which consists of multiple figures grouped together. To change the tween method of the whole requires changing the tween methods of the individual constituent figures, a process which is cumbersome and beyond the scope of this guide. For now, just remember that the tween method (and also transition) of a grid can only be set via parameters passed to the ``mathgrid()`` function.
+> **New in v0.6.1:** A mathgrid's tween method can be changed after construction, but you have to use the ``all`` property like this:
+> ```python
+> mygrid.all.tweenMethod = morpho.grid.Path.tweenSpiral
+> ```
+> This will propagate the tween method change to all the component paths inside the mathgrid figure.
 
 ### Pivot Tween
 
