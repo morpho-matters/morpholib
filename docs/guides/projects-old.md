@@ -5,8 +5,6 @@ title: Morpho Guide -- Making Longer-Form Videos
 
 # Morpho Guide: Making Longer-Form Videos
 
-> **Note:** This guide is only for Morpho 0.6.1+. For older versions, see [this guide](https://morpho-matters.github.io/morpholib/guides/projects-old).
-
 In this guide, we'll go over how to use Morpho to create longer animations and entire videos.
 
 Now, since I really only have my own use case to go on for now, I'll mostly just be explaining my own personal process for video creation here. However, I think Morpho is a flexible enough tool to support multiple video-making schemes, and so I hope that by presenting my scheme, you'll get enough inspiration to come up with your own. You should absolutely modify, or even totally replace, my scheme to suit whatever your particular needs are.
@@ -45,6 +43,11 @@ morpho.transition.default = quadease
 # Note you may have to install this font separately onto your system
 # if you want to use it.
 morpho.text.defaultFont = "CMU serif"
+
+# Basic unit vectors for 3D animations
+ihat = mo.array([1,0,0])
+jhat = mo.array([0,1,0])
+khat = mo.array([0,0,1])
 
 # Particular colors are named here.
 # Feel free to customize to your heart's content.
@@ -224,21 +227,21 @@ As my videos are typically narration-driven with animation executed on cue accor
 # Define background grid
 grid = mo.grid.mathgrid(
     view=[-9,9, -5,5],
-    steps=1,
+    hsteps=1, vsteps=1,
     hcolor=[0,0.6,0], vcolor=[0,0,1],
     axesColor=[0,0,0],
-    axisWidth=7
+    xaxisWidth=7, yaxisWidth=7
     )
 ```
 > **Note:** Remember `mo` is a shorthand for `morpho`, as we defined in the header.
 
-Now we'll turn it into an actor and add it to `mainlayer` using the `affix()` method:
+Now we'll turn it into an actor and add it to `mainlayer` using the `merge()` method:
 ```python
 grid = mo.Actor(grid)
-mainlayer.affix(grid)
+mainlayer.merge(grid)
 ```
 
-The `affix()` method adds an actor to a layer and places it at the current end of the global animation timeline. `affix()` is handy to use in longer-form animations because it allows you to add actors to a layer one at a time instead of having to input the complete list of actors all at once when defining the layer. It also allows you to easily control and organize when actors first appear in an animation because it always places the actor at the current final frame of the animation.
+The `merge()` method is handy to use in longer-form animations because it allows you to add actors to the layer one at a time instead of having to input the complete list of actors all at once when defining the layer. The `merge()` method also allows you to place actors at different points on the timeline, but more on that later.
 
 Next, we'll create the line and animate it being drawn on the grid. We can define the line itself with `realgraph()`, but then we'll also set the `end` attribute of the resulting path figure to 0 so that we can update it to `end=1` in a new keyframe. This will create the drawing animation we want.
 
@@ -247,15 +250,22 @@ Next, we'll create the line and animate it being drawn on the grid. We can defin
 curve = mo.graph.realgraph(lambda x: 2*x + 1, -3, 3)
 curve.set(width=5, color=[1,0,0], end=0)
 curve = mo.Actor(curve)
-mainlayer.affix(curve)
+mainlayer.merge(curve)
 curve.newendkey(30).end = 1  # Draw curve over 1 second (30 frames)
 ```
 
 > **Note:** The `end` attribute of a Path is a number between 0 and 1 that controls where along the path it ends. So having the path transition from `end=0` to `end=1` causes the path to gradually be drawn out starting from its initial node.
 
-Now we'll add in the text label:
+Now we'll add the text label. However, since we want this text label to appear AFTER the line has finished being drawn, we need to first store the frame number where the line finished animating. Since this corresponds to what is currently the end of the animation, we can grab this frame number by grabbing the current final frame (a.k.a. "index" or "ID") of the animation as a whole. Let's store this frame index value in a variable called `time`:
 
 ```python
+time = mation.lastID()
+```
+
+Now we define the text label itself:
+
+```python
+time = mation.lastID()
 # Create "Linear" label.
 # MultiText is used so that we can morph the text later
 label = mo.text.MultiText("Linear",
@@ -263,11 +273,11 @@ label = mo.text.MultiText("Linear",
     )
 ```
 
-Note how we set its `alpha` value to 0 so that it starts out invisible. We'll later update `alpha` to be 1 in a future keyframe so we get a *fade-in* animation. But first, we need to convert `label` into an Actor and affix it to `mainlayer`:
+Note how we set its `alpha` value to 0 so that it starts out invisible. We'll later update `alpha` to be 1 in a future keyframe so we get a *fade-in* animation. But first, we need to convert `label` into an Actor and add it to `mainlayer` at frame index `time`:
 
 ```python
 label = mo.Actor(label)
-mainlayer.affix(label)
+mainlayer.merge(label, atFrame=time)
 ```
 
 And now we'll create a new keyframe for the label where we set `alpha=1` so we get the fade-in effect:
@@ -288,28 +298,29 @@ So here's our first chunk in its entirety:
 # Define background grid
 grid = mo.grid.mathgrid(
     view=[-9,9, -5,5],
-    steps=1,
+    hsteps=1, vsteps=1,
     hcolor=[0,0.6,0], vcolor=[0,0,1],
     axesColor=[0,0,0],
-    axisWidth=7
+    xaxisWidth=7, yaxisWidth=7
     )
 grid = mo.Actor(grid)
-mainlayer.affix(grid)
+mainlayer.merge(grid)
 
 # Define curve to initially be a line
 curve = mo.graph.realgraph(lambda x: 2*x + 1, -3, 3)
 curve.set(width=5, color=[1,0,0], end=0)
 curve = mo.Actor(curve)
-mainlayer.affix(curve)
+mainlayer.merge(curve)
 curve.newendkey(30).end = 1  # Draw curve over 1 second
 
+time = mation.lastID()
 # Create "Linear" label.
 # MultiText is used so that we can morph the text later
 label = mo.text.MultiText("Linear",
     pos=1+0.5j, size=64, color=[1,0,0], alpha=0
     )
 label = mo.Actor(label)
-mainlayer.affix(label)
+mainlayer.merge(label, atFrame=time)
 label.newendkey(20).alpha = 1
 
 mation.endDelayUntil()
@@ -324,17 +335,24 @@ In this chunk we'll be morphing the line to a parabola, so begin this chunk with
 print("Morph line to parabola:", mation.seconds())
 ```
 
-To get the morphing animation to begin at the start of this chunk, we need to create a new key at what is currently the end of the animation. This can be done with an empty call to `newendkey()`:
+Next, store the new current final frame number of the animation into the variable `time`, again.
+```python
+time = mation.lastID()
+```
+We will need to do this at the beginning of each successive chunk from now on because we are no longer at the beginning of the animation and we need to tell `mainlayer` where to begin animating the new actors we define here.
+
+To get the morphing animation to begin at the start of this chunk, we need to create a new key for the line at frame `time`:
 
 ```python
-curve.newendkey()  # Make a new key at the current animation end frame
+time = mation.lastID()
+curve.newkey(time)
 ```
 
 Now we'll create the parabola figure
 
 ```python
-curve.newendkey()
-
+time = mation.lastID()
+curve.newkey(time)
 quadratic = mo.graph.realgraph(lambda x: x**2, -3, 3)
 quadratic.set(width=5, color=violet)
 ```
@@ -342,55 +360,27 @@ quadratic.set(width=5, color=violet)
 and then assign this curve to a new keyfigure of `curve` to have it morph into the parabola:
 
 ```python
-curve.newendkey()
-
+time = mation.lastID()
+curve.newkey(time)
 quadratic = mo.graph.realgraph(lambda x: x**2, -3, 3)
 quadratic.set(width=5, color=violet)
 curve.newendkey(30, quadratic)
 ```
 
-Note that the initial `curve.newendkey()` is important here, as it defines the starting point for the morphing animation. If we omitted it, our line figure would morph into a parabola too soon: it would start morphing *immediately* after its drawing animation finished during the previous chunk while the "Linear" label is still fading in. But including the line `curve.newendkey()` here causes the line to remain static on screen after its initial animation finishes, until the start of this new chunk.
+Note that the line `curve.newkey(time)` is important here, as it defines the starting point for the morphing animation. If we omitted it, our line figure would morph into a parabola too soon: it would start morphing *immediately* after its drawing animation finished during the previous chunk while the "Linear" label is still fading in. But including the line `curve.newkey(time)` here causes the line to remain static on screen after its initial animation finishes, until the start of this new chunk.
 
-All right, now let's also have the "Linear" label morph into the word "Quadratic" at the same time while the line is morphing into a parabola. To ensure the label starts morphing exactly when the line starts morphing, we include an empty `newendkey()` call for the label actor at the same place where we called it for the `curve` actor:
-
-```python
-curve.newendkey()
-label.newendkey()  # label will morph when curve morphs
-
-quadratic = mo.graph.realgraph(lambda x: x**2, -3, 3)
-quadratic.set(width=5, color=violet)
-curve.newendkey(30, quadratic)
-```
-
-Then afterward, make a new key for the label with a new `text` string:
+All right, now let's also have the "Linear" label morph into the word "Quadratic" at the same time while the line is morphing into a parabola. Let's also change its position and color while we're at it. To do it, add the following two lines:
 
 ```python
-curve.newendkey()
-label.newendkey()  # label will morph when curve morphs
-
-quadratic = mo.graph.realgraph(lambda x: x**2, -3, 3)
-quadratic.set(width=5, color=violet)
-curve.newendkey(30, quadratic)
-
-label.newendkey(30).text = "Quadratic"  # New keyfigure with new text string
-```
-
-We can also change its position and color while we're at it by changing the line to this:
-
-```python
+label.newkey(time)  # Don't start morphing until this chunk starts
 label.newendkey(30).set(text="Quadratic", pos=2.5+0.5j, color=violet)
 ```
 
-Playing the animation, you should see the line and label morph together at the same time. If instead, you wanted the label to start morphing *after* the line finishes morphing into a parabola, just move the `label.newendkey()` line to a point *after* the code defining the curve animation:
+Playing the animation, you should see the line and label morph together at the same time. If instead you wanted the label to morph after the line finishes morphing into a parabola, this can be accomplished by adding a new `time = mation.lastID()` line immediately before the new label code:
 
 ```python
-curve.newendkey()
-
-quadratic = mo.graph.realgraph(lambda x: x**2, -3, 3)
-quadratic.set(width=5, color=violet)
-curve.newendkey(30, quadratic)
-
-label.newendkey()  # It's over here now
+time = mation.lastID()  # Label morphs after curve finishes morphing
+label.newkey(time)
 label.newendkey(30).set(text="Quadratic", pos=2.5+0.5j, color=violet)
 ```
 
@@ -399,13 +389,13 @@ Now we end off the chunk with another placeholder pause. Here's the code for thi
 ```python
 print("Morph to quadratic:", mation.seconds())
 
-curve.newendkey()
-label.newendkey()
-
+time = mation.lastID()
+curve.newkey(time)
 quadratic = mo.graph.realgraph(lambda x: x**2, -3, 3)
 quadratic.set(width=5, color=violet)
 curve.newendkey(30, quadratic)
 
+label.newkey(time)  # Don't start morphing until this chunk starts
 label.newendkey(30).set(text="Quadratic", pos=2.5+0.5j, color=violet)
 
 mation.endDelayUntil()
@@ -418,14 +408,14 @@ We can keep adding new chunks in the same way as we added the previous chunk---h
 ```python
 print("Fade everything out:", mation.seconds())
 
-# Create initial keyfigures
-curve.newendkey()
-label.newendkey()
+time = mation.lastID()
 
 # Fade curve
+curve.newkey(time)
 curve.newendkey(30).alpha = 0
 
 # Simultaneously fade the label
+label.newkey(time)
 label.newendkey(30).alpha = 0
 ```
 
@@ -518,9 +508,92 @@ mation.export("./animation.mp4", scale=1)
 
 
 
-## Actor actions
+## Streamlining the Code
 
-Once you have the core workflow pattern of animating with Morpho down, you can make use of so-called *actor actions* to speed up creating certain very common animations.
+So that's the basics of my process for creating a single scene in a video. However, after having used Morpho to create so many scenes for so many videos, I've developed a number of shortcuts that speed up certain animation tasks that occur very frequently. I'll show you some of them now.
+
+> ***CAUTION!*** Please note that what I've shown in this guide so far is really the core pattern to follow, and you shouldn't come to rely on the shortcuts without a solid understanding of these core patterns. This is because the shortcuts really only work in specific (albeit common) situations, and so you need to know when they won't work and you'll need to fall back on the core patterns.
+
+### The `append()` method
+
+We've been using `merge()` to add actors to a layer, but there is another method called `append()` which does the same thing, except it merges the given actor to the layer at that layer's current final frame index:
+
+```python
+# The following lines are equivalent
+mylayer.append(myactor)
+mylayer.merge(myactor, atFrame=mylayer.lastID())
+```
+
+The `append()` method can remove the need to constantly be assigning `time = mation.lastID()` and doing `merge(atFrame=time)`. If you want to add a new actor to a layer *precisely* at the current end of that layer's timeline, you can just use `append()`.
+
+For example, in our code, we merged the text label into `mainlayer` at frame index `time`, where `time` was defined to be the animation's current final frame:
+
+```python
+time = mation.lastID()
+label = mo.text.MultiText("Linear",
+    pos=1+0.5j, size=64, color=[1,0,0], alpha=0
+    )
+label = mo.Actor(label)
+mainlayer.merge(label, atFrame=time)
+```
+
+But in this case, since we're only dealing with a single layer thruout (`mainlayer`), the final frame of the animation is the same as the final frame of `mainlayer`, so we can eliminate the `time = mation.lastID()` call and just use `append()` instead to streamline the code:
+
+```python
+label = mo.text.MultiText("Linear",
+    pos=1+0.5j, size=64, color=[1,0,0], alpha=0
+    )
+label = mo.Actor(label)
+mainlayer.append(label)
+```
+
+If you're using Morpho 0.4.1+, you can also append multiple actors to a layer at the same frame by supplying a list of actors to `append()` after all those actors are constructed:
+
+```python
+label1 = mo.text.Text("Label 1")
+label1 = mo.Actor(label1)
+
+label2 = mo.text.Text("Label 2")
+label2 = mo.Actor(label2)
+
+mainlayer.append([label1, label2])
+```
+
+though for this to work, be careful NOT to merge or append the actors individually before appending the list. There should only be a single append command at the end:
+
+```python
+label1 = mo.text.Text("Label 1")
+label1 = mo.Actor(label1)
+mainlayer.append(label1)  # THIS SHOULDN'T BE HERE
+
+label2 = mo.text.Text("Label 2")
+label2 = mo.Actor(label2)
+mainlayer.append(label2)  # THIS SHOULDN'T BE HERE
+
+mainlayer.append([label1, label2])
+```
+
+#### Limitations
+
+This is great and all, but there are some limitations to when you can use `append()`. For example, you have to be careful using `append()` in a multilayer animation, because `append()` only appends actors to the end of that layer's ***local*** timeline, not the global timeline of the entire animation.
+
+For example, let's say you have two point actors, `pt1` and `pt2`, that you want to appear in the animation one after the other, but they need to belong to two separate layers, `layer1` and `layer2`. If you try to use `append()` like this,
+
+```python
+layer1.append(pt1)
+layer2.append(pt2)
+```
+
+the two point actors will not appear one after the other, because each actor will be appended to the end of its respective layer's *local* timeline. To make them properly appear one after the other in the global animation timeline, you have to use the `time` pattern:
+
+```python
+time = mation.lastID()
+layer1.merge(pt1, atFrame=time)
+time = mation.lastID()
+layer2.merge(pt2, atFrame=time)
+```
+
+### Actor actions
 
 Actor actions, or just *actions* for short, are built-in mini routines that automatically implement certain common, simple animations, typically opening animations (making an actor appear on screen) and closing animations (making an actor disappear from the screen).
 
@@ -537,7 +610,7 @@ In our example code, we implemented both of these opening animations manually. F
 curve = mo.graph.realgraph(lambda x: 2*x + 1, -3, 3)
 curve.set(width=5, color=[1,0,0], end=0)
 curve = mo.Actor(curve)
-mainlayer.affix(curve)
+mainlayer.merge(curve)
 curve.newendkey(30).end = 1  # Draw curve over 1 second (30 frames)
 
 # Create "Linear" label.
@@ -546,7 +619,7 @@ label = mo.text.MultiText("Linear",
     pos=1+0.5j, size=64, color=[1,0,0], alpha=0
     )
 label = mo.Actor(label)
-mainlayer.affix(label)
+mainlayer.append(label)
 label.newendkey(20).alpha = 1
 ```
 
@@ -557,7 +630,7 @@ But we can produce this effect automatically by using *actions*, like this:
 curve = mo.graph.realgraph(lambda x: 2*x + 1, -3, 3)
 curve.set(width=5, color=[1,0,0])  # No longer need to say end=0
 curve = mo.Actor(curve)
-mainlayer.affix(curve)
+mainlayer.merge(curve)
 curve.growIn(duration=30)
 
 # Create "Linear" label.
@@ -566,7 +639,7 @@ label = mo.text.MultiText("Linear",
     pos=1+0.5j, size=64, color=[1,0,0]  # No longer need to say alpha=0
     )
 label = mo.Actor(label)
-mainlayer.affix(label)
+mainlayer.append(label)
 label.fadeIn(duration=20)
 ```
 
@@ -575,48 +648,39 @@ Note how we don't have to specify `end=0` and `alpha=0` for the starting keyfigu
 At the end of our animation, we had both the curve and the label fade out to invisibility. We implemented it manually, but we could use the `fadeOut()` action instead:
 
 ```python
-# Create initial keyfigures
-curve.newendkey()
-label.newendkey()
-
+time = mation.lastID()
 # Fade curve and label
+curve.newkey(time)
 curve.fadeOut(duration=30)
+label.newkey(time)
 label.fadeOut(duration=30)
 ```
 
-> ***CAUTION!*** The `newendkey()` calls are important here! By default, actions act starting on the given ***actor's*** current final frame, not the layer or animation's final frame. If you omit the `newendkey()` calls, the fade outs may occur earlier than you wanted.
+> ***CAUTION!*** The `newkey(time)` calls are important here! By default, actions act starting on the given ***actor's*** current final frame, not the layer or animation's final frame. If you omit the `newkey(time)` calls, the fade outs may occur earlier than you wanted.
 
 However, this can be streamlined even further: If you want to apply the same action to *multiple* actors all at once, you can use the following syntax:
 
 ```python
-# Create initial keyfigures
-curve.newendkey()
-label.newendkey()
-
+time = mation.lastID()
 # Fade curve and label
-morpho.action.fadeOut([curve, label], duration=30)
+morpho.action.fadeOut([curve, label], atFrame=time, duration=30)
 ```
 
 which also enables another neat feature: staggering. By passing in another optional parameter called `stagger` into the `fadeOut()` action, you can cause each actor to fade out slightly out of sync with each other by a time difference you specify. For example, setting `stagger=15` causes each actor to start fading out 15 frames *after* the previous actor in the list starts fading out, leading to a kind of "staggered" fade out animation:
 
 ```python
-# Create initial keyfigures
-curve.newendkey()
-label.newendkey()
-
-# Fade curve and label in a staggered fashion
-morpho.action.fadeOut([curve, label], duration=30, stagger=15)
+time = mation.lastID()
+# Fade curve and label
+morpho.action.fadeOut([curve, label], atFrame=time, duration=30, stagger=15)
 ```
 
 `fadeIn()` and `fadeOut()` also support an optional parameter called `jump` which causes the affected actors to move a certain amount in a certain direction while fading in or out. For example, setting `jump=2j` causes each actor to "jump" 2 units upward while fading in/out:
 
 ```python
-# Create initial keyfigures
-curve.newendkey()
-label.newendkey()
-
-# Fade curve and label in a staggered fashion with jumping
-morpho.action.fadeOut([curve, label], duration=30, stagger=15, jump=2j)
+time = mation.lastID()
+# Fade curve and label
+morpho.action.fadeOut([curve, label],
+    atFrame=time, duration=30, stagger=15, jump=2j)
 ```
 
 You can apply this on `fadeIn()` as well, which is how I accomplish many of the opening animations in my videos:
@@ -628,11 +692,11 @@ label = mo.text.MultiText("Linear",
     pos=1+0.5j, size=64, color=[1,0,0]  # No longer need to say alpha=0
     )
 label = mo.Actor(label)
-mainlayer.affix(label)
+mainlayer.append(label)
 label.fadeIn(duration=20, jump=1j)
 ```
 
-### Limitations
+#### Limitations
 
 Actions are a relatively recent addition to Morpho, and they are not fully supported for all figure types yet. So it's best not to get overly reliant on them. You should still make sure you master implementing opening and closing animations manually if you need to.
 
@@ -653,12 +717,10 @@ print("Fade everything out:", mation.seconds())
 
 mation.start = mation.lastID()  # Bookmark
 
-# Create initial keyfigures
-curve.newendkey()
-label.newendkey()
-
-# Fade curve and label in a staggered fashion with jumping
-morpho.action.fadeOut([curve, label], duration=30, stagger=15, jump=2j)
+time = mation.lastID()
+# Fade curve and label
+morpho.action.fadeOut([curve, label],
+    atFrame=time, duration=30, stagger=15, jump=2j)
 ```
 
 To restore the animation playback to normal, you can just comment out `mation.start = mation.lastID()`. You can uncomment it again whenever you need to, and so it acts kind of like a playback "bookmark" in your code allowing you to skip to whatever part of the scene you want when previewing.
