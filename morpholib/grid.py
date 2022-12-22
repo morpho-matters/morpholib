@@ -450,6 +450,7 @@ class Path(morpho.Figure):
         headSize = morpho.Tweenable("headSize", 0, tags=["scalar"])
         tailSize = morpho.Tweenable("tailSize", 0, tags=["scalar"])
         dash = morpho.Tweenable("dash", [], tags=["scalar", "list"])
+        dashOffset = morpho.Tweenable("dashOffset", 0, tags=["scalar"])
         outlineWidth = morpho.Tweenable("outlineWidth", value=0, tags=["size"])
         outlineColor = morpho.Tweenable("outlineColor", value=[0,0,0], tags=["color"])
         outlineAlpha = morpho.Tweenable("outlineAlpha", value=1, tags=["scalar"])
@@ -458,7 +459,7 @@ class Path(morpho.Figure):
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
         self.extendState([seq, start, end, color, alphaEdge, fill, alphaFill, alpha,
-            width, headSize, tailSize, dash,
+            width, headSize, tailSize, dash, dashOffset,
             outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform]
             )
 
@@ -979,6 +980,8 @@ class Path(morpho.Figure):
                     shift = -sign*dl
                 else:
                     shift = sign*2*dl
+                # Offset the dash by the outline width
+                back.dashOffset += 2*sign*abs(dL)
             else:
                 shift = dl
             # `shift` is the amount to shift the initial node of the
@@ -1319,7 +1322,7 @@ class Path(morpho.Figure):
             else:
                 ctx.set_line_width(self.width)
                 ctx.set_source_rgba(*RGBA_start)
-                ctx.set_dash(self.dash)
+                ctx.set_dash(self.dash, self.dashOffset)
                 ctx.stroke()
                 ctx.set_dash([])  # Remove dash pattern and restore to solid strokes
 
