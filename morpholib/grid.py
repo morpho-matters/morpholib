@@ -980,8 +980,10 @@ class Path(morpho.Figure):
                     shift = -sign*dl
                 else:
                     shift = sign*2*dl
-                # Offset the dash by the outline width
-                back.dashOffset += 2*sign*abs(dL)
+                # Offset the dash by the outline width if
+                # tailSize is positive
+                if sign == 1:
+                    back.dashOffset += 2*abs(dL)
             else:
                 shift = dl
             # `shift` is the amount to shift the initial node of the
