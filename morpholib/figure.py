@@ -2013,4 +2013,8 @@ def object_hasattr(obj, name):
         object.__getattribute__(obj, name)
     except AttributeError:
         return False
+    except Exception:
+        # Absorb any other exceptions because we're only trying to
+        # check for attribute EXISTENCE, not whether access is possible.
+        pass
     return True
