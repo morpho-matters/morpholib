@@ -1795,7 +1795,11 @@ ArrayList = Arraylist
 class SpacePath(Path):
     def __init__(self, seq=None, width=3, color=(1,1,1), alpha=1):
         # Use normal Path constructor first
-        super().__init__(seq=None, width=width, color=color, alpha=alpha)
+        super().__init__()
+
+        self.width = width
+        self.color = color
+        self.alpha = alpha
 
         # # Change the "seq" tweenable's "complex" tag to "nparray"
         # tags = self._state["seq"].tags
@@ -1837,7 +1841,11 @@ class SpacePath(Path):
             seq = seq.seq
 
         # Redefine seq tweenable to be 3D.
-        seq = Arraylist(morpho.matrix.array(seq[n]) for n in range(len(seq)))
+        if not isinstance(seq, Arraylist):
+            # This line could probably be optimized by converting into
+            # a complex-type np.array and manipulating it into the correct
+            # form and then typecasting it to Arraylist.
+            seq = Arraylist(morpho.matrix.array(seq[n]) for n in range(len(seq)))
         _seq = morpho.Tweenable("_seq", seq, tags=["nparray", "list", "fimage", "nospiral"])
         self._state.pop("seq")
         self._state["_seq"] = _seq
@@ -3769,115 +3777,41 @@ def quadgrid(*,
 #         Can be set like an attribute: myarrow.angle = radian value.
 #         Works by holding tail fixed and rotating head around tail to
 #         appropriate angle value.
-class Arrow(morpho.Figure):
-    def __init__(self, tail=0, head=1, color=None, alpha=1, width=3,
+class Arrow(Path):
+    def __init__(self, tail=0, head=1, color=(1,1,1), alpha=1, width=3,
         headSize=25, tailSize=0):
 
-        # morpho.Figure.__init__(self)
         super().__init__()
 
-        if color is None:
-            color = [1,1,1]
-
-        tail = morpho.Tweenable("tail", tail, tags=["complex", "tail"])
-        head = morpho.Tweenable("head", head, tags=["complex", "head"])
-        color = morpho.Tweenable("color", value=color, tags=["color"])
-        alpha = morpho.Tweenable("alpha", value=alpha, tags=["scalar"])
-        width = morpho.Tweenable("width", value=width, tags=["size"])
-        headSize = morpho.Tweenable("headSize", headSize, tags=["scalar"])
-        tailSize = morpho.Tweenable("tailSize", tailSize, tags=["scalar"])
-        dash = morpho.Tweenable("dash", [], tags=["scalar", "list"])
-        outlineWidth = morpho.Tweenable("outlineWidth", value=0, tags=["size"])
-        outlineColor = morpho.Tweenable("outlineColor", value=[0,0,0], tags=["color"])
-        outlineAlpha = morpho.Tweenable("outlineAlpha", value=1, tags=["scalar"])
-        origin = morpho.Tweenable("origin", value=0, tags=["complex", "nofimage"])
-        rotation = morpho.Tweenable("rotation", value=0, tags=["scalar"])
-        _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
-
-        self.extendState([tail, head, color, alpha, width, headSize, tailSize, dash,
-            outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform])
-
-        self.NonTweenable("headExternal", False)
-        self.NonTweenable("tailExternal", False)
-
-        # self.dash = []
-
-        # Initialize internal path figure
-        # Todo: This could probably be replaced with
-        # self._updateInternalPath()
-        # Actually, it may not be needed at all, as
-        # _updateInternalPath() is always called upon draw()
-        self.path = Path([tail, head])
-        self.path.color = self.color
-        self.path.alpha = self.alpha
-        self.path.width = self.width
-        self.path.outlineWidth = self.outlineWidth
-        self.path.outlineColor = self.outlineColor
-        self.path.outlineAlpha = self.outlineAlpha
-        self.path.origin = self.origin
-        self.path.rotation = self.rotation
-        self.path.transform = self.transform
-        self.path.dash = self.dash
-
-    # No need to make a special copy() method here to handle the
-    # internal path figure because a new one will be made
-    # when the generic copy() calls the Arrow constructor!
+        self.seq = [tail, head]
+        self.color = color
+        self.alpha = alpha
+        self.width = width
+        self.headSize = headSize
+        self.tailSize = tailSize
 
     @property
-    def transform(self):
-        return self._transform
+    def head(self):
+        return self.seq[-1]
 
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
-
-    # Setting `tipSize` property sets both `headSize` and `tailSize
-    # to the same value.
-    @property
-    def tipSize(self):
-        if self.headSize != self.tailSize:
-            raise ValueError("headSize and tailSize are different!")
-        return self.headSize
-
-    @tipSize.setter
-    def tipSize(self, value):
-        self.headSize = value
-        self.tailSize = value
+    @head.setter
+    def head(self, value):
+        self.seq[-1] = value
 
     @property
-    def tipExternal(self):
-        if self.headExternal != self.tailExternal:
-            raise ValueError("headExternal and tailExternal have different truth values.")
-        return self.headExternal
+    def tail(self):
+        return self.seq[0]
 
-    @tipExternal.setter
-    def tipExternal(self, value):
-        self.headExternal = value
-        self.tailExternal = value
+    @tail.setter
+    def tail(self, value):
+        self.seq[0] = value
 
-
-    # def copy(self):
-    #     new = super().copy()
-
-    #     new.dash = self.dash[:]
-
-    #     return new
-
-    # Applies all of the transformation attributes
-    # origin, rotation, transform
-    # to the head and tail and then
-    # resets the transformation attributes.
-    def commitTransforms(self):
-        rot = cmath.exp(self.rotation*1j)
-        mat = morpho.matrix.Mat(*self.transform.flatten().tolist())
-        f = lambda s: (mat*(rot*s))+self.origin
-        self.head = f(self.head)
-        self.tail = f(self.tail)
-
-        self.origin = 0
-        self.rotation = 0
-        self.transform = np.identity(2)
-        return self
+    # Return unit-length complex number whose direction
+    # matches the direction of the arrow.
+    def unit(self):
+        Dir = self.head - self.tail
+        Dir = Dir/abs(Dir) if Dir != 0 else 1
+        return Dir
 
     @property
     def length(self):
@@ -3896,227 +3830,56 @@ class Arrow(morpho.Figure):
     def angle(self, value):
         self.head = self.tail + self.length*cmath.exp(value*1j)
 
-
-    # Return unit-length complex number whose direction
-    # matches the direction of the arrow.
-    def unit(self):
-        Dir = self.head - self.tail
-        Dir = Dir/abs(Dir) if Dir != 0 else 1
-        return Dir
-
     # Return midpoint between head and tail.
     def midpoint(self):
         return (self.head + self.tail) / 2
 
-    def _updateInternalPath(self):
-        # Update and draw the internal path figure.
-        self.path.seq = [self.tail, self.head]
-        self.path.color = self.color
-        self.path.alpha = self.alpha
-        self.path.width = self.width
-        self.path.headSize = self.headSize
-        self.path.tailSize = self.tailSize
-        self.path.outlineWidth = self.outlineWidth
-        self.path.outlineColor = self.outlineColor
-        self.path.outlineAlpha = self.outlineAlpha
-        self.path.origin = self.origin
-        self.path.rotation = self.rotation
-        self.path.transform = self.transform
-        self.path.dash = self.dash
-        self.path.headExternal = self.headExternal
-        self.path.tailExternal = self.tailExternal
 
     def toPath(self):
-        self._updateInternalPath()
-        return self.path.copy()
-
-
-    # TODO FOR FUTURE:
-    # Handling of transparency needs to be fixed.
-    # If an arrowhead is inverted (i.e. has negative size),
-    # then the alpha blending will partially blend the body thru
-    # the arrow head. To fix this, we either need to make it so
-    # if the arrowhead is inverted, then the body stops at the tip
-    # instead of the base of the arrowhead, or else dynamically
-    # change the alpha blend method so that arrowhead alpha doesn't
-    # influence body alpha.
-    def draw(self, camera, ctx):
-        # Check if it's too short to draw
-        if self.head == self.tail:
-            return
-
-        self._updateInternalPath()
-        self.path.draw(camera, ctx)
-
-
-    ### TWEEN METHODS ###
-
-    @morpho.TweenMethod
-    @handleDash
-    def tweenLinear(self, other, t):
-        tw = super().tweenLinear(other, t)
-        return tw
-
-    @morpho.TweenMethod
-    @handleDash
-    def tweenSpiral(self, other, t):
-        # Do standard spiral tween first.
-        newfig = morpho.Figure.tweenSpiral(self, other, t)
-
-        th1 = self.angle % tau
-        th2 = other.angle % tau
-        dth = argShift(th1, th2)
-
-        r1 = self.length
-        r2 = other.length
-        dr = r2 - r1
-
-        r = morpho.numTween(r1, r2, t)
-        th = th1 + t*dth
-
-        newfig.length = r
-        newfig.angle = th
-
-        return newfig
-
-    @classmethod
-    def tweenPivot(cls, angle=tau/2):
-        pivot = super().tweenPivot(angle)
-
-        # Apply necessary decorators
-        pivot = handleDash(pivot)
-        pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
-
-        return pivot
-
-### ACTIONS ###
-
-# Animates an arrow actor appearing by "growing in" from its tailpoint.
-# See also: morpho.actions.fadeIn()
-@Arrow.action
-def growIn(arrow, duration=30, atFrame=None, *, reverse=False):
-    if atFrame is None:
-        atFrame = arrow.lastID()
-
-    arrow0 = arrow.last()
-    head, tail, headSize, tailSize = arrow0.head, arrow0.tail, arrow0.headSize, arrow0.tailSize
-    arrow0.visible = False
-    arrow1 = arrow.newkey(atFrame)
-    arrow1.set(headSize=0, tailSize=0, visible=True)
-    if reverse:
-        arrow1.set(tail=arrow0.head)
-    else:
-        arrow1.set(head=arrow0.tail)
-    arrow2 = arrow.newendkey(duration)
-    arrow2.set(head=head, tail=tail, headSize=headSize, tailSize=tailSize)
-
-@Arrow.action
-def shrinkOut(arrow, duration=30, atFrame=None, *, reverse=False):
-    if atFrame is None:
-        atFrame = arrow.lastID()
-
-    arrow.newkey(atFrame)
-    arrow1 = arrow.newendkey(duration)
-    arrow1.set(headSize=0, tailSize=0, visible=False)
-    if reverse:
-        arrow1.tail = arrow1.head
-    else:
-        arrow1.head = arrow1.tail
-
-# OBSOLETE!
-# Instead, use Arrow with tail set at 0, translate it with origin, and use
-# the rotation tweenable.
-#
-# Arrow but with winding numbers for the head and tail.
-# It should be implemented differently than vanilla Arrow by
-# using a relative position for the head as opposed to absolute.
-# Head's position should be relative to the tail in the polar
-# setting, but there will be properties so that ArrowPolar can still
-# be used similarly to vanilla Arrow; e.g. there will be a .head
-# pseudo-attribute.
-# The reason for doing this is it should make using the built-in
-# spiral tween method easier.
-class ArrowPolar(Arrow):
-    pass
+        path = Path()
+        path._updateFrom(self, common=True)
+        return path
 
 
 # 3D version of Arrow. See "Arrow" for more info.
 # Note that the transformation tweenables "rotation" and "transform"
 # are unsupported.
 # Also note that the "angle" property is not implemented for this class.
-class SpaceArrow(Arrow):
+class SpaceArrow(SpacePath, Arrow):
     def __init__(self, tail=0, head=1, color=None, alpha=1, width=3,
         headSize=25, tailSize=0):
 
         # Use superclass constructor
-        super().__init__(
-            color=color, alpha=alpha, width=width,
-            headSize=headSize, tailSize=tailSize
-            )
+        super().__init__()
 
-        # Redefine head tweenable to be 3D.
-        _head = morpho.Tweenable("_head", morpho.matrix.array(head), tags=["nparray", "fimage"])
-        self._state.pop("head")
-        self._state["_head"] = _head
+        self.tail = tail
+        self.head = head
+        self.color = color
+        self.alpha = alpha
+        self.width = width
+        self.headSize = headSize
+        self.tailSize = tailSize
 
-        # Redefine tail tweenable to be 3D.
-        _tail = morpho.Tweenable("_tail", morpho.matrix.array(tail), tags=["nparray", "fimage"])
-        self._state.pop("tail")
-        self._state["_tail"] = _tail
-
-        # Re-implement "origin" as a property so it will auto-convert
-        # into np.array.
-        origin = morpho.array([0,0,0])
-        self._state.pop("origin")
-        _origin = morpho.Tweenable("_origin", origin, tags=["nparray", "nofimage"])
-        self.extendState([_origin])
-
-        # These transformation tweenables from 2D Path are currently
-        # not supported for SpacePaths
-        self._state.pop("rotation")
-        self._state.pop("_transform")
-
-    @property
-    def origin(self):
-        return self._origin
-
-    @origin.setter
-    def origin(self, value):
-        self._origin = morpho.matrix.array(value)
-
-    # Applies the origin transformation attribute
-    # to the head and tail and then
-    # resets the transformation attribute.
-    def commitTransforms(self):
-        f = lambda v: v+self.origin
-        self.head = f(self.head)
-        self.tail = f(self.tail)
-        self.origin = 0
-        return self
 
     @property
     def head(self):
-        return self._head
+        return self.seq[-1]
 
     @head.setter
     def head(self, value):
-        self._head = morpho.matrix.array(value)
+        self.seq[-1] = morpho.matrix.array(value)
 
     @property
     def tail(self):
-        return self._tail
+        return self.seq[0]
 
     @tail.setter
     def tail(self, value):
-        self._tail = morpho.matrix.array(value)
-
-    def _updateInternalPath(self):
-        raise NotImplementedError
+        self.seq[0] = morpho.matrix.array(value)
 
     def toPath(self):
         path = SpacePath()
         path._updateFrom(self, common=True)
-        path.seq = [self.tail.copy(), self.head.copy()]
         return path
 
     # zdepth is taken to be that of the midpoint of the head and tail.
@@ -4134,23 +3897,14 @@ class SpaceArrow(Arrow):
         head = (head3d[0] + 1j*head3d[1]).tolist()
         tail = (tail3d[0] + 1j*tail3d[1]).tolist()
 
-        if head == tail:
-            return []
+        # Update and return equivalent 2D Arrow figure.
+        arrow = Arrow()
+        arrow._updateFrom(self, common=True)
+        arrow.tail = tail
+        arrow.head = head
+        arrow.zdepth = (head3d[2] + tail3d[2]) / 2  # Average of z-coords
 
-        # Update and return the internal path figure.
-        self.path.seq = [tail, head]
-        self.path.zdepth = (head3d[2] + tail3d[2]) / 2  # Average of z-coords
-        self.path.color = self.color
-        self.path.alpha = self.alpha
-        self.path.width = self.width
-        self.path.headSize = self.headSize
-        self.path.tailSize = self.tailSize
-        self.path.outlineWidth = self.outlineWidth
-        self.path.outlineColor = self.outlineColor
-        self.path.outlineAlpha = self.outlineAlpha
-        self.path.dash = self.dash
-
-        return [self.path]
+        return [arrow]
 
 
     def draw(self, camera, ctx): #, orient=np.identity(3), focus=np.zeros(3)):
@@ -4161,7 +3915,14 @@ class SpaceArrow(Arrow):
         path.draw(camera, ctx)
 
 
-    ### HELPERS ###
+    # Return unit-length vector (np.array) whose direction
+    # matches the direction of the arrow.
+    # Given the zero vector, returns the vector (1,0,0).
+    def unit(self):
+        Dir = self.head - self.tail
+        # Dir = Dir/np.linalg.norm(Dir) if Dir != 0 else np.array([1,0,0])
+        Dir = Dir/np.linalg.norm(Dir) if not np.allclose(Dir, 0) else np.array([1,0,0])
+        return Dir
 
     @property
     def length(self):
@@ -4179,16 +3940,6 @@ class SpaceArrow(Arrow):
     @angle.setter
     def angle(self, value):
         raise NotImplementedError
-
-
-    # Return unit-length vector (np.array) whose direction
-    # matches the direction of the arrow.
-    # Given the zero vector, returns the vector (1,0,0).
-    def unit(self):
-        Dir = self.head - self.tail
-        # Dir = Dir/np.linalg.norm(Dir) if Dir != 0 else np.array([1,0,0])
-        Dir = Dir/np.linalg.norm(Dir) if not np.allclose(Dir, 0) else np.array([1,0,0])
-        return Dir
 
 
 ### HELPERS ###
