@@ -3861,58 +3861,10 @@ class SpaceArrow(SpacePath, Arrow):
         self.tailSize = tailSize
 
 
-    @property
-    def head(self):
-        return self.seq[-1]
-
-    @head.setter
-    def head(self, value):
-        self.seq[-1] = morpho.matrix.array(value)
-
-    @property
-    def tail(self):
-        return self.seq[0]
-
-    @tail.setter
-    def tail(self, value):
-        self.seq[0] = morpho.matrix.array(value)
-
     def toPath(self):
         path = SpacePath()
         path._updateFrom(self, common=True)
         return path
-
-    # zdepth is taken to be that of the midpoint of the head and tail.
-    def primitives(self, camera): # orient=np.identity(3), focus=np.zeros(3)):
-        orient = camera.orient
-        focus = camera.focus
-
-        if np.allclose(focus, 0):
-            head3d = orient @ (self.head + self.origin)
-            tail3d = orient @ (self.tail + self.origin)
-        else:
-            head3d = orient @ (self.head + self.origin - focus) + focus
-            tail3d = orient @ (self.tail + self.origin - focus) + focus
-
-        head = (head3d[0] + 1j*head3d[1]).tolist()
-        tail = (tail3d[0] + 1j*tail3d[1]).tolist()
-
-        # Update and return equivalent 2D Arrow figure.
-        arrow = Arrow()
-        arrow._updateFrom(self, common=True)
-        arrow.tail = tail
-        arrow.head = head
-        arrow.zdepth = (head3d[2] + tail3d[2]) / 2  # Average of z-coords
-
-        return [arrow]
-
-
-    def draw(self, camera, ctx): #, orient=np.identity(3), focus=np.zeros(3)):
-        primlist = self.primitives(camera)
-        if len(primlist) == 0:
-            return
-        path = primlist[0]
-        path.draw(camera, ctx)
 
 
     # Return unit-length vector (np.array) whose direction
