@@ -4480,15 +4480,23 @@ def insertNodesUniformlyTo(seq, numNodes, segment=(0,1), *, close=False):
     newseq = seq[:]
     len_seq = len(seq)
     t1, t2 = segment
-    a = t1*(len_seq-1)
-    b = t2*(len_seq-1)
-    dt = (b-a)/(numNodes+1)
-    for n in range(numNodes):
-        # t = (n+1)/(numNodes+1)*(len_seq-1)
-        t = mo.lerp0(a+dt, b-dt, n, start=0, end=numNodes-1)
+    a = t1*(len_seq-1)  # Min fractional index
+    b = t2*(len_seq-1)  # Max fractional index
+    dt = (b-a)/(numNodes+1)  # Buffer between index endpoints
+
+    if numNodes == 1:
+        # Insert a new node exactly in the middle of the
+        # index space.
+        t = (a+b)/2
         node = interpSeqLinear(seq, t)
-        # +n because each insertion shifts all later indices up by 1.
-        newseq.insert(int(t)+1+n, node)
+        newseq.insert(int(t)+1, node)
+    else:
+        for n in range(numNodes):
+            # t = (n+1)/(numNodes+1)*(len_seq-1)
+            t = mo.lerp0(a+dt, b-dt, n, start=0, end=numNodes-1)
+            node = interpSeqLinear(seq, t)
+            # +n because each insertion shifts all later indices up by 1.
+            newseq.insert(int(t)+1+n, node)
 
     if close:
         # Remove final temporary element which matches init
