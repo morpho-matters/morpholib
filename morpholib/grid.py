@@ -1116,7 +1116,10 @@ class Path(morpho.Figure):
                 base = (mat_inv*(base - origin))/rot
 
             oldHead = self.seq[final]
-            self.seq[final] = base
+            # self.seq[final] = base
+            # Postpone reassigning node point until after tail
+            # modification below finishes
+            newFinalNode = base
 
             # Define the other two pixels and assemble them
             pxlB = pxlA + self.headSize*DIR*ccw150
@@ -1164,6 +1167,10 @@ class Path(morpho.Figure):
 
             # Define the other two pixels and assemble them
             tailVertices = (pxlA, pxlB, pxlC)
+
+        # Reassign final node if needed
+        if headDraw:
+            self.seq[final] = newFinalNode
 
         # Initialize starting point
         zn = self.seq[init]
