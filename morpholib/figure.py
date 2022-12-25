@@ -2005,16 +2005,21 @@ class _KeyIDContainer(object):
 # https://stackoverflow.com/a/952952
 def flattenList(L): return [item for sublist in L for item in sublist]
 
-# Checks if `obj` has `name` as an attribute.
-# Equivalent to hasattr(), but it does the check
-# using the `object` class's __getattribute__() method.
+# Checks if `obj` has `name` as an attribute in the strict
+# sense of the base object class.
+# Essentially equivalent to `name in dir(obj)`, but it does it
+# much faster by calling object.__getattribute__(obj, name) and
+# catching AttributeError and absorbing any other exceptions.
 def object_hasattr(obj, name):
     try:
         object.__getattribute__(obj, name)
     except AttributeError:
         return False
     except Exception:
-        # Absorb any other exceptions because we're only trying to
-        # check for attribute EXISTENCE, not whether access is possible.
+        # Absorb any other exceptions because (in theory) the only
+        # way object.__getattribute__() can throw any other
+        # exception is if some property of `obj` threw the exception
+        # as part of being accessed, which of course means the
+        # property exists and so we should return True.
         pass
     return True
