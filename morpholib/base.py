@@ -25,7 +25,7 @@ cr = cairo
 # filterwarnings("ignore")
 
 
-version = "0.6.1.dev1"  # Current public morpho version
+version = "0.6.1"  # Current public morpho version
 internalVersion = "2.3.2ip"  # Current internal morpho version
 subversion = ""
 DEBUG_MODE = False
