@@ -329,9 +329,7 @@ my_figure.tween(my_other_figure, 0.5)
 # @tweenMethod
 # def my_tween_method(self, other, t)
 #
-# The decorator performs some sanity checks to make sure tweening
-# is possible. e.g. checks the start and end figures are of the same class.
-# It also automatically enforces the rule
+# It automatically enforces the rule
 # that t=0 returns self.copy() and t=1 returns other.copy()
 #
 # Optionally, a splitter function can be assigned to the tween method
