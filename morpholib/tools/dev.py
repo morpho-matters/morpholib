@@ -142,15 +142,23 @@ def drawOutOfBoundsStartEnd(fig, camera, ctx):
     if start_local > end_local:
         # Draw a two-segment path
 
+        # Save head and tail sizes
+        headSize_orig = fig.headSize
+        tailSize_orig = fig.tailSize
+
         # Draw first path component
         fig.start = 0
         fig.end = end_local
+        fig.tailSize = 0
         fig.draw(camera, ctx)
+        fig.tailSize = tailSize_orig
 
         # Draw second path component
         fig.start = start_local
         fig.end = 1
+        fig.headSize = 0
         fig.draw(camera, ctx)
+        fig.headSize = headSize_orig
 
         # Restore original values
         fig.start = start_orig

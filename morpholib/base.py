@@ -329,9 +329,7 @@ my_figure.tween(my_other_figure, 0.5)
 # @tweenMethod
 # def my_tween_method(self, other, t)
 #
-# The decorator performs some sanity checks to make sure tweening
-# is possible. e.g. checks the start and end figures are of the same class.
-# It also automatically enforces the rule
+# It automatically enforces the rule
 # that t=0 returns self.copy() and t=1 returns other.copy()
 #
 # Optionally, a splitter function can be assigned to the tween method
@@ -354,8 +352,8 @@ def tweenMethod(tween=None, *, splitter=None):
         splitter = tween.splitter
 
     def wrapper(self, other, t, *args, **kwargs):
-        if type(self) is not type(other):
-            raise TypeError("Tried to tween figures of different class!")
+        # if type(self) is not type(other):
+        #     raise TypeError("Tried to tween figures of different class!")
 
         # Enforce self and other if t==0 or 1.
         if t == 0:
@@ -363,11 +361,10 @@ def tweenMethod(tween=None, *, splitter=None):
         elif t == 1:
             return other.copy()
         else:
-            # t = self.transition(t)  # Compute new time based on transition.
             twfig = tween(self, other, t, *args, **kwargs)
-            twfig.visible = self.visible  # Inherits visibility of self
+            # twfig.visible = self.visible  # Inherits visibility of self
             return twfig
-    # wrapper = Tween(wrapper, splitter=splitter)
+
     wrapper.splitter = splitter
     return wrapper
 

@@ -1776,7 +1776,10 @@ class Actor(object):
     # Optionally specify the latest key index. This is mainly used
     # internally for performance reasons. You probably don't need
     # to worry about it.
-    def time(self, f, keyID=None):
+    # If optional keyword argument copykeys is set to True,
+    # if a keyfigure is returned, a copy will be returned instead.
+    # Also mainly for internal use.
+    def time(self, f, keyID=None, *, copykeys=False):
         # If f is a float, but it's really an int, make it an int.
         # This is so searching the timeline dict is done correctly
         # because all the keys in the dict are ints.
@@ -1788,7 +1791,8 @@ class Actor(object):
 
         # If the given index is a keyindex, just return the keyfig.
         if f in self.timeline:
-            return self.timeline[f]
+            keyfig = self.timeline[f]
+            return keyfig if not copykeys else keyfig.copy()
 
         # Compute the latest keyID on the fly if not provided.
         if keyID is None:
@@ -1798,26 +1802,23 @@ class Actor(object):
         else:
             k = self.keyIDs.index(keyID)
 
-        # # Return None if we're before the first keyfig
-        # if k == -1: return None
-
         # Grab latest keyfigure.
         keyfig = self.timeline[keyID]
 
         # If we're within the latest keyfig's endlag, just
         # return that keyfig.
         if f <= keyID + keyfig.delay:
-            return keyfig
+            return keyfig if not copykeys else keyfig.copy()
         # Special case if the latest keyfig is the last keyfig
         # in the timeline. Return None unless actors persist.
         elif keyID == self.keyIDs[-1]:
             if Actor.persist:
-                return keyfig
+                return keyfig if not copykeys else keyfig.copy()
             else:
                 return None
         # If the latest keyframe is static, don't tween.
         elif keyfig.static:
-            return keyfig
+            return keyfig if not copykeys else keyfig.copy()
             # return keyfig.copy()
         else:
             # keyfig2 = self.timeline[keyID+1]
@@ -1848,17 +1849,9 @@ class Actor(object):
             raise TypeError("No global timeline to reference.")
 
         f = currentIndex - self.owner.timeOffset
-        fig = self.time(f)
+        fig = self.time(f, copykeys=True)  # Make a copy in case it's a keyfigure
 
-        # Make a copy in case fig is a keyfigure.
-        # FUTURE: Maybe find a way to avoid making a copy
-        # of a non-keyfigure since non-keyfigures don't need
-        # to be copied, and they are the vast majority of cases
-        # when now() is called. Unfortunately it's more complicated
-        # than merely testing if f in self.timeline since there
-        # are other cases where time() returns a keyfigure
-        # e.g. if f > self.lastID()
-        return fig.copy()
+        return fig
 
 
     # Should the final keyfigure persist after the final frame?

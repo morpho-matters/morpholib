@@ -111,6 +111,12 @@ def handleSplineNodeInterp(tweenmethod):
 #                By default, showTangents = False
 class Spline(morpho.Figure):
 
+    # Dummy headSize and tailSize so that functions that expect
+    # them to exist don't crash
+    # (e.g. morpho.tools.dev.drawOutOfBoundsStartEnd())
+    headSize = 0
+    tailSize = 0
+
     def __init__(self, data=None, width=3, color=(1,1,1), alpha=1):
         if data is None:
             # data = np.array([
