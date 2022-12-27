@@ -427,7 +427,24 @@ def handleDash(tweenmethod):
 #            no line segment will be drawn from the deadend index to the next index.
 #            This is mainly used under the hood by helper functions like mathgrid()
 #            to speed up rendering.
+# headExternal/tailExternal = Boolean controlling arrow triangle
+#       placement. If set to True, the arrow triangle's base will be
+#       drawn at the corresponding path endpoint instead of its tip.
+#       Both can be set simultaneously by setting `tipExternal`.
+#       Default: False.
+# outlineMethod = String indicating the rendering technique that should
+#       be used to render outlines on paths. Supports two options:
+#       "classic", "cap". By default "classic" is used, which gives
+#       the best results in most cases, but can mess up for dashed
+#       paths with large tailSize compared to node spacing.
+#       If "cap" is used, outlines are rendered by using cairo's square
+#       line caps, which produces decent results even for large tailSize.
+#       The default outline method for all paths can be set by setting
+#       the class attribute `Path.defaultOutlineMethod`.
 class Path(morpho.Figure):
+    defaultOutlineMethod = "classic"
+    outlineMethods = ("classic", "cap")  # List of all supported outline styles
+
     def __init__(self, seq=None, width=3, color=(1,1,1), alpha=1):
         if seq is None:
             seq = [0,1]
@@ -484,6 +501,9 @@ class Path(morpho.Figure):
 
         self.NonTweenable("headExternal", False)
         self.NonTweenable("tailExternal", False)
+
+        # The technique that should be used to render outlines
+        self.NonTweenable("outlineMethod", self.defaultOutlineMethod)
 
     # # Returns a (deep-ish) copy of the path
     # def copy(self):
@@ -943,6 +963,121 @@ class Path(morpho.Figure):
 
             back.dash = self.dash
 
+            if self.outlineMethod == "cap":
+                ctx.set_line_cap(cairo.LINE_CAP_SQUARE)
+                backTipExpand = self.outlineWidth
+            else:
+                backTipExpand = 0
+                # Handle head
+                diff = back.seq[-1] - back.seq[-2]  # Final segment vector
+                diff_length = abs(diff)
+                unit = diff/abs(diff) if diff != 0 else 1  # Endpoint direction vector
+                UNIT = unit.real/xRatio + 1j*unit.imag/yRatio
+                UNIT = UNIT/abs(UNIT)  # Pixel space direction vector
+                dL = self.outlineWidth*UNIT  # Pixel outline thickness vector
+                dX, dY = dL.real, dL.imag
+                dx = morpho.physicalWidth(dX, view, ctx)
+                dy = morpho.physicalHeight(dY, view, ctx)
+                dl = abs(dx + 1j*dy)  # Outline thickness physical vector
+                if headDraw:
+                    sign = sgn(self.headSize)
+                    back.headSize += 4*root3over2*self.outlineWidth*sign
+                    if self.headExternal:
+                        shift = -sign*dl
+                    else:
+                        shift = sign*2*dl
+                else:
+                    shift = dl
+                # `shift` is the amount to shift the final node of the
+                # outline path so that the outline evenly covers the
+                # original path.
+
+                # If the final node will be shifted basically on top of
+                # the penultimate node, slightly perturb the shift value
+                # to eliminate possible precision issues when calculating
+                # tip direction.
+                if shift < 0 and abs(-shift/diff_length-1) < 1e-9:
+                    shift += 1e-8*diff_length
+
+                # Reverse tip direction if the final node is going to be
+                # shifted behind the penultimate node.
+                if shift < 0 and abs(shift) > diff_length:
+                    back.headSize *= -1
+
+                # Shift the final node by the shift amount.
+                back.seq[-1] += shift*unit
+
+                # Handle tail
+                diff = back.seq[0] - back.seq[1]  # Initial segment vector
+                diff_length = abs(diff)
+                unit = diff/abs(diff) if diff != 0 else 1  # Startpoint direction vector
+                UNIT = unit.real/xRatio + 1j*unit.imag/yRatio
+                UNIT = UNIT/abs(UNIT)  # Pixel space direction vector
+                dL = self.outlineWidth*UNIT  # Pixel outline thickness vector
+                dX, dY = dL.real, dL.imag
+                dx = morpho.physicalWidth(dX, view, ctx)
+                dy = morpho.physicalHeight(dY, view, ctx)
+                dl = abs(dx + 1j*dy)  # Outline thickness physical vector
+                if tailDraw:
+                    sign = sgn(self.tailSize)
+                    back.tailSize += 4*root3over2*self.outlineWidth*sign
+                    if self.tailExternal:
+                        shift = -sign*dl
+                    else:
+                        shift = sign*2*dl
+                    # Offset the dash by the outline width if
+                    # tailSize is positive
+                    if sign == 1:
+                        back.dashOffset += 2*abs(dL)
+                else:
+                    shift = dl
+                # `shift` is the amount to shift the initial node of the
+                # outline path so that the outline evenly covers the
+                # original path.
+
+                # If the initial node will be shifted basically on top of
+                # the next node, slightly perturb the shift value
+                # to eliminate possible precision issues when calculating
+                # tip direction.
+                if shift < 0 and abs(-shift/diff_length-1) < 1e-9:
+                    shift += 1e-8*diff_length
+
+                # Reverse tip direction if the final node is going to be
+                # shifted behind the penultimate node.
+                if shift < 0 and abs(shift) > diff_length:
+                    back.tailSize *= -1
+
+                # Shift the initial node by the shift amount.
+                back.seq[0] += shift*unit
+
+                # Dash adjustment
+                if len(back.dash) > 0:
+                    dash = list(back.dash)
+
+                    # If dash pattern is odd, make it an equivalent even
+                    # version by concatenating it with itself.
+                    if len(dash) % 2 == 1:
+                        dash = dash*2
+
+                    adjust = 2*self.outlineWidth
+                    for i in range(len(dash)):
+                        dash[i] += adjust
+                        adjust *= -1
+
+                    # if any(step < 0 for step in dash):
+                    #     raise ValueError("Path outline cannot be drawn because of too short dash steps. Ensure all dash steps >= 2*outlineWidth.")
+
+                    # Check for negative dash steps and adjust accordingly
+                    for i in range(1, len(dash), 2):
+                        # Only need to check odd indices since those are the ones
+                        # that are reduced.
+                        step = dash[i]
+                        if step < 0:
+                            dash[i-1] += step
+                            dash[i] = 0
+
+                    back.dash = dash
+
             # I'm changing back.draw() to Path.draw(back) because
             # that seems to be the better convention based on how I've
             # used subclasses of Path before. But I'm not 100% sure this
@@ -951,8 +1086,7 @@ class Path(morpho.Figure):
             # meaning the drawing of outlines may not be easily changed
             # by subclasses. At least for now, that's the behavior I want,
             # but consider changing it back if that seems better.
-            ctx.set_line_cap(cairo.LINE_CAP_SQUARE)
-            Path.draw(back, camera, ctx, _tipExpand=self.outlineWidth)
+            Path.draw(back, camera, ctx, _tipExpand=backTipExpand)
             ctx.set_line_cap(cairo.LINE_CAP_BUTT)
             # back.draw(camera, ctx)
 
