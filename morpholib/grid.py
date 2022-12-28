@@ -506,6 +506,12 @@ class Path(morpho.Figure):
         # The technique that should be used to render outlines
         self.NonTweenable("outlineMethod", self.defaultOutlineMethod)
 
+        # For internal use.
+        # The vertices of an arrow triangle will be expanded by this
+        # amount. Mainly for use internally when rendering arrow
+        # arrow outlines using the "cap" outline method.
+        self.NonTweenable("_tipExpand", 0)
+
     # # Returns a (deep-ish) copy of the path
     # def copy(self):
     #     # C = morpho.Figure.copy(self)
@@ -890,9 +896,8 @@ class Path(morpho.Figure):
 
         if self.outlineMethod == "cap":
             ctx.set_line_cap(cairo.LINE_CAP_SQUARE)
-            backTipExpand = self.outlineWidth
+            back._tipExpand = self.outlineWidth
         else:  # Classic rendering
-            backTipExpand = 0
             # Handle head
             back.headSize = back._adjustSeqForOutline(
                 camera, ctx, -1, -2,
@@ -942,11 +947,11 @@ class Path(morpho.Figure):
         # meaning the drawing of outlines may not be easily changed
         # by subclasses. At least for now, that's the behavior I want,
         # but consider changing it back if that seems better.
-        Path.draw(back, camera, ctx, _tipExpand=backTipExpand)
+        Path.draw(back, camera, ctx)
         # back.draw(camera, ctx)
         ctx.set_line_cap(cairo.LINE_CAP_BUTT)
 
-    def draw(self, camera, ctx, *, _tipExpand=0):
+    def draw(self, camera, ctx):
         # This method is admittedly a mess. It should really be cleaned up and
         # streamlined, but I'm so scared of breaking it! There are so many cases
         # to test and the Path figure is a critically important figure.
@@ -1159,7 +1164,7 @@ class Path(morpho.Figure):
             headVertices = (pxlA, pxlB, pxlC)
 
             # Expand vertices if needed
-            headVertices = Path._expandVertices(headVertices, _tipExpand, self.headSize)
+            headVertices = Path._expandVertices(headVertices, self._tipExpand, self.headSize)
 
         if tailDraw:
             head = self.seq[init+1]
@@ -1203,7 +1208,7 @@ class Path(morpho.Figure):
             tailVertices = (pxlA, pxlB, pxlC)
 
             # Expand vertices if needed
-            tailVertices = Path._expandVertices(tailVertices, _tipExpand, self.tailSize)
+            tailVertices = Path._expandVertices(tailVertices, self._tipExpand, self.tailSize)
 
         # Reassign final node if needed
         if headDraw:
