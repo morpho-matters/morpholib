@@ -821,7 +821,7 @@ class Path(morpho.Figure):
     # in the classic way so that the outline uniformly covers the original.
     # Also computes what the new arrow size should be and returns it.
     def _adjustSeqForOutline(back, camera, ctx, endIndex, prevIndex,
-        outlineWidth, arrowSize, arrowExternal, xRatio, yRatio):
+        outlineWidth, arrowDraw, arrowSize, arrowExternal, xRatio, yRatio):
 
         diff = back.seq[endIndex] - back.seq[prevIndex]  # Ending segment vector
         diff_length = abs(diff)
@@ -833,7 +833,7 @@ class Path(morpho.Figure):
         dx = morpho.physicalWidth(dX, camera.view, ctx)
         dy = morpho.physicalHeight(dY, camera.view, ctx)
         dl = abs(dx + 1j*dy)  # Outline thickness physical vector
-        if arrowSize != 0:
+        if arrowDraw:
             sign = sgn(arrowSize)
             arrowSize += 4*root3over2*outlineWidth*sign
             if arrowExternal:
@@ -901,13 +901,13 @@ class Path(morpho.Figure):
             # Handle head
             back.headSize = back._adjustSeqForOutline(
                 camera, ctx, -1, -2,
-                self.outlineWidth, self.headSize, self.headExternal, xRatio, yRatio
+                self.outlineWidth, headDraw, self.headSize, self.headExternal, xRatio, yRatio
                 )
 
             # Handle tail
             back.tailSize = back._adjustSeqForOutline(
                 camera, ctx, 0, 1,
-                self.outlineWidth, self.tailSize, self.tailExternal, xRatio, yRatio
+                self.outlineWidth, tailDraw, self.tailSize, self.tailExternal, xRatio, yRatio
                 )
             # Offset the dash by the outline width if
             # tailSize is positive
@@ -1071,7 +1071,7 @@ class Path(morpho.Figure):
         # Draw outlined version if needed
         # (NOTE: This block may need to be re-implemented later because
         # it currently doesn't QUITE handle non-trivial transform
-        # attribute (I think). However, I'm not in a big rush, because
+        # attribute. However, I'm not in a big rush, because
         # it doesn't look that off and modifying transform is a very
         # rare thing to do, esp. with outlines too.)
         if useOutline:
