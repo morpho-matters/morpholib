@@ -415,6 +415,7 @@ def handleDash(tweenmethod):
 #        of ints which are traversed cyclically and will alternatingly indicate
 #        number of pixels of visibility and invisibility.
 #        Note: Effect will not appear if "color" is a gradient.
+# dashOffset = Where along the dash pattern it will start. Default: 0
 # outlineWidth = Thickness of path outline (in pixels). Default: 0 (no outline)
 # outlineColor = Outline color (RGB vector-like). Default: [0,0,0] (black)
 # outlineAlpha = Outline opacity. Default: 1 (opaque)
@@ -2115,6 +2116,7 @@ class SpacePath(Path):
         # path.static = self.static
         path.interp = self.interp
         path.dash = self.dash
+        path.dashOffset = self.dashOffset
         path.deadends = self.deadends
         # path.defaultTween = self.defaultTween
 
@@ -3054,6 +3056,7 @@ def handlePolyVertexInterp(tweenmethod):
 #        Works exactly like how it does in cairo. It's a list
 #        of ints which are traversed cyclically and will alternatingly indicate
 #        number of pixels of visibility and invisibility.
+# dashOffset = Where along the dash pattern it will start. Default: 0
 # origin = Translation value (complex number). Default: 0
 # rotation = Polygon rotation about origin point (radians). Default: 0
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
@@ -3106,12 +3109,13 @@ class Polygon(morpho.Figure):
         alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         width = morpho.Tweenable(name="width", value=width, tags=["size"])
         dash = morpho.Tweenable("dash", [], tags=["scalar", "list"])
+        dashOffset = morpho.Tweenable("dashOffset", 0, tags=["scalar"])
         origin = morpho.Tweenable("origin", value=0, tags=["complex", "nofimage"])
         rotation = morpho.Tweenable("rotation", value=0, tags=["scalar"])
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
         self.extendState([vertices, color, alphaEdge,
-            fill, alphaFill, alpha, width, dash,
+            fill, alphaFill, alpha, width, dash, dashOffset,
             origin, rotation, _transform])
 
         # If set to True, then if fill is a GradientFill,
@@ -3249,7 +3253,7 @@ class Polygon(morpho.Figure):
 
         ctx.set_source_rgba(*self.color, self.alphaEdge*self.alpha)
         ctx.set_line_width(self.width)
-        ctx.set_dash(self.dash)
+        ctx.set_dash(self.dash, self.dashOffset)
         ctx.stroke()
         ctx.set_dash([])
 
@@ -3420,6 +3424,7 @@ class SpacePolygon(Polygon):
         poly.alpha = self.alpha
         poly.width = self.width
         poly.dash = self.dash[:]
+        poly.dashOffset = self.dashOffset
 
         # Compute zdepth as the average of all z-coords of vertices
         z_coords = array[2,:]

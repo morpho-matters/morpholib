@@ -95,6 +95,7 @@ def handleSplineNodeInterp(tweenmethod):
 # dash = Dash pattern. Works exactly like how it does in cairo. It's a list
 #        of ints which are traversed cyclically and will alternatingly indicate
 #        number of pixels of visibility and invisibility.
+# dashOffset = Where along the dash pattern it will start. Default: 0
 # origin = Translation value (complex number). Default: 0 (complex number).
 # rotation = Path rotation about origin point (radians). Default: 0
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
@@ -138,6 +139,7 @@ class Spline(morpho.Figure):
         alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         width = morpho.Tweenable(name="width", value=width, tags=["size"])
         dash = morpho.Tweenable("dash", [], tags=["scalar", "list"])
+        dashOffset = morpho.Tweenable("dashOffset", 0, tags=["scalar"])
         # headSize = morpho.Tweenable("headSize", 0, tags=["scalar"])
         # tailSize = morpho.Tweenable("tailSize", 0, tags=["scalar"])
         # outlineWidth = morpho.Tweenable("outlineWidth", value=0, tags=["size"])
@@ -148,7 +150,7 @@ class Spline(morpho.Figure):
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
         self.update([_data, start, end, color, alphaEdge, fill, alphaFill, alpha,
-            width, dash, origin, rotation, _transform]
+            width, dash, dashOffset, origin, rotation, _transform]
             )
 
 
@@ -943,7 +945,7 @@ class Spline(morpho.Figure):
         else:
             ctx.set_line_width(self.width)
             ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
-            ctx.set_dash(self.dash)
+            ctx.set_dash(self.dash, self.dashOffset)
             ctx.stroke()
             ctx.set_dash([])
 
@@ -1531,6 +1533,7 @@ class SpaceSpline(Spline):
         spline.width = self.width
 
         spline.dash = self.dash
+        spline.dashOffset = self.dashOffset
         spline.deadends = self.deadends
         spline.showTangents = self.showTangents
 
