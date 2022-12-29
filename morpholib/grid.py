@@ -816,7 +816,7 @@ class Path(morpho.Figure):
         vertices = factor*(vertices-center) + center
         return vertices.tolist()
 
-    # For internal use.
+    # For internal use by the draw() method.
     # Adjusts the vertex sequence for an outline path being rendered
     # in the classic way so that the outline uniformly covers the original.
     # Also computes what the new arrow size should be and returns it.
@@ -863,7 +863,8 @@ class Path(morpho.Figure):
 
         return arrowSize
 
-    # For internal use.
+    # For internal use by the draw() method.
+    # Draws the outline of a path.
     def _drawOutline(self, camera, ctx, init, final,
         headDraw, tailDraw, xRatio, yRatio):
 
@@ -951,6 +952,52 @@ class Path(morpho.Figure):
         # back.draw(camera, ctx)
         ctx.set_line_cap(cairo.LINE_CAP_BUTT)
 
+    # For internal use by the draw() method.
+    # Computes the arrow triangle vertex triplet as well as
+    # the modified location of the path's endpoint.
+    def _computeArrowVerticesAndNewTip(
+        self, camera, ctx, head, tail, arrowSize, arrowExternal,
+        mat, mat_inv, rot, origin
+        ):
+
+        # Initialize arrow triangle base to the original head.
+        base = head
+
+        # Update head and tail according to transformations
+        head = mat*(rot*head) + origin
+        tail = mat*(rot*tail) + origin
+
+        HEAD = vect2complex(morpho.anim.screenCoords(head, camera.view, ctx))
+        TAIL = vect2complex(morpho.anim.screenCoords(tail, camera.view, ctx))
+        BODY = HEAD - TAIL
+        DIR = BODY/abs(BODY) if BODY != 0 else 1
+
+        # Draw the arrowhead
+        X,Y = morpho.screenCoords(head, camera.view, ctx)
+        pxlA = X + 1j*Y
+        if arrowExternal:
+            pxlA += root3over2*arrowSize*DIR
+        else:
+            # Adjust the end node temporarily to be located at the
+            # base of the arrowhead.
+            D_head = -arrowSize*root3over2*DIR
+            BASE = pxlA + D_head
+            base = morpho.physicalCoords(BASE.real, BASE.imag, camera.view, ctx)
+
+            # Undo transforms
+            base = (mat_inv*(base - origin))/rot
+
+        # Define the other two pixels and assemble them
+        pxlB = pxlA + arrowSize*DIR*ccw150
+        pxlC = pxlA + arrowSize*DIR*cw150
+
+        vertices = (pxlA, pxlB, pxlC)
+
+        # Expand vertices if needed
+        vertices = Path._expandVertices(vertices, self._tipExpand, arrowSize)
+
+        return vertices, base
+
     def draw(self, camera, ctx):
         # This method is admittedly a mess. It should really be cleaned up and
         # streamlined, but I'm so scared of breaking it! There are so many cases
@@ -1024,20 +1071,26 @@ class Path(morpho.Figure):
         init = math.floor(start)
         final = math.ceil(end)
 
+        # Save initial and final nodes because they may get
+        # temporarily modified in the code below and need to be
+        # restored later.
+        oldTail = self.seq[init]
+        oldHead = self.seq[final]
+
         # TEMPORARY FOR TESTING! COMMENT OUT OR DELETE LATER!
         # oldSeq = self.seq[:]
 
         # Temporarily modify self.seq in place to account
         # for non-integer start and end
-        oldStart = self.seq[int_start]
+        # oldStart = self.seq[int_start]
         if start != int_start:
-            self.seq[int_start] = morpho.numTween(
-                oldStart, self.seq[int_start+1], start-int_start
+            self.seq[init] = morpho.numTween(
+                oldTail, self.seq[int_start+1], start-int_start
                 )
         if end != int_end:
-            oldEnd = self.seq[int_end+1]
-            self.seq[int_end+1] = morpho.numTween(
-                self.seq[int_end] if int_end != int_start else oldStart, oldEnd, end-int_end
+            # oldEnd = self.seq[int_end+1]
+            self.seq[final] = morpho.numTween(
+                (self.seq[int_end] if int_end != int_start else oldTail), oldHead, end-int_end
                 )
 
         # CALCULATE BOOLEAN FLAGS FOR VARIOUS SITUATIONS
@@ -1081,21 +1134,11 @@ class Path(morpho.Figure):
 
 
         # Setup color parameters
-        # gradMode = False  # Indicates whether gradients are used anywhere
-        if isinstance(self.color, morpho.color.Gradient):
-            if len(self.color) == 0:
-                raise ValueError("Color gradient is empty!")
-            # gradMode = True
+        if isinstance(self.color, morpho.color.Gradient) and len(self.color) == 0:
+            raise ValueError("Color gradient is empty!")
         else:
             R,G,B = self.color
-
-        # if isinstance(self.alpha, morpho.color.Gradient):
-        #     if len(self.alpha) == 0:
-        #         raise ValueError("Alpha gradient is empty!")
-        #     gradMode = True
-        # else:
         A = self.alpha*self.alphaEdge
-        # if A == 0: return  # Don't bother drawing invisible path.
 
 
         # Populate RGBA lists with color depending on whether color
@@ -1118,101 +1161,29 @@ class Path(morpho.Figure):
             RGBA_start = [R,G,B,A]
             RGBA_end = [R,G,B,A]
 
-        # Draw arrows if necessary
+        # Draw arrows if necessary.
+        # Compute head and tail nodes
+        head = self.seq[final]
+        head_prev = self.seq[final-1]
+        tail = self.seq[init]
+        tail_prev = self.seq[init+1]
         if headDraw:
-            head = self.seq[final]
-            tail = self.seq[final-1]
-
-            # Update head and tail according to transformations
-            head = mat*(rot*head) + origin
-            tail = mat*(rot*tail) + origin
-
-            HEAD = vect2complex(morpho.anim.screenCoords(head, view, ctx))
-            TAIL = vect2complex(morpho.anim.screenCoords(tail, view, ctx))
-            # HEAD = vect2complex(morpho.anim.screenCoords(self.seq[final], view, ctx))
-            # TAIL = vect2complex(morpho.anim.screenCoords(self.seq[final-1], view, ctx))
-            BODY = HEAD - TAIL
-            DIR = BODY/abs(BODY) if BODY != 0 else 1
-
-            # Draw the arrowhead
-            X,Y = morpho.screenCoords(head, view, ctx)
-            # x,y = morpho.screenCoords(self.seq[final], view, ctx)
-            pxlA = X + 1j*Y
-            if self.headExternal:
-                pxlA += root3over2*self.headSize*DIR
-                base = self.seq[final]
-            else:
-                # Adjust the final node temporarily to be located at the
-                # base of the arrowhead.
-                D_head = -self.headSize*root3over2*DIR
-                BASE = pxlA + D_head
-                base = morpho.physicalCoords(BASE.real, BASE.imag, view, ctx)
-
-                # Undo transforms
-                base = (mat_inv*(base - origin))/rot
-
-            oldHead = self.seq[final]
-            # self.seq[final] = base
-            # Postpone reassigning node point until after tail
-            # modification below finishes
-            newFinalNode = base
-
-            # Define the other two pixels and assemble them
-            pxlB = pxlA + self.headSize*DIR*ccw150
-            pxlC = pxlA + self.headSize*DIR*cw150
-
-            headVertices = (pxlA, pxlB, pxlC)
-
-            # Expand vertices if needed
-            headVertices = Path._expandVertices(headVertices, self._tipExpand, self.headSize)
-
+            headVertices, newHead = self._computeArrowVerticesAndNewTip(
+                camera, ctx,
+                head, head_prev, self.headSize, self.headExternal,
+                mat, mat_inv, rot, origin
+                )
+            self.seq[final] = newHead
         if tailDraw:
-            head = self.seq[init+1]
-            tail = self.seq[init]
+            tailVertices, newTail = self._computeArrowVerticesAndNewTip(
+                camera, ctx,
+                tail, tail_prev, self.tailSize, self.tailExternal,
+                mat, mat_inv, rot, origin
+                )
+            self.seq[init] = newTail
 
-            # Update head and tail according to transformations
-            head = mat*(rot*head) + origin
-            tail = mat*(rot*tail) + origin
 
-            HEAD = vect2complex(morpho.anim.screenCoords(head, view, ctx))
-            TAIL = vect2complex(morpho.anim.screenCoords(tail, view, ctx))
-            # HEAD = vect2complex(morpho.anim.screenCoords(self.seq[init+1], view, ctx))
-            # TAIL = vect2complex(morpho.anim.screenCoords(self.seq[init], view, ctx))
-            BODY = HEAD - TAIL
-            DIR = BODY/abs(BODY) if BODY != 0 else 1
-
-            # Do more stuff
-            X,Y = morpho.screenCoords(tail, view, ctx)
-            # x,y = morpho.anim.screenCoords(self.seq[init], view, ctx)
-            pxlA = X + 1j*Y
-            if self.tailExternal:
-                pxlA -= root3over2*self.tailSize*DIR
-                base = self.seq[init]
-            else:
-                # Adjust the starting node temporarily to be located
-                # at the base of the arrowhead.
-                D_tail = self.tailSize*root3over2*DIR
-                BASE = pxlA + D_tail
-                base = morpho.physicalCoords(BASE.real, BASE.imag, view, ctx)
-
-                # Undo transforms
-                base = (mat_inv*(base - origin))/rot
-
-            oldTail = self.seq[init]
-            self.seq[init] = base
-
-            pxlB = pxlA - self.tailSize*DIR*ccw150
-            pxlC = pxlA - self.tailSize*DIR*cw150
-
-            # Define the other two pixels and assemble them
-            tailVertices = (pxlA, pxlB, pxlC)
-
-            # Expand vertices if needed
-            tailVertices = Path._expandVertices(tailVertices, self._tipExpand, self.tailSize)
-
-        # Reassign final node if needed
-        if headDraw:
-            self.seq[final] = newFinalNode
+        ### BEGIN DRAWING THE PATH IN CAIRO ###
 
         # Initialize starting point
         zn = self.seq[init]
@@ -1385,16 +1356,21 @@ class Path(morpho.Figure):
         if tailDraw:
             cairo_triangle(ctx, *tailVertices, RGBA_start)
 
-        # Restore modified nodes if necessary
-        if end != int_end:
-            self.seq[int_end+1] = oldEnd
-        elif headDraw:
-            self.seq[final] = oldHead
+        # # Restore modified nodes if necessary
+        # if end != int_end:
+        #     self.seq[int_end+1] = oldEnd
+        # elif headDraw:
+        #     self.seq[final] = oldHead
 
-        if start != int_start:
-            self.seq[int_start] = oldStart
-        elif tailDraw:
-            self.seq[init] = oldTail
+        # if start != int_start:
+        #     self.seq[int_start] = oldStart
+        # elif tailDraw:
+        #     self.seq[init] = oldTail
+
+        # Restore initial and final nodes if they were
+        # temporarily modified.
+        self.seq[init] = oldTail
+        self.seq[final] = oldHead
 
         # TEMPORARY FOR TESTING! COMMENT OUT OR DELETE LATER!
         # assert self.seq == oldSeq
