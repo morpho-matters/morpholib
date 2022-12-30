@@ -90,3 +90,14 @@ def invertBezier2d(p0, p1, p2, p3, z, *, tol=1e-9):
                 solns.append(tx)
 
     return solns
+
+# NOT IMPLEMENTED YET.
+# Converts a list of Catmull-Rom spline control points to their
+# equivalent Bezier spline control points.
+def CatmullRomToBezier(pts):
+    raise NotImplementedError
+    bezierPts = list(pts)
+    for n in range(0, len(pts)-1, 3):
+        p0, p1, p2, p3 = pts[n: n+4]
+        bezierPts[n: n+4] = (p1, p1 + (p2-p0)/6, p2 - (p3-p1)/6, p2)
+    return bezierPts

@@ -201,6 +201,10 @@ class Spline(morpho.Figure):
     def length(self):
         return self.data.shape[0]
 
+    # Returns the number of nodes
+    def nodeCount(self):
+        return self._data.shape[0]
+
     # Returns or sets the position of the node of given index.
     # Usage: myspline.node(n) -> position of nth node
     #        myspline.node(n, value) sets nth node position to value
@@ -408,6 +412,38 @@ class Spline(morpho.Figure):
         self._data = np.insert(self._data, self.length(), self._data[0].copy(), axis=0)
         return self
 
+    # Automatically sets the tangent handles of the splines
+    # to interpolate between the node points according to a
+    # Catmull-Rom spline. The first and last nodes are handled
+    # by mirroring their neighbors about them.
+    #
+    # Optionally can specify an index range using syntax similar
+    # to python's range() function:
+    #   spline.autoHandles(3,7)  # Sets handles for nodes #3 thru #7
+    #   spline.autoHandles(5)  # Sets handles for the first 5 nodes
+    #   spline.autoHandles()  # Sets handles for all nodes.
+    # You can optionally specify a tension value > 0.
+    #   spline.autoHandles(tension=0.75)
+    # By default, tension=1 for a standard Catmull-Rom spline.
+    def autoHandles(self, a=None, b=None, /, *, tension=1):
+        if a is None:
+            a = 0
+            b = self.nodeCount()
+        elif b is None:
+            b = a
+            a = 0
+
+        nodeCount = self.nodeCount()
+        for n in range(a, b):
+            prevIndex = max(0, n-1)
+            nextIndex = min(n+1, nodeCount-1)
+            node = self.node(n)
+            prevNode = self.node(prevIndex)
+            nextNode = self.node(nextIndex)
+            vector = (nextNode - prevNode)/(3*tension*(nextIndex-prevIndex))
+            self.outhandleRel(n, vector)
+            self.inhandleRel(n, oo)
+        return self
 
     # Returns the interpolated position along the path corresponding to the
     # parameter t, where t = 0 is the path start and t = 1 is the path end.
