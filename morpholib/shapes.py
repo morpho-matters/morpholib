@@ -437,21 +437,19 @@ class Spline(morpho.Figure):
     # all nodes and setting the inhandles to inf (mirrored), but
     # this can be reversed by passing in `viaInhandles=True`.
     #
-    # Optionally can specify an index range using syntax similar
-    # to python's range() function:
-    #   spline.autoHandles(3,7)  # Sets handles for nodes #3 thru #7
-    #   spline.autoHandles(5)  # Sets handles for the first 5 nodes
-    #   spline.autoHandles()  # Sets handles for all nodes.
+    # Optionally can specify a particular index or an index range:
+    #   spline.autosetHandles(5)  # Sets handles for the node at index 5.
+    #   spline.autosetHandles(3,7)  # Sets handles for nodes #3 thru #6
+    #   spline.autosetHandles()  # Sets handles for all nodes.
     # You can optionally specify a non-zero tension value.
-    #   spline.autoHandles(tension=0.75)
+    #   spline.autosetHandles(tension=0.75)
     # By default, tension=1 for a standard Catmull-Rom spline.
     def autosetHandles(self, a=None, b=None, /, *, tension=1, viaInhandles=False):
         if a is None:
             a = 0
             b = self.nodeCount()
         elif b is None:
-            b = a
-            a = 0
+            b = a + 1
 
         if viaInhandles:
             # Use inhandleRel() as the primary handle setter.
