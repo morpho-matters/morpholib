@@ -445,7 +445,7 @@ class Spline(morpho.Figure):
     # You can optionally specify a non-zero tension value.
     #   spline.autoHandles(tension=0.75)
     # By default, tension=1 for a standard Catmull-Rom spline.
-    def autoHandles(self, a=None, b=None, /, *, tension=1, viaInhandles=False):
+    def autosetHandles(self, a=None, b=None, /, *, tension=1, viaInhandles=False):
         if a is None:
             a = 0
             b = self.nodeCount()
