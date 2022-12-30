@@ -395,6 +395,22 @@ class Spline(morpho.Figure):
             self._data = np.insert(self.data, beforeIndex, [point,inhandle,outhandle], axis=0)
         return self
 
+    # Adds a list of points to the spline instead of just one at a time.
+    # See also: newNode()
+    def newNodes(self, point, inhandle=oo, outhandle=oo,
+        beforeIndex=oo, *args, **kwargs):
+
+        # Handle out of bounds beforeIndex value.
+        beforeIndex = min(beforeIndex, self.length())  # Clamp overflows
+        if beforeIndex < 0:  # Cycle underflows
+            beforeIndex = beforeIndex % self.length()
+
+        # This is reversed so that all points are placed before
+        # the specified beforeIndex value.
+        for pt in reversed(point):
+            self.newNode(pt, inhandle, outhandle, beforeIndex, *args, **kwargs)
+
+        return self
 
     # Deletes the node at the specified index. The dangling nodes on
     # either side will then be connected assuming they aren't prevented
@@ -1486,8 +1502,9 @@ class SpaceSpline(Spline):
     # Also optionally specify where to insert the node in the sequence.
     # By default, places it after the current final node.
     def newNode(self, point, inhandle=(oo,oo,oo), outhandle=(oo,oo,oo), beforeIndex=oo):
-        beforeIndex = min(beforeIndex, self.length())
-        if beforeIndex < 0:
+        # Handle out of bounds beforeIndex value.
+        beforeIndex = min(beforeIndex, self.length())  # Clamp overflows
+        if beforeIndex < 0:  # Cycle underflows
             beforeIndex = beforeIndex % self.length()
 
         # Convert to np.arrays if needed
