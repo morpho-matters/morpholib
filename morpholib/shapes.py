@@ -417,21 +417,37 @@ class Spline(morpho.Figure):
     # Catmull-Rom spline. The first and last nodes are handled
     # by mirroring their neighbors about them.
     #
+    # This is done by automatically setting the outhandles of
+    # all nodes and setting the inhandles to inf (mirrored), but
+    # this can be reversed by passing in `viaInhandles=True`.
+    #
     # Optionally can specify an index range using syntax similar
     # to python's range() function:
     #   spline.autoHandles(3,7)  # Sets handles for nodes #3 thru #7
     #   spline.autoHandles(5)  # Sets handles for the first 5 nodes
     #   spline.autoHandles()  # Sets handles for all nodes.
-    # You can optionally specify a tension value > 0.
+    # You can optionally specify a non-zero tension value.
     #   spline.autoHandles(tension=0.75)
     # By default, tension=1 for a standard Catmull-Rom spline.
-    def autoHandles(self, a=None, b=None, /, *, tension=1):
+    def autoHandles(self, a=None, b=None, /, *, tension=1, viaInhandles=False):
         if a is None:
             a = 0
             b = self.nodeCount()
         elif b is None:
             b = a
             a = 0
+
+        if viaInhandles:
+            # Use inhandleRel() as the primary handle setter.
+            handleMethod = self.inhandleRel
+            autoMethod = self.outhandleRel
+            # Tension is negated so that the vector directions
+            # get mirrored.
+            tension *= -1
+        else:
+            handleMethod = self.outhandleRel
+            autoMethod = self.inhandleRel
+
 
         nodeCount = self.nodeCount()
         for n in range(a, b):
@@ -441,8 +457,8 @@ class Spline(morpho.Figure):
             prevNode = self.node(prevIndex)
             nextNode = self.node(nextIndex)
             vector = (nextNode - prevNode)/(3*tension*(nextIndex-prevIndex))
-            self.outhandleRel(n, vector)
-            self.inhandleRel(n, oo)
+            handleMethod(n, vector)
+            autoMethod(n, oo)
         return self
 
     # Returns the interpolated position along the path corresponding to the
