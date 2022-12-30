@@ -1501,7 +1501,9 @@ class SpaceSpline(Spline):
     # Optionally also specify inhandle and outhandle which default to inf.
     # Also optionally specify where to insert the node in the sequence.
     # By default, places it after the current final node.
-    def newNode(self, point, inhandle=(oo,oo,oo), outhandle=(oo,oo,oo), beforeIndex=oo):
+    def newNode(self, point, inhandle=(oo,oo,oo), outhandle=(oo,oo,oo),
+        beforeIndex=oo, *, relHandles=True):
+
         # Handle out of bounds beforeIndex value.
         beforeIndex = min(beforeIndex, self.length())  # Clamp overflows
         if beforeIndex < 0:  # Cycle underflows
@@ -1511,6 +1513,10 @@ class SpaceSpline(Spline):
         point = morpho.array(point)
         inhandle = morpho.array(inhandle)
         outhandle = morpho.array(outhandle)
+
+        if relHandles:
+            inhandle = point + inhandle
+            outhandle = point + outhandle
 
         if self._data.size == 0:
             self._data = np.array([[point, inhandle, outhandle]], dtype=float)
