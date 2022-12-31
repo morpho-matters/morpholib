@@ -786,10 +786,16 @@ class Path(BoundingBoxFigure):
         L = self.arclength()
         return lambda t: self.s_inv(L*t)
 
-    # Returns the center of mass of all nodes in the Path.
+    # Returns the center of mass of all nodes in the Path
+    # ignoring transformation attributes.
     # That is, returns mean(path.seq)
     def center(self):
         return mean(self.seq)
+
+    # Returns the center of the path's bounding box
+    # ignoring transformation attributes.
+    def boxCenter(self):
+        return BoundingBoxFigure.center(self)
 
     # NOTE: FOR INTERNAL USE ONLY! NOT WELL-MAINTAINED. USE AT OWN RISK!
     # Returns boolean on whether a path has the same
@@ -3146,12 +3152,23 @@ class Polygon(BoundingBoxFigure):
         self.transform = np.identity(2)
         return self
 
-    # Returns physical bounding box of path as
+    # Returns physical bounding box of polygon as
     # [xmin, xmax, ymin, ymax]
     # ignoring transformation attributes.
     def box(self):
         array = np.array(self.vertices)
         return Path._calculateBox(array)
+
+    # Returns the center of mass of all vertices
+    # ignoring transformation attributes.
+    # That is, returns mean(polygon.vertices)
+    def center(self):
+        return mean(self.vertices)
+
+    # Returns the center of the polygon's bounding box
+    # ignoring transformation attributes.
+    def boxCenter(self):
+        return BoundingBoxFigure.center(self)
 
     # Specifies which class to use in constructing the edge path.
     # Mainly useful under the hood with how SpacePolygon inherits from Polygon.
