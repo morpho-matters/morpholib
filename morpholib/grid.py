@@ -1134,8 +1134,9 @@ class Path(morpho.Figure):
 
 
         # Setup color parameters
-        if isinstance(self.color, morpho.color.Gradient) and len(self.color) == 0:
-            raise ValueError("Color gradient is empty!")
+        if isinstance(self.color, morpho.color.Gradient):
+            if len(self.color) == 0:
+                raise ValueError("Color gradient is empty!")
         else:
             R,G,B = self.color
         A = self.alpha*self.alphaEdge
