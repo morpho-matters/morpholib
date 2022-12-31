@@ -571,23 +571,23 @@ class Path(BoundingBoxFigure):
     # Calculates the bounding box of a numpy array of
     # complex number positional data.
     @staticmethod
-    def _calculateBox(array):
+    def _calculateBox(array, origin=0):
         reals = array.real
         imags = array.imag
 
-        left = np.min(reals).tolist()
-        right = np.max(reals).tolist()
-        bottom = np.min(imags).tolist()
-        top = np.max(imags).tolist()
+        left = np.min(reals).tolist() + origin.real
+        right = np.max(reals).tolist() + origin.real
+        bottom = np.min(imags).tolist() + origin.imag
+        top = np.max(imags).tolist() + origin.imag
 
         return [left, right, bottom, top]
 
     # Returns physical bounding box of path as
     # [xmin, xmax, ymin, ymax]
-    # ignoring transformation attributes.
+    # ignoring rotation and transform.
     def box(self):
         array = np.array(self.seq)
-        return self._calculateBox(array)
+        return self._calculateBox(array, self.origin)
 
     # Closes the path IN PLACE if it is not already closed.
     def close(self):
@@ -793,7 +793,7 @@ class Path(BoundingBoxFigure):
         return mean(self.seq)
 
     # Returns the center of the path's bounding box
-    # ignoring transformation attributes.
+    # ignoring rotation and transform.
     def boxCenter(self):
         return BoundingBoxFigure.center(self)
 
@@ -3154,10 +3154,10 @@ class Polygon(BoundingBoxFigure):
 
     # Returns physical bounding box of polygon as
     # [xmin, xmax, ymin, ymax]
-    # ignoring transformation attributes.
+    # ignoring rotation and transform.
     def box(self):
         array = np.array(self.vertices)
-        return Path._calculateBox(array)
+        return Path._calculateBox(array, self.origin)
 
     # Returns the center of mass of all vertices
     # ignoring transformation attributes.
@@ -3166,7 +3166,7 @@ class Polygon(BoundingBoxFigure):
         return mean(self.vertices)
 
     # Returns the center of the polygon's bounding box
-    # ignoring transformation attributes.
+    # ignoring rotation and transform.
     def boxCenter(self):
         return BoundingBoxFigure.center(self)
 
