@@ -4,7 +4,7 @@ mo = morpho
 import morpholib.tools.color, morpholib.anim
 from morpholib.matrix import mat
 from morpholib.tools.basics import *
-from morpholib.tools.dev import drawOutOfBoundsStartEnd
+from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure
 
 from morpholib import object_hasattr
 
@@ -442,7 +442,7 @@ def handleDash(tweenmethod):
 #       line caps, which produces decent results even for large tailSize.
 #       The default outline method for all paths can be set by setting
 #       the class attribute `Path.defaultOutlineMethod`.
-class Path(morpho.Figure):
+class Path(BoundingBoxFigure):
     defaultOutlineMethod = "classic"
     outlineMethods = ("classic", "cap")  # List of all supported outline styles
 
@@ -566,6 +566,28 @@ class Path(morpho.Figure):
         self.rotation = 0
         self.transform = np.identity(2)
         return self
+
+    # Mainly for internal use.
+    # Calculates the bounding box of a numpy array of
+    # complex number positional data.
+    @staticmethod
+    def _calculateBox(array):
+        reals = array.real
+        imags = array.imag
+
+        left = np.min(reals).tolist()
+        right = np.max(reals).tolist()
+        bottom = np.min(imags).tolist()
+        top = np.max(imags).tolist()
+
+        return [left, right, bottom, top]
+
+    # Returns physical bounding box of path as
+    # [xmin, xmax, ymin, ymax]
+    # ignoring transformation attributes.
+    def box(self):
+        array = np.array(self.seq)
+        return self._calculateBox(array)
 
     # Closes the path IN PLACE if it is not already closed.
     def close(self):
@@ -1965,6 +1987,10 @@ class SpacePath(Path):
 
         return new
 
+    # box() method for SpacePath is currently unimplemented.
+    def box(self, *args, **kwargs):
+        raise NotImplementedError("box() method is currently unimplemented for SpacePath.")
+
     # Closes the path if it is not already closed.
     def close(self):
         if len(self.seq) == 0:
@@ -3026,7 +3052,7 @@ def handlePolyVertexInterp(tweenmethod):
 # origin = Translation value (complex number). Default: 0
 # rotation = Polygon rotation about origin point (radians). Default: 0
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
-class Polygon(morpho.Figure):
+class Polygon(BoundingBoxFigure):
     def __init__(self, vertices=None, width=3, color=(1,1,1), alphaEdge=1,
         fill=(1,0,0), alphaFill=1,
         alpha=1):
@@ -3120,6 +3146,12 @@ class Polygon(morpho.Figure):
         self.transform = np.identity(2)
         return self
 
+    # Returns physical bounding box of path as
+    # [xmin, xmax, ymin, ymax]
+    # ignoring transformation attributes.
+    def box(self):
+        array = np.array(self.vertices)
+        return Path._calculateBox(array)
 
     # Specifies which class to use in constructing the edge path.
     # Mainly useful under the hood with how SpacePolygon inherits from Polygon.
@@ -3347,6 +3379,10 @@ class SpacePolygon(Polygon):
         new.vertices = Arraylist(np.array(new.vertices, dtype=float).tolist())
 
         return new
+
+    # box() method for SpacePolygon is currently unimplemented.
+    def box(self, *args, **kwargs):
+        raise NotImplementedError("box() method is currently unimplemented for SpacePolygon.")
 
     # zdepth of the primitive polygon is taken to be the average of all
     # vertices of the space polygon.
