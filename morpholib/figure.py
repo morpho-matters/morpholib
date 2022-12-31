@@ -1349,6 +1349,8 @@ class Actor(object):
     # two neighboring keyfigures. This behavior can be
     # disabled by passing in the keyword argument
     # `seamless=False`
+    # Also note that this will only work for strictly increasing
+    # transition functions.
     def newkey(self, f, figure=None, *, seamless=True):
         f = round(f)
         if type(f) is not int:
