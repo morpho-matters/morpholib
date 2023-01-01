@@ -247,6 +247,11 @@ class Figure(object):
         new.static = self.static
         new.delay = self.delay
         new.visible = self.visible
+
+        # Note that the `owner` attribute should NOT be copied
+        # since the copied figure may not be used within an
+        # actor.
+
         return new
 
     # Updates the standard "meta-settings" of the figure with those
@@ -1336,6 +1341,9 @@ class Actor(object):
         #     raise TypeError("Specified index is not an int!")
         if f not in self.timeline:
             raise KeyError("No keyfigure at given index.")
+
+        # Reset owner attribute
+        self.timeline[f].owner = None
 
         del self.timeline[f]
         self.keyIDs.remove(f)
