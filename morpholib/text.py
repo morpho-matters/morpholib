@@ -1785,7 +1785,7 @@ def paragraph(textarray, view, windowShape=None,
             else:
                 raise AttributeError
         except AttributeError:
-            raise TypeError("Cannot implicitly determine windowShape.")
+            raise TypeError("Cannot infer windowShape.")
 
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):

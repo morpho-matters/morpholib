@@ -20,8 +20,8 @@ import math, cmath
 # whereby `view` will be taken as the latest viewbox in the
 # layer and `windowShape` will be taken from the corresponding
 # attribute in the animation object.
-# If view/ctx is unspecified, an attempt will be made to implicitly
-# determine them by going thru the figure's owner chain looking
+# If view/ctx is unspecified, an attempt will be made to infer
+# them by going thru the figure's owner chain looking
 # for a layer or animation object.
 def typecastViewCtx(method):
     def wrapper(self, view=None, ctx=None, *args, **kwargs):
@@ -29,11 +29,24 @@ def typecastViewCtx(method):
         # determine the layer or animation object containing
         # the figure.
         if view is None:
+            # Try to find the layer this figure is a part of
             try:
                 view = self.owner.owner
                 if view is None: raise AttributeError
             except AttributeError:
-                raise TypeError("Figure is not owned by a layer. `view` cannot be implicitly determined.")
+                raise TypeError("Figure is not owned by a layer. `view` cannot be inferred.")
+
+            # # I DON'T THINK THIS IS A GOOD FEATURE ANYMORE!!!
+            # # IT'S HERE FOR REFERENCE PURPOSES ONLY.
+            # # Try to find the timeline position of this figure
+            # # to find the appropriate camera view
+            # try:
+            #     time = self.owner.timeof(self)
+            # except ValueError:  # self is somehow not in the timeline??
+            #     pass  # Just use the layer itself.
+            # else:
+            #     view = view.viewtime(time)
+
         if ctx is None:
             try:
                 ctx = self.owner.owner.owner
