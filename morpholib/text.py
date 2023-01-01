@@ -1739,6 +1739,7 @@ def conformText(textarray):
 #               (pixel width, pixel height)
 #               Can also be specified as an Animation object, in which
 #               case the `windowShape` attribute is extracted and used.
+#               If unspecified, it will be inferred from `view`.
 # pos = Position of the text group (complex number). Default: 0
 # anchor_x = Overall horizontal position alignment parameter.
 #            -1 = left-aligned, 0 = center-aligned, 1 = right-aligned.
@@ -1766,10 +1767,25 @@ def conformText(textarray):
 # **kwargs = Any other keyword arguments will be applied to the
 #            every component Text figure:
 #            txt.set(**kwargs) for each txt in the textarray
-def paragraph(textarray, view, windowShape,
+def paragraph(textarray, view, windowShape=None,
     pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0,
     *, flush=0, align=None, gap=None, rotation=0,
     background=(1,1,1), backAlpha=0, backPad=0, **kwargs):
+
+    # If windowShape unspecified, try to infer it
+    # from the given `view` value.
+    if windowShape is None:
+        try:
+            if isinstance(view, morpho.Layer):
+                windowShape = view.owner.windowShape
+            elif isinstance(view, morpho.Actor):
+                windowShape = view.owner.owner.windowShape
+            elif isinstance(view, morpho.anim.Camera):
+                windowShape = view.owner.owner.owner.windowShape
+            else:
+                raise AttributeError
+        except AttributeError:
+            raise TypeError("Cannot implicitly determine windowShape.")
 
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):
@@ -1900,7 +1916,7 @@ def paragraphPhys(textarray, *args, **kwargs):
 #
 # You also have to specify an `orient` rotation matrix, as space
 # paragraphs cannot be non-orientable. It defaults to the identity.
-def paragraph3d(textarray, view, windowShape,
+def paragraph3d(textarray, view, windowShape=None,
     pos=0, orient=None, *args, _use_paragraphPhys=False, **kwargs):
 
     # Create 2d paragraph
