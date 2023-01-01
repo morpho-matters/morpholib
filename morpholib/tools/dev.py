@@ -20,8 +20,27 @@ import math, cmath
 # whereby `view` will be taken as the latest viewbox in the
 # layer and `windowShape` will be taken from the corresponding
 # attribute in the animation object.
+# If view/ctx is unspecified, an attempt will be made to implicitly
+# determine them by going thru the figure's owner chain looking
+# for a layer or animation object.
 def typecastViewCtx(method):
-    def wrapper(self, view, ctx, *args, **kwargs):
+    def wrapper(self, view=None, ctx=None, *args, **kwargs):
+        # If view and/or ctx is unspecified, try to implicitly
+        # determine the layer or animation object containing
+        # the figure.
+        if view is None:
+            try:
+                view = self.owner.owner
+                if view is None: raise AttributeError
+            except AttributeError:
+                raise TypeError("Figure is not owned by a layer. `view` cannot be implicitly determined.")
+        if ctx is None:
+            try:
+                ctx = self.owner.owner.owner
+                if ctx is None: raise AttributeError
+            except AttributeError:
+                raise TypeError("Figure is not owned by an animation. `ctx` cannot be implictly determined.")
+
         # Handle Layer/Camera/Animation type inputs to
         # view and ctx.
         if isinstance(view, morpho.Layer):
