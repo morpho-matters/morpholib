@@ -11,6 +11,8 @@ Last guide, we explored some basic figures like points, paths, and polygons. Now
 > ```python
 > import morpholib as morpho
 > morpho.importAll()
+>
+> import numpy as np
 > ```
 > You will also need to place the two image files ``ball.png`` and ``oo.png`` into the same directory as your Python scripts. These image files can be downloaded [from here](https://github.com/morpho-matters/morpholib/tree/master/examples).
 
@@ -507,12 +509,11 @@ shape = morpho.grid.rect([0,1,0,1])
 # Apply the linear transformation corresponding to the matrix
 # [[  1  1]
 #  [0.5  2]]
-shape.transform = morpho.array([[1,1],[0.5,2]])
+shape.transform = np.array([[1,1],[0.5,2]])
 
 movie = morpho.Animation(shape)
 movie.play()
 ```
-> **Note:** The code above invokes the function ``morpho.array()``. It's recommended to use this function whenever you need to define a matrix or a vector. It's basically just a wrapper around ``numpy.array()``, but it has a few different properties, and usually ensures that the result will be compatible with other components of Morpho.
 
 You can also apply the ``origin`` and ``rotation`` tweenables in addition to the ``transform`` tweenable to get other composite effects. However, you will need to be mindful of the order of operations. The transformation tweenables are always applied in the order ``rotation``, ``transform``, ``origin``. This means the figure will be rotated first, then transformed according to the matrix given, and finally translated to its new origin point.
 
@@ -576,7 +577,7 @@ I've already mentioned that ``Text`` and ``Image`` figures support a ``rotation`
 ball = morpho.graphics.Image("./ball.png")
 ball.width = 2
 # Shear the ball
-ball.transform = morpho.array([[1,1],[0,1]])
+ball.transform = np.array([[1,1],[0,1]])
 
 label = morpho.text.Text("sheared ball", pos=3j)
 # Shear the label

@@ -167,7 +167,7 @@ def parallelogram():
     # Apply the linear transformation corresponding to the matrix
     # [[  1  1]
     #  [0.5  2]]
-    shape.transform = morpho.array([[1,1],[0.5,2]])
+    shape.transform = np.array([[1,1],[0.5,2]])
 
     movie = morpho.Animation(shape)
     movie.play()
@@ -205,7 +205,7 @@ def shearedBall():
     ball = morpho.graphics.Image("./ball.png")
     ball.width = 2
     # Shear the ball
-    ball.transform = morpho.array([[1,1],[0,1]])
+    ball.transform = np.array([[1,1],[0,1]])
 
     label = morpho.text.Text("sheared ball", pos=3j)
     # Shear the label
