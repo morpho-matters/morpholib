@@ -1348,6 +1348,14 @@ class Actor(object):
         del self.timeline[f]
         self.keyIDs.remove(f)
 
+    # Returns the given keyfigure's position in the timeline.
+    # Equivalent: myactor.keyID[keyfig]
+    def timeof(self, keyfig):
+        try:
+            IDno = list(self.timeline.values()).index(keyfig)
+            return list(self.timeline.keys())[IDno]
+        except ValueError:
+            raise ValueError("Given keyfigure is not in the timeline.")
 
     # Creates a new keyfigure at index f and returns it.
     # If f is ahead of the last keyframe, the new keyfigure
@@ -2002,6 +2010,9 @@ class _KeyIDContainer(object):
         self.actor = actor
 
     def __getitem__(self, i):
+        if isinstance(i, Figure):
+            return self.actor.timeof(i)
+
         return self.actor._keyIDno(i)
 
     def __delitem__(self, i):
