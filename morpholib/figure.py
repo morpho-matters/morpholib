@@ -65,6 +65,9 @@ class Figure(object):
 
         self.update(tweenables)
 
+        # Actor that this figure is a part of.
+        self.owner = None
+
         ### META-SETTINGS ###
 
         # Tells higher-level structures whether or not to draw this figure.
@@ -1185,6 +1188,13 @@ class Actor(object):
     def update(self):
         self.keyIDs = list(self.timeline.keys())
         self.keyIDs.sort()
+        self._updateOwnerships()
+
+    # Assigns this actor to the `owner` attribute of all
+    # component figures.
+    def _updateOwnerships(self):
+        for fig in self.keys():
+            fig.owner = self
 
     # Makes a deep-ish copy of the actor.
     # Assumes all figures in the timeline are distinct.
