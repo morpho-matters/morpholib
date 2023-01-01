@@ -1227,8 +1227,9 @@ class Actor(object):
 
     # Returns the i-th keyfigure in the timeline when subscripted:
     # firstkey = myactor.key[0]
-    # Also can replace keys:
-    # myactor.key[0] = newfig
+    # Also can replace keys either by key number or by object:
+    #   myactor.key[0] = newfig  # Replace first key
+    #   myactor.key[keyfig] = newfig  # Replace keyfig with newfig
     # Segments of actors can also be extracted with this syntax:
     # myactor.key[i:j]
     # which extracts a subactor starting from the i-th keyfigure
@@ -1997,9 +1998,15 @@ class _KeyContainer(object):
         return self.actor._keyno(i)
 
     def __setitem__(self, i, value):
+        if isinstance(i, Figure):
+            self.actor.replacekey(self.actor.timeof(i), value)
+            return
         self.actor.replacekey(self.actor.keyID(i), value)
 
     def __delitem__(self, i):
+        if isinstance(i, Figure):
+            self.actor.delkey(self.actor.timeof(i))
+            return
         self.actor.delkey(self.actor.keyID[i])
 
     def __call__(self, i):
