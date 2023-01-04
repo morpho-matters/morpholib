@@ -16,6 +16,8 @@ mation.setupContext()
 ctx0 = mation.context
 del mation
 
+DUMMY = object()
+
 # Default font. If set to a font's name, this font
 # will be used as the default font for the Text class
 # and its derivatives.
@@ -521,7 +523,7 @@ class PText(Text):
     #
     # Also note the physical width is estimated and may not be
     # perfectly accurate.
-    def dimensions(self, view=None, ctx=None):
+    def dimensions(self, view=DUMMY, ctx=DUMMY):
         # return (self.aspectRatioWH()*self.size, self.size)
         height = self.height()
         width = self.aspectRatioWH()*height
@@ -534,13 +536,13 @@ class PText(Text):
     # but they exist for internal implementation reasons.
     #
     # Note this ignores the "transform" and prescale tweenables.
-    def width(self, view=None, ctx=None):
+    def width(self, view=DUMMY, ctx=DUMMY):
         # return self.aspectRatioWH()*self.height()
         return self.dimensions()[0]
 
     # Returns the physical height of the text's bounding box.
     # It is equal to the `size` attribute.
-    def height(self, view=None, ctx=None):
+    def height(self, view=DUMMY, ctx=DUMMY):
         txt = self._makeDummy()
         heightSelf = txt.pixelHeight()
         txt.text = _referenceString
@@ -561,12 +563,12 @@ class PText(Text):
     # Note: Ignores rotation and transform, but includes
     # the prescale factors
     def box(self, pad=0):
-        return Text.box(self, None, None, pad=pad)
+        return Text.box(self, DUMMY, DUMMY, pad=pad)
 
     # Same as box(), but the coordinates are relative to
     # the text's position.
     def relbox(self, pad=0):
-        return Text.relbox(self, None, None, pad=pad)
+        return Text.relbox(self, DUMMY, DUMMY, pad=pad)
 
     # Returns the four corners of the text's bounding box
     # plus any optional padding. The sequence of the corners is
@@ -1479,7 +1481,7 @@ class FancyMultiPText(FancyMultiText):
     #
     # The optional arguments `view` and `ctx` do nothing here,
     # but they exist for internal implementation reasons.
-    def totalCenter(self, view=None, ctx=None):
+    def totalCenter(self, view=DUMMY, ctx=DUMMY):
         box = self.totalBox()
         return mean(box[:2]) + 1j*mean(box[2:])
 
@@ -1506,8 +1508,8 @@ class FancyMultiPText(FancyMultiText):
     #
     # The optional arguments `view` and `ctx` do nothing here,
     # but they exist for internal implementation reasons.
-    def recenter(self, view=None, ctx=None):
-        FancyMultiText.recenter(self, None, None)
+    def recenter(self, view=DUMMY, ctx=DUMMY):
+        FancyMultiText.recenter(self, DUMMY, DUMMY)
 
     def makeFrame(self, camera=None, ctx=None):
         boxes = [fig.box() for fig in self.figures]
@@ -1857,7 +1859,7 @@ def paragraph(textarray, view, windowShape=None,
         rowWidth = sum(box[1]-box[0] for box in rowBoxes[i]) + (len(row)-1)*xgap
         rowPosition = -morpho.lerp(-rowWidth/2, rowWidth/2, flush, start=-1, end=1) + 1j*yPositions[i]
         if physical:
-            row = group(row, None, None, pos=rowPosition, gap=xgap, physical=physical, physicalGap=True)
+            row = group(row, DUMMY, DUMMY, pos=rowPosition, gap=xgap, physical=physical, physicalGap=True)
         else:
             row = group(row, *camctx, pos=rowPosition, gap=xgap, physical=physical, physicalGap=True)
         rows.append(row)
@@ -1906,7 +1908,7 @@ def paragraphPhys(textarray, *args, **kwargs):
             if not isinstance(fig, PText):
                 row[n] = PText(fig)
 
-    return paragraph(textarray, None, None, *args, **kwargs)
+    return paragraph(textarray, DUMMY, DUMMY, *args, **kwargs)
 
 # 3D version of paragraph(). See paragraph() for more info.
 #
@@ -1940,7 +1942,7 @@ def paragraph3d(textarray, view, windowShape=None,
 
 def paragraph3dPhys(textarray, *args, **kwargs):
     return paragraph3d(
-        textarray, None, None, *args, _use_paragraphPhys=True, **kwargs
+        textarray, DUMMY, DUMMY, *args, _use_paragraphPhys=True, **kwargs
         )
 
 # Physical version of paragraph3d().
