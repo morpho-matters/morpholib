@@ -14,6 +14,8 @@ from morpholib.grid import Polygon, SpacePolygon, Spacepolygon
 import cairo
 cr = cairo
 
+# import svgelements as se  # POSSIBLE FUTURE DEPENDENCY
+
 import math, cmath
 import numpy as np
 
@@ -196,6 +198,66 @@ class Spline(morpho.Figure):
         new.showTangents = self.showTangents
 
         return new
+
+    # NOT IMPLEMENTED YET!
+    # Generates a Spine figure by parsing an SVG file/stream
+    # and taking the first SVG path element found.
+    #
+    # For this method to work, the only elements that can be in
+    # the path are Line, CubicBezier, Move, and Close.
+    # The presence of QuadraticBezier or Arcs will throw an error.
+    # This may be rectified in future versions.
+    #
+    # Note that this method only generates a Spline based on the
+    # point data of the SVG. Color/Width/Fill data is ignored and
+    # default Spline figure values are used. However, future versions
+    # of this method may use this data, so this behavior should not
+    # be depended on.
+    #
+    # Also note that any transforms that are part of the SVG data
+    # will be committed (i.e. reified) and the returned Spline
+    # will have identity transforms.
+    #
+    # INPUTS
+    # source = SVG data source such as a filepath.
+    #
+    # OPTIONAL KEYWORD-ONLY INPUTS
+    # origin = SVG coordinates that should be converted into
+    #          (0,0) Morpho physical coordinates.
+    #          Can be specified as tuple or complex number.
+    #          Default: None (meaning infer it from `align`)
+    # align = Tuple specifying origin point of SVG according to alignment
+    #         within the SVG's bounding box. Note this value is
+    #         ignored if a value is supplied to the `origin` input.
+    #         Default: (0,0) (center of bounding box)
+    # scale = Factor by which to scale the SVG about its origin
+    #         when converting into Morpho physical units.
+    #         Example: If an SVG path is 100 SVG units long and
+    #         scale=0.1, the resulting Spline figure will be only
+    #         10 units long in Morpho physical units.
+    #         Default: 1
+    # flip = Boolean indicating whether the SVG should be vertically
+    #        flipped when converting into Morpho physical coordinates.
+    #        Default: True
+    @classmethod
+    def fromsvg(cls, source, *, origin=None, align=(0,0), scale=1, flip=True):
+        raise NotImplementedError
+
+        # TODO FOR FUTURE? Implement a similar method for a
+        # SplineGroup class (deriving from Frame like MathGrid)
+        # which can
+
+        svg = se.SVG.parse(source)
+        try:
+            svgpath = next(svg.elements(lambda elem: isinstance(elem, se.Path)))
+        except StopIteration:
+            raise ValueError(f'Could not find any SVG path elements in source "{source}"')
+
+        svgpath.reify()  # Commit all transforms
+        bbox = svgpath.bbox()  # Get bounding box
+
+        pass
+
 
     # Returns the node count of the spline
     def length(self):
