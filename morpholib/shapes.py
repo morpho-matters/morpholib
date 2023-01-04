@@ -483,7 +483,7 @@ class Spline(morpho.Figure):
         return self
 
 
-    # Closes the path IN PLACE if it is not already closed.
+    # Closes the spline IN PLACE if it is not already closed.
     def close(self):
         if self.length() < 2 or self.node(0) == self.node(1):
             return self
