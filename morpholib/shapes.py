@@ -199,7 +199,7 @@ class Spline(morpho.Figure):
 
         return new
 
-    # NOT IMPLEMENTED YET!
+    # EXPERIMENTAL! - Requires `svgelements` to be installed.
     # Generates a Spine figure by parsing an SVG file/stream
     # and taking the first SVG path element found.
     #
@@ -208,11 +208,11 @@ class Spline(morpho.Figure):
     # The presence of QuadraticBezier or Arcs will throw an error.
     # This may be rectified in future versions.
     #
-    # Note that this method only generates a Spline based on the
-    # point data of the SVG. Color/Width/Fill data is ignored and
-    # default Spline figure values are used. However, future versions
-    # of this method may use this data, so this behavior should not
-    # be depended on.
+    # The stroke and fill color is also imported from the SVG
+    # as well as their alpha values. All other style attributes
+    # are ignored and the Spline default values are used.
+    # However, future versions of this method may use this data,
+    # so this behavior should not be depended on.
     #
     # Also note that any transforms that are part of the SVG data
     # will be committed (i.e. reified) and the returned Spline
@@ -236,27 +236,95 @@ class Spline(morpho.Figure):
     #         scale=0.1, the resulting Spline figure will be only
     #         10 units long in Morpho physical units.
     #         Default: 1
+    # index = If the SVG contains multiple path elements, which
+    #         one should it use? Default: 0 (the first path).
     # flip = Boolean indicating whether the SVG should be vertically
-    #        flipped when converting into Morpho physical coordinates.
+    #        flipped when converting into Morpho physical coordinates
+    #        since positive y is up in Morpho, but down in SVG.
     #        Default: True
     @classmethod
-    def fromsvg(cls, source, *, origin=None, align=(0,0), scale=1, flip=True):
-        raise NotImplementedError
+    def fromsvg(cls, source, *,
+        origin=None, align=(0,0), scale=1, index=0, flip=True):
+
+        # raise NotImplementedError
+
+        # Import statement is temporarily located here while
+        # this method is experimental. In the future,
+        # svgelements will probably be added as a dependency.
+        import svgelements as se
 
         # TODO FOR FUTURE? Implement a similar method for a
         # SplineGroup class (deriving from Frame like MathGrid)
         # which can
 
         svg = se.SVG.parse(source)
-        try:
-            svgpath = next(svg.elements(lambda elem: isinstance(elem, se.Path)))
-        except StopIteration:
-            raise ValueError(f'Could not find any SVG path elements in source "{source}"')
+        elems = list(svg.elements(lambda elem: isinstance(elem, se.Path)))
+        svgpath = elems[index]
 
+        # Convert path data into spline
         svgpath.reify()  # Commit all transforms
-        bbox = svgpath.bbox()  # Get bounding box
+        spline = cls()
 
-        pass
+        # Assign style attributes
+        if svgpath.stroke != None:  # don't use `is not`
+            spline.color = morpho.color.rgbNormalize(
+                svgpath.stroke.red, svgpath.stroke.green, svgpath.stroke.blue
+                )
+            spline.alphaEdge = svgpath.stroke.opacity
+        if svgpath.fill != None:  # don't use `is not`
+            spline.fill = morpho.color.rgbNormalize(
+                svgpath.fill.red, svgpath.fill.green, svgpath.fill.blue
+                )
+            spline.alphaFill = svgpath.fill.opacity
+
+        try:
+            # Extract initial point
+            initpt = next(svgpath.as_points())
+        except StopIteration:
+            return spline  # Return empty spline if path is empty
+        spline.newNode(complex(initpt))
+        # prevpt = initpt
+        for n,segment in enumerate(svgpath.segments()):
+            if isinstance(segment, se.CubicBezier):
+                spline.outhandle(-1, complex(segment.control1))
+                spline.newNode(complex(segment.end), complex(segment.control2), relHandles=False)
+            elif isinstance(segment, se.Line):
+                spline.outhandleRel(-1, 0)
+                spline.newNode(complex(segment.end), 0)
+            elif isinstance(segment, se.Move):
+                if n == 0: continue
+                spline.deadends.add(spline.nodeCount()-1)
+                spline.newNode(complex(segment.end), relHandles=False)
+            elif isinstance(segment, se.Close):
+                spline.close()
+            else:
+                raise ValueError(f'Cannot parse SVG path element "{type(segment)}"')
+            # FUTURE: Handle Quadratic Beziers by turning them into
+            # equivalent Cubic Beziers, and use
+            # svgpath.approximate_arcs_with_cubics() to convert arcs
+            # into Cubic Beziers.
+
+        if origin is None:
+            # Infer origin from `align` parameter and bounding box
+            xmin, ymin, xmax, ymax = svgpath.bbox()  # Get bounding box
+            anchor_x, anchor_y = align
+            if flip:
+                anchor_y *= -1
+            origin_x = morpho.lerp0(xmin, xmax, anchor_x, start=-1, end=1)
+            origin_y = morpho.lerp0(ymin, ymax, anchor_y, start=-1, end=1)
+            spline.origin = -complex(origin_x, origin_y)
+            spline.commitTransforms()
+        if scale != 1:
+            spline._transform = morpho.matrix.scale2d(scale)
+            spline.commitTransforms()
+
+        if flip:
+            spline._transform = morpho.matrix.scale2d(1, -1)
+            spline.commitTransforms()
+
+        return spline
+
+
 
 
     # Returns the node count of the spline
@@ -843,6 +911,23 @@ class Spline(morpho.Figure):
         #     pin, pout = replaceInfHandles(*self.data[n,:])
         #     self._data[n,1:] = pin, pout
 
+    # NOT IMPLEMENTED YET!
+    # Opposite of commitHandles().
+    # Looks for any unlinked handle pairs and if they are
+    # sufficiently close to being mirrored, sets outhandle
+    # value to inf, meaning it will be treated as a mirror
+    # of its partner. This is an in-place operation.
+    #
+    # OPTIONAL INPUTS
+    # viaInhandles = Boolean. If set to True, inhandles will be
+    #                set to inf instead of outhandles.
+    #                Default: False
+    # tol = How close do two handles need to be to being mirrored
+    #       before they will be linked? Default: 1e-9
+    def linkHandles(self, viaInhandles=False, tol=1e-9):
+        raise NotImplementedError
+        return self
+
     # Applies all of the transformation attributes
     # origin, rotation, transform
     # to the actual data array itself and then
@@ -1411,6 +1496,13 @@ class SpaceSpline(Spline):
     @transform.setter
     def transform(self, value):
         raise AttributeError
+
+    # fromsvg() is currently not implemented for SpaceSplines.
+    def fromsvg(self, *args, **kwargs):
+        raise NotImplementedError
+        # Cannot simply inherit because 2D fromsvg() uses
+        # the `transform` attribute to scale and flip the spline.
+        # This attribute does not exist for SpaceSplines.
 
     # Returns or sets the position of the node of given index.
     # Usage: myspline.node(n) -> position of nth node
