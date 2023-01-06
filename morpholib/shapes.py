@@ -2033,9 +2033,12 @@ class Ellipse(morpho.Figure):
 
         ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
         ctx.fill_preserve()
-        ctx.set_source_rgba(*self.color, self.alphaEdge*self.alpha)
-        ctx.set_line_width(self.strokeWeight)
-        ctx.stroke()
+        if self.strokeWeight < 0.5:  # Don't stroke if strokeWeight is too small
+            ctx.new_path()
+        else:
+            ctx.set_source_rgba(*self.color, self.alphaEdge*self.alpha)
+            ctx.set_line_width(self.strokeWeight)
+            ctx.stroke()
 
 
 # Creates an arc of an ellipse.
@@ -2162,9 +2165,12 @@ class EllipticalArc(morpho.Figure):
         ctx.arc(0,0, 1, theta0, theta1)
         ctx.restore()
 
-        ctx.set_source_rgba(*self.color, self.alpha)
-        ctx.set_line_width(self.strokeWeight)
-        ctx.stroke()
+        if self.strokeWeight < 0.5:  # Don't stroke if strokeWeight is too small
+            ctx.new_path()
+        else:
+            ctx.set_source_rgba(*self.color, self.alpha)
+            ctx.set_line_width(self.strokeWeight)
+            ctx.stroke()
 
 # Animates an e-arc actor appearing by "growing in" from a single point.
 # The starting point is always the initial node in the sequence.
@@ -2254,9 +2260,12 @@ class Pie(EllipticalArc):
         ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
         ctx.fill_preserve()
 
-        ctx.set_source_rgba(*self.color, self.alphaEdge*self.alpha)
-        ctx.set_line_width(self.strokeWeight)
-        ctx.stroke()
+        if self.strokeWeight < 0.5:  # Don't stroke if strokeWeight is too small
+            ctx.new_path()
+        else:
+            ctx.set_source_rgba(*self.color, self.alphaEdge*self.alpha)
+            ctx.set_line_width(self.strokeWeight)
+            ctx.stroke()
 
     def toPath(self, dTheta=tau/72):
         raise NotImplementedError

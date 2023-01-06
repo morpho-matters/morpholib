@@ -102,9 +102,12 @@ class Point(morpho.Figure):
         ctx.set_source_rgba(*self.fill, self.alpha*self.alphaFill)
         ctx.fill_preserve()
 
-        ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
-        ctx.set_line_width(self.strokeWeight)
-        ctx.stroke()
+        if self.strokeWeight < 0.5:  # Don't stroke if strokeWeight is too small
+            ctx.new_path()
+        else:
+            ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
+            ctx.set_line_width(self.strokeWeight)
+            ctx.stroke()
 
 @Point.action
 def growIn(point, duration=30, atFrame=None):

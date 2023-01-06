@@ -538,9 +538,12 @@ class RiemannDisk(morpho.Figure):
         ctx.fill_preserve()
 
         # Stroke path
-        ctx.set_source_rgba(*self.outlineColor, self.alpha)
-        ctx.set_line_width(self.strokeWeight)
-        ctx.stroke()
+        if self.strokeWeight < 0.5:  # Don't stroke if strokeWeight is too small
+            ctx.new_path()
+        else:
+            ctx.set_source_rgba(*self.outlineColor, self.alpha)
+            ctx.set_line_width(self.strokeWeight)
+            ctx.stroke()
 
         # Now draw the face
         self.face.draw(camera, ctx)
