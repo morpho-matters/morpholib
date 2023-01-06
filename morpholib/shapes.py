@@ -1074,27 +1074,15 @@ class Spline(morpho.Figure):
         init = math.floor(start)
         final = math.ceil(end)
 
-        # # Temporarily modify self.data in place to account
-        # # for non-integer start and end
-        # oldStart = self._data[int_start,:]
-        # if start != init:
-        #     p, pin, pout = self.nodeData(int_start)
-        #     q, qin, qout = self.nodeData(int_start+1)
-        #     m0, m1, m2, m3 = morpho.bezier.bezierLastSlice(p, pout, qin, q, start-int_start)
-
-        #     self._data[int_start,:] = [m0, m1, 0]
-        # if end != int_end:
-        #     oldEnd = self._data[int_end+1,:]
-
-        #     p, pin, pout = self._data[int_end,:] if int_end != int_start else oldStart
-        #     q, qin, qout = self.nodeData(int_end+1)
-        #     m0, m1, m2, m3 = morpho.bezier.bezierFirstSlice(p, pout, qin, q, end-int_end)
-
-        #     self._data[int_end+1] = [m3, m2, 0]
-
-        #     # self.seq[int_end+1] = morpho.numTween(
-        #     #     self.seq[int_end] if int_end != int_start else oldStart, oldEnd, end-int_end
-        #     #     )
+        # Calculate physical distance corresponding to half a pixel.
+        # If a handle and its corresponding node are within this
+        # distance, the handle will be snapped to the node.
+        # This is to get around an apparent bug in cairo in rendering
+        # bezier curves with handles too close to (but not equal to)
+        # their nodes.
+        pixel_tol_x = morpho.physicalWidth(0.5, camera.view, ctx)
+        pixel_tol_y = morpho.physicalHeight(0.5, camera.view, ctx)
+        pixel_tol = max(pixel_tol_x, pixel_tol_y)
 
         # Temporarily modify cairo coordinates to coincide with
         # physical coordinates.
@@ -1135,6 +1123,12 @@ class Spline(morpho.Figure):
                 if n in self.deadends or isbadnum(z) or isbadnum(zprev):
                     ctx.move_to(x,y)
                 else:
+                    # Snap handles to nodes if they are within
+                    # half a pixel of each other.
+                    if abs(outprev-zprev) < pixel_tol:
+                        outprev = zprev
+                    if abs(inhandle - z) < pixel_tol:
+                        inhandle = z
                     x1,y1 = outprev.real, outprev.imag
                     x2,y2 = inhandle.real, inhandle.imag
                     ctx.curve_to(x1,y1, x2,y2, x,y)
