@@ -230,12 +230,10 @@ class Spline(morpho.Figure):
     #         within the SVG's bounding box. Note this value is
     #         ignored if a value is supplied to the `origin` input.
     #         Default: (0,0) (center of bounding box)
-    # scale = Factor by which to scale the SVG about its origin
-    #         when converting into Morpho physical units.
-    #         Example: If an SVG path is 100 SVG units long and
-    #         scale=0.1, the resulting Spline figure will be only
-    #         10 units long in Morpho physical units.
-    #         Default: 1
+    # boxWidth/boxHeight = Desired physical dimensions of the bounding
+    #       box. If one is unspecified, it will be inferred from the
+    #       other. If neither are specified, the bounding box is taken
+    #       from the raw SVG coordinates.
     # index = If the SVG contains multiple path elements, which
     #         one should it use? Default: 0 (the first path).
     # flip = Boolean indicating whether the SVG should be vertically
@@ -244,7 +242,8 @@ class Spline(morpho.Figure):
     #        Default: True
     @classmethod
     def fromsvg(cls, source, *,
-        origin=None, align=(0,0), scale=1, index=0, flip=True):
+        origin=None, align=(0,0), boxWidth=None, boxHeight=None,
+        index=0, flip=True):
 
         # raise NotImplementedError
 
@@ -314,8 +313,24 @@ class Spline(morpho.Figure):
             origin_y = morpho.lerp0(ymin, ymax, anchor_y, start=-1, end=1)
             spline.origin = -complex(origin_x, origin_y)
             spline.commitTransforms()
-        if scale != 1:
-            spline._transform = morpho.matrix.scale2d(scale)
+
+        # Set scale factors based on box dimensions
+        if boxWidth is None and boxHeight is None:
+            scale_x = 1
+            scale_y = 1
+        elif boxWidth is None:
+            scale_y = boxHeight / (ymax - ymin)
+            scale_x = scale_y
+        elif boxHeight is None:
+            scale_x = boxWidth / (xmax - xmin)
+            scale_y = scale_x
+        else:
+            scale_x = boxWidth / (xmax - xmin)
+            scale_y = boxHeight / (ymax - ymin)
+
+        # Rescale spline if needed
+        if scale_x != 1 or scale_y != 1:
+            spline._transform = morpho.matrix.scale2d(scale_x, scale_y)
             spline.commitTransforms()
 
         if flip:
