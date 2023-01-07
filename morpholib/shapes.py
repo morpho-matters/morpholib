@@ -4,6 +4,7 @@ import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd
 from morpholib.matrix import mat
+from morpholib.anim import MultiFigure
 
 from morpholib import object_hasattr
 
@@ -1406,6 +1407,25 @@ def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
         spline1.start = 1
     else:
         spline1.end = 0
+
+
+# EXPERIMENTAL!
+class MultiSpline(MultiFigure):
+
+    ### TWEEN METHODS ###
+
+    tweenLinear = MultiFigure.Multi(Spline.tweenLinear)
+    tweenSpiral = MultiFigure.Multi(Spline.tweenSpiral)
+
+    @classmethod
+    def tweenPivot(cls, angle=tau/2, *args, **kwargs):
+        pivot = MultiFigure.Multi(Image.tweenPivot(angle, *args, **kwargs),
+            reverseMethod=Image.tweenPivot(-angle, *args, **kwargs)
+            )
+        # Enable splitting for this tween method
+        pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
+
+        return pivot
 
 
 # Space version of Spline figure. See "Spline" for more info.

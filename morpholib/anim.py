@@ -613,6 +613,74 @@ class MultiFigure(Frame):
                 # super().__setattr__(name, value)
                 morpho.Figure.__setattr__(self, name, value)
 
+    # EXPERIMENTAL!
+    # Decorator for the tween methods in a MultiFigure subclass.
+    # Reworks ordinary base class tween methods so that they work
+    # in a multifigure setting.
+    @staticmethod
+    def Multi(baseMethod):
+
+        def wrapper(self, other, t, *args, **kwargs):
+            # wrapper function for a MultiFigure tween method
+
+            # TODO: The following two blocks can probably be refactored
+            # into one since I think the only difference between them is
+            # that self and other reverse roles.
+
+            # Temporarily extend the figure list of self or other
+            # so that both have exactly the same number of subfigures.
+            diff = len(self.figures) - len(other.figures)
+            if diff > 0:
+                # Temporarily extend the figure list of other with copies of
+                # other's final subfigure
+                extension = []
+                for i in range(diff):
+                    extension.append(other.figures[-1].copy())
+                other.figures.extend(extension)
+                tw = wrapper(self, other, t, *args, **kwargs)
+                # Restore other to its original state
+                other.figures = other.figures[:-diff]
+                return tw
+            elif diff < 0:
+                # Temporarily extend the figure list of self with copies of
+                # self's final subfigure
+                extension = []
+                for i in range(-diff):
+                    extension.append(self.figures[-1].copy())
+                self.figures.extend(extension)
+                tw = wrapper(self, other, t, *args, **kwargs)
+                self.figures = self.figures[:diff]
+                return tw
+
+            # # Remove temporary extensions
+            # if diff > 0:
+            #     other.figures = other.figures[:-len(extensions)]
+            # elif diff < 0:
+            #     self.figures = self.figures[:-len(extensions)]
+
+            # Tween each subfigure in self with its partner in other
+            figures = []
+            for fig, pig in zip(self.figures, other.figures):
+                twig = baseMethod(fig, pig, t, *args, **kwargs)
+                figures.append(twig)
+
+            # Create final tweened multifigure object
+            tw = type(self)()
+            tw.figures = figures
+            # Copy over all of self's tweenables other than `figures`
+            tw._updateFrom(self, ignore="figures", includeTweenMethod=True)
+
+            # The following handling of zdepth seems a little too
+            # hard-coded.
+            # It assumes you always want to linearly tween zdepth.
+            # If you plan on using the Multi decorator more broadly,
+            # you should consider reimplementing this.
+            tw.zdepth = morpho.numTween(self.zdepth, other.zdepth, t)
+
+            return tw
+
+        return wrapper
+
     # Mainly for internal use.
     # Decorator maker made to be used on a MultiFigure subclass.
     # Takes in the baseclass of the MultiFigure class
