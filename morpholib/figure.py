@@ -324,6 +324,7 @@ class Figure(object):
         # Update non-tweenables
         for name in target._nontweenables:
             if ((not common) or (name in self._nontweenables)) and name not in ignore:
+                self._nontweenables.add(name)
                 setattr(self, name, getattr(target, name))
 
         # Update meta-settings
