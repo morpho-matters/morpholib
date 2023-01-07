@@ -21,6 +21,12 @@ import morpholib.actions
 import math, cmath
 import numpy as np
 
+# Alias for `set` because the name gets overridden
+# in the Figure class
+pyset = set
+
+# Set of all Figure metasetting names
+METASETTINGS = {"transition", "visible", "static", "delay"}
 
 
 ### CLASSES ###
@@ -263,13 +269,26 @@ class Figure(object):
     # tied to the given figure's type, but to force transferral
     # of the target's tween method, set the optional kwarg
     # `includeTweenMethod` to True.
-    def _updateSettings(self, target, *, includeTweenMethod=False):
+    #
+    # Optionally, a set of setting names to ignore can be passed in
+    # like this:
+    #   myfig._updateSettings(target, ignore={"visible", "static"})
+    def _updateSettings(self, target, *,
+        includeTweenMethod=False, ignore=pyset()):
+
+        # Typecast ignore into a singleton set if it is not
+        # a standard python iterable.
+        if not isinstance(ignore, (pyset, tuple, list)):
+            ignore = {ignore}
+
         if includeTweenMethod:
             self.defaultTween = target.defaultTween
-        self.transition = target.transition
-        self.visible = target.visible
-        self.static = target.static
-        self.delay = target.delay
+
+        for name in METASETTINGS:
+            if name not in ignore:
+                setattr(self, name, getattr(target, name))
+
+        return self
 
     # Copies over all tweenables, registered non-tweenables,
     # and meta-settings from the target figure over to self.
@@ -283,30 +302,34 @@ class Figure(object):
     # only copy over attributes from the target that are in
     # common with self. No new attributes will be added to self
     # from the target.
+    #
+    # Optionally, a set of attribute names to ignore can be passed in
+    # like this:
+    #   myfig._updateFrom(target, ignore={"pos", "color"})
     def _updateFrom(self, target, *, copy=True, common=False,
-        includeTweenMethod=False):
+        includeTweenMethod=False, ignore=pyset()):
+
+        # Typecast ignore into a singleton set if it is not
+        # a standard python iterable.
+        if not isinstance(ignore, (pyset, tuple, list)):
+            ignore = {ignore}
 
         if copy:
             target = target.copy()
 
-        if common:
-            # Copy tweenables that are in common with self.
-            for name in self._state:
-                if name in target._state:
-                    self._state[name] = target._state[name]
-            # Copy common non-tweenables
-            for name in self._nontweenables:
-                if name in target._nontweenables:
-                    setattr(self, name, getattr(target, name))
-        else:
-            self._state.update(target._state)  # Copy over tweenables
-            # Copy non-tweenables
-            self._nontweenables.update(target._nontweenables)
-            for name in self._nontweenables:
+        # Update tweenables
+        for name in target._state:
+            if ((not common) or (name in self._state)) and name not in ignore:
+                self._state[name] = target._state[name]
+        # Update non-tweenables
+        for name in target._nontweenables:
+            if ((not common) or (name in self._nontweenables)) and name not in ignore:
                 setattr(self, name, getattr(target, name))
 
-        # Copy meta-settings
-        self._updateSettings(target, includeTweenMethod=includeTweenMethod)
+        # Update meta-settings
+        self._updateSettings(target, includeTweenMethod=includeTweenMethod, ignore=ignore)
+
+        return self
 
     # Update the state with a new set of tweenables.
     def update(self, tweenables):
