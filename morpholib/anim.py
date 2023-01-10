@@ -632,10 +632,10 @@ class MultiFigure(Frame):
             diff = len(self.figures) - len(other.figures)
             if diff > 0:
                 # Temporarily extend the figure list of other with copies of
-                # other's final subfigure
+                # other's subfigures
                 extension = []
                 for i in range(diff):
-                    extension.append(other.figures[-1].copy())
+                    extension.append(other.figures[i%len(other.figures)].copy())
                 other.figures.extend(extension)
                 tw = wrapper(self, other, t, *args, **kwargs)
                 # Restore other to its original state
@@ -643,10 +643,10 @@ class MultiFigure(Frame):
                 return tw
             elif diff < 0:
                 # Temporarily extend the figure list of self with copies of
-                # self's final subfigure
+                # self's subfigures
                 extension = []
                 for i in range(-diff):
-                    extension.append(self.figures[-1].copy())
+                    extension.append(self.figures[i%len(self.figures)].copy())
                 self.figures.extend(extension)
                 tw = wrapper(self, other, t, *args, **kwargs)
                 self.figures = self.figures[:diff]

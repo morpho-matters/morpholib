@@ -717,10 +717,10 @@ def Multi(imageMethod, reverseMethod=None):
         diff = len(self.images) - len(other.images)
         if diff > 0:
             # Temporarily extend the image list of other with copies of
-            # other's final image
+            # other's subimages
             extension = []
             for i in range(diff):
-                extension.append(other.images[-1].copy())
+                extension.append(other.images[i%len(other.images)].copy())
             other.images.extend(extension)
             tw = wrapper(self, other, t)
             # Restore other to its original state
@@ -728,10 +728,10 @@ def Multi(imageMethod, reverseMethod=None):
             return tw
         elif diff < 0:
             # Temporarily extend the image list of self with copies of
-            # self's final image
+            # self's subimages
             extension = []
             for i in range(-diff):
-                extension.append(self.images[-1].copy())
+                extension.append(self.images[i%len(self.images)].copy())
             self.images.extend(extension)
             tw = wrapper(self, other, t)
             self.images = self.images[:diff]
