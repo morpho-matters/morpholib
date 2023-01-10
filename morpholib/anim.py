@@ -685,11 +685,19 @@ class MultiFigure(Frame):
     # Decorator maker made to be used on a MultiFigure subclass.
     # Takes in the baseclass of the MultiFigure class
     # (e.g. Image for MultiImage) and a list of method names
-    # for methods that return self in the baseclass.
-    # The decorator then implements versions of those methods
-    # with the same names in the MultiFigure subclass which
-    # accomplish the same effect but return the MultiFigure
-    # object instead of the baseclass object.
+    # from the baseclass and then creates modified versions of
+    # them for the multifigure class according to a `modifier`
+    # decorator that takes a baseclass method as input and returns
+    # a new modified method. Note that `modifier` should NOT modify
+    # the baseclass method in place, but merely return a new version
+    # reflecting the modifications.
+    #
+    # The main use case for this is to modify baseclass methods
+    # that would return self to instead return the multifigure
+    # that called them. This can accomplished with the syntax
+    #   @MultiFigure._modifyMethods(names, baseclass, MultiFigure._returnOrigCaller)
+    #   class SubMultiFigure(MultiFigure):
+    #       ...
     #
     # This was created to solve the problem whereby invoking
     # a subfigure method from the multifigure (e.g. calling
@@ -702,30 +710,30 @@ class MultiFigure(Frame):
     # so this decorator should be considered an implementation
     # detail and shouldn't be depended on it to exist in
     # future versions of Morpho.
-    @staticmethod
-    def _selfReturningMethods(baseclass, names):
-        # Decorator creates a special multifigure method for each
-        # method named in the `names` list of the baseclass but
-        # it returns the multifigure object instead of the subobject.
+    def _modifyMethods(names, baseclass, modifier):
         def decorator(cls):
             for name in names:
-                # Extract the base method from the base class
                 basemethod = getattr(baseclass, name)
-                # Define multifigure version of the base method
-                def multifigureMethod(self, *args, _selfReturningMethods_basemethod=basemethod, **kwargs):
-                    try:
-                        fig0 = self.figures[0]
-                    except IndexError:
-                        raise AttributeError("Multifigure is empty. Cannot access subfigure methods.")
-
-                    # Call base method on the first figure in the figure list
-                    _selfReturningMethods_basemethod(fig0, *args, **kwargs)
-                    return self  # Return the multifigure self
-
-                # Assign new multifigure method to the given multifigure class
+                multifigureMethod = modifier(basemethod)
                 setattr(cls, name, multifigureMethod)
             return cls
         return decorator
+
+    # Mainly for internal use.
+    # Method modifier meant to be used in conjunction with
+    # _modifyMethods(). It modifies a baseclass method to
+    # return the original caller object instead of the
+    # subfigure. See _modifyMethods() for more info.
+    @staticmethod
+    def _returnOrigCaller(basemethod):
+        def modifiedMethod(self, *args, **kwargs):
+            try:
+                fig0 = self.figures[0]
+            except IndexError:
+                raise AttributeError("Multifigure is empty. Cannot access subfigure methods.")
+            basemethod(fig0, *args, **kwargs)
+            return self
+        return modifiedMethod
 
     # This is needed because inherited tween() is Frame.tween()
     # which is a modified version of default Figure.tween()

@@ -788,7 +788,9 @@ def Multi(imageMethod, reverseMethod=None):
 
     return wrapper
 
-
+# Method names in the Image class that return self when called.
+# These will need to be modified in the MultiImage class to return
+# the original calling MultiFigure.
 selfmethods = ["rescaleAspectRatioWH", "scaleByWidth", "scaleByHeight",
     "rescaleWidth", "rescaleHeight", "newSource", "link", "unlink"]
 
@@ -806,7 +808,7 @@ selfmethods = ["rescaleAspectRatioWH", "scaleByWidth", "scaleByHeight",
 #
 # Bottom line: It's just like Image except you can tween between different
 # underlying image files.
-@morpho.MultiFigure._selfReturningMethods(Image, selfmethods)
+@morpho.MultiFigure._modifyMethods(selfmethods, Image, morpho.MultiFigure._returnOrigCaller)
 class MultiImage(morpho.MultiFigure):
 
     def __init__(self, source=None):
