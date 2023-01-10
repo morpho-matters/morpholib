@@ -724,6 +724,12 @@ class MultiFigure(Frame):
     # _modifyMethods(). It modifies a baseclass method to
     # return the original caller object instead of the
     # subfigure. See _modifyMethods() for more info.
+    #
+    # Note that this method first checks if the base method
+    # returns the subfigure before overriding the return value.
+    # If the base method does NOT return the subfigure, it will
+    # not override it, and the modified method will simply return
+    # the base method's original return value.
     @staticmethod
     def _returnOrigCaller(basemethod):
         def modifiedMethod(self, *args, **kwargs):
@@ -731,8 +737,12 @@ class MultiFigure(Frame):
                 fig0 = self.figures[0]
             except IndexError:
                 raise AttributeError("Multifigure is empty. Cannot access subfigure methods.")
-            basemethod(fig0, *args, **kwargs)
-            return self
+            baseOutput = basemethod(fig0, *args, **kwargs)
+            # Only override basemethod return value if fig0 is being returned.
+            if baseOutput is fig0:
+                return self
+            else:
+                return baseOutput
         return modifiedMethod
 
     # This is needed because inherited tween() is Frame.tween()
