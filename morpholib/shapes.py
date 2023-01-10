@@ -1410,6 +1410,13 @@ def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
 
 
 # EXPERIMENTAL!
+@MultiFigure._modifyMethods(
+    ["node", "inhandle", "outhandle", "inhandleRel", "outhandleRel",
+    "newNode_old", "newNode", "newNodes", "delNode", "close",
+    "autosetHandles", "splitAt", "splitAtIndex", "reverse", "insertNodes",
+    "commitHandles", "linkHandles", "commitTransforms"],
+    Spline, MultiFigure._returnOrigCaller
+    )
 class MultiSpline(MultiFigure):
 
     ### TWEEN METHODS ###
