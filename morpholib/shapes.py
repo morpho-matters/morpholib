@@ -1419,6 +1419,21 @@ def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
     )
 class MultiSpline(MultiFigure):
 
+    def __init__(self, data=None, *args, **kwargs):
+        if isinstance(data, Spline):
+            # Case: data is a Spline. Initialize as a singleton Frame.
+            super().__init__([data])
+        elif isinstance(data, (list, tuple)) and len(data) > 0 and isinstance(data[0], Spline):
+            # Case: data is a list of splines. Initialize like a Frame.
+            super().__init__(data)
+        else:
+            # Else: Assume data represents an actual data array.
+            # Construct the spline and append it as the first and only
+            # subspline.
+            spline = Spline(data, *args, **kwargs)
+            super().__init__([spline])
+
+
     ### TWEEN METHODS ###
 
     tweenLinear = MultiFigure.Multi(Spline.tweenLinear)
