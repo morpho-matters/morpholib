@@ -745,6 +745,21 @@ class MultiFigure(Frame):
                 return baseOutput
         return modifiedMethod
 
+    # Mainly for internal use.
+    # Method modifier to be used with _modifyMethods().
+    # It applies the basemethod to ALL subfigures and then
+    # returns the original caller (the multifigure object).
+    # Best used for subfigure methods that modified the figure
+    # in place and returned self.
+    @staticmethod
+    def _applyToSubfigures(basemethod):
+        def modifiedMethod(self, *args, **kwargs):
+            for fig in self.figures:
+                basemethod(fig, *args, **kwargs)
+            return self
+        return modifiedMethod
+
+
     # This is needed because inherited tween() is Frame.tween()
     # which is a modified version of default Figure.tween()
     tween = morpho.Figure.tween

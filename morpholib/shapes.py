@@ -1464,10 +1464,14 @@ def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
 # Notably, this class can import an SVG file and render it.
 # See MultiSpline.fromsvg()
 @MultiFigure._modifyMethods(
+    ["autosetHandles", "close", "commitHandles", "commitTransforms",
+    "reverse", "linkHandles"],
+    Spline, MultiFigure._applyToSubfigures
+    )
+@MultiFigure._modifyMethods(
     ["node", "inhandle", "outhandle", "inhandleRel", "outhandleRel",
-    "newNode_old", "newNode", "newNodes", "delNode", "close",
-    "autosetHandles", "splitAt", "splitAtIndex", "reverse", "insertNodes",
-    "commitHandles", "linkHandles", "commitTransforms"],
+    "newNode_old", "newNode", "newNodes", "delNode",
+    "splitAt", "splitAtIndex", "insertNodes"],
     Spline, MultiFigure._returnOrigCaller
     )
 class MultiSpline(MultiFigure):
