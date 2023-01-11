@@ -1504,7 +1504,10 @@ class MultiSpline(MultiFigure):
         splines = []
         for svgpath in svgpaths[slice(*index)]:
             spline = Spline.fromsvg(svgpath, origin=0, flip=False)
-            splines.append(spline)
+            if len(spline.deadends) > 0:
+                splines.extend(spline.splitAtDeadends().figures)
+            else:
+                splines.append(spline)
 
         # Compute overall bounding box
         allpaths = svgpaths[0]  # Combine all paths
