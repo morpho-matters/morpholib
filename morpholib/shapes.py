@@ -203,6 +203,10 @@ class Spline(morpho.Figure):
 
         return new
 
+    # Mainly for internal use by fromsvg().
+    # Computes the needed translation vector for the raw spline
+    # generated from an SVG file to make it conform to a given
+    # alignment.
     @staticmethod
     def _inferTranslationFromAlign(svgbbox, align, flip):
         xmin, ymin, xmax, ymax = svgbbox
@@ -213,6 +217,10 @@ class Spline(morpho.Figure):
         origin_y = morpho.lerp0(ymin, ymax, anchor_y, start=-1, end=1)
         return -complex(origin_x, origin_y)
 
+    # Mainly for internal use by fromsvg().
+    # Applies the necessary transformations to a spline to make it
+    # fit the specifications outlined in the arguments of fromsvg(),
+    # such as making it meet the given boxHeight.
     def _transformForSVG(self, svgbbox, boxWidth, boxHeight, origin, align, flip):
         xmin, ymin, xmax, ymax = svgbbox
         if origin is None:
@@ -243,7 +251,7 @@ class Spline(morpho.Figure):
             self._transform = morpho.matrix.scale2d(1, -1)
             self.commitTransforms()
 
-    # EXPERIMENTAL! - Requires `svgelements` to be installed.
+    # EXPERIMENTAL!
     # Generates a Spine figure by parsing an SVG file/stream
     # and taking the first SVG path element found.
     #
@@ -264,6 +272,8 @@ class Spline(morpho.Figure):
     #
     # INPUTS
     # source = SVG data source such as a filepath.
+    #          Can also be an svgelements.Path object, though
+    #          note that the element will be reified IN PLACE.
     #
     # OPTIONAL KEYWORD-ONLY INPUTS
     # origin = SVG coordinates that should be converted into
@@ -1412,6 +1422,11 @@ def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
 
 
 # EXPERIMENTAL!
+# MultiFigure version of Spline.
+# See "morpho.graphics.MultiImage" for more info on the basic idea here.
+#
+# Notably, this class can import an SVG file and render it.
+# See MultiSpline.fromsvg()
 @MultiFigure._modifyMethods(
     ["node", "inhandle", "outhandle", "inhandleRel", "outhandleRel",
     "newNode_old", "newNode", "newNodes", "delNode", "close",
@@ -1436,6 +1451,15 @@ class MultiSpline(MultiFigure):
             super().__init__([spline])
 
 
+    # EXPERIMENTAL!
+    # Parses an SVG file/stream to construct a MultiSpline
+    # representation of it. See Spline.fromsvg() for more info.
+    #
+    # By default it constructs a Spline from every SVG Path element
+    # found within the source, but this can be changed by passing
+    # in a tuple for the `index` input:
+    #      index=(start, stop, step)
+    # The tuple is interpreted identically to how range() works.
     @classmethod
     def fromsvg(cls, source, *,
         origin=None, align=(0,0), boxWidth=None, boxHeight=None,
