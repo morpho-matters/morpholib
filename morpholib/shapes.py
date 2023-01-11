@@ -1439,7 +1439,7 @@ class MultiSpline(MultiFigure):
     @classmethod
     def fromsvg(cls, source, *,
         origin=None, align=(0,0), boxWidth=None, boxHeight=None,
-        index=None, flip=True):
+        index=(None,), flip=True):
 
         svg = se.SVG.parse(source)
         svgpaths = list(svg.elements(lambda elem: isinstance(elem, se.Path)))
@@ -1448,9 +1448,12 @@ class MultiSpline(MultiFigure):
         if len(svgpaths) == 0:
             return cls()
 
+        if isinstance(index, int):
+            index = (index, index+1)
+
         # Generate raw Spline figures
         splines = []
-        for svgpath in svgpaths:
+        for svgpath in svgpaths[slice(*index)]:
             spline = Spline.fromsvg(svgpath, origin=0, flip=False)
             splines.append(spline)
 
