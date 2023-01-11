@@ -1551,9 +1551,7 @@ class MultiSpline(MultiFigure):
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):
-        pivot = MultiFigure.Multi(Image.tweenPivot(angle, *args, **kwargs),
-            reverseMethod=Image.tweenPivot(-angle, *args, **kwargs)
-            )
+        pivot = MultiFigure.Multi(Spline.tweenPivot(angle, *args, **kwargs))
         # Enable splitting for this tween method
         pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
 
