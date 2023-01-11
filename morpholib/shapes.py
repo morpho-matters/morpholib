@@ -15,7 +15,10 @@ from morpholib.grid import Polygon, SpacePolygon, Spacepolygon
 import cairo
 cr = cairo
 
-# import svgelements as se  # POSSIBLE FUTURE DEPENDENCY
+try:
+    import svgelements as se  # POSSIBLE FUTURE DEPENDENCY
+except ImportError:
+    pass
 
 import math, cmath
 import numpy as np
@@ -200,6 +203,46 @@ class Spline(morpho.Figure):
 
         return new
 
+    @staticmethod
+    def _inferTranslationFromAlign(svgbbox, align, flip):
+        xmin, ymin, xmax, ymax = svgbbox
+        anchor_x, anchor_y = align
+        if flip:
+            anchor_y *= -1
+        origin_x = morpho.lerp0(xmin, xmax, anchor_x, start=-1, end=1)
+        origin_y = morpho.lerp0(ymin, ymax, anchor_y, start=-1, end=1)
+        return -complex(origin_x, origin_y)
+
+    def _transformForSVG(self, svgbbox, boxWidth, boxHeight, origin, align, flip):
+        xmin, ymin, xmax, ymax = svgbbox
+        if origin is None:
+            # Infer origin from `align` parameter and bounding box
+            self.origin = self._inferTranslationFromAlign(svgbbox, align, flip)
+            self.commitTransforms()
+
+        # Set scale factors based on box dimensions
+        if boxWidth is None and boxHeight is None:
+            scale_x = 1
+            scale_y = 1
+        elif boxWidth is None:
+            scale_y = boxHeight / (ymax - ymin)
+            scale_x = scale_y
+        elif boxHeight is None:
+            scale_x = boxWidth / (xmax - xmin)
+            scale_y = scale_x
+        else:
+            scale_x = boxWidth / (xmax - xmin)
+            scale_y = boxHeight / (ymax - ymin)
+
+        # Rescale spline if needed
+        if scale_x != 1 or scale_y != 1:
+            self._transform = morpho.matrix.scale2d(scale_x, scale_y)
+            self.commitTransforms()
+
+        if flip:
+            self._transform = morpho.matrix.scale2d(1, -1)
+            self.commitTransforms()
+
     # EXPERIMENTAL! - Requires `svgelements` to be installed.
     # Generates a Spine figure by parsing an SVG file/stream
     # and taking the first SVG path element found.
@@ -246,20 +289,12 @@ class Spline(morpho.Figure):
         origin=None, align=(0,0), boxWidth=None, boxHeight=None,
         index=0, flip=True):
 
-        # raise NotImplementedError
-
-        # Import statement is temporarily located here while
-        # this method is experimental. In the future,
-        # svgelements will probably be added as a dependency.
-        import svgelements as se
-
-        # TODO FOR FUTURE? Implement a similar method for a
-        # SplineGroup class (deriving from Frame like MathGrid)
-        # which can
-
-        svg = se.SVG.parse(source)
-        elems = list(svg.elements(lambda elem: isinstance(elem, se.Path)))
-        svgpath = elems[index]
+        if isinstance(source, se.svgelements.Path):
+            svgpath = source
+        else:
+            svg = se.SVG.parse(source)
+            elems = list(svg.elements(lambda elem: isinstance(elem, se.Path)))
+            svgpath = elems[index]
 
         # Convert path data into spline
         svgpath.reify()  # Commit all transforms
@@ -304,43 +339,10 @@ class Spline(morpho.Figure):
             # svgpath.approximate_arcs_with_cubics() to convert arcs
             # into Cubic Beziers.
 
-        if origin is None:
-            # Infer origin from `align` parameter and bounding box
-            xmin, ymin, xmax, ymax = svgpath.bbox()  # Get bounding box
-            anchor_x, anchor_y = align
-            if flip:
-                anchor_y *= -1
-            origin_x = morpho.lerp0(xmin, xmax, anchor_x, start=-1, end=1)
-            origin_y = morpho.lerp0(ymin, ymax, anchor_y, start=-1, end=1)
-            spline.origin = -complex(origin_x, origin_y)
-            spline.commitTransforms()
-
-        # Set scale factors based on box dimensions
-        if boxWidth is None and boxHeight is None:
-            scale_x = 1
-            scale_y = 1
-        elif boxWidth is None:
-            scale_y = boxHeight / (ymax - ymin)
-            scale_x = scale_y
-        elif boxHeight is None:
-            scale_x = boxWidth / (xmax - xmin)
-            scale_y = scale_x
-        else:
-            scale_x = boxWidth / (xmax - xmin)
-            scale_y = boxHeight / (ymax - ymin)
-
-        # Rescale spline if needed
-        if scale_x != 1 or scale_y != 1:
-            spline._transform = morpho.matrix.scale2d(scale_x, scale_y)
-            spline.commitTransforms()
-
-        if flip:
-            spline._transform = morpho.matrix.scale2d(1, -1)
-            spline.commitTransforms()
+        svgbbox = svgpath.bbox()
+        spline._transformForSVG(svgbbox, boxWidth, boxHeight, origin, align, flip)
 
         return spline
-
-
 
 
     # Returns the node count of the spline
@@ -1433,6 +1435,44 @@ class MultiSpline(MultiFigure):
             spline = Spline(data, *args, **kwargs)
             super().__init__([spline])
 
+
+    @classmethod
+    def fromsvg(cls, source, *,
+        origin=None, align=(0,0), boxWidth=None, boxHeight=None,
+        index=None, flip=True):
+
+        svg = se.SVG.parse(source)
+        svgpaths = list(svg.elements(lambda elem: isinstance(elem, se.Path)))
+
+        # Return empty MultiSpline if SVG source has no paths.
+        if len(svgpaths) == 0:
+            return cls()
+
+        # Generate raw Spline figures
+        splines = []
+        for svgpath in svgpaths:
+            spline = Spline.fromsvg(svgpath, origin=0, flip=False)
+            splines.append(spline)
+
+        # Compute overall bounding box
+        allpaths = svgpaths[0]  # Combine all paths
+        for svgpath in svgpaths[1:]:
+            allpaths = allpaths + svgpath
+        svgbbox = svgpath.bbox()  # Get bounding box
+
+        XMIN, YMIN, XMAX, YMAX = svgpaths[0].bbox()
+        for svgpath in svgpaths[1:]:
+            xmin, ymin, xmax, ymax = svgpath.bbox()
+            XMIN = min(XMIN, xmin)
+            YMIN = min(YMIN, ymin)
+            XMAX = max(XMAX, xmax)
+            YMAX = max(YMAX, ymax)
+        svgbbox = [XMIN, YMIN, XMAX, YMAX]
+
+        for spline in splines:
+            spline._transformForSVG(svgbbox, boxWidth, boxHeight, origin, align, flip)
+
+        return cls(splines)
 
     ### TWEEN METHODS ###
 
