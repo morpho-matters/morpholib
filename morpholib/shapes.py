@@ -221,12 +221,14 @@ class Spline(morpho.Figure):
     # Applies the necessary transformations to a spline to make it
     # fit the specifications outlined in the arguments of fromsvg(),
     # such as making it meet the given boxHeight.
-    def _transformForSVG(self, svgbbox, boxWidth, boxHeight, origin, align, flip):
+    def _transformForSVG(self, svgbbox, boxWidth, boxHeight, svgOrigin, align, flip):
         xmin, ymin, xmax, ymax = svgbbox
-        if origin is None:
+        if svgOrigin is None:
             # Infer origin from `align` parameter and bounding box
             self.origin = self._inferTranslationFromAlign(svgbbox, align, flip)
             self.commitTransforms()
+        else:
+            self.origin = -svgOrigin if not flip else -svgOrigin.conjugate()
 
         # Set scale factors based on box dimensions
         if boxWidth is None and boxHeight is None:
@@ -276,10 +278,10 @@ class Spline(morpho.Figure):
     #          note that the element will be reified IN PLACE.
     #
     # OPTIONAL KEYWORD-ONLY INPUTS
-    # origin = SVG coordinates that should be converted into
-    #          (0,0) Morpho physical coordinates.
-    #          Can be specified as tuple or complex number.
-    #          Default: None (meaning infer it from `align`)
+    # svgOorigin = SVG coordinates that should be converted into
+    #              (0,0) Morpho physical coordinates.
+    #              Can be specified as tuple or complex number.
+    #              Default: None (meaning infer it from `align`)
     # align = Tuple specifying origin point of SVG according to alignment
     #         within the SVG's bounding box. Note this value is
     #         ignored if a value is supplied to the `origin` input.
@@ -296,7 +298,7 @@ class Spline(morpho.Figure):
     #        Default: True
     @classmethod
     def fromsvg(cls, source, *,
-        origin=None, align=(0,0), boxWidth=None, boxHeight=None,
+        svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
         index=0, flip=True):
 
         if isinstance(source, se.svgelements.Path):
@@ -353,7 +355,7 @@ class Spline(morpho.Figure):
             # into Cubic Beziers.
 
         svgbbox = svgpath.bbox()
-        spline._transformForSVG(svgbbox, boxWidth, boxHeight, origin, align, flip)
+        spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
 
         return spline
 
@@ -1490,7 +1492,7 @@ class MultiSpline(MultiFigure):
     # The tuple is interpreted identically to how range() works.
     @classmethod
     def fromsvg(cls, source, *,
-        origin=None, align=(0,0), boxWidth=None, boxHeight=None,
+        svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
         index=(None,), flip=True):
 
         svg = se.SVG.parse(source)
@@ -1506,7 +1508,7 @@ class MultiSpline(MultiFigure):
         # Generate raw Spline figures
         splines = []
         for svgpath in svgpaths[slice(*index)]:
-            spline = Spline.fromsvg(svgpath, origin=0, flip=False)
+            spline = Spline.fromsvg(svgpath, svgOrigin=0, flip=False)
             if len(spline.deadends) > 0:
                 splines.extend(spline.splitAtDeadends().figures)
             else:
@@ -1528,7 +1530,7 @@ class MultiSpline(MultiFigure):
         svgbbox = [XMIN, YMIN, XMAX, YMAX]
 
         for spline in splines:
-            spline._transformForSVG(svgbbox, boxWidth, boxHeight, origin, align, flip)
+            spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
 
         return cls(splines)
 
