@@ -257,16 +257,14 @@ class Spline(morpho.Figure):
     # Generates a Spine figure by parsing an SVG file/stream
     # and taking the first SVG path element found.
     #
-    # For this method to work, the only elements that can be in
-    # the path are Line, CubicBezier, Move, and Close.
-    # The presence of QuadraticBezier or Arcs will throw an error.
-    # This may be rectified in future versions.
-    #
     # The stroke and fill color is also imported from the SVG
     # as well as their alpha values. All other style attributes
     # are ignored and the Spline default values are used.
     # However, future versions of this method may use this data,
     # so this behavior should not be depended on.
+    #
+    # Note that any circular arcs will be approximated with
+    # cubic Bezier curves.
     #
     # Also note that any transforms that are part of the SVG data
     # will be committed (i.e. reified) and the returned Spline
@@ -310,6 +308,7 @@ class Spline(morpho.Figure):
 
         # Convert path data into spline
         svgpath.reify()  # Commit all transforms
+        svgpath.approximate_arcs_with_cubics()
         spline = cls()
 
         # Assign style attributes
@@ -347,6 +346,13 @@ class Spline(morpho.Figure):
                 spline.newNode(complex(segment.end), relHandles=False)
             elif isinstance(segment, se.Close):
                 spline.close()
+            elif isinstance(segment, se.QuadraticBezier):
+                q0 = complex(segment.start)
+                q1 = complex(segment.control)
+                q2 = complex(segment.end)
+                p0,p1,p2,p3 = morpho.bezier.quad2cubic(q0, q1, q2)
+                spline.outhandle(-1, p1)
+                spline.newNode(p3, p2, relHandles=False)
             else:
                 raise ValueError(f'Cannot parse SVG path element "{type(segment)}"')
             # FUTURE: Handle Quadratic Beziers by turning them into

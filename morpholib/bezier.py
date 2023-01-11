@@ -101,3 +101,18 @@ def CatmullRomToBezier(pts):
         p0, p1, p2, p3 = pts[n: n+4]
         bezierPts[n: n+4] = (p1, p1 + (p2-p0)/6, p2 - (p3-p1)/6, p2)
     return bezierPts
+
+# Converts a quadratic Bezier curve into the equivalent cubic
+# Bezier curve.
+#
+# INPUTS:
+# q0,q1,q2 = Quadratic Bezier curve control points
+#
+# RETURNS:
+# p0,p1,p2,p3 = Equivalent cubic Bezier curve control points
+def quad2cubic(q0, q1, q2):
+    p0 = q0
+    p1 = q0 + (2/3)*(q1 - q0)
+    p2 = q2 + (2/3)*(q1 - q2)
+    p3 = q2
+    return (p0, p1, p2, p3)
