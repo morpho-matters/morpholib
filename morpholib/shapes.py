@@ -311,7 +311,10 @@ class Spline(morpho.Figure):
         spline = cls()
 
         # Assign style attributes
-        if svgpath.stroke != None:  # don't use `is not`
+        if svgpath.stroke == None:  # don't use 'is None'
+            spline.width = 0
+        else:
+            spline.width = svgpath.stroke_width
             spline.color = morpho.color.rgbNormalize(
                 svgpath.stroke.red, svgpath.stroke.green, svgpath.stroke.blue
                 )
