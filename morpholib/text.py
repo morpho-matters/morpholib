@@ -647,7 +647,7 @@ Ptext = PText  # Alias is maybe easier to type
 # This was originally developed to solve the problem of decorating
 # tweenPivot() because it is not symmetric in swapping
 # self with other.
-def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, reverseMethod=None):
+def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, *, reverseMethod=None):
     if reverseMethod is None:
         reverseMethod = imageMethod
 
