@@ -647,7 +647,7 @@ Ptext = PText  # Alias is maybe easier to type
 # This was originally developed to solve the problem of decorating
 # tweenPivot() because it is not symmetric in swapping
 # self with other.
-def Multi(imageMethod, reverseMethod=None):
+def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, reverseMethod=None):
     if reverseMethod is None:
         reverseMethod = imageMethod
 
@@ -746,23 +746,9 @@ def Multi(imageMethod, reverseMethod=None):
         elif diff < 0:
             self.figures = self.figures[:-len(extensions)]
 
-        tw = type(self)(figures)
-        # Copy over all of self's tweenables other than `figures`
-        for name, tweenable in self._state.items():
-            if name != "figures":
-                tw._state[name] = tweenable.copy()
-        tw.defaultTween = self.defaultTween
-        tw.transition = self.transition
-        tw.static = self.static
-        tw.delay = self.delay
-        tw.visible = self.visible
-
-        # The following handling of zdepth seems a little too
-        # hard-coded.
-        # It assumes you always want to linearly tween zdepth.
-        # If you plan on using the Multi decorator more broadly,
-        # you should consider reimplementing this.
-        tw.zdepth = morpho.numTween(self.zdepth, other.zdepth, t)
+        # Create final tweened multifigure object
+        tw = mainMethod(self, other, t)
+        tw.figures = figures
 
         return tw
 
@@ -818,12 +804,14 @@ class MultiText(morpho.MultiFigure):
 
     ### TWEEN METHODS ###
 
-    tweenLinear = Multi(Text.tweenLinear)
-    tweenSpiral = Multi(Text.tweenSpiral)
+    tweenLinear = Multi(Text.tweenLinear, morpho.MultiFigure.tweenLinear)
+    tweenSpiral = Multi(Text.tweenSpiral, morpho.MultiFigure.tweenSpiral)
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):
+        mainPivot = morpho.MultiFigure.tweenPivot(angle, *args, **kwargs)
         pivot = Multi(Text.tweenPivot(angle, *args, **kwargs),
+            mainMethod=mainPivot,
             reverseMethod=Text.tweenPivot(-angle, *args, **kwargs)
             )
         # Enable splitting
@@ -1436,7 +1424,9 @@ class FancyMultiText(MultiText, BoundingBoxFigure):
 
     @classmethod
     def tweenPivot(cls, angle=tau/2):
+        mainPivot = morpho.MultiFigure.tweenPivot(angle, *args, **kwargs)
         twMethod1 = Multi(Text.tweenPivot(angle),
+            mainMethod=mainPivot,
             reverseMethod=Text.tweenPivot(-angle)
             )
 
