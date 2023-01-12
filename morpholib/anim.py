@@ -617,8 +617,19 @@ class MultiFigure(Frame):
     # Decorator for the tween methods in a MultiFigure subclass.
     # Reworks ordinary base class tween methods so that they work
     # in a multifigure setting.
+    #
+    # INPUTS
+    # baseMethod = The method from the base class that should be
+    #              modified. This method will be applied to the
+    #              subfigures during a tween.
+    # mainMethod = The corresponding method in the MultiFigure subclass.
+    #              e.g. MultiFigure.tweenLinear. This method handles
+    #              tweening all the "main" tweenables of the multifigure
+    #              object itself (as opposed to subfigures), but it
+    #              should NOT act on the `figures` tweenable!
+    #              Defaults to Frame.tweenLinear.
     @staticmethod
-    def Multi(baseMethod):
+    def Multi(baseMethod, mainMethod=Frame.tweenLinear):
 
         def wrapper(self, other, t, *args, **kwargs):
             # wrapper function for a MultiFigure tween method
@@ -652,12 +663,6 @@ class MultiFigure(Frame):
                 self.figures = self.figures[:diff]
                 return tw
 
-            # # Remove temporary extensions
-            # if diff > 0:
-            #     other.figures = other.figures[:-len(extensions)]
-            # elif diff < 0:
-            #     self.figures = self.figures[:-len(extensions)]
-
             # Tween each subfigure in self with its partner in other
             figures = []
             for fig, pig in zip(self.figures, other.figures):
@@ -665,17 +670,8 @@ class MultiFigure(Frame):
                 figures.append(twig)
 
             # Create final tweened multifigure object
-            tw = type(self)()
+            tw = mainMethod(self, other, t)
             tw.figures = figures
-            # Copy over all of self's tweenables other than `figures`
-            tw._updateFrom(self, ignore="figures", includeTweenMethod=True)
-
-            # The following handling of zdepth seems a little too
-            # hard-coded.
-            # It assumes you always want to linearly tween zdepth.
-            # If you plan on using the Multi decorator more broadly,
-            # you should consider reimplementing this.
-            tw.zdepth = morpho.numTween(self.zdepth, other.zdepth, t)
 
             return tw
 
