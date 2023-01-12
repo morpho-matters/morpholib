@@ -1410,21 +1410,20 @@ class FancyMultiText(MultiText, BoundingBoxFigure):
         self.makeFrame(camera, ctx).draw(camera, ctx)
 
     ### TWEEN METHODS ###
+
     @morpho.TweenMethod
     def tweenLinear(self, other, t):
-        tw = super().tweenLinear(other, t)
-        tw = morpho.Figure.tweenLinear(tw, other, t, ignore="figures")
+        tw = MultiText.tweenLinear(self, other, t)
         return tw
 
     @morpho.TweenMethod
     def tweenSpiral(self, other, t):
-        tw = super().tweenSpiral(other, t)
-        tw = morpho.Figure.tweenSpiral(tw, other, t, ignore="figures")
+        tw = MultiText.tweenSpiral(self, other, t)
         return tw
 
     @classmethod
     def tweenPivot(cls, angle=tau/2):
-        mainPivot = morpho.MultiFigure.tweenPivot(angle, *args, **kwargs)
+        mainPivot = morpho.MultiFigure.tweenPivot(angle)
         twMethod1 = Multi(Text.tweenPivot(angle),
             mainMethod=mainPivot,
             reverseMethod=Text.tweenPivot(-angle)
@@ -1433,7 +1432,6 @@ class FancyMultiText(MultiText, BoundingBoxFigure):
         @morpho.pivotTweenMethod(cls.tweenPivot, angle)  # Enable splitting
         def pivot(self, other, t):
             tw = twMethod1(self, other, t)
-            tw = morpho.Figure.tweenPivot(angle, ignore="figures")(tw, other, t)
             return tw
 
         return pivot
