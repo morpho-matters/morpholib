@@ -1525,11 +1525,6 @@ class MultiSpline(MultiFigure):
                 splines.append(spline)
 
         # Compute overall bounding box
-        allpaths = svgpaths[0]  # Combine all paths
-        for svgpath in svgpaths[1:]:
-            allpaths = allpaths + svgpath
-        svgbbox = svgpath.bbox()  # Get bounding box
-
         XMIN, YMIN, XMAX, YMAX = svgpaths[0].bbox()
         for svgpath in svgpaths[1:]:
             xmin, ymin, xmax, ymax = svgpath.bbox()
