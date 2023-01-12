@@ -1377,7 +1377,7 @@ class Spline(morpho.Figure):
     @handleSplineNodeInterp
     def tweenSpiral(self, other, t):
         # Handle interpolating everything but the data tweenable
-        tw = morpho.Figure.tweenLinear(self, other, t, ignore="_data")
+        tw = morpho.Figure.tweenSpiral(self, other, t, ignore="_data")
 
         # Handle interpolating data
         data1 = self.data.copy()
