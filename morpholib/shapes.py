@@ -1398,13 +1398,17 @@ class Spline(morpho.Figure):
     @classmethod
     def tweenPivot(cls, angle=tau/2):
 
+        # Performs a pivot tween on all tweenables EXCEPT the
+        # data array which will be handled separately.
+        mainPivot = morpho.Figure.tweenPivot(angle=angle, ignore="_data")
+
         @morpho.pivotTweenMethod(cls.tweenPivot, angle)  # Enable splitting
         @morpho.grid.handleDash
         @morpho.color.handleGradientFills(["fill"])
         @handleSplineNodeInterp
         def pivot(self, other, t):
             # Handle interpolating everything but the data tweenable
-            tw = morpho.Figure.tweenLinear(self, other, t, ignore="_data")
+            tw = mainPivot(self, other, t)
 
             # Handle interpolating data
             data1 = self.data.copy()
