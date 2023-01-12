@@ -1525,14 +1525,20 @@ class MultiSpline(MultiFigure):
                 splines.append(spline)
 
         # Compute overall bounding box
-        XMIN, YMIN, XMAX, YMAX = svgpaths[0].bbox()
-        for svgpath in svgpaths[1:]:
-            xmin, ymin, xmax, ymax = svgpath.bbox()
+        XMIN, YMIN, XMAX, YMAX = oo, oo, -oo, -oo
+        for svgpath in svgpaths:
+            try:
+                xmin, ymin, xmax, ymax = svgpath.bbox()
+            except TypeError:
+                continue
             XMIN = min(XMIN, xmin)
             YMIN = min(YMIN, ymin)
             XMAX = max(XMAX, xmax)
             YMAX = max(YMAX, ymax)
         svgbbox = [XMIN, YMIN, XMAX, YMAX]
+
+        if oo in svgbbox or -oo in svgbbox:
+            raise TypeError("Given SVG has no well-defined bounding box.")
 
         for spline in splines:
             spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
