@@ -700,13 +700,17 @@ Spaceimage = SpaceImage  # Synonym for SpaceImage for people who hate camel case
 # Reworks ordinary Image class tween methods so that they work
 # in a multi-image setting.
 #
+# `mainMethod` is the tween method that will be used to tween
+# everything in the multiImage EXCEPT the subimage list.
+# It should not act at all on the subimage list.
+#
 # Optionally specify a method called "reverseMethod" which is used
 # instead of the main method when the main method would have been
 # called "in reverse" by calling imageMethod(other, self, 1-t).
 # This was originally developed to solve the problem of decorating
 # tweenPivot() because it is not symmetric in swapping
 # self with other.
-def Multi(imageMethod, reverseMethod=None):
+def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, reverseMethod=None):
     if reverseMethod is None:
         reverseMethod = imageMethod
 
@@ -766,23 +770,9 @@ def Multi(imageMethod, reverseMethod=None):
         elif diff < 0:
             self.images = self.images[:-len(extensions)]
 
-        tw = type(self)(images)
-        # Copy over all of self's tweenables other than `figures`
-        for name, tweenable in self._state.items():
-            if name != "figures":
-                tw._state[name] = tweenable.copy()
-        tw.defaultTween = self.defaultTween
-        tw.transition = self.transition
-        tw.static = self.static
-        tw.delay = self.delay
-        tw.visible = self.visible
-
-        # The following handling of zdepth seems a little too
-        # hard-coded.
-        # It assumes you always want to linearly tween zdepth.
-        # If you plan on using the Multi decorator more broadly,
-        # you should consider reimplementing this.
-        tw.zdepth = morpho.numTween(self.zdepth, other.zdepth, t)
+        # Create final tweened multifigure object
+        tw = mainMethod(self, other, t)
+        tw.figures = images
 
         return tw
 
@@ -842,12 +832,14 @@ class MultiImage(morpho.MultiFigure):
 
     ### TWEEN METHODS ###
 
-    tweenLinear = Multi(Image.tweenLinear)
-    tweenSpiral = Multi(Image.tweenSpiral)
+    tweenLinear = Multi(Image.tweenLinear, mainMethod=morpho.MultiFigure.tweenLinear)
+    tweenSpiral = Multi(Image.tweenSpiral, mainMethod=morpho.MultiFigure.tweenSpiral)
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):
+        mainPivot = morpho.MultiFigure.tweenPivot(angle, *args, **kwargs)
         pivot = Multi(Image.tweenPivot(angle, *args, **kwargs),
+            mainMethod=mainPivot,
             reverseMethod=Image.tweenPivot(-angle, *args, **kwargs)
             )
         # Enable splitting for this tween method
