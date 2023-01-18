@@ -294,10 +294,19 @@ class Spline(morpho.Figure):
     #        flipped when converting into Morpho physical coordinates
     #        since positive y is up in Morpho, but down in SVG.
     #        Default: True
+    # arcError = Controls the amount of error in approximating arcs
+    #       as cubic Bezier curves. I believe it works by splitting
+    #       each arc into a bunch of sub-arcs of a set size and
+    #       approximating each sub-arc with a cubic curve.
+    #       arcError (I believe) controls the approximate size of each
+    #       sub-arc specified as a proportion of a full arc turn.
+    #       For example: arcError=0.1 means all arcs will be split
+    #       into sub-arcs that are 0.1*2pi (circular) radians wide.
+    #       Default: 0.1
     @classmethod
     def fromsvg(cls, source, *,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
-        index=0, flip=True):
+        index=0, flip=True, arcError=0.1):
 
         if isinstance(source, se.svgelements.Path):
             svgpath = source
@@ -308,7 +317,7 @@ class Spline(morpho.Figure):
 
         # Convert path data into spline
         svgpath.reify()  # Commit all transforms
-        svgpath.approximate_arcs_with_cubics()
+        svgpath.approximate_arcs_with_cubics(arcError)
         spline = cls()
 
         # Assign style attributes
@@ -1507,7 +1516,7 @@ class MultiSpline(MultiFigure):
     @classmethod
     def fromsvg(cls, source, *,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
-        index=(None,), flip=True):
+        index=(None,), flip=True, arcError=0.1):
 
         svg = se.SVG.parse(source)
         svgpaths = list(svg.elements(lambda elem: isinstance(elem, se.Path)))
@@ -1522,7 +1531,7 @@ class MultiSpline(MultiFigure):
         # Generate raw Spline figures
         splines = []
         for svgpath in svgpaths[slice(*index)]:
-            spline = Spline.fromsvg(svgpath, svgOrigin=0, flip=False)
+            spline = Spline.fromsvg(svgpath, svgOrigin=0, flip=False, arcError=arcError)
             if len(spline.deadends) > 0:
                 splines.extend(spline.splitAtDeadends().figures)
             else:
