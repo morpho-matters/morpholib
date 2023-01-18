@@ -276,7 +276,7 @@ class Spline(morpho.Figure):
     #          note that the element will be reified IN PLACE.
     #
     # OPTIONAL KEYWORD-ONLY INPUTS
-    # svgOorigin = SVG coordinates that should be converted into
+    # svgOrigin = SVG coordinates that should be converted into
     #              (0,0) Morpho physical coordinates.
     #              Can be specified as tuple or complex number.
     #              Default: None (meaning infer it from `align`)
