@@ -658,6 +658,8 @@ class Spline(morpho.Figure):
     # NOTE: This method ignores deadends and the transformation tweenables
     # origin, rotation, transform.
     def positionAt(self, t):
+        if not(0 <= t <= 1):
+            raise ValueError(f"Index parameter must be between 0 and 1. Got t = {t}")
         length = self.length()
         if length < 2:
             raise IndexError("Spline must have at least 2 nodes!")

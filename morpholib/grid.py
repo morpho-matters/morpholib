@@ -653,7 +653,7 @@ class Path(BoundingBoxFigure):
     # parameters!
     def positionAt(self, t):
         if not(0 <= t <= 1):
-            raise ValueError("Index parameter must be in the interval [0,1]")
+            raise ValueError(f"Index parameter must be between 0 and 1. Got t = {t}")
         T = t*(len(self.seq)-1)
         index = int(T)
 
