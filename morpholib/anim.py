@@ -2177,7 +2177,7 @@ class Layer(object):
 
         # NOTE: The "start" and "end" parameters of the masklayer are ignored
         # when drawing with masking!
-        if self.mask is None or not self.mask.viewtime(f, returnCamera=True).visible:
+        if self.mask is None or not self.mask.visible or not self.mask.viewtime(f, returnCamera=True).visible:
             # Draw all figures
             with cam._pushRotation(ctx):  # Apply camera rotation
                 for fig in figlist:
@@ -2343,7 +2343,7 @@ class SpaceLayer(Layer):
 
         # NOTE: The "start" and "end" parameters of the masklayer are ignored
         # when drawing with masking!
-        if self.mask is None or not self.mask.viewtime(f, returnCamera=True).visible:
+        if self.mask is None or not self.mask.visible or not self.mask.viewtime(f, returnCamera=True).visible:
             with cam._pushRotation(ctx):  # Apply camera rotation
                 # Draw all non-primitive figures
                 for fig in figlist:
