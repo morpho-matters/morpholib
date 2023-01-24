@@ -2771,6 +2771,34 @@ def mathgrid3d(*,
 
     return wire
 
+# Equivalent to mathgrid(), but hsteps/vsteps default to 1,
+# and `BGgrid` and `axes` default to False.
+# See mathgrid() for more info.
+def basicgrid(
+    hsteps=1, vsteps=1,
+    BGgrid=False, axes=False,
+    **kwargs):
+
+    return mathgrid(
+        hsteps=hsteps, vsteps=vsteps,
+        BGgrid=BGgrid, axes=axes,
+        **kwargs
+        )
+
+# Equivalent to mathgrid3d(), but hsteps/vsteps default to 1,
+# and `axes` defaults to False.
+# See mathgrid3d() for more info.
+def basicgrid3d(
+    hsteps=1, vsteps=1,
+    axes=False,
+    **kwargs):
+
+    return mathgrid3d(
+        hsteps=hsteps, vsteps=vsteps,
+        axes=axes,
+        **kwargs
+        )
+
 # Identical to mathgrid3d() except the "axes" argument
 # defaults to False.
 def wireframe(*,
