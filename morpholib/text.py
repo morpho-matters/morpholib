@@ -1,6 +1,7 @@
+import io
 
 import morpholib as morpho
-import morpholib.anim, morpholib.grid
+import morpholib.anim, morpholib.grid, morpholib.shapes
 from morpholib.tools.basics import *
 from morpholib.tools.dev import typecastViewCtx, BoundingBoxFigure
 
@@ -541,7 +542,6 @@ class PText(Text):
         return self.dimensions()[0]
 
     # Returns the physical height of the text's bounding box.
-    # It is equal to the `size` attribute.
     def height(self, view=DUMMY, ctx=DUMMY):
         txt = self._makeDummy()
         heightSelf = txt.pixelHeight()
@@ -608,6 +608,63 @@ class PText(Text):
     # the transformation attributes.
     def center(self):
         return mean(self.corners())
+
+    # Mainly for internal use.
+    # Converts the text object into an SVG data stream.
+    #
+    # This method is best to invoke as part of a `with` statement
+    # to ensure it closes properly:
+    #   with ptxt.tosvg() as source:
+    #       ...
+    def tosvg(self):
+        stream = io.BytesIO()
+
+        # Initialize a cairo SVG surface of arbitrary dimensions.
+        # It will all get rescaled later.
+        # This code is inspired from code found on geeksforgeeks.org
+        # https://www.geeksforgeeks.org/pycairo-creating-text-paths/
+        with cairo.SVGSurface(stream, 700, 700) as surface:
+
+            # surface.restrict_to_version(cairo.SVGVersion.VERSION_1_1)
+
+            context = cairo.Context(surface)
+
+            context.select_font_face(
+                self.font,
+                cr.FONT_SLANT_ITALIC if self.italic else cr.FONT_SLANT_NORMAL,
+                cr.FONT_WEIGHT_BOLD if self.bold else cr.FONT_WEIGHT_NORMAL
+                )
+            context.set_font_size(64)  # Dummy value. Will be rescaled later
+            context.set_source_rgba(*self.color, self.alpha)
+
+            # Arbitrary position. Will be rescaled later.
+            context.move_to(35, 45)
+
+            # displays the text
+            context.text_path(self.text)
+
+            context.fill()
+
+        # Seek to beginning of data stream so it is ready for reading.
+        stream.seek(0)
+        return stream
+
+    # Converts the text figure into an equivalent Spline figure.
+    # The `origin` attribute of the resulting Spline will be set
+    # as the position of the text figure.
+    #
+    # Note that the resulting spline may not perfectly line up
+    # with the original text figure. This may be fixed in a future
+    # version.
+    def toSpline(self):
+        with self.tosvg() as source:
+            spline = morpho.shapes.Spline.fromsvg(source,
+                align=self.align, boxHeight=self.height()
+                )
+        spline.origin = self.pos
+        spline.rotation = self.rotation
+        spline.transform = self.transform
+        return spline
 
     # Returns equivalent non-physical Text object
     @typecastViewCtx
