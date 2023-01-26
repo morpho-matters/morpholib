@@ -600,6 +600,11 @@ class Spline(morpho.Figure):
         if self.length() < 2 or self.node(0) == self.node(-1):
             return self
         self._data = np.insert(self._data, self.length(), self._data[0].copy(), axis=0)
+
+        # Flatten handles
+        self.outhandleRel(-2, 0)
+        self.inhandleRel(-1, 0)
+
         return self
 
     # Automatically sets the tangent handles of the splines
@@ -1856,6 +1861,11 @@ class SpaceSpline(Spline):
         if self.length() < 2 or np.array_equal(self.node(0), self.node(-1)):
             return self
         self._data = np.insert(self._data, self.length(), self._data[0,:,:].copy(), axis=0)
+
+        # Flatten handles
+        self.outhandleRel(-2, 0)
+        self.inhandleRel(-1, 0)
+
         return self
 
 
