@@ -650,7 +650,7 @@ class MultiFigure(Frame):
                 other.figures = extension + other.figures
                 tw = wrapper(self, other, t, *args, **kwargs)
                 # Restore other to its original state
-                other.figures = other.figures[:-diff]
+                other.figures = other.figures[diff:]
                 return tw
             elif diff < 0:
                 # Temporarily extend the figure list of self with copies of
@@ -660,7 +660,7 @@ class MultiFigure(Frame):
                     extension.append(self.figures[i%len(self.figures)].copy())
                 self.figures = extension + self.figures
                 tw = wrapper(self, other, t, *args, **kwargs)
-                self.figures = self.figures[:diff]
+                self.figures = self.figures[-diff:]
                 return tw
 
             # Tween each subfigure in self with its partner in other
