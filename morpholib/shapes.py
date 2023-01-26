@@ -317,7 +317,7 @@ class Spline(morpho.Figure):
     #              Default: None (meaning infer it from `align`)
     # align = Tuple specifying origin point of SVG according to alignment
     #         within the SVG's bounding box. Note this value is
-    #         ignored if a value is supplied to the `origin` input.
+    #         ignored if a value is supplied to the `svgOrigin` input.
     #         Default: (0,0) (center of bounding box)
     # boxWidth/boxHeight = Desired physical dimensions of the bounding
     #       box. If one is unspecified, it will be inferred from the
