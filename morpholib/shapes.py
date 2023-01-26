@@ -2,7 +2,7 @@
 import morpholib as morpho
 import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
-from morpholib.tools.dev import drawOutOfBoundsStartEnd
+from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 
@@ -151,7 +151,7 @@ def handleSplineNodeInterp(tweenmethod):
 #                debugging use while creating an animation.
 #                Final animations should usually have showTangents = False.
 #                By default, showTangents = False
-class Spline(morpho.Figure):
+class Spline(BoundingBoxFigure):
 
     # Dummy headSize and tailSize so that functions that expect
     # them to exist don't crash
@@ -237,6 +237,38 @@ class Spline(morpho.Figure):
         new.showTangents = self.showTangents
 
         return new
+
+    # Computes the loose bounding box of the spline.
+    # That is, it returns the bounding box of all the
+    # control points (positional and tangent) the spline contains.
+    # This function may be improved in a future version to return
+    # a tighter bounding box.
+    def box(self):
+        data = self._data.copy()
+        commitSplineHandles(data)
+
+        # Remove initial inhandle and final outhandle
+        # from the calculation.
+        data[0,1] = data[0,0]
+        data[-1,2] = data[-1,0]
+
+        # Remove tangent handles that do not participate
+        # in defining the shape due to deadends.
+        finalIndex = self.nodeCount() - 1
+        for deadend in self.deadends:
+            data[deadend,2] = data[deadend,0]
+            if deadend < finalIndex:
+                data[deadend+1, 1] = data[deadend+1, 0]
+
+        xdata = data.real
+        ydata = data.imag
+
+        xmin = np.min(xdata).tolist()
+        xmax = np.max(xdata).tolist()
+        ymin = np.min(ydata).tolist()
+        ymax = np.max(ydata).tolist()
+
+        return [xmin, xmax, ymin, ymax]
 
     # Mainly for internal use by fromsvg().
     # Computes the needed translation vector for the raw spline
@@ -1745,6 +1777,10 @@ class SpaceSpline(Spline):
     @transform.setter
     def transform(self, value):
         raise AttributeError
+
+    # box() method for SpaceSpline is currently unimplemented.
+    def box(self, *args, **kwargs):
+        raise NotImplementedError("box() method is currently unimplemented for SpaceSpline.")
 
     # fromsvg() is currently not implemented for SpaceSplines.
     def fromsvg(self, *args, **kwargs):
