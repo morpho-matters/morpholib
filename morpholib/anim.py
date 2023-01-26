@@ -647,7 +647,7 @@ class MultiFigure(Frame):
                 extension = []
                 for i in range(diff):
                     extension.append(other.figures[i%len(other.figures)].copy())
-                other.figures.extend(extension)
+                other.figures = extension + other.figures
                 tw = wrapper(self, other, t, *args, **kwargs)
                 # Restore other to its original state
                 other.figures = other.figures[:-diff]
@@ -658,7 +658,7 @@ class MultiFigure(Frame):
                 extension = []
                 for i in range(-diff):
                     extension.append(self.figures[i%len(self.figures)].copy())
-                self.figures.extend(extension)
+                self.figures = extension + self.figures
                 tw = wrapper(self, other, t, *args, **kwargs)
                 self.figures = self.figures[:diff]
                 return tw
