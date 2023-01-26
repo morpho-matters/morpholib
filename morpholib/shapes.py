@@ -1569,6 +1569,15 @@ class MultiSpline(MultiFigure):
         return spline
 
 
+    # Removes subsplines IN PLACE whose node counts are less than 2
+    # (and are therefore non-drawable).
+    def squeeze(self):
+        for spline in self.figures[:]:
+            if spline.nodeCount() < 2:
+                self.figures.remove(spline)
+        return self
+
+
     # EXPERIMENTAL!
     # Parses an SVG file/stream to construct a MultiSpline
     # representation of it. See Spline.fromsvg() for more info.
@@ -1618,7 +1627,9 @@ class MultiSpline(MultiFigure):
         for spline in splines:
             spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
 
-        return cls(splines)
+        multispline = cls(splines)
+        multispline.squeeze()  # Remove empty and singleton splines
+        return multispline
 
     ### TWEEN METHODS ###
 
