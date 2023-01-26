@@ -364,10 +364,6 @@ class Spline(morpho.Figure):
                 spline.newNode(p3, p2, relHandles=False)
             else:
                 raise ValueError(f'Cannot parse SVG path element "{type(segment)}"')
-            # FUTURE: Handle Quadratic Beziers by turning them into
-            # equivalent Cubic Beziers, and use
-            # svgpath.approximate_arcs_with_cubics() to convert arcs
-            # into Cubic Beziers.
 
         svgbbox = svgpath.bbox()
         spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
