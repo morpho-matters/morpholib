@@ -597,7 +597,7 @@ class Spline(morpho.Figure):
 
     # Closes the spline IN PLACE if it is not already closed.
     def close(self):
-        if self.length() < 2 or self.node(0) == self.node(1):
+        if self.length() < 2 or self.node(0) == self.node(-1):
             return self
         self._data = np.insert(self._data, self.length(), self._data[0].copy(), axis=0)
         return self
@@ -1853,7 +1853,7 @@ class SpaceSpline(Spline):
 
     # Closes the path IN PLACE if it is not already closed.
     def close(self):
-        if self.length() < 2 or np.array_equal(self.node(0), self.node(1)):
+        if self.length() < 2 or np.array_equal(self.node(0), self.node(-1)):
             return self
         self._data = np.insert(self._data, self.length(), self._data[0,:,:].copy(), axis=0)
         return self
