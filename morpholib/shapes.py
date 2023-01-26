@@ -320,6 +320,30 @@ class Spline(BoundingBoxFigure):
             self._transform = morpho.matrix.scale2d(1, -1)
             self.commitTransforms()
 
+    # Mainly for internal use.
+    # Computes the svg bounding box of an svg path object, but
+    # skips over Move and Close elements.
+    @staticmethod
+    def _tightbbox(svgpath):
+        XMIN, YMIN, XMAX, YMAX = oo, oo, -oo, -oo
+        for segment in svgpath.segments():
+            if isinstance(segment, (se.Move, se.Close)):
+                continue
+            try:
+                xmin, ymin, xmax, ymax = segment.bbox()
+            except TypeError:
+                continue
+            XMIN = min(XMIN, xmin)
+            YMIN = min(YMIN, ymin)
+            XMAX = max(XMAX, xmax)
+            YMAX = max(YMAX, ymax)
+        svgbbox = [XMIN, YMIN, XMAX, YMAX]
+
+        if oo in svgbbox or -oo in svgbbox:
+            raise TypeError("Given SVG has no well-defined tight bounding box.")
+
+        return svgbbox
+
     # EXPERIMENTAL!
     # Generates a Spine figure by parsing an SVG file/stream
     # and taking the first SVG path element found.
@@ -370,10 +394,16 @@ class Spline(BoundingBoxFigure):
     #       For example: arcError=0.1 means all arcs will be split
     #       into sub-arcs that are 0.1*2pi (circular) radians wide.
     #       Default: 0.1
+    # tightbox = Boolean which if set to True computes the bounding
+    #       box of the source SVG path more tightly by skipping over
+    #       Move and Close elements in the bounding box calculation.
+    #       Setting it to False allows for isolated points (which are
+    #       normally invisible) to contribute the bounding box.
+    #       Default: False
     @classmethod
     def fromsvg(cls, source, *,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
-        index=0, flip=True, arcError=0.1):
+        index=0, flip=True, arcError=0.1, tightbox=False):
 
         if isinstance(source, se.svgelements.Path):
             svgpath = source
@@ -432,7 +462,10 @@ class Spline(BoundingBoxFigure):
             else:
                 raise ValueError(f'Cannot parse SVG path element "{type(segment)}"')
 
-        svgbbox = svgpath.bbox()
+        if tightbox:
+            svgbbox = Spline._tightbbox(svgpath)
+        else:
+            svgbbox = svgpath.bbox()
         spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
 
         return spline

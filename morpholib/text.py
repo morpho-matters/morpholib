@@ -652,14 +652,11 @@ class PText(Text):
     # Converts the text figure into an equivalent Spline figure.
     # The `origin` attribute of the resulting Spline will be set
     # as the position of the text figure.
-    #
-    # Note that the resulting spline may not perfectly line up
-    # with the original text figure. This may be fixed in a future
-    # version.
     def toSpline(self):
         with self.tosvg() as source:
             spline = morpho.shapes.Spline.fromsvg(source,
-                align=self.align, boxHeight=self.height()
+                align=self.align, boxHeight=self.height(),
+                tightbox=True
                 )
         spline.origin = self.pos
         spline.rotation = self.rotation
