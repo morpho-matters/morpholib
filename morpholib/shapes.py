@@ -1597,10 +1597,7 @@ class MultiSpline(MultiFigure):
         splines = []
         for svgpath in svgpaths[slice(*index)]:
             spline = Spline.fromsvg(svgpath, svgOrigin=0, flip=False, arcError=arcError)
-            if len(spline.deadends) > 0:
-                splines.extend(spline.splitAtDeadends().figures)
-            else:
-                splines.append(spline)
+            splines.append(spline)
 
         # Compute overall bounding box
         XMIN, YMIN, XMAX, YMAX = oo, oo, -oo, -oo
