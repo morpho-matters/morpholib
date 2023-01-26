@@ -882,11 +882,6 @@ class Spline(morpho.Figure):
     # nodes will tend to bunch around the original nodes.
     def insertNodes(self, numNodes):
         segCount = self.length() - 1
-        if segCount == 0:
-            for n in range(numNodes):
-                self.newNode(*self.nodeData(0, raw=True))
-            return self
-
         for n in range(numNodes):
             x = (n+1)/(numNodes+1) * segCount
             t = (x + n)/(segCount + n)
