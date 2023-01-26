@@ -47,6 +47,13 @@ def handleSplineNodeInterp(tweenmethod):
         # nodes into a copy of other before tweening
         if len_self > len_other:
             othercopy = other.copy()
+            if len_other == 1:
+                # If other is a singleton spline, convert it into a
+                # trivial 2-node spline with trivial handles
+                othercopy.inhandleRel(0,0)
+                othercopy.outhandleRel(0,0)
+                othercopy.newNode(othercopy.node(0))
+                len_other += 1
             othercopy.insertNodes(len_self - len_other)
             # other.seq = insertNodesUniformlyTo(other.seq, len_self-len_other)
             return tweenmethod(self, othercopy, t, *args, **kwargs)
@@ -54,6 +61,13 @@ def handleSplineNodeInterp(tweenmethod):
         # copy of self before tweening
         else:
             selfcopy = self.copy()
+            if len_self == 1:
+                # If self is a singleton spline, convert it into a
+                # trivial 2-node spline with trivial handles
+                selfcopy.inhandleRel(0,0)
+                selfcopy.outhandleRel(0,0)
+                selfcopy.newNode(selfcopy.node(0))
+                len_self += 1
             selfcopy.insertNodes(len_other - len_self)
             # selfcopy.seq = insertNodesUniformlyTo(selfcopy.seq, len_other-len_self)
             # return super(Path, selfcopy).tweenLinear(other, t)
