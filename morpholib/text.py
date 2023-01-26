@@ -878,6 +878,10 @@ class MultiText(morpho.MultiFigure):
 class MultiPText(MultiText):
     _baseFigure = PText
 
+    def toSpline(self):
+        splines = [ptxt.toSpline() for ptxt in self.figures]
+        return morpho.shapes.MultiSpline(splines)
+
 MultiPtext = MultiPText
 
 
@@ -1411,7 +1415,7 @@ class FancyMultiText(MultiText, BoundingBoxFigure):
         for fig in self.figures:
             fig.pos -= center
 
-    def _makeFrameFromBoxes(self, boxes):
+    def _makeFrameFromBoxes(self, boxes, *, ignoreBackground=False):
         left = min(box[0] for box in boxes)
         right = max(box[1] for box in boxes)
         bottom = min(box[2] for box in boxes)
@@ -1441,7 +1445,7 @@ class FancyMultiText(MultiText, BoundingBoxFigure):
             fig._transform = self._transform @ fig._transform
             figs.append(fig)
 
-        if self.backAlpha > 0:
+        if self.backAlpha > 0 and not ignoreBackground:
             rect = morpho.grid.rect(
                 [left-self.backPad+dx, right+self.backPad+dx, bottom-self.backPad+dy, top+self.backPad+dy]
                 )
@@ -1553,10 +1557,13 @@ class FancyMultiPText(FancyMultiText):
     def recenter(self, view=DUMMY, ctx=DUMMY):
         FancyMultiText.recenter(self, DUMMY, DUMMY)
 
-    def makeFrame(self, camera=None, ctx=None):
+    def makeFrame(self, camera=None, ctx=None, *, ignoreBackground=False):
         boxes = [fig.box() for fig in self.figures]
 
-        return self._makeFrameFromBoxes(boxes)
+        return self._makeFrameFromBoxes(boxes, ignoreBackground=ignoreBackground)
+
+    def toSpline(self):
+        return MultiPText(self.makeFrame(ignoreBackground=True).figures).toSpline()
 
 FancyMultiPtext = FancyMultiPText
 
