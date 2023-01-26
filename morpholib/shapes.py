@@ -596,10 +596,14 @@ class Spline(morpho.Figure):
 
 
     # Closes the spline IN PLACE if it is not already closed.
-    def close(self):
+    # If optional kwarg `local` is set to True, the closure
+    # is performed relative to the latest deadend.
+    def close(self, *, local=False):
         if self.length() < 2 or self.node(0) == self.node(-1):
             return self
-        self._data = np.insert(self._data, self.length(), self._data[0].copy(), axis=0)
+
+        startIndex = max(self.deadends) + 1 if local and len(self.deadends) > 0 else 0
+        self._data = np.insert(self._data, self.length(), self._data[startIndex].copy(), axis=0)
 
         # Flatten handles
         self.outhandleRel(-2, 0)
@@ -1857,10 +1861,14 @@ class SpaceSpline(Spline):
 
 
     # Closes the path IN PLACE if it is not already closed.
-    def close(self):
+    # If optional kwarg `local` is set to True, the closure
+    # is performed relative to the latest deadend.
+    def close(self, *, local=False):
         if self.length() < 2 or np.array_equal(self.node(0), self.node(-1)):
             return self
-        self._data = np.insert(self._data, self.length(), self._data[0,:,:].copy(), axis=0)
+
+        startIndex = max(self.deadends) + 1 if local and len(self.deadends) > 0 else 0
+        self._data = np.insert(self._data, self.length(), self._data[startIndex,:,:].copy(), axis=0)
 
         # Flatten handles
         self.outhandleRel(-2, 0)
