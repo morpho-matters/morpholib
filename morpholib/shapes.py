@@ -144,7 +144,7 @@ class Spline(morpho.Figure):
             #     [0,-1j,oo],
             #     [1,1+1j,oo]
             #     ], dtype=complex)
-            data = np.array([], dtype=complex)
+            data = np.array([], dtype=complex).reshape(0,3)
 
         # morpho.Figure.__init__(self)
         super().__init__()
@@ -1525,6 +1525,26 @@ class MultiSpline(MultiFigure):
             super().__init__([spline])
 
 
+    # Joins all of the subsplines into a single Spline
+    # with the jumps between different subsplines being implemented
+    # using Spline deadends. In effect, this reverses the effects of
+    # Spline.splitAtDeadends().
+    #
+    # Note that since a single Spline can have only one style,
+    # the style of the joined multispline will be taken as the style
+    # of its first subspline.
+    def joinUsingDeadends(self):
+        if len(self.figures) == 0:
+            return Spline()
+
+        spline = self.figures[0].copy()
+        for subspline in self.figures[1:]:
+            spline.deadends.add(spline.nodeCount()-1)
+            spline._data = np.insert(spline._data, spline._data.shape[0], subspline._data, axis=0)
+
+        return spline
+
+
     # EXPERIMENTAL!
     # Parses an SVG file/stream to construct a MultiSpline
     # representation of it. See Spline.fromsvg() for more info.
@@ -1609,7 +1629,7 @@ class SpaceSpline(Spline):
 
         if data is None:
             # Use default data array supplied by superclass's constructor
-            data = np.array([[[]]], dtype=float)
+            data = np.array([], dtype=float).reshape(0, 3, 3)
         elif type(data) is Spline:
             spline = data  # Rename so the following lines make more sense
 
