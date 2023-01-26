@@ -354,7 +354,7 @@ class Spline(morpho.Figure):
                 spline.deadends.add(spline.nodeCount()-1)
                 spline.newNode(complex(segment.end), relHandles=False)
             elif isinstance(segment, se.Close):
-                spline.close()
+                spline.close(local=True)
             elif isinstance(segment, se.QuadraticBezier):
                 q0 = complex(segment.start)
                 q1 = complex(segment.control)
