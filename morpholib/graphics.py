@@ -722,23 +722,26 @@ def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, *, reverseMeth
         if diff > 0:
             # Temporarily extend the image list of other with copies of
             # other's subimages
+            orig_figures = other.images
             extension = []
             for i in range(diff):
                 extension.append(other.images[i%len(other.images)].copy())
-            other.images.extend(extension)
+            other.images = extension + other.images
             tw = wrapper(self, other, t)
             # Restore other to its original state
-            other.images = other.images[:-diff]
+            other.images = orig_figures
             return tw
         elif diff < 0:
             # Temporarily extend the image list of self with copies of
             # self's subimages
+            orig_figures = self.images
             extension = []
             for i in range(-diff):
                 extension.append(self.images[i%len(self.images)].copy())
-            self.images.extend(extension)
+            self.images = extension + self.images
             tw = wrapper(self, other, t)
-            self.images = self.images[:diff]
+            # Restore self to its original state
+            self.images = orig_figures
             return tw
 
         images = []
