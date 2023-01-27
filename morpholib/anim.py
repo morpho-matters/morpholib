@@ -227,7 +227,7 @@ class Frame(morpho.Figure):
         # if not self._names.keys().isdisjoint(other._names.keys()):
         #     raise MergeError("Frame to merge shares names with self.")
 
-        if isinstance(other, morpho.Figure):
+        if not isinstance(other, morpho.Frame) and isinstance(other, morpho.Figure):
             other = type(self)([other])
 
         # Append other's name registry to self's (skipping duplicate names),
@@ -644,23 +644,26 @@ class MultiFigure(Frame):
             if diff > 0:
                 # Temporarily extend the figure list of other with copies of
                 # other's subfigures
+                orig_figures = other.figures
                 extension = []
                 for i in range(diff):
                     extension.append(other.figures[i%len(other.figures)].copy())
                 other.figures = extension + other.figures
                 tw = wrapper(self, other, t, *args, **kwargs)
                 # Restore other to its original state
-                other.figures = other.figures[diff:]
+                other.figures = orig_figures
                 return tw
             elif diff < 0:
                 # Temporarily extend the figure list of self with copies of
                 # self's subfigures
+                orig_figures = self.figures
                 extension = []
                 for i in range(-diff):
                     extension.append(self.figures[i%len(self.figures)].copy())
                 self.figures = extension + self.figures
                 tw = wrapper(self, other, t, *args, **kwargs)
-                self.figures = self.figures[-diff:]
+                # Restore self to its original state
+                self.figures = orig_figures
                 return tw
 
             # Tween each subfigure in self with its partner in other
