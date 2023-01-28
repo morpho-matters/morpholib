@@ -233,7 +233,10 @@ def handleDeadendInterp(tweenmethod):
 
     def wrapper(self, other, t, *args, **kwargs):
         # Do nothing fancy if both paths have identical deadends and node counts
-        if len(self.deadends) == len(other.deadends) and self.nodeCount() == other.nodeCount():
+        if len(self.deadends) == len(other.deadends) and \
+            self.nodeCount() == other.nodeCount() and \
+            self.deadends == other.deadends:
+
             return tweenmethod(self, other, t, *args, **kwargs)
 
         multiself = self.splitAtDeadends()
