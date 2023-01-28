@@ -294,6 +294,25 @@ def boxCorners(box, initCorner="NW", CCW=True):
 
     return corners
 
+# Pads a bounding box by the given pad amount.
+# Usage: padbox(box, pad) -> paddedBox
+# where `box` is a 4-tuple defining the bounding box in the format
+#       [xmin, xmax, ymin, ymax]
+# Optionally, a ypad value can be specified, allowing the box to be
+# padded differently vertically vs horizontally:
+#       padbox(box, xpad, ypad) -> paddedBox
+def padbox(box, xpad, ypad=None, /):
+    if ypad is None:
+        ypad = xpad
+
+    box = list(box)
+    box[0] -= xpad
+    box[1] += xpad
+    box[2] -= ypad
+    box[3] += ypad
+
+    return box
+
 # Converts minutes with seconds into just seconds.
 # minsec(m,s) --> 60*m + s
 #
