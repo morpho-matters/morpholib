@@ -15,10 +15,7 @@ from morpholib.grid import Polygon, SpacePolygon, Spacepolygon
 import cairo
 cr = cairo
 
-try:
-    import svgelements as se  # POSSIBLE FUTURE DEPENDENCY
-except ImportError:
-    pass
+import svgelements as se
 
 import math, cmath
 import numpy as np
