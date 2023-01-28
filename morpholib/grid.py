@@ -3,6 +3,7 @@ import morpholib as morpho
 mo = morpho
 import morpholib.tools.color, morpholib.anim
 from morpholib.matrix import mat
+from morpholib.anim import MultiFigure
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure
 
@@ -221,6 +222,27 @@ class SpacePoint(Point):
 
 
 Spacepoint = SpacePoint
+
+# Decorator enables a Pathlike tween method to smoothly tween paths
+# with non-matching deadends.
+def handleDeadendInterp(tweenmethod):
+
+    # Convert given tweenmethod into a MultiFigure tween method
+    # so it can be applied to multiself and multiother.
+    multiTweenMethod = MultiFigure.Multi(tweenmethod, MultiFigure.tweenLinear)
+
+    def wrapper(self, other, t, *args, **kwargs):
+        # Do nothing fancy if both paths have identical deadends and node counts
+        if len(self.deadends) == len(other.deadends) and self.nodeCount() == other.nodeCount():
+            return tweenmethod(self, other, t, *args, **kwargs)
+
+        multiself = self.splitAtDeadends()
+        multiother = other.splitAtDeadends()
+
+        multitweened = multiTweenMethod(multiself, multiother, t, *args, **kwargs)
+        return multitweened.joinUsingDeadends()
+
+    return wrapper
 
 # Decorator modifies the tween methods of the Path class to support
 # gradients for the color and alpha tweenables.
@@ -556,6 +578,11 @@ class Path(BoundingBoxFigure):
         self.headExternal = value
         self.tailExternal = value
 
+    # Returns number of nodes in the path.
+    # Equivalent to len(self.seq)
+    def nodeCount(self):
+        return len(self.seq)
+
     # Applies all of the transformation attributes
     # origin, rotation, transform
     # to the actual seq list itself and then
@@ -638,6 +665,35 @@ class Path(BoundingBoxFigure):
         self.color = origColor
 
         return subpaths
+
+    # Returns a MultiPath figure that consists of continuous
+    # paths taken from splitting the Path at its deadends.
+    def splitAtDeadends(self):
+
+        # TODO: This method is almost a copy of a version for Splines.
+        # Consider refactoring this at some point.
+
+        # Sort the deadends in ascending order
+        deadends = list(self.deadends)
+        deadends.sort()
+
+        nodeCount = self.nodeCount()
+        segCount = nodeCount - 1
+        # Append the final node to the list to ensure the final
+        # segment is included.
+        deadends.append(segCount)
+
+        start = 0  # Current starting index of path slicing.
+        subpaths = []
+        for deadend in deadends:
+            if deadend <= start:  # Skip consecutive deadends
+                start = deadend + 1
+                continue
+            subpath = self.segment(start/segCount, deadend/segCount)
+            subpath.deadends = set()
+            subpaths.append(subpath)
+            start = deadend + 1
+        return MultiPath(subpaths)
 
     # Applies interpSeqLinear() to uniformly add nodes to the given
     # path IN PLACE.
@@ -1445,6 +1501,7 @@ class Path(BoundingBoxFigure):
     ### TWEEN METHODS ###
 
     @morpho.TweenMethod
+    @handleDeadendInterp
     @handleDash
     @morpho.color.handleGradients(["color"])
     @morpho.color.handleGradientFills(["fill"])
@@ -1465,6 +1522,7 @@ class Path(BoundingBoxFigure):
         pivot = morpho.color.handleGradientFills(["fill"])(pivot)
         pivot = morpho.color.handleGradients(["color"])(pivot)
         pivot = handleDash(pivot)
+        pivot = handleDeadendInterp(pivot)
         # Enable splitting
         pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
 
@@ -1473,6 +1531,7 @@ class Path(BoundingBoxFigure):
 
     # Returns an interpolated path between itself and another path.
     @morpho.TweenMethod
+    @handleDeadendInterp
     @handleDash
     @morpho.color.handleGradients(["color"])
     @morpho.color.handleGradientFills(["fill"])
@@ -1592,6 +1651,81 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
         path1.start = 1
     else:
         path1.end = 0
+
+
+# EXPERIMENTAL!
+# MultiFigure version of Path.
+# See "morpho.graphics.MultiImage" for more info on the basic idea here.
+@MultiFigure._modifyMethods(
+    ["close", "commitTransforms"],
+    Path, MultiFigure._applyToSubfigures
+    )
+@MultiFigure._modifyMethods(
+    ["insertNodesUniformly", "concat"],
+    Path, MultiFigure._returnOrigCaller
+    )
+class MultiPath(MultiFigure):
+
+    # TODO: Much of this class is redundant with MultiSpline.
+    # Consider refactoring in the future.
+
+    def __init__(self, seq=None, *args, **kwargs):
+        if isinstance(seq, Path):
+            # Case: seq is a Path. Initialize as a singleton Frame.
+            super().__init__([seq])
+        elif isinstance(seq, (list, tuple)) and len(seq) > 0 and isinstance(seq[0], Path):
+            # Case: seq is a list of paths. Initialize like a Frame.
+            super().__init__(seq)
+        else:
+            # Else: Assume seq represents an actual seq list.
+            # Construct the path and append it as the first and only
+            # subpath.
+            path = Path(seq, *args, **kwargs)
+            super().__init__([path])
+
+
+    # Joins all of the subpaths into a single Path
+    # with the jumps between different subpaths being implemented
+    # using Path deadends. In effect, this reverses the effects of
+    # Path.splitAtDeadends().
+    #
+    # Note that since a single Path can have only one style,
+    # the style of the joined multipath will be taken as the style
+    # of its first subpath.
+    def joinUsingDeadends(self):
+        if len(self.figures) == 0:
+            return Path()
+
+        path = self.figures[0].copy()
+        for subpath in self.figures[1:]:
+            path.deadends.add(path.nodeCount()-1)
+            path.seq.extend(subpath.seq)
+
+        return path
+
+    # Removes subpaths IN PLACE whose node counts are less than 2
+    # (and are therefore non-drawable).
+    def squeeze(self):
+        for path in self.figures[:]:
+            if path.nodeCount() < 2:
+                self.figures.remove(path)
+        return self
+
+    ### TWEEN METHODS ###
+
+    tweenLinear = MultiFigure.Multi(Path.tweenLinear, MultiFigure.tweenLinear)
+    tweenSpiral = MultiFigure.Multi(Path.tweenSpiral, MultiFigure.tweenSpiral)
+
+    @classmethod
+    def tweenPivot(cls, angle=tau/2, *args, **kwargs):
+        pivot = MultiFigure.Multi(
+            Path.tweenPivot(angle, *args, **kwargs),
+            MultiFigure.tweenPivot(angle, *args, **kwargs)
+            )
+        # Enable splitting for this tween method
+        pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
+
+        return pivot
 
 
 class Track(Path):
@@ -2406,6 +2540,11 @@ class MathGrid(morpho.Frame):
                         fig.tweenMethod = fig.tweenMethod.splitter(t_split)[0]
         else:
             raise TypeError(f"Invalid type `{type(value).__name__}` for tween method.")
+
+    # Returns equivalent MultiPath figure of this MathGrid
+    def toMultiPath(self):
+        multipath = MultiPath(self.figures)
+        return multipath
 
     ### TWEEN METHODS ###
 

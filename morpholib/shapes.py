@@ -23,27 +23,6 @@ import numpy as np
 I2 = np.identity(2)
 
 
-# Decorator enables a Spline tween method to smoothly tween splines
-# with non-matching deadends.
-def handleSplineDeadendInterp(tweenmethod):
-    def wrapper(self, other, t, *args, **kwargs):
-        # Do nothing fancy if neither spline has deadends
-        if len(self.deadends) == 0 and len(other.deadends) == 0:
-            return tweenmethod(self, other, t, *args, **kwargs)
-
-        multiself = self.splitAtDeadends()
-        multiother = other.splitAtDeadends()
-
-        # Convert given tweenmethod into a MultiFigure tween method
-        # so it can be applied to multiself and multiother.
-        multiTweenMethod = MultiFigure.Multi(tweenmethod, MultiFigure.tweenLinear)
-
-        multitweened = multiTweenMethod(multiself, multiother, t, *args, **kwargs)
-        return multitweened.joinUsingDeadends()
-
-    return wrapper
-
-
 # Decorator modifies the tween methods of the Spline class to support
 # tweening between splines with different node counts.
 def handleSplineNodeInterp(tweenmethod):
@@ -1472,7 +1451,7 @@ class Spline(BoundingBoxFigure):
     ### TWEEN METHODS ###
 
     @morpho.tweenMethod
-    @handleSplineDeadendInterp
+    @morpho.grid.handleDeadendInterp
     @morpho.grid.handleDash
     @morpho.color.handleGradientFills(["fill"])
     @handleSplineNodeInterp
@@ -1486,7 +1465,7 @@ class Spline(BoundingBoxFigure):
         return tw
 
     @morpho.tweenMethod
-    @handleSplineDeadendInterp
+    @morpho.grid.handleDeadendInterp
     @morpho.grid.handleDash
     @morpho.color.handleGradientFills(["fill"])
     @handleSplineNodeInterp
@@ -1518,7 +1497,7 @@ class Spline(BoundingBoxFigure):
         mainPivot = morpho.Figure.tweenPivot(angle=angle, ignore="_data")
 
         @morpho.pivotTweenMethod(cls.tweenPivot, angle)  # Enable splitting
-        @handleSplineDeadendInterp
+        @morpho.grid.handleDeadendInterp
         @morpho.grid.handleDash
         @morpho.color.handleGradientFills(["fill"])
         @handleSplineNodeInterp
