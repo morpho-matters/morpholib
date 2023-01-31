@@ -1358,6 +1358,9 @@ class Spline(BoundingBoxFigure):
     # Optionally specify "segsteps" which is how many path steps to
     # use in a single bezier curve segment of the spline.
     # Defaults to 30 steps per segment.
+    #
+    # Note that this method currently ignores deadends. This may be
+    # resolved in a future version.
     def toPath(self, segsteps=30):
         path = morpho.grid.line(0,1, steps=segsteps*(self.length()-1))
 
@@ -1365,19 +1368,7 @@ class Spline(BoundingBoxFigure):
         path = path.fimage(self.positionAt)
 
         # Match other tweenables
-        # path.start = self.start
-        # path.end = self.end
-        # path.color = self.color[:]
-        # path.alphaEdge = self.alphaEdge
-        # path.fill = self.fill.copy() if object_hasattr(self.fill, "copy") else self.fill
-        # path.alphaFill = self.alphaFill
-        # path.alpha = self.alpha
-        # path.width = self.width
-        # path.origin = self.origin
-        # path.rotation = self.rotation
-        # path._transform = self._transform.copy()
-        # path._updateSettings(self)
-        path._updateFrom(self, common=True)
+        path._updateFrom(self, common=True, ignore="deadends")
 
         return path
 
