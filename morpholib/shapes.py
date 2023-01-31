@@ -863,7 +863,8 @@ class Spline(BoundingBoxFigure):
         return self
 
     splitAtDeadends = morpho.grid.Path.splitAtDeadends
-
+    _shiftDeadends = morpho.grid.Path._shiftDeadends
+    _reverseDeadends = morpho.grid.Path._reverseDeadends
 
     # Reverses the direction of the spline IN PLACE.
     def reverse(self):
@@ -871,10 +872,8 @@ class Spline(BoundingBoxFigure):
         self._data = self._data[::-1,:]
         # Swap inhandles and outhandles
         self._data[:, [2,1]] = self._data[:, [1,2]]
+        self._reverseDeadends()
         return self
-
-    _shiftDeadends = morpho.grid.Path._shiftDeadends
-    _reverseDeadends = morpho.grid.Path._reverseDeadends
 
     # Extract a subspline.
     # a and b are parameters in the range [0,1]
@@ -928,7 +927,6 @@ class Spline(BoundingBoxFigure):
 
         if reverse:
             subspline.reverse()
-            subspline._reverseDeadends()
 
         return subspline
 
