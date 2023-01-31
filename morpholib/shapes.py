@@ -1632,6 +1632,14 @@ class MultiSpline(MultiFigure):
         multispline.squeeze()  # Remove empty and singleton splines
         return multispline
 
+    # Converts the MultiSpline into a similar looking MultiPath figure.
+    # See also: Spline.toPath()
+    def toMultiPath(self, segsteps=30):
+        subpaths = [subspline.toPath(segsteps) for subspline in self.figures]
+        multipath = morpho.grid.MultiPath(subpaths)
+        multipath._updateFrom(self, common=True, ignore="figures")
+        return multipath
+
     ### TWEEN METHODS ###
 
     tweenLinear = MultiFigure.Multi(Spline.tweenLinear, MultiFigure.tweenLinear)
