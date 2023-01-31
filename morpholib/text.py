@@ -619,34 +619,39 @@ class PText(Text):
     def tosvg(self):
         stream = io.BytesIO()
 
-        # Initialize a cairo SVG surface of arbitrary dimensions.
-        # It will all get rescaled later.
-        # This code is inspired from code found on geeksforgeeks.org
-        # https://www.geeksforgeeks.org/pycairo-creating-text-paths/
-        with cairo.SVGSurface(stream, 700, 700) as surface:
+        try:
+            # Initialize a cairo SVG surface of arbitrary dimensions.
+            # It will all get rescaled later.
+            # This code is inspired from code found on geeksforgeeks.org
+            # https://www.geeksforgeeks.org/pycairo-creating-text-paths/
+            with cairo.SVGSurface(stream, 700, 700) as surface:
 
-            # surface.restrict_to_version(cairo.SVGVersion.VERSION_1_1)
+                # surface.restrict_to_version(cairo.SVGVersion.VERSION_1_1)
 
-            context = cairo.Context(surface)
+                context = cairo.Context(surface)
 
-            context.select_font_face(
-                self.font,
-                cr.FONT_SLANT_ITALIC if self.italic else cr.FONT_SLANT_NORMAL,
-                cr.FONT_WEIGHT_BOLD if self.bold else cr.FONT_WEIGHT_NORMAL
-                )
-            context.set_font_size(64)  # Dummy value. Will be rescaled later
-            context.set_source_rgba(*self.color, self.alpha)
+                context.select_font_face(
+                    self.font,
+                    cr.FONT_SLANT_ITALIC if self.italic else cr.FONT_SLANT_NORMAL,
+                    cr.FONT_WEIGHT_BOLD if self.bold else cr.FONT_WEIGHT_NORMAL
+                    )
+                context.set_font_size(64)  # Dummy value. Will be rescaled later
+                context.set_source_rgba(*self.color, self.alpha)
 
-            # Arbitrary position. Will be rescaled later.
-            context.move_to(35, 45)
+                # Arbitrary position. Will be rescaled later.
+                context.move_to(35, 45)
 
-            # displays the text
-            context.text_path(self.text)
+                # displays the text
+                context.text_path(self.text)
 
-            context.fill()
+                context.fill()
 
-        # Seek to beginning of data stream so it is ready for reading.
-        stream.seek(0)
+            # Seek to beginning of data stream so it is ready for reading.
+            stream.seek(0)
+        except Exception:
+            stream.close()
+            raise
+
         return stream
 
     # Converts the text figure into an equivalent Spline figure.
