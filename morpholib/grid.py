@@ -1696,9 +1696,6 @@ class MultiPath(MultiFigure):
 
     _basetype = Path
 
-    # TODO: Much of this class is redundant with MultiSpline.
-    # Consider refactoring in the future.
-
     def __init__(self, seq=None, *args, **kwargs):
         if isinstance(seq, Path):
             # Case: seq is a Path. Initialize as a singleton Frame.
