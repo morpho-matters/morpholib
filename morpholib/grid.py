@@ -1694,6 +1694,8 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
     )
 class MultiPath(MultiFigure):
 
+    _basetype = Path
+
     # TODO: Much of this class is redundant with MultiSpline.
     # Consider refactoring in the future.
 
@@ -1722,12 +1724,12 @@ class MultiPath(MultiFigure):
     # of its first subpath.
     def joinUsingDeadends(self):
         if len(self.figures) == 0:
-            return Path()
+            return self._basetype()
 
         path = self.figures[0].copy()
         for subpath in self.figures[1:]:
             path.deadends.add(path.nodeCount()-1)
-            path.seq.extend(subpath.seq)
+            path.concat(subpath)
 
         return path
 

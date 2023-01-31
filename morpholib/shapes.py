@@ -1429,6 +1429,20 @@ class Spline(BoundingBoxFigure):
 
         return data
 
+    # Concatenates other to self in place. Does not modify other.
+    # self retains its original style parameters, though.
+    # Also ignores "origin", "rotation", and "transform" attributes
+    # for now. Only use this method with paths that have the standard
+    # transforms.
+    def concat(self, other):
+        self._data = np.insert(self._data, self._data.shape[0], other._data, axis=0)
+
+        # Merge deadends from other into self
+        nodeCount = self.nodeCount()
+        for n in other.deadends:
+            self.deadends.add(n+nodeCount)
+
+        return self
 
     ### TWEEN METHODS ###
 
@@ -1571,35 +1585,8 @@ class MultiSpline(MultiFigure):
             spline = Spline(data, *args, **kwargs)
             super().__init__([spline])
 
-
-    # Joins all of the subsplines into a single Spline
-    # with the jumps between different subsplines being implemented
-    # using Spline deadends. In effect, this reverses the effects of
-    # Spline.splitAtDeadends().
-    #
-    # Note that since a single Spline can have only one style,
-    # the style of the joined multispline will be taken as the style
-    # of its first subspline.
-    def joinUsingDeadends(self):
-        if len(self.figures) == 0:
-            return Spline()
-
-        spline = self.figures[0].copy()
-        for subspline in self.figures[1:]:
-            spline.deadends.add(spline.nodeCount()-1)
-            spline._data = np.insert(spline._data, spline._data.shape[0], subspline._data, axis=0)
-
-        return spline
-
-
-    # Removes subsplines IN PLACE whose node counts are less than 2
-    # (and are therefore non-drawable).
-    def squeeze(self):
-        for spline in self.figures[:]:
-            if spline.nodeCount() < 2:
-                self.figures.remove(spline)
-        return self
-
+    joinUsingDeadends = morpho.grid.MultiPath.joinUsingDeadends
+    squeeze = morpho.grid.MultiPath.squeeze
 
     # EXPERIMENTAL!
     # Parses an SVG file/stream to construct a MultiSpline
