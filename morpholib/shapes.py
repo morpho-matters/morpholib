@@ -862,30 +862,7 @@ class Spline(BoundingBoxFigure):
         self._data = np.insert(self._data, index+1, [p,pin,pout], axis=0)
         return self
 
-    # Returns a MultiSpline figure that consists of continuous
-    # splines taken from splitting the Spline at its deadends.
-    def splitAtDeadends(self):
-        # Sort the deadends in ascending order
-        deadends = list(self.deadends)
-        deadends.sort()
-
-        nodeCount = self.nodeCount()
-        segCount = nodeCount - 1
-        # Append the final node to the list to ensure the final
-        # segment is included.
-        deadends.append(segCount)
-
-        start = 0  # Current starting index of spline slicing.
-        subsplines = []
-        for deadend in deadends:
-            if deadend <= start:  # Skip consecutive deadends
-                start = deadend + 1
-                continue
-            subspline = self.segment(start/segCount, deadend/segCount)
-            subspline.deadends = set()
-            subsplines.append(subspline)
-            start = deadend + 1
-        return MultiSpline(subsplines)
+    splitAtDeadends = morpho.grid.Path.splitAtDeadends
 
 
     # Reverses the direction of the spline IN PLACE.
@@ -1687,6 +1664,9 @@ class MultiSpline(MultiFigure):
         pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
 
         return pivot
+
+# Assign MultiSpline as the dedicated multifigure version of Spline.
+Spline._multitype = MultiSpline
 
 
 # Space version of Spline figure. See "Spline" for more info.

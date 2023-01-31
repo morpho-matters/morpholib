@@ -673,9 +673,6 @@ class Path(BoundingBoxFigure):
     # paths taken from splitting the Path at its deadends.
     def splitAtDeadends(self):
 
-        # TODO: This method is almost a copy of a version for Splines.
-        # Consider refactoring this at some point.
-
         # Sort the deadends in ascending order
         deadends = list(self.deadends)
         deadends.sort()
@@ -696,7 +693,7 @@ class Path(BoundingBoxFigure):
             subpath.deadends = set()
             subpaths.append(subpath)
             start = deadend + 1
-        return MultiPath(subpaths)
+        return self._multitype(subpaths)
 
     # Applies interpSeqLinear() to uniformly add nodes to the given
     # path IN PLACE.
@@ -1730,6 +1727,8 @@ class MultiPath(MultiFigure):
 
         return pivot
 
+# Assign MultiPath as the Path class's dedicated multifigure version.
+Path._multitype = MultiPath
 
 class Track(Path):
     '''Path with tick marks - like a train track: --|--|--|--
