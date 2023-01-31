@@ -181,11 +181,11 @@ class Spline(BoundingBoxFigure):
         # self.dash = []
 
         # Set of indices that represent where a path should terminate.
-        self.deadends = set()
+        self.NonTweenable("deadends", set())
 
         # Boolean indicates whether the control point tangents
         # should be shown. This is mainly for debugging purposes.
-        self.showTangents = False
+        self.NonTweenable("showTangents", False)
 
 
     @property
@@ -1707,13 +1707,8 @@ class SpaceSpline(Spline):
             spline = data  # Rename so the following lines make more sense
 
             # Copy over state and all other attributes except data
-            for name in self._state:
-                if name != "_data":
-                    self._state[name] = spline._state[name].copy()
+            self._updateFrom(spline, common=False, ignore={"_data"}.union(morpho.METASETTINGS))
 
-            # Copy other attributes
-            self.dash = spline.dash[:]
-            self.deadends = spline.deadends.copy()
             origin = morpho.matrix.array(spline.origin)
 
             # Make "data" actually hold the 2D spline's data array
