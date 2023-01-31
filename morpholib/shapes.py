@@ -1656,6 +1656,8 @@ class MultiSpline(MultiFigure):
 
         return pivot
 
+Multispline = MultiSpline  # Alias
+
 # Assign MultiSpline as the dedicated multifigure version of Spline.
 Spline._multitype = MultiSpline
 

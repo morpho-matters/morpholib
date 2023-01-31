@@ -1754,6 +1754,8 @@ class MultiPath(MultiFigure):
 
         return pivot
 
+Multipath = MultiPath  # Alias
+
 # Assign MultiPath as the Path class's dedicated multifigure version.
 Path._multitype = MultiPath
 
