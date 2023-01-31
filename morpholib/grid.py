@@ -719,6 +719,30 @@ class Path(BoundingBoxFigure):
 
         return morpho.numTween0(self.seq[index], self.seq[index+1], T-index)
 
+    # Mainly for internal use.
+    # Shifts/removes deadends according to taking a slice.
+    # This operation acts IN PLACE.
+    def _shiftDeadends(self, floor_A):
+        # Shift/remove deadends
+        newDeadends = set()
+        for deadend in self.deadends:
+            if deadend >= floor_A:
+                newDeadends.add(deadend-floor_A)
+        self.deadends = newDeadends
+        return self
+
+    def _reverseDeadends(self):
+        # Reverse deadends
+        nodeCount = self.nodeCount()
+        maxIndex = nodeCount - 1
+        newDeadends = set()
+        for deadend in self.deadends:
+            newDeadend = maxIndex - 1 - deadend
+            if newDeadend >= 0:
+                newDeadends.add(newDeadend)
+        self.deadends = newDeadends
+        return self
+
     # Returns a segment of a path between parameters a and b,
     # where a,b = 0 means path start and a,b = 1 means path end.
     def segment(self, a, b):
@@ -765,25 +789,13 @@ class Path(BoundingBoxFigure):
                 subpath.color.reverse()
 
         # Shift/remove deadends
-        newDeadends = set()
-        floor_A = int(A)
-        for deadend in subpath.deadends:
-            if deadend >= floor_A:
-                newDeadends.add(deadend-floor_A)
-        subpath.deadends = newDeadends
+        subpath._shiftDeadends(int(A))
 
         # Reverse order if needed
         if reverse:
             subpath.seq.reverse()
             # Reverse deadends
-            nodeCount = subpath.nodeCount()
-            maxIndex = nodeCount - 1
-            newDeadends = set()
-            for deadend in subpath.deadends:
-                newDeadend = maxIndex - 1 - deadend
-                if newDeadend >= 0:
-                    newDeadends.add(newDeadend)
-            subpath.deadends = newDeadends
+            subpath._reverseDeadends()
 
         return subpath
 
