@@ -764,9 +764,26 @@ class Path(BoundingBoxFigure):
             if reverse:
                 subpath.color.reverse()
 
+        # Shift/remove deadends
+        newDeadends = set()
+        floor_A = int(A)
+        for deadend in subpath.deadends:
+            if deadend >= floor_A:
+                newDeadends.add(deadend-floor_A)
+        subpath.deadends = newDeadends
+
         # Reverse order if needed
         if reverse:
             subpath.seq.reverse()
+            # Reverse deadends
+            nodeCount = subpath.nodeCount()
+            maxIndex = nodeCount - 1
+            newDeadends = set()
+            for deadend in subpath.deadends:
+                newDeadend = maxIndex - 1 - deadend
+                if newDeadend >= 0:
+                    newDeadends.add(newDeadend)
+            subpath.deadends = newDeadends
 
         return subpath
 
