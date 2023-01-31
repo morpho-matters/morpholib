@@ -176,7 +176,10 @@ class Frame(morpho.Figure):
         # morpho.Figure.__init__(self)
         super().__init__()
 
-        if figures is None: figures = []
+        if figures is None:
+            figures = []
+        elif isinstance(figures, tuple):
+            figures = list(figures)
         figures.extend(kwargs.values())
 
         self.Tweenable("figures", figures, tags=["figures", "notween"])
