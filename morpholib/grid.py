@@ -794,7 +794,6 @@ class Path(BoundingBoxFigure):
         # Reverse order if needed
         if reverse:
             subpath.seq.reverse()
-            # Reverse deadends
             subpath._reverseDeadends()
 
         return subpath

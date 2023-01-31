@@ -873,6 +873,9 @@ class Spline(BoundingBoxFigure):
         self._data[:, [2,1]] = self._data[:, [1,2]]
         return self
 
+    _shiftDeadends = morpho.grid.Path._shiftDeadends
+    _reverseDeadends = morpho.grid.Path._reverseDeadends
+
     # Extract a subspline.
     # a and b are parameters in the range [0,1]
     def segment(self, a, b):
@@ -920,8 +923,12 @@ class Spline(BoundingBoxFigure):
         # Slice the data array
         subspline._data = subspline._data[math.ceil(A):math.ceil(B)+1]
 
+        # Shift/remove deadends
+        subspline._shiftDeadends(int(A))
+
         if reverse:
             subspline.reverse()
+            subspline._reverseDeadends()
 
         return subspline
 
