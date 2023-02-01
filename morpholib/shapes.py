@@ -1372,33 +1372,24 @@ class Spline(BoundingBoxFigure):
 
         return path
 
-
-
-    # NOT IMPLEMENTED YET!!!
     # Takes the function image of the spline under the given func.
     # Note: This applies to ALL control points: both nodes AND
     # handles. This function will skip any control points that are
     # inf or nan.
-    #
-    # Currently thinking I'll change the default behavior on
-    # handle points so that the tangent lines change based on
-    # the numerical DERIVATIVE of the given func. That seems
-    # like it would produce the most faithful fimage of a spline.
-    # However, that behavior perhaps could be suppressed by
-    # changing a flag parameter.
-    # It would basically work by computing the local linear
-    # transformation about a node and applying that linear
-    # transformation to both inhandle and outhandle locally.
     def fimage(self, func):
-        raise NotImplementedError
         newfig = self.copy()
-        # newfig._data = newfig._data.copy()
 
-        for i in range(newfig.length()):
-            for j in range(3):
-                value = newfig.data[i,j].tolist()
-                if not isbadnum(value):
-                    newfig._data[i,j] = func(value)
+        # Convert to a single-dimensional array2d
+        seq = newfig._data.reshape(-1)
+        # Conditional array for finite values
+        finite = np.logical_not(np.logical_or(np.isinf(seq), np.isnan(seq)))
+
+        # Evaluate function on all finite values
+        fseq = []
+        for z in seq[finite].tolist():
+            fseq.append(func(z))
+        seq[finite] = fseq
+        newfig._data = seq.reshape(newfig._data.shape)
 
         return newfig
 
@@ -1754,6 +1745,21 @@ class SpaceSpline(Spline):
     @transform.setter
     def transform(self, value):
         raise AttributeError
+
+    def fimage(self, func):
+        newfig = self.copy()
+
+        # Convert to a list of 3-vectors
+        seq = newfig._data.reshape(-1, 3)
+
+        # Evaluate function on all finite vectors
+        for n,v in enumerate(seq):
+            if isbadarray(v):
+                continue
+            seq[n] = func(v)
+        newfig._data = seq.reshape(newfig._data.shape)
+
+        return newfig
 
     # box() method for SpaceSpline is currently unimplemented.
     def box(self, *args, **kwargs):
