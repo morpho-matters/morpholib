@@ -1054,6 +1054,21 @@ Spacetext = SpaceText  # Synonym
 class SpacePText(PText, SpaceText):
     _baseFigure = PText
 
+    # Converts the text figure into an equivalent SpaceSpline figure.
+    # The `origin` attribute of the resulting Spline will be set
+    # as the position of the text figure.
+    def toSpline(self):
+        # Create equivalent 2D PText figure
+        ptext = PText()
+        ptext._updateFrom(self, common=True, ignore=morpho.METASETTINGS)
+
+        # Convert to SpaceSpline and apply transforms
+        spline = morpho.shapes.SpaceSpline(ptext.toSpline())
+        spline = spline.fimage(lambda v: self.orient @ v)
+        spline.origin = self.pos.copy()
+
+        return spline
+
     def draw(self, camera, ctx):
         SpaceText.draw(self, camera, ctx)
 
