@@ -307,6 +307,30 @@ class Text(BoundingBoxFigure):
     def _specialBoxTransform(self, par):
         return morpho.parconj(par, self.rotation, self._transform)
 
+    # Returns the "M" pixel width of the text.
+    # That is, returns the pixel width of the current text
+    # if it only consisted of the single capital letter "M".
+    # Mainly used to help define horizontal spacing relative
+    # to the style and size of the text.
+    def em(self):
+        textOrig = self.text
+        self.text = "M"
+        M_width = self.pixelWidth()
+        self.text = textOrig
+        return M_width
+
+    # Returns the "x" pixel height of the text.
+    # That is, returns the pixel height of the current text
+    # if it only consisted of the single lowercase letter "x".
+    # Mainly used to help define vertical spacing relative
+    # to the style and size of the text.
+    def ex(self):
+        textOrig = self.text
+        self.text = "x"
+        x_height = self.pixelHeight()
+        self.text = textOrig
+        return x_height
+
     def draw(self, camera, ctx):
         # Do nothing if size less than 1.
         if self.size < 1:
@@ -608,6 +632,30 @@ class PText(Text):
     # the transformation attributes.
     def center(self):
         return mean(self.corners())
+
+    # Returns the "M" physical width of the text.
+    # That is, returns the physical width of the current text
+    # if it only consisted of the single capital letter "M".
+    # Mainly used to help define horizontal spacing relative
+    # to the style and size of the text.
+    def em(self):
+        textOrig = self.text
+        self.text = "M"
+        M_width = self.width()
+        self.text = textOrig
+        return M_width
+
+    # Returns the "x" physical height of the text.
+    # That is, returns the physical height of the current text
+    # if it only consisted of the single lowercase letter "x".
+    # Mainly used to help define vertical spacing relative
+    # to the style and size of the text.
+    def ex(self):
+        textOrig = self.text
+        self.text = "x"
+        x_height = self.height()
+        self.text = textOrig
+        return x_height
 
     # Mainly for internal use.
     # Converts the text object into an SVG data stream.
@@ -1709,9 +1757,15 @@ class SpaceParagraphPhys(SpaceParagraph):
 # alpha = Overall opacity of group. Default: 1 (opaque)
 # gap = Pixel separation between adjacent text figures.
 #       Default: 0 pixels
+# KEYWORD ONLY INPUTS
+# xbuf = Relative spacing between adjacent text figures, specified in
+#        units of "em's", i.e. number of "M" widths of the text.
+#        For variable-sized text, the spacing between two
+#        adjacent text figures is done with "em" relative to the
+#        previous text figure.
 def group(textfigs, view, windowShape,
     pos=0, anchor_x=0, anchor_y=0, alpha=1, gap=0,
-    *, align=None, physical=False, physicalGap=False):
+    *, align=None, xbuf=None, physical=False, physicalGap=False):
 
     widths = []
     heights = []
@@ -1736,6 +1790,15 @@ def group(textfigs, view, windowShape,
     if align is not None:
         anchor_x, anchor_y = align
 
+    if xbuf is not None:
+        # Calculate individual physical em sizes
+        ems = []
+        for fig in textfigs:
+            em = fig.em()
+            if not physical:
+                em = morpho.physicalWidth(em, *camctx)
+            ems.append(em)
+
     # Record the widths and heights of all text figures
     totalWidth = 0
     for fig in textfigs:
@@ -1757,12 +1820,19 @@ def group(textfigs, view, windowShape,
         heights.append(height)
         totalWidth += width
 
-    totalWidth += gap*(len(textfigs)-1)
+    if xbuf is None:
+        totalWidth += gap*(len(textfigs)-1)
+    else:
+        totalWidth += xbuf*sum(ems)
     totalHeight = max(heights)
     totalxRadius = totalWidth/2
     totalyRadius = totalHeight/2
     curpos = pos-totalxRadius*(anchor_x+1) - 1j*totalyRadius*(anchor_y+1)
 
+    if xbuf is None:
+        gaps = [gap]*len(textfigs)
+    else:
+        gaps = [xbuf*em for em in ems]
     for n, fig in enumerate(textfigs):
         # Make a copy of fig so to not affect the original
         fig = fig.copy()
@@ -1772,7 +1842,7 @@ def group(textfigs, view, windowShape,
         height = heights[n]
         fig.pos = curpos + (fig.anchor_x+1)*width/2 + 1j*(fig.anchor_y+1)*height/2
         fig.alpha *= alpha
-        curpos += width + gap
+        curpos += width + gaps[n]
 
     return FancyMultiText(textfigs)
 
@@ -1833,6 +1903,15 @@ def conformText(textarray):
 # align = Specify both anchors at once as a tuple: (anchor_x, anchor_y)
 #         Overrides anchor_x and anchor_y if also specified.
 #         Default: None (use given anchor_x, anchor_y)
+# xbuf = Relative spacing between adjacent text figures, specified in
+#        units of "em's", i.e. number of "M" widths of the text.
+#        For variable-sized text in a row, the spacing between two
+#        adjacent text figures is done with "em" relative to the
+#        previous text figure.
+# ybuf = Relative spacing between adjacent rows of text figures,
+#        specified in units of "ex's", i.e. number of "x" heights of
+#        the text in the row. For variable height text in a row,
+#        the max is used.
 # gap = Alias for xgap. Exists to match the `gap` arg in group()
 #       Overrides xgap if specified.
 #       Default: None (ignore and just use given xgap value)
@@ -1843,8 +1922,9 @@ def conformText(textarray):
 #            txt.set(**kwargs) for each txt in the textarray
 def paragraph(textarray, view, windowShape=None,
     pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0,
-    *, flush=0, align=None, gap=None, rotation=0,
-    background=(1,1,1), backAlpha=0, backPad=0, **kwargs):
+    *, flush=0, align=None, gap=None, xbuf=None, ybuf=None,
+    rotation=0, background=(1,1,1), backAlpha=0, backPad=0,
+    **kwargs):
 
     # If windowShape unspecified, try to infer it
     # from the given `view` value.
@@ -1907,6 +1987,24 @@ def paragraph(textarray, view, windowShape=None,
         xgap = morpho.physicalWidth(xgap, *camctx)
         ygap = morpho.physicalHeight(ygap, *camctx)
 
+    # Calculate combined gaps between all elements in each row
+    if xbuf is None:
+        rowgaps = [(len(row)-1)*xgap for row in textarray]
+    else:
+        rowgaps = []
+        for row in textarray:
+            rowgaps.append(xbuf*sum([fig.em() if isinstance(fig, PText) else morpho.physicalWidth(fig.em(), *camctx) for fig in row[:-1]]))
+
+    # Calculate ygaps between each row based on whether ybuf
+    # is specified or not.
+    if ybuf is None:
+        ygaps = [ygap]*len(textarray)
+    else:
+        ygaps = []
+        for row in textarray:
+            ygap = ybuf*max([fig.ex() if isinstance(fig, PText) else morpho.physicalHeight(fig.ex(), *camctx) for fig in row])
+            ygaps.append(ygap)
+
     # Apply align parameter if given
     if align is not None:
         anchor_x, anchor_y = align
@@ -1918,7 +2016,7 @@ def paragraph(textarray, view, windowShape=None,
         boxes = [fig.box(*camctx) for fig in row]
         rowBoxes.append(boxes)
         rowHeight = max(box[-1]-box[-2] for box in boxes)
-        yPositions.append(yPositions[-1]-ygap-rowHeight)
+        yPositions.append(yPositions[-1]-ygaps[i]-rowHeight)
     adjust = -mean([yPositions[0], yPositions[-1]])
     yPositions = [y+adjust for y in yPositions]
 
@@ -1928,12 +2026,12 @@ def paragraph(textarray, view, windowShape=None,
     # Create rows
     rows = []
     for i, row in enumerate(textarray):
-        rowWidth = sum(box[1]-box[0] for box in rowBoxes[i]) + (len(row)-1)*xgap
+        rowWidth = sum(box[1]-box[0] for box in rowBoxes[i]) + rowgaps[i]
         rowPosition = -morpho.lerp(-rowWidth/2, rowWidth/2, flush, start=-1, end=1) + 1j*yPositions[i]
         if physical:
-            row = group(row, DUMMY, DUMMY, pos=rowPosition, gap=xgap, physical=physical, physicalGap=True)
+            row = group(row, DUMMY, DUMMY, pos=rowPosition, gap=xgap, xbuf=xbuf, physical=physical, physicalGap=True)
         else:
-            row = group(row, *camctx, pos=rowPosition, gap=xgap, physical=physical, physicalGap=True)
+            row = group(row, *camctx, pos=rowPosition, gap=xgap, xbuf=xbuf, physical=physical, physicalGap=True)
         rows.append(row)
 
     # Pool all the rows into a single FancyMultiText figure
