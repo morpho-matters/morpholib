@@ -16,6 +16,7 @@ import cairo
 cr = cairo
 
 import svgelements as se
+import io
 
 import math, cmath
 import numpy as np
@@ -386,7 +387,7 @@ class Spline(BoundingBoxFigure):
         if isinstance(source, se.svgelements.Path):
             svgpath = source
         else:
-            svg = se.SVG.parse(source)
+            svg = parseSVG(source)
             elems = list(svg.elements(lambda elem: isinstance(elem, se.Path)))
             svgpath = elems[index]
 
@@ -1586,7 +1587,7 @@ class MultiSpline(MultiFigure):
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
         index=(None,), flip=True, arcError=0.1):
 
-        svg = se.SVG.parse(source)
+        svg = parseSVG(source)
         svgpaths = list(svg.elements(lambda elem: isinstance(elem, se.Path)))
 
         # Return empty MultiSpline if SVG source has no paths.
@@ -2613,6 +2614,33 @@ class Pie(EllipticalArc):
 
         return poly
 
+### HELPERS ###
+
+# Parses a string of SVG data using svgelements.SVG.parse()
+# and returns the resulting SVG object.
+def parseSVGstring(svgstring):
+    # Open a data stream and load the svg data into it,
+    # then pass the stream into the svgelements parser.
+    with io.StringIO() as stream:
+        stream.write(svgstring)
+        stream.seek(0)
+        svg = se.SVG.parse(stream)
+    return svg
+
+
+# Wrapper around svgelements.SVG.parse() which enables
+# it to parse raw SVG code as a string.
+#
+# Note this function first attempts to open the source
+# string as a file and upon failure attempts to parse it
+# as raw SVG data. Therefore this function may be slow
+# if it needs to be called every frame draw.
+def parseSVG(source):
+    try:
+        svg = se.SVG.parse(source)
+    except FileNotFoundError:
+        svg = parseSVGstring(source)
+    return svg
 
 
 ### GADGETS ###
