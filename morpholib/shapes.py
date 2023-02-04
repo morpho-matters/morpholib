@@ -232,6 +232,8 @@ class Spline(BoundingBoxFigure):
         # in defining the shape due to deadends.
         finalIndex = self.nodeCount() - 1
         for deadend in self.deadends:
+            if deadend > finalIndex:
+                continue
             data[deadend,2] = data[deadend,0]
             if deadend < finalIndex:
                 data[deadend+1, 1] = data[deadend+1, 0]
