@@ -201,3 +201,14 @@ def drawOutOfBoundsStartEnd(fig, camera, ctx):
         fig.draw(camera, ctx)
         fig.start = start_orig
         fig.end = end_orig
+
+class Slicer(object):
+    def __init__(self, getter=None, setter=None):
+        self.getter = getter
+        self.setter = setter
+
+    def __getitem__(self, index):
+        return self.getter(index)
+
+    def __setitem__(self, index, value):
+        self.setter(index, value)
