@@ -34,7 +34,7 @@ def _sanitizeTex(tex):
 #
 # Any other args/kwargs will be passed into the MultiSpline
 # constructor (e.g. boxWidth)
-def tosvg(tex, *args, preamble=None, **kwargs):
+def parse(tex, *args, preamble=None, **kwargs):
     tex = _sanitizeTex(tex)
     if preamble is None:
         preamble = _preamble
