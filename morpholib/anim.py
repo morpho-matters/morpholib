@@ -12,6 +12,7 @@ import morpholib as morpho
 import morpholib.transitions, morpholib.giffer
 from morpholib.tools.basics import *
 from morpholib.tools.ktimer import tic, toc
+import morpholib.tools.dev
 
 # Backward compatibility because these functions used to live in anim.py
 from morpholib import screenCoords, physicalCoords, \
@@ -248,6 +249,17 @@ class Frame(morpho.Figure):
     @property
     def all(self):
         return _SubAttributeManager(self)
+
+    def _select(self, index):
+        return type(self)(self.figures[index]).all
+
+    # Allows the modification of a subset of the subfigures
+    # with the syntax:
+    #   myframe.select[1:4].set(...)
+    @property
+    def select(self):
+        return morpho.tools.dev.Slicer(getter=self._select)
+
 
     # Allows you to give a name to a figure in the Frame that can
     # be referenced later using attribute access syntax.
