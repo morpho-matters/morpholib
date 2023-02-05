@@ -7,13 +7,13 @@ need to have LaTeX installed on your system.
 import morpholib as morpho
 import morpholib.tools.latex2svg as latex2svg
 
+# Import itself so that global names can be accessed
+# from a local scope that uses the same names.
+import morpholib.latex
+
 template = latex2svg.default_template
 preamble = latex2svg.default_preamble
 params = latex2svg.default_params.copy()
-
-# Aliases allow them to be accessed from an inner scope
-_preamble = preamble
-_params = params
 
 # Mainly for internal use.
 # Takes LaTeX code and surrounds it with \( \) if it
@@ -37,8 +37,11 @@ def _sanitizeTex(tex):
 def parse(tex, *args, preamble=None, **kwargs):
     tex = _sanitizeTex(tex)
     if preamble is None:
-        preamble = _preamble
-    params = _params.copy()
+        # Referencing the global scope `preamble` variable via
+        # the module itself is required here since the local
+        # variable and global variable have the same name.
+        preamble = morpho.latex.preamble
+    params = morpho.latex.params.copy()
     params["preamble"] = preamble
 
     out = latex2svg.latex2svg(tex, params)
