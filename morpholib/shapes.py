@@ -384,15 +384,20 @@ class Spline(BoundingBoxFigure):
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
         index=0, flip=True, arcError=0.1, tightbox=False):
 
-        if isinstance(source, se.svgelements.Path):
+        if isinstance(source, se.Shape):
             svgpath = source
         else:
             svg = parseSVG(source)
-            elems = list(svg.elements(lambda elem: isinstance(elem, se.Path)))
+            elems = list(svg.elements(lambda elem: isinstance(elem, se.Shape)))
             svgpath = elems[index]
 
         # Convert path data into spline
         svgpath.reify()  # Commit all transforms
+        if not isinstance(svgpath, se.Path):
+            shape = svgpath
+            svgpath = se.Path(shape.segments())
+            svgpath.stroke = shape.stroke
+            svgpath.fill = shape.fill
         svgpath.approximate_arcs_with_cubics(arcError)
         spline = cls()
 
@@ -1588,7 +1593,7 @@ class MultiSpline(MultiFigure):
         index=(None,), flip=True, arcError=0.1):
 
         svg = parseSVG(source)
-        svgpaths = list(svg.elements(lambda elem: isinstance(elem, se.Path)))
+        svgpaths = list(svg.elements(lambda elem: isinstance(elem, se.Shape)))
 
         # Return empty MultiSpline if SVG source has no paths.
         if len(svgpaths) == 0:
