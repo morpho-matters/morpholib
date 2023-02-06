@@ -5,7 +5,7 @@ import morpholib.tools.color, morpholib.anim
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.tools.basics import *
-from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure
+from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, totalBox
 
 from morpholib import object_hasattr
 
@@ -1722,6 +1722,32 @@ class MultiPath(MultiFigure):
             path = Path(seq, *args, **kwargs)
             super().__init__([path])
 
+    anchorPoint = Path.anchorPoint
+
+    # Transforms the path so that the `origin` attribute
+    # is in the physical position indicated by the alignment
+    # paramter. The path should be visually unchanged after
+    # this transformation.
+    def alignOrigin(self, align):
+        anchor = self.anchorPoint(align)
+        for fig in self.figures:
+            array = np.array(fig.seq, dtype=complex)
+            array += self.origin - anchor
+            fig.seq = array.tolist()
+        self.origin = anchor
+        return self
+
+    # Compute bounding box of the entire figure taking `origin`
+    # attribute into account, but no other transformation attributes.
+    # Returned as [xmin, xmax, ymin, ymax]
+    def box(self):
+        left, right, bottom, top = totalBox(path.box() for path in self.figures)
+        # Adjust by origin
+        left += self.origin.real
+        right += self.origin.real
+        bottom += self.origin.imag
+        top += self.origin.imag
+        return [left, right, bottom, top]
 
     # Joins all of the subpaths into a single Path
     # with the jumps between different subpaths being implemented

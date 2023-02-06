@@ -1593,11 +1593,7 @@ class MultiSpline(MultiFigure):
 
     joinUsingDeadends = morpho.grid.MultiPath.joinUsingDeadends
     squeeze = morpho.grid.MultiPath.squeeze
-
-    # Compute bounding box of the entire figure. Returned as
-    # [xmin, xmax, ymin, ymax]
-    def box(self):
-        return totalBox(spline.box() for spline in self.figures)
+    box = morpho.grid.MultiPath.box
 
     # EXPERIMENTAL!
     # Parses an SVG file/stream to construct a MultiSpline
