@@ -2,7 +2,7 @@
 import morpholib as morpho
 import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
-from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure
+from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, totalBox
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 
@@ -1577,6 +1577,11 @@ class MultiSpline(MultiFigure):
 
     joinUsingDeadends = morpho.grid.MultiPath.joinUsingDeadends
     squeeze = morpho.grid.MultiPath.squeeze
+
+    # Compute bounding box of the entire figure. Returned as
+    # [xmin, xmax, ymin, ymax]
+    def box(self):
+        return totalBox(spline.box() for spline in self.figures)
 
     # EXPERIMENTAL!
     # Parses an SVG file/stream to construct a MultiSpline

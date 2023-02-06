@@ -145,6 +145,22 @@ class BoundingBoxFigure(morpho.Figure):
         NW, SW, SE, NE = self.corners(*args, **kwargs)
         return SE
 
+# Computes the total bounding box of a list of boxes.
+def totalBox(boxes):
+    XMIN, YMIN, XMAX, YMAX = oo, oo, -oo, -oo
+    for box in boxes:
+        xmin, xmax, ymin, ymax = box
+        XMIN = min(XMIN, xmin)
+        YMIN = min(YMIN, ymin)
+        XMAX = max(XMAX, xmax)
+        YMAX = max(YMAX, ymax)
+
+    bigbox = [XMIN, XMAX, YMIN, YMAX]
+    if isbadarray(bigbox):
+        raise ValueError("Total box is unbounded or undefined.")
+
+    return bigbox
+
 # Draw a figure whose start or end attribute is outside the interval
 # [0,1] according to the cyclic rules.
 def drawOutOfBoundsStartEnd(fig, camera, ctx):
