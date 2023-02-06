@@ -171,6 +171,18 @@ def totalBox(boxes):
 
     return bigbox
 
+# Shifts a bounding box of the form [xmin,xmax,ymin,ymax]
+# by the given 2d vector `shift` expressed as a complex number.
+# Returns the modified box.
+def shiftBox(box, shift):
+    left, right, bottom, top = box
+    # Adjust by origin
+    left += shift.real
+    right += shift.real
+    bottom += shift.imag
+    top += shift.imag
+    return [left, right, bottom, top]
+
 # Draw a figure whose start or end attribute is outside the interval
 # [0,1] according to the cyclic rules.
 def drawOutOfBoundsStartEnd(fig, camera, ctx):

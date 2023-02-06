@@ -5,7 +5,8 @@ import morpholib.tools.color, morpholib.anim
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.tools.basics import *
-from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, totalBox
+from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
+    totalBox, shiftBox
 
 from morpholib import object_hasattr
 
@@ -1741,13 +1742,7 @@ class MultiPath(MultiFigure):
     # attribute into account, but no other transformation attributes.
     # Returned as [xmin, xmax, ymin, ymax]
     def box(self):
-        left, right, bottom, top = totalBox(path.box() for path in self.figures)
-        # Adjust by origin
-        left += self.origin.real
-        right += self.origin.real
-        bottom += self.origin.imag
-        top += self.origin.imag
-        return [left, right, bottom, top]
+        return shiftBox(totalBox(path.box() for path in self.figures), self.origin)
 
     # Joins all of the subpaths into a single Path
     # with the jumps between different subpaths being implemented

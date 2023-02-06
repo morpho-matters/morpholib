@@ -2,7 +2,8 @@
 import morpholib as morpho
 import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
-from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, totalBox
+from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
+    totalBox, shiftBox
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 
@@ -247,7 +248,7 @@ class Spline(BoundingBoxFigure):
         ymin = np.min(ydata).tolist()
         ymax = np.max(ydata).tolist()
 
-        return [xmin, xmax, ymin, ymax]
+        return shiftBox([xmin, xmax, ymin, ymax], self.origin)
 
         # The following code is probably a way to compute a tighter
         # bounding box, but it relies on the currently broken
@@ -264,6 +265,18 @@ class Spline(BoundingBoxFigure):
         #     subboxes.append(morpho.bezier.cubicbox(p0, p1, p2, p3))
 
         # return totalBox(subboxes)
+
+    # Transforms the spline so that the `origin` attribute
+    # is in the physical position indicated by the alignment
+    # paramter. The spline should be visually unchanged after
+    # this transformation.
+    def alignOrigin(self, align):
+        anchor = self.anchorPoint(align)
+        self._data = self._data.copy()
+        self._data += self.origin - anchor
+        nan2inf(self._data)
+        self.origin = anchor
+        return self
 
     # Mainly for internal use by fromsvg().
     # Computes the needed translation vector for the raw spline
@@ -1594,6 +1607,20 @@ class MultiSpline(MultiFigure):
     joinUsingDeadends = morpho.grid.MultiPath.joinUsingDeadends
     squeeze = morpho.grid.MultiPath.squeeze
     box = morpho.grid.MultiPath.box
+    anchorPoint = Spline.anchorPoint
+
+    # Transforms the spline so that the `origin` attribute
+    # is in the physical position indicated by the alignment
+    # paramter. The spline should be visually unchanged after
+    # this transformation.
+    def alignOrigin(self, align):
+        anchor = self.anchorPoint(align)
+        for fig in self.figures:
+            fig._data = fig._data.copy()
+            fig._data += self.origin - anchor
+            nan2inf(fig._data)
+        self.origin = anchor
+        return self
 
     # EXPERIMENTAL!
     # Parses an SVG file/stream to construct a MultiSpline
