@@ -309,7 +309,7 @@ class Spline(BoundingBoxFigure):
             if isinstance(segment, (se.Move, se.Close)):
                 continue
             try:
-                xmin, ymin, xmax, ymax = segment.bbox()
+                xmin, ymin, xmax, ymax = np.array(segment.bbox()).tolist()
             except TypeError:
                 continue
             XMIN = min(XMIN, xmin)
@@ -449,7 +449,7 @@ class Spline(BoundingBoxFigure):
         if tightbox:
             svgbbox = Spline._tightbbox(svgpath)
         else:
-            svgbbox = svgpath.bbox()
+            svgbbox = np.array(svgpath.bbox()).tolist()
         spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
 
         return spline
@@ -1617,7 +1617,7 @@ class MultiSpline(MultiFigure):
         XMIN, YMIN, XMAX, YMAX = oo, oo, -oo, -oo
         for svgpath in svgpaths:
             try:
-                xmin, ymin, xmax, ymax = svgpath.bbox()
+                xmin, ymin, xmax, ymax = np.array(svgpath.bbox()).tolist()
             except TypeError:
                 continue
             XMIN = min(XMIN, xmin)
