@@ -251,11 +251,20 @@ class Frame(morpho.Figure):
         return _SubAttributeManager(self)
 
     def _select(self, index):
-        return type(self)(self.figures[index]).all
+        if callable(index):
+            condition = index
+            selection = [fig for fig in self.figures if condition(fig)]
+        else:
+            selection = self.figures[index]
+        return type(self)(selection).all
 
     # Allows the modification of a subset of the subfigures
     # with the syntax:
     #   myframe.select[1:4].set(...)
+    # You can also specify a choice function. That is, a function
+    # that takes a subfigure as input and returns a boolean on
+    # whether that figure should be selected.
+    #   myframe.select[lambda fig: fig.width==0].set(...)
     @property
     def select(self):
         return morpho.tools.dev.Slicer(getter=self._select)
