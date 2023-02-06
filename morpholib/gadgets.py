@@ -52,11 +52,13 @@ def crossout_old(box, time=30, width=3, color=(1,0,0), view=None):
 #            Default: False (absolute coordinates)
 def crossoutPath(box, time=30, width=3, color=(1,0,0),
     transition=None, origin=0, relative=False,
-    *, duration=None, **kwargs):
+    *, duration=None, pad=0, **kwargs):
 
     # "duration" is a dominant alias for the "time" parameter
     if duration is not None:
         time = duration
+
+    box = padbox(box, pad)
 
     x_min, x_max, y_min, y_max = box
 
@@ -96,11 +98,13 @@ crossout = crossoutPath
 #            Default: False (absolute coordinates)
 def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
     CCW=True, steps=75, transition=None, origin=0, relative=False,
-    *, duration=None, **kwargs):
+    *, duration=None, pad=0, **kwargs):
 
     # "duration" is a dominant alias for the "time" parameter
     if duration is not None:
         time = duration
+
+    box = padbox(box, pad)
 
     orbit = 2*int(CCW) - 1
     z0 = (box[0]+box[1])/2 + (box[2]+box[3])/2*1j if not relative else 0
@@ -143,7 +147,7 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
 #              Default: morpho.transition.default
 # origin = origin point of path (complex number). Default: 0
 def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
-    transition=None, origin=0, *, duration=None, **kwargs):
+    transition=None, origin=0, *, duration=None, pad=0, **kwargs):
 
     # "duration" is a dominant alias for the "time" parameter
     if duration is not None:
@@ -153,6 +157,8 @@ def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
     dirs = ["NW", "SW", "SE", "NE"]
     if corner not in dirs:
         raise ValueError('corner must be "NW", "SW", "SE", or "NE".')
+
+    box = padbox(box, pad)
 
     left = box[0]
     right = box[1]
