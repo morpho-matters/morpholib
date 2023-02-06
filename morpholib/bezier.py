@@ -4,6 +4,7 @@ Various helper functions for dealing with cubic Bezier curves.
 
 # import math, cmath
 import numpy as np
+
 from morpholib.base import lerp0, bezierInterp
 from morpholib.tools import polyroots
 
@@ -116,3 +117,12 @@ def quad2cubic(q0, q1, q2):
     p2 = q2 + (2/3)*(q1 - q2)
     p3 = q2
     return (p0, p1, p2, p3)
+
+# NOT IMPLEMENTED BECAUSE OF UNRESOLVED BUG
+# Returns the tight bounding box of a cubic Bezier curve.
+def cubicbox(p0, p1, p2, p3):
+    raise NotImplementedError
+
+    import svgelements as se
+    xmin, ymin, xmax, ymax = np.array(se.CubicBezier(p0, p1, p2, p3).bbox()).tolist()
+    return [xmin, xmax, ymin, ymax]
