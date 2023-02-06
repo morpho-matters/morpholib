@@ -249,6 +249,22 @@ class Spline(BoundingBoxFigure):
 
         return [xmin, xmax, ymin, ymax]
 
+        # The following code is probably a way to compute a tighter
+        # bounding box, but it relies on the currently broken
+        # morpho.bezier.cubicbox() function. If/when this function
+        # is ever properly implemented, the below code can be
+        # substituted (hopefully).
+
+        # subboxes = []
+        # for n in range(len(data)-1):
+        #     p0 = data[n, 0].tolist()
+        #     p1 = data[n, 2].tolist()
+        #     p2 = data[n+1, 1].tolist()
+        #     p3 = data[n+1, 0].tolist()
+        #     subboxes.append(morpho.bezier.cubicbox(p0, p1, p2, p3))
+
+        # return totalBox(subboxes)
+
     # Mainly for internal use by fromsvg().
     # Computes the needed translation vector for the raw spline
     # generated from an SVG file to make it conform to a given
