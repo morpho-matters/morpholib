@@ -1429,6 +1429,9 @@ class Actor(object):
                 figure = figure.copy()
         elif type(figure) is not self.figureType:
             raise TypeError("Given figure is not of actor's figure type.")
+        elif figure in self.timeline.values():
+            # Copy the figure if it's already in the timeline.
+            figure = figure.copy()
 
         # Adjust transition of previous keyfig so that the
         # insertion of a new keyfigure does not modify the playback
