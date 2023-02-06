@@ -145,6 +145,16 @@ class BoundingBoxFigure(morpho.Figure):
         NW, SW, SE, NE = self.corners(*args, **kwargs)
         return SE
 
+    # Returns the corresponding physical position of an
+    # alignment parameter with respect to the bounding box.
+    def anchorPoint(self, align, *args, **kwargs):
+        anchor_x, anchor_y = align
+        left, right, bottom, top = self.box(*args, **kwargs)
+        x = morpho.lerp(left, right, anchor_x, start=-1, end=1)
+        y = morpho.lerp(bottom, top, anchor_y, start=-1, end=1)
+        return complex(x,y)
+
+
 # Computes the total bounding box of a list of boxes.
 def totalBox(boxes):
     XMIN, YMIN, XMAX, YMAX = oo, oo, -oo, -oo

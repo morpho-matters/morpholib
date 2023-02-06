@@ -600,6 +600,18 @@ class Path(BoundingBoxFigure):
         self.transform = np.identity(2)
         return self
 
+    # Transforms the path so that the `origin` attribute
+    # is in the physical position indicated by the alignment
+    # paramter. The path should be visually unchanged after
+    # this transformation.
+    def alignOrigin(self, align):
+        anchor = self.anchorPoint(align)
+        array = np.array(self.seq, dtype=complex)
+        array += self.origin - anchor
+        self.seq = array.tolist()
+        self.origin = anchor
+        return self
+
     # Mainly for internal use.
     # Calculates the bounding box of a numpy array of
     # complex number positional data.
