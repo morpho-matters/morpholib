@@ -250,13 +250,18 @@ class Frame(morpho.Figure):
     def all(self):
         return _SubAttributeManager(self)
 
-    def _select(self, index):
+    def _select(self, index, *, _asFrame=False):
         if callable(index):
             condition = index
             selection = [fig for fig in self.figures if condition(fig)]
         else:
             selection = self.figures[index]
-        return type(self)(selection).all
+
+        frm = type(self)(selection)
+        if _asFrame:
+            return frm
+        else:
+            return frm.all
 
     # Allows the modification of a subset of the subfigures
     # with the syntax:
@@ -268,6 +273,20 @@ class Frame(morpho.Figure):
     @property
     def select(self):
         return morpho.tools.dev.Slicer(getter=self._select)
+
+    def _sub(self, index):
+        return self._select(index, _asFrame=True).copy()
+
+    # Extracts a subframe of subfigures from the Frame.
+    # Subfigures can be selected either via slice notation
+    #   subframe = myframe.sub[1:4]
+    # Or by choice function:
+    #   subframe = myframe.sub[lambda fig: fig.width==0]
+    # Note that the subfigures selected will be copied.
+    @property
+    def sub(self):
+        return morpho.tools.dev.Slicer(getter=self._sub)
+
 
 
     # Allows you to give a name to a figure in the Frame that can
