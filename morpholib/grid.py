@@ -1705,7 +1705,7 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
     ["insertNodesUniformly", "concat"],
     Path, MultiFigure._returnOrigCaller
     )
-class MultiPath(MultiFigure):
+class MultiPath(MultiFigure, BoundingBoxFigure):
 
     _basetype = Path
 
@@ -1723,7 +1723,7 @@ class MultiPath(MultiFigure):
             path = Path(seq, *args, **kwargs)
             super().__init__([path])
 
-    anchorPoint = Path.anchorPoint
+    # anchorPoint = Path.anchorPoint
 
     # Transforms the path so that the `origin` attribute
     # is in the physical position indicated by the alignment

@@ -1593,7 +1593,7 @@ def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
     "splitAt", "splitAtIndex", "insertNodes"],
     Spline, MultiFigure._returnOrigCaller
     )
-class MultiSpline(MultiFigure):
+class MultiSpline(MultiFigure, BoundingBoxFigure):
 
     def __init__(self, data=None, *args, **kwargs):
         if isinstance(data, Spline):
@@ -1612,7 +1612,7 @@ class MultiSpline(MultiFigure):
     joinUsingDeadends = morpho.grid.MultiPath.joinUsingDeadends
     squeeze = morpho.grid.MultiPath.squeeze
     box = morpho.grid.MultiPath.box
-    anchorPoint = Spline.anchorPoint
+    # anchorPoint = Spline.anchorPoint
     commitTransforms = morpho.grid.MultiPath.commitTransforms
 
     # Transforms the spline so that the `origin` attribute
