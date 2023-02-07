@@ -707,13 +707,13 @@ class PText(Text):
     # as the position of the text figure.
     def toSpline(self):
         with self.tosvg() as source:
-            spline = morpho.shapes.Spline.fromsvg(source,
+            spline = morpho.shapes.MultiSpline.fromsvg(source,
                 align=self.align, boxHeight=self.height(),
                 tightbox=True
                 )
-        spline.origin = self.pos
-        spline.rotation = self.rotation
-        spline.transform = self.transform
+        spline.all.origin = self.pos
+        # spline.rotation = self.rotation
+        # spline.transform = self.transform
         return spline
 
     # Returns equivalent non-physical Text object
@@ -935,8 +935,8 @@ class MultiPText(MultiText):
     _baseFigure = PText
 
     def toSpline(self):
-        splines = [ptxt.toSpline() for ptxt in self.figures]
-        return morpho.shapes.MultiSpline(splines)
+        multisplines = [ptxt.toSpline() for ptxt in self.figures]
+        return morpho.shapes.MultiSpline(morpho.flattenList([multispline.figures for multispline in multisplines]))
 
 MultiPtext = MultiPText
 
@@ -1106,6 +1106,8 @@ class SpacePText(PText, SpaceText):
     # The `origin` attribute of the resulting Spline will be set
     # as the position of the text figure.
     def toSpline(self):
+        raise NotImplementedError
+
         # Create equivalent 2D PText figure
         ptext = PText()
         ptext._updateFrom(self, common=True, ignore=morpho.METASETTINGS)

@@ -301,9 +301,9 @@ class Spline(BoundingBoxFigure):
         if svgOrigin is None:
             # Infer origin from `align` parameter and bounding box
             self.origin = self._inferTranslationFromAlign(svgbbox, align, flip)
-            self.commitTransforms()
         else:
             self.origin = -svgOrigin if not flip else -svgOrigin.conjugate()
+        self.commitTransforms()
 
         # Set scale factors based on box dimensions
         if boxWidth is None and boxHeight is None:
@@ -1634,7 +1634,7 @@ class MultiSpline(MultiFigure):
     @classmethod
     def fromsvg(cls, source, *,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
-        index=(None,), flip=True, arcError=0.1):
+        index=(None,), flip=True, arcError=0.1, tightbox=False):
 
         svg = parseSVG(source)
         svgpaths = list(svg.elements(lambda elem: isinstance(elem, se.Shape)))
@@ -1649,14 +1649,15 @@ class MultiSpline(MultiFigure):
         # Generate raw Spline figures
         splines = []
         for svgpath in svgpaths[slice(*index)]:
-            spline = Spline.fromsvg(svgpath, svgOrigin=0, flip=False, arcError=arcError)
+            spline = Spline.fromsvg(svgpath,
+                svgOrigin=0, flip=False, arcError=arcError, tightbox=tightbox)
             splines.append(spline)
 
         # Compute overall bounding box
         XMIN, YMIN, XMAX, YMAX = oo, oo, -oo, -oo
         for svgpath in svgpaths:
             try:
-                xmin, ymin, xmax, ymax = np.array(svgpath.bbox()).tolist()
+                xmin, ymin, xmax, ymax = np.array(svgpath.bbox()).tolist() if not tightbox else np.array(Spline._tightbbox(svgpath)).tolist()
             except TypeError:
                 continue
             XMIN = min(XMIN, xmin)
