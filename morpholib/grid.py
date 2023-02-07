@@ -603,7 +603,7 @@ class Path(BoundingBoxFigure):
 
     # Transforms the path so that the `origin` attribute
     # is in the physical position indicated by the alignment
-    # paramter. The path should be visually unchanged after
+    # parameter. The path should be visually unchanged after
     # this transformation.
     def alignOrigin(self, align):
         anchor = self.anchorPoint(align)
@@ -1698,7 +1698,7 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
 # MultiFigure version of Path.
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.
 @MultiFigure._modifyMethods(
-    ["close", "commitTransforms"],
+    ["close"],
     Path, MultiFigure._applyToSubfigures
     )
 @MultiFigure._modifyMethods(
@@ -1727,7 +1727,7 @@ class MultiPath(MultiFigure):
 
     # Transforms the path so that the `origin` attribute
     # is in the physical position indicated by the alignment
-    # paramter. The path should be visually unchanged after
+    # parameter. The path should be visually unchanged after
     # this transformation.
     def alignOrigin(self, align):
         anchor = self.anchorPoint(align)
@@ -1762,6 +1762,14 @@ class MultiPath(MultiFigure):
             path.concat(subpath)
 
         return path
+
+
+    def commitTransforms(self):
+        for path in self.figures:
+            path.origin += self.origin
+            path.commitTransforms()
+        self.origin = 0
+        return self
 
     # Removes subpaths IN PLACE whose node counts are less than 2
     # (and are therefore non-drawable).

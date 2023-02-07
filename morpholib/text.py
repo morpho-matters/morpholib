@@ -702,8 +702,8 @@ class PText(Text):
 
         return stream
 
-    # Converts the text figure into an equivalent Spline figure.
-    # The `origin` attribute of the resulting Spline will be set
+    # Converts the text figure into an equivalent MultiSpline figure.
+    # The `origin` attribute of the resulting MultiSpline will be set
     # as the position of the text figure.
     def toSpline(self):
         with self.tosvg() as source:
@@ -711,7 +711,7 @@ class PText(Text):
                 align=self.align, boxHeight=self.height(),
                 tightbox=True
                 )
-        spline.all.origin = self.pos
+        spline.origin = self.pos
         # spline.rotation = self.rotation
         # spline.transform = self.transform
         return spline
@@ -934,9 +934,18 @@ class MultiText(morpho.MultiFigure):
 class MultiPText(MultiText):
     _baseFigure = PText
 
+    # Converts the MultiPText figure into an equivalent MultiSpline.
+    # The resulting MultiSpline will have its global origin set to the
+    # position of the MultiPText's first component text figure's
+    # position. All subsplines will have origin = 0.
     def toSpline(self):
-        multisplines = [ptxt.toSpline() for ptxt in self.figures]
-        return morpho.shapes.MultiSpline(morpho.flattenList([multispline.figures for multispline in multisplines]))
+        multisplines = [ptxt.toSpline().commitTransforms() for ptxt in self.figures]
+        finalspline = morpho.shapes.MultiSpline(morpho.flattenList([multispline.figures for multispline in multisplines]))
+        for spline in finalspline.figures:
+            spline.origin -= self.pos
+            spline.commitTransforms()
+        finalspline.origin = self.pos
+        return finalspline
 
 MultiPtext = MultiPText
 
@@ -1635,8 +1644,16 @@ class FancyMultiPText(FancyMultiText):
 
         return self._makeFrameFromBoxes(boxes, ignoreBackground=ignoreBackground)
 
+    # Converts the text figure into an equivalent MultiSpline figure.
+    # The origin attribute of the MultiSpline will match the pos
+    # attribute of the text figure.
     def toSpline(self):
-        return MultiPText(self.makeFrame(ignoreBackground=True).figures).toSpline()
+        multispline = MultiPText(self.makeFrame(ignoreBackground=True).figures).toSpline()
+        for spline in multispline.figures:
+            spline.origin += multispline.origin - self.pos
+            spline.commitTransforms()
+        multispline.origin = self.pos
+        return multispline
 
 FancyMultiPtext = FancyMultiPText
 

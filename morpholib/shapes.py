@@ -268,7 +268,7 @@ class Spline(BoundingBoxFigure):
 
     # Transforms the spline so that the `origin` attribute
     # is in the physical position indicated by the alignment
-    # paramter. The spline should be visually unchanged after
+    # parameter. The spline should be visually unchanged after
     # this transformation.
     def alignOrigin(self, align):
         anchor = self.anchorPoint(align)
@@ -1578,7 +1578,7 @@ def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
 # Notably, this class can import an SVG file and render it.
 # See MultiSpline.fromsvg()
 @MultiFigure._modifyMethods(
-    ["autosetHandles", "close", "commitHandles", "commitTransforms",
+    ["autosetHandles", "close", "commitHandles",
     "reverse", "linkHandles"],
     Spline, MultiFigure._applyToSubfigures
     )
@@ -1608,10 +1608,11 @@ class MultiSpline(MultiFigure):
     squeeze = morpho.grid.MultiPath.squeeze
     box = morpho.grid.MultiPath.box
     anchorPoint = Spline.anchorPoint
+    commitTransforms = morpho.grid.MultiPath.commitTransforms
 
     # Transforms the spline so that the `origin` attribute
     # is in the physical position indicated by the alignment
-    # paramter. The spline should be visually unchanged after
+    # parameter. The spline should be visually unchanged after
     # this transformation.
     def alignOrigin(self, align):
         anchor = self.anchorPoint(align)
