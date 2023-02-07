@@ -1104,10 +1104,15 @@ def blink(actor, duration=15, atFrame=None, *, times=1):
 # into itself from a given source figure. Useful as an opening
 # animation to create a new figure morphing out of a copy of
 # another figure.
+#
+# `source` can also be an actor, in which case, its latest
+# keyfigure is taken as the source figure.
 @Figure.action
-def morphFrom(actor, sourceFigure, duration=30, atFrame=None):
+def morphFrom(actor, source, duration=30, atFrame=None):
     if atFrame is None:
         atFrame = actor.lastID()
+    if isinstance(source, Actor):
+        source = source.last()
 
     # Save a copy of the latest keyfigure to use as the
     # target ending figure.
@@ -1117,7 +1122,7 @@ def morphFrom(actor, sourceFigure, duration=30, atFrame=None):
 
     # Create new key for the start of the morph.
     # It should be equal to the given source figure.
-    fig1 = actor.newkey(atFrame, sourceFigure.copy())
+    fig1 = actor.newkey(atFrame, source.copy())
     fig1.set(visible=True)
 
     # Set destination figure to be the original last keyfigure.
