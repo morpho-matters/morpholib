@@ -1100,6 +1100,29 @@ def blink(actor, duration=15, atFrame=None, *, times=1):
         fig = actor.newkey(atFrame + n*duration/(2*times-1))
         fig.visible = not fig.visible  # Toggle visibility
 
+# Animates the current latest keyfigure in the actor morphing
+# into itself from a given source figure. Useful as an opening
+# animation to create a new figure morphing out of a copy of
+# another figure.
+@Figure.action
+def morphFrom(actor, sourceFigure, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    # Save a copy of the latest keyfigure to use as the
+    # target ending figure.
+    fig0 = actor.last()
+    target = fig0.copy()
+    fig0.visible = False
+
+    # Create new key for the start of the morph.
+    # It should be equal to the given source figure.
+    fig1 = actor.newkey(atFrame, sourceFigure.copy())
+    fig1.set(visible=True)
+
+    # Set destination figure to be the original last keyfigure.
+    actor.newendkey(duration, target)
+
 
 # Base class for certain space figures.
 class SpaceFigure(Figure):
