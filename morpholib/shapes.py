@@ -1679,7 +1679,7 @@ class MultiSpline(MultiFigure):
 
     # Converts the MultiSpline into a similar looking MultiPath figure.
     # See also: Spline.toPath()
-    def toMultiPath(self, segsteps=30):
+    def toPath(self, segsteps=30):
         subpaths = [subspline.toPath(segsteps) for subspline in self.figures]
         multipath = morpho.grid.MultiPath(subpaths)
         multipath._updateFrom(self, common=True, ignore="figures")
