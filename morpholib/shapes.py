@@ -266,6 +266,8 @@ class Spline(BoundingBoxFigure):
 
         # return totalBox(subboxes)
 
+    boxAlign = morpho.grid.Path.boxAlign
+
     # Transforms the spline so that the `origin` attribute
     # is in the physical position indicated by the alignment
     # parameter. The spline should be visually unchanged after
@@ -284,6 +286,7 @@ class Spline(BoundingBoxFigure):
         return self
 
     realign = morpho.grid.Path.realign
+    align = morpho.grid.Path.align
 
     # Mainly for internal use by fromsvg().
     # Computes the needed translation vector for the raw spline
@@ -1616,6 +1619,7 @@ class MultiSpline(MultiFigure, BoundingBoxFigure):
     box = morpho.grid.MultiPath.box
     # anchorPoint = Spline.anchorPoint
     commitTransforms = morpho.grid.MultiPath.commitTransforms
+    boxAlign = morpho.grid.MultiPath.boxAlign
 
     # Transforms the spline so that the `origin` attribute
     # is in the physical position indicated by the alignment
@@ -1636,6 +1640,7 @@ class MultiSpline(MultiFigure, BoundingBoxFigure):
         return self
 
     realign = morpho.grid.MultiPath.realign
+    align = morpho.grid.MultiPath.align
 
     # EXPERIMENTAL!
     # Parses an SVG file/stream to construct a MultiSpline
@@ -1698,18 +1703,6 @@ class MultiSpline(MultiFigure, BoundingBoxFigure):
         multipath = morpho.grid.MultiPath(subpaths)
         multipath._updateFrom(self, common=True, ignore="figures")
         return multipath
-
-    # Returns the alignment of the MultiSpline's origin relative
-    # to its bounding box. Mainly for use in replaceTex().
-    # Optionally, the bounding box may be provided to the function
-    # so that it doesn't have to be computed on the fly.
-    def boxAlign(self, *, box=None):
-        if box is None:
-            box = self.box()
-        xmin, xmax, ymin, ymax = box
-        anchor_x = morpho.lerp(-1, 1, self.origin.real, start=xmin, end=xmax)
-        anchor_y = morpho.lerp(-1, 1, self.origin.imag, start=ymin, end=ymax)
-        return (anchor_x, anchor_y)
 
     # Replaces the MultiSpline with a MultiSpline generated
     # from morpho.latex.parse(). Intended to provide an easier

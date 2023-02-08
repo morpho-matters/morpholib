@@ -601,6 +601,18 @@ class Path(BoundingBoxFigure):
         self.transform = np.identity(2)
         return self
 
+    # Returns the alignment of the Path's origin relative
+    # to its bounding box.
+    # Optionally, the bounding box may be provided to the function
+    # so that it doesn't have to be computed on the fly.
+    def boxAlign(self, *, box=None):
+        if box is None:
+            box = self.box()
+        xmin, xmax, ymin, ymax = box
+        anchor_x = morpho.lerp(-1, 1, self.origin.real, start=xmin, end=xmax)
+        anchor_y = morpho.lerp(-1, 1, self.origin.imag, start=ymin, end=ymax)
+        return (anchor_x, anchor_y)
+
     # Transforms the path so that the `origin` attribute
     # is in the physical position indicated by the alignment
     # parameter. The path should be visually unchanged after
@@ -615,14 +627,25 @@ class Path(BoundingBoxFigure):
 
     # Translates the path so that the current origin point
     # agrees with the given alignment parameter.
+    # Can also be invoked by setting the `align` property:
+    #   mypath.align = [-1,1]
     #
     # Note that this method will probably work incorrectly
     # on paths with non-identity rotation or transform.
+    # This behavior may be fixed in a future version.
     def realign(self, align):
         origOrigin = self.origin
         self.alignOrigin(align)
         self.origin = origOrigin
         return self
+
+    @property
+    def align(self):
+        return self.boxAlign()
+
+    @align.setter
+    def align(self, value):
+        self.realign(value)
 
     # Mainly for internal use.
     # Calculates the bounding box of a numpy array of
@@ -1736,6 +1759,7 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
 
     # anchorPoint = Path.anchorPoint
     realign = Path.realign
+    boxAlign = Path.boxAlign
 
     # Transforms the path so that the `origin` attribute
     # is in the physical position indicated by the alignment
@@ -1749,6 +1773,8 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
             fig.seq = array.tolist()
         self.origin = anchor
         return self
+
+    align = Path.align
 
     # Compute bounding box of the entire figure taking `origin`
     # attribute into account, but no other transformation attributes.
