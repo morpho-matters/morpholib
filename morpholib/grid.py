@@ -613,6 +613,17 @@ class Path(BoundingBoxFigure):
         self.origin = anchor
         return self
 
+    # Translates the path so that the current origin point
+    # agrees with the given alignment parameter.
+    #
+    # Note that this method will probably work incorrectly
+    # on paths with non-identity rotation or transform.
+    def realign(self, align):
+        origOrigin = self.origin
+        self.alignOrigin(align)
+        self.origin = origOrigin
+        return self
+
     # Mainly for internal use.
     # Calculates the bounding box of a numpy array of
     # complex number positional data.
@@ -1724,6 +1735,7 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
             super().__init__([path])
 
     # anchorPoint = Path.anchorPoint
+    realign = Path.realign
 
     # Transforms the path so that the `origin` attribute
     # is in the physical position indicated by the alignment

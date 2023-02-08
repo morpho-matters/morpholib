@@ -283,6 +283,8 @@ class Spline(BoundingBoxFigure):
         self.origin = anchor
         return self
 
+    realign = morpho.grid.Path.realign
+
     # Mainly for internal use by fromsvg().
     # Computes the needed translation vector for the raw spline
     # generated from an SVG file to make it conform to a given
@@ -1632,6 +1634,8 @@ class MultiSpline(MultiFigure, BoundingBoxFigure):
             nan2inf(fig._data)
         self.origin = anchor
         return self
+
+    realign = morpho.grid.MultiPath.realign
 
     # EXPERIMENTAL!
     # Parses an SVG file/stream to construct a MultiSpline
