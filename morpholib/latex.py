@@ -15,6 +15,11 @@ template = latex2svg.default_template
 preamble = latex2svg.default_preamble
 params = latex2svg.default_params.copy()
 
+# Default fill color to use for MultiSplines produced
+# by parse(). None means use whatever natively pops
+# out of the LaTeX to SVG converter (probably black).
+fill = None
+
 # Mainly for internal use.
 # Takes LaTeX code and surrounds it with \( \) if it
 # doesn't already. These are needed for the LaTeX
@@ -45,4 +50,7 @@ def parse(tex, *args, preamble=None, **kwargs):
     params["preamble"] = preamble
 
     out = latex2svg.latex2svg(tex, params)
-    return morpho.shapes.MultiSpline.fromsvg(out["svg"], *args, **kwargs)
+    spline = morpho.shapes.MultiSpline.fromsvg(out["svg"], *args, **kwargs)
+    if fill is not None:
+        spline.all.fill = fill[:]
+    return spline
