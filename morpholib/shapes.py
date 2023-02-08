@@ -1711,7 +1711,7 @@ class MultiSpline(MultiFigure, BoundingBoxFigure):
     def replaceTex(self, tex, *, align=None, boxWidth=None, boxHeight=None, **kwargs):
         box = self.box()
         if align is None:
-            align = self.boxAlign(box=box)
+            align = self.boxAlign(box=box, invalidValue=0)
         if boxWidth is None and boxHeight is None:
             boxHeight = box[-1] - box[-2]
         multispline = morpho.latex.parse(tex,
