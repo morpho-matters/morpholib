@@ -81,6 +81,17 @@ class _SubAttributeManager(object):
         # Bypass native setattr() because it's overridden below.
         object.__setattr__(self, "_subattrman_frame", frame)
 
+    # Returns a function that when called will call the
+    # corresponding method across all subfigures in the
+    # Frame and collect their return values into a list
+    # which will then be returned.
+    def _subattrman_createSubmethod(self, name):
+        def submethod(*args, **kwargs):
+            outputs = []
+            for fig in self._subattrman_frame.figures:
+                outputs.append(getattr(fig, name)(*args, **kwargs))
+            return outputs
+        return submethod
 
     def __getattr__(self, name):
         frame = self._subattrman_frame
@@ -113,10 +124,11 @@ class _SubAttributeManager(object):
                 value = list(value)
             # Check if they are unequal
             if not isequal(value, commonValue):  # isequal() handles np.arrays too
+                if callable(commonValue):
+                    return self._subattrman_createSubmethod(name)
                 raise ValueError(f"Subfigures do not have a common value for attribute `{name}`")
 
         return commonValue
-
 
     def __setattr__(self, name, value):
         # Handle ordinary attribute sets if self possesses
