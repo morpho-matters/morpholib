@@ -603,14 +603,17 @@ class Path(BoundingBoxFigure):
 
     # Returns the alignment of the Path's origin relative
     # to its bounding box.
+    # If the bounding box is degenerate (i.e. width or height is 0),
+    # the alignment value for the offending dimension will be set to nan.
+    #
     # Optionally, the bounding box may be provided to the function
     # so that it doesn't have to be computed on the fly.
     def boxAlign(self, *, box=None):
         if box is None:
             box = self.box()
         xmin, xmax, ymin, ymax = box
-        anchor_x = morpho.lerp(-1, 1, self.origin.real, start=xmin, end=xmax)
-        anchor_y = morpho.lerp(-1, 1, self.origin.imag, start=ymin, end=ymax)
+        anchor_x = nan if xmin == xmax else morpho.lerp(-1, 1, self.origin.real, start=xmin, end=xmax)
+        anchor_y = nan if ymin == ymax else morpho.lerp(-1, 1, self.origin.imag, start=ymin, end=ymax)
         return (anchor_x, anchor_y)
 
     # Transforms the path so that the `origin` attribute
