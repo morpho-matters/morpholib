@@ -1695,6 +1695,35 @@ class MultiSpline(MultiFigure, BoundingBoxFigure):
         multipath._updateFrom(self, common=True, ignore="figures")
         return multipath
 
+    # Returns the alignment of the MultiSpline's origin relative
+    # to its bounding box. Mainly for use in replaceTex().
+    # Optionally, the bounding box may be provided to the function
+    # so that it doesn't have to be computed on the fly.
+    def boxAlign(self, *, box=None):
+        if box is None:
+            box = self.box()
+        xmin, xmax, ymin, ymax = box
+        anchor_x = morpho.lerp(-1, 1, self.origin.real, start=xmin, end=xmax)
+        anchor_y = morpho.lerp(-1, 1, self.origin.imag, start=ymin, end=ymax)
+        return (anchor_x, anchor_y)
+
+    # Replaces the MultiSpline with a MultiSpline generated
+    # from morpho.latex.parse(). Intended to provide an easier
+    # way to morph one LaTeX spline into another one, like this:
+    #   myTexSpline.newendkey(30).replaceTex(r"E = mc^2")
+    def replaceTex(self, tex, *, align=None, boxWidth=None, boxHeight=None, **kwargs):
+        box = self.box()
+        if align is None:
+            align = self.boxAlign(box=box)
+        if boxWidth is None and boxHeight is None:
+            boxHeight = box[-1] - box[-2]
+        multispline = morpho.latex.parse(tex,
+            align=align, boxWidth=boxWidth, boxHeight=boxHeight,
+            **kwargs
+            )
+        self.figures = multispline.figures
+        return self
+
     ### TWEEN METHODS ###
 
     tweenLinear = MultiFigure.Multi(Spline.tweenLinear, MultiFigure.tweenLinear)
