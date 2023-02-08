@@ -1870,19 +1870,35 @@ def group(textfigs, view, windowShape,
 # a paragraph. Throws error if unable to conform the given textarray.
 def conformText(textarray):
     # Handle nonstandard values for textarray
-    try:
-        textarray[0]
-    except TypeError:
-        textarray = [[textarray]]
-    except IndexError:
+    if not isinstance(textarray, (list, tuple)):
+        return [[textarray]]
+
+    # Handle empty textarray
+    if len(textarray) == 0:
         raise IndexError("Empty `textarray` was given.")
 
-    try:
-        textarray[0][0]
-    except TypeError:
+    # Handle list of non-lists
+    if not any(isinstance(row, (list, tuple)) for row in textarray):
         textarray = [textarray]
-    except IndexError:
-        raise IndexError("Empty sublist in `textarray`.")
+
+    # Go row by row and conform the types found
+    for i, row in enumerate(textarray):
+        # Turn strings into singleton lists of Text figures
+        if isinstance(row, str):
+            textarray[i] = [Text(row)]
+            continue
+        # Turn Text figures into singleton lists of themselves.
+        elif isinstance(row, Text):
+            textarray[i] = [row]
+            continue
+        elif not isinstance(row, (list, tuple)):
+            raise TypeError(f"Invalid type {type(row).__name__} for `textarray` row.")
+        elif len(row) == 0:
+            raise IndexError("Empty sublist in `textarray`.")
+        # Turn any individual string items into Text figures
+        for j, item in enumerate(row):
+            if isinstance(item, str):
+                row[j] = Text(item)
 
     return textarray
 
@@ -2090,6 +2106,13 @@ def paragraphPhys(textarray, *args, **kwargs):
         textarray = [[PText(string)] for string in stringlist]
     else:
         textarray = conformText(textarray)
+
+    # Convert all items in the textarray into PText
+    # if they aren't already.
+    for row in textarray:
+        for n, item in enumerate(row):
+            if not isinstance(item, PText):
+                row[n] = PText(item)
 
     # Convert everything to PText if needed
     for row in textarray:
