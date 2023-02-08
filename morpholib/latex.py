@@ -4,6 +4,8 @@ Note that to use the functions in this module, you will
 need to have LaTeX installed on your system.
 '''
 
+import io
+
 import morpholib as morpho
 import morpholib.tools.latex2svg as latex2svg
 
@@ -50,7 +52,10 @@ def parse(tex, *args, preamble=None, **kwargs):
     params["preamble"] = preamble
 
     out = latex2svg.latex2svg(tex, params)
-    spline = morpho.shapes.MultiSpline.fromsvg(out["svg"], *args, **kwargs)
+    with io.StringIO() as stream:
+        stream.write(out["svg"])
+        stream.seek(0)
+        spline = morpho.shapes.MultiSpline.fromsvg(stream, *args, **kwargs)
     if fill is not None:
         spline.all.fill = fill[:]
     return spline
