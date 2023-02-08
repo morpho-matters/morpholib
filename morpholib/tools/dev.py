@@ -154,6 +154,14 @@ class BoundingBoxFigure(morpho.Figure):
         y = morpho.lerp(bottom, top, anchor_y, start=-1, end=1)
         return complex(x,y)
 
+    def boxWidth(self, *args, **kwargs):
+        box = self.box(*args, **kwargs)
+        return box[1] - box[0]
+
+    def boxHeight(self, *args, **kwargs):
+        box = self.box(*args, **kwargs)
+        return box[-1] - box[-2]
+
 
 # Computes the total bounding box of a list of boxes.
 def totalBox(boxes):
