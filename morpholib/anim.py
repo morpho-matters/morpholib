@@ -1860,11 +1860,16 @@ class Layer(object):
     # method. But if optional keyword argument `atFrame` is
     # passed in, merge() will be used instead of affix().
     def Actor(self, figure, *args, atFrame=None, **kwargs):
-        actor = morpho.Actor(figure)
+        if isinstance(figure, morpho.Actor):
+            actor = figure
+        else:
+            actor = morpho.Actor(figure)
+
         if atFrame is not None:
             self.merge(actor, atFrame=atFrame, **kwargs)
         else:
             self.affix(actor, *args, **kwargs)
+
         return actor
 
     # Returns the minimum key index across all actors (including the camera).
