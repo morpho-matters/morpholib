@@ -78,6 +78,11 @@ def typecastViewCtx(method):
 # repeated code shared among Image, Text and their subclasses.
 class BoundingBoxFigure(morpho.Figure):
     # Needs to be implemented in subclasses
+    # Returns the bounding box of the figure in the form
+    # [xmin, xmax, ymin, ymax]
+    # If the figure supports transformation attributes,
+    # box() should respect origin/pos but NOT respect
+    # rotation or transform.
     def box(self, *args, **kwargs):
         pass
 
