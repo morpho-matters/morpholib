@@ -1847,6 +1847,26 @@ class Layer(object):
     def affix(self, *args, **kwargs):
         return self.append(*args, **kwargs, glob=True)
 
+    # Creates an Actor from the given figure and then immediately
+    # affixes it to the layer at the end of the global timeline
+    # and returns the newly created Actor
+    # Roughly equivalent to: self.affix(Actor(figure))
+    # but its return value is Actor(figure).
+    # This allows figure/actor creation and layer merge to be
+    # be condense into a single line like this:
+    #   newactor = mylayer.Actor(myfigure)
+    #
+    # Any additional arguments are passed in to the affix()
+    # method. But if optional keyword argument `atFrame` is
+    # passed in, merge() will be used instead of affix().
+    def Actor(self, figure, *args, atFrame=None, **kwargs):
+        actor = morpho.Actor(figure)
+        if atFrame is not None:
+            self.merge(actor, atFrame=atFrame, **kwargs)
+        else:
+            self.affix(actor, *args, **kwargs)
+        return actor
+
     # Returns the minimum key index across all actors (including the camera).
     # If all actors have empty timelines, it returns +oo.
     # Note that this method ignores the mask.
