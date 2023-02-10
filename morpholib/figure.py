@@ -1128,6 +1128,10 @@ def morphFrom(actor, source, duration=30, atFrame=None):
     # Set destination figure to be the original last keyfigure.
     actor.newendkey(duration, target)
 
+    # Keep only the first frame AFTER atFrame
+    actor.newkey(atFrame+1)
+    actor.delkey(atFrame)
+
 
 # Base class for certain space figures.
 class SpaceFigure(Figure):
