@@ -678,7 +678,6 @@ class Path(BoundingBoxFigure):
 
     # Returns physical bounding box of path as
     # [xmin, xmax, ymin, ymax]
-    # ignoring rotation and transform.
     def box(self):
         if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
             temp = self.copy()
