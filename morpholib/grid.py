@@ -1855,7 +1855,7 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
             # Draw background box
             brect = morpho.grid.rect(padbox(self.box(raw=False), self.backPad))
             brect.set(
-                width=0, fill=self.background, alpha=self.backAlpha
+                width=0, fill=self.background, alpha=self.backAlpha*self.alpha
                 )
             brect.draw(camera, ctx)
         MultiFigure.draw(self, camera, ctx)

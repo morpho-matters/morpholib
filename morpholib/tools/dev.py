@@ -166,8 +166,9 @@ class BoundingBoxFigure(morpho.Figure):
 
     # Only works for BoundingBoxFigures that have
     # background box tweenables `background`,
-    # `backAlpha`, and `backPad` defined, along with
-    # a box() method that accepts the `raw` kwarg.
+    # `backAlpha`, and `backPad` defined and the general
+    # `alpha` tweenable, along with a box() method that
+    # accepts the `raw` kwarg.
     def _drawBackgroundBox(self, camera, ctx):
         if self.backAlpha > 0:
             # Draw background box
@@ -175,7 +176,7 @@ class BoundingBoxFigure(morpho.Figure):
             brect.set(
                 origin=self.origin, rotation=self.rotation,
                 _transform=self._transform,
-                width=0, fill=self.background, alpha=self.backAlpha
+                width=0, fill=self.background, alpha=self.backAlpha*self.alpha
                 )
             brect.draw(camera, ctx)
 
