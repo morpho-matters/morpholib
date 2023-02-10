@@ -222,6 +222,11 @@ class Spline(BoundingBoxFigure):
     # This function may be improved in a future version to return
     # a tighter bounding box.
     def box(self):
+        if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+            temp = self.copy()
+            temp.commitTransforms()
+            return temp.box()
+
         data = self._data.copy()
         commitSplineHandles(data)
 
