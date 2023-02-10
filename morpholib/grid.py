@@ -592,9 +592,17 @@ class Path(BoundingBoxFigure):
     # to the actual seq list itself and then
     # resets the transformation attributes.
     def commitTransforms(self):
-        rot = cmath.exp(self.rotation*1j)
-        mat = morpho.matrix.Mat(*self.transform.flatten().tolist())
-        newSeq = self.fimage(lambda s: (mat*(rot*s))+self.origin).seq
+        rot = cmath.exp(self.rotation*1j)  # Rotator complex number
+        vector = rot*np.array(self.seq)  # Apply rotation and convert to np.array
+        # Break apart real and imag parts into rows
+        array = np.zeros((2,len(self.seq)))
+        array[0,:] = vector.real
+        array[1,:] = vector.imag
+        # Apply transformation, convert back to complex vector and add origin
+        arrayTransformed = (self._transform @ array)
+        vectorTransformed = arrayTransformed[0,:] + 1j*arrayTransformed[1,:] + self.origin
+        newSeq = vectorTransformed.tolist()
+
         self.seq = newSeq
         self.origin = 0
         self.rotation = 0
