@@ -1122,16 +1122,13 @@ class Spline(BoundingBoxFigure):
         with np.errstate(all="ignore"):  # Suppress numpy warnings
             self._data *= cmath.exp(self.rotation*1j)
 
-            # Perform linear transformation
-            mat = morpho.matrix.Mat(self._transform)
-            for i in range(self.length()):
-                for j in range(3):
-                    z = self._data[i,j]
-                    if not isbadnum(z):
-                        self._data[i,j] = mat*z
-
-            # Translate
-            self._data += self.origin
+            vector = self._data.reshape(-1)
+            array = np.zeros((2,len(vector)))
+            array[0,:] = vector.real
+            array[1,:] = vector.imag
+            arrayTransformed = self._transform @ array
+            vectorTransformed = arrayTransformed[0,:] + 1j*arrayTransformed[1,:] + self.origin
+            self._data = vectorTransformed.reshape(self._data.shape)
 
         # Convert any possible nans that were produced into infs.
         nan2inf(self._data)
