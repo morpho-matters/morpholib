@@ -172,6 +172,10 @@ class Spline(BoundingBoxFigure):
             width, dash, dashOffset, origin, rotation, _transform]
             )
 
+        self.Tweenable("background", (1,1,1), tags=["color"])
+        self.Tweenable("backAlpha", 0, tags=["scalar"])
+        self.Tweenable("backPad", 0, tags=["scalar"])
+
 
         # The dash pattern for this line. The format is identical to how
         # pycairo handles dash patterns: each item in the list is how long
@@ -221,8 +225,12 @@ class Spline(BoundingBoxFigure):
     # control points (positional and tangent) the spline contains.
     # This function may be improved in a future version to return
     # a tighter bounding box.
-    def box(self):
-        if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+    #
+    # If optional kwarg `raw` is set to True, the
+    # bounding box is computed without applying
+    # the transformation attributes origin, rotation, transform.
+    def box(self, raw=False):
+        if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
             temp = self.copy()
             temp.commitTransforms()
             return temp.box()
@@ -253,7 +261,7 @@ class Spline(BoundingBoxFigure):
         ymin = np.min(ydata).tolist()
         ymax = np.max(ydata).tolist()
 
-        return shiftBox([xmin, xmax, ymin, ymax], self.origin)
+        return shiftBox([xmin, xmax, ymin, ymax], self.origin if not raw else 0)
 
         # The following code is probably a way to compute a tighter
         # bounding box, but it relies on the currently broken
@@ -1146,6 +1154,9 @@ class Spline(BoundingBoxFigure):
 
 
     def draw(self, camera, ctx):
+
+        self._drawBackgroundBox(camera, ctx)
+
         # Need at least two nodes to draw
         if self.data.shape[0] < 2:
             return
