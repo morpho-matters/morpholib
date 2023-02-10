@@ -680,6 +680,10 @@ class Path(BoundingBoxFigure):
     # [xmin, xmax, ymin, ymax]
     # ignoring rotation and transform.
     def box(self):
+        if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+            temp = self.copy()
+            temp.commitTransforms()
+            return temp.box()
         array = np.array(self.seq)
         return self._calculateBox(array, self.origin)
 
