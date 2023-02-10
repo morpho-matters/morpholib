@@ -1771,17 +1771,17 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
     _basetype = Path
 
     def __init__(self, seq=None, *args, **kwargs):
-        if isinstance(seq, Path):
+        if isinstance(seq, self._basetype):
             # Case: seq is a Path. Initialize as a singleton Frame.
             super().__init__([seq])
-        elif isinstance(seq, (list, tuple)) and len(seq) > 0 and isinstance(seq[0], Path):
+        elif isinstance(seq, (list, tuple)) and len(seq) > 0 and isinstance(seq[0], self._basetype):
             # Case: seq is a list of paths. Initialize like a Frame.
             super().__init__(seq)
         else:
             # Else: Assume seq represents an actual seq list.
             # Construct the path and append it as the first and only
             # subpath.
-            path = Path(seq, *args, **kwargs)
+            path = self._basetype(seq, *args, **kwargs)
             super().__init__([path])
 
     # anchorPoint = Path.anchorPoint

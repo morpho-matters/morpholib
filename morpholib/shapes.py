@@ -1611,28 +1611,12 @@ def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
     "splitAt", "splitAtIndex", "insertNodes"],
     Spline, MultiFigure._returnOrigCaller
     )
-class MultiSpline(MultiFigure, BoundingBoxFigure):
+class MultiSpline(morpho.grid.MultiPath):
+
+    _basetype = Spline
 
     def __init__(self, data=None, *args, **kwargs):
-        if isinstance(data, Spline):
-            # Case: data is a Spline. Initialize as a singleton Frame.
-            super().__init__([data])
-        elif isinstance(data, (list, tuple)) and len(data) > 0 and isinstance(data[0], Spline):
-            # Case: data is a list of splines. Initialize like a Frame.
-            super().__init__(data)
-        else:
-            # Else: Assume data represents an actual data array.
-            # Construct the spline and append it as the first and only
-            # subspline.
-            spline = Spline(data, *args, **kwargs)
-            super().__init__([spline])
-
-    joinUsingDeadends = morpho.grid.MultiPath.joinUsingDeadends
-    squeeze = morpho.grid.MultiPath.squeeze
-    box = morpho.grid.MultiPath.box
-    # anchorPoint = Spline.anchorPoint
-    commitTransforms = morpho.grid.MultiPath.commitTransforms
-    boxAlign = morpho.grid.MultiPath.boxAlign
+        super().__init__(data, *args, **kwargs)
 
     # Transforms the spline so that the `origin` attribute
     # is in the physical position indicated by the alignment
@@ -1651,9 +1635,6 @@ class MultiSpline(MultiFigure, BoundingBoxFigure):
             nan2inf(fig._data)
         self.origin = anchor
         return self
-
-    realign = morpho.grid.MultiPath.realign
-    align = morpho.grid.MultiPath.align
 
     # EXPERIMENTAL!
     # Parses an SVG file/stream to construct a MultiSpline
