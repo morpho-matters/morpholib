@@ -2130,20 +2130,7 @@ class SpaceSpline(Spline):
         with np.errstate(all="ignore"):  # Suppress numpy warnings
             array2d = array[:,:,0] + 1j*array[:,:,1]
         spline = Spline(data=array2d)
-        spline.start = self.start
-        spline.end = self.end
-        spline.color = self.color
-        spline.alphaEdge = self.alphaEdge
-        spline.fill = self.fill
-        spline.alphaFill = self.alphaFill
-        spline.alpha = self.alpha
-        spline.width = self.width
-
-        spline.dash = self.dash
-        spline.dashOffset = self.dashOffset
-        spline.deadends = self.deadends
-        spline.showTangents = self.showTangents
-
+        spline._updateFrom(self, common=True, copy=False, ignore={"_data"}.union(morpho.METASETTINGS))
 
         # zdepth of the whole spline is given by the median node's visual zdepth.
         max_index = self.length()-1

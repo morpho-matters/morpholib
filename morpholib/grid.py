@@ -2371,26 +2371,7 @@ class SpacePath(Path):
 
         # Construct 2D path in the same style
         path = Path(seq)
-        path.start = self.start
-        path.end = self.end
-        path.color = self.color
-        path.alphaEdge = self.alphaEdge
-        path.fill = self.fill
-        path.alphaFill = self.alphaFill
-        path.alpha = self.alpha
-        path.width = self.width
-        path.headSize = self.headSize
-        path.tailSize = self.tailSize
-        path.outlineWidth = self.outlineWidth
-        path.outlineColor = self.outlineColor
-        path.outlineAlpha = self.outlineAlpha
-
-        # path.static = self.static
-        path.interp = self.interp
-        path.dash = self.dash
-        path.dashOffset = self.dashOffset
-        path.deadends = self.deadends
-        # path.defaultTween = self.defaultTween
+        path._updateFrom(self, common=True, copy=False, ignore={"seq"}.union(morpho.METASETTINGS))
 
         # zdepth of the whole path is given by the mean visual zdepth.
         path.zdepth = np.mean(array[2,:]).tolist()
