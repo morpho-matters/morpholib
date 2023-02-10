@@ -510,6 +510,10 @@ class Path(BoundingBoxFigure):
             outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform]
             )
 
+        self.Tweenable("background", (1,1,1), tags=["color"])
+        self.Tweenable("backAlpha", 0, tags=["scalar"])
+        self.Tweenable("backPad", 0, tags=["scalar"])
+
         # How to interpolate between the points given in the seq.
         # For now, the only interp method is "linear", which  means
         # connect successive points in the seq by straight lines.
@@ -678,13 +682,17 @@ class Path(BoundingBoxFigure):
 
     # Returns physical bounding box of path as
     # [xmin, xmax, ymin, ymax]
-    def box(self):
-        if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+    #
+    # If optional kwarg `raw` is set to True, the
+    # bounding box is computed without applying
+    # the transformation attributes origin, rotation, transform.
+    def box(self, *, raw=False):
+        if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
             temp = self.copy()
             temp.commitTransforms()
             return temp.box()
         array = np.array(self.seq)
-        return self._calculateBox(array, self.origin)
+        return self._calculateBox(array, self.origin if not raw else 0)
 
     # Closes the path IN PLACE if it is not already closed.
     def close(self):
@@ -1181,6 +1189,8 @@ class Path(BoundingBoxFigure):
         # This method is admittedly a mess. It should really be cleaned up and
         # streamlined, but I'm so scared of breaking it! There are so many cases
         # to test and the Path figure is a critically important figure.
+
+        self._drawBackgroundBox(camera, ctx)
 
         # Don't bother drawing an invisible path.
         if self.alpha == 0:

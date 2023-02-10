@@ -164,6 +164,21 @@ class BoundingBoxFigure(morpho.Figure):
         box = self.box(*args, **kwargs)
         return box[-1] - box[-2]
 
+    # Only works for BoundingBoxFigures that have
+    # background box tweenables `background`,
+    # `backAlpha`, and `backPad` defined, along with
+    # a box() method that accepts the `raw` kwarg.
+    def _drawBackgroundBox(self, camera, ctx):
+        if self.backAlpha > 0:
+            # Draw background box
+            brect = morpho.grid.rect(padbox(self.box(raw=True), self.backPad))
+            brect.set(
+                origin=self.origin, rotation=self.rotation,
+                _transform=self._transform,
+                width=0, fill=self.background, alpha=self.backAlpha
+                )
+            brect.draw(camera, ctx)
+
 
 # Computes the total bounding box of a list of boxes.
 def totalBox(boxes):
