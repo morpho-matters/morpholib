@@ -168,7 +168,7 @@ class Spline(BoundingBoxFigure):
         rotation = morpho.Tweenable("rotation", value=0, tags=["scalar"])
         _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
-        self.update([_data, start, end, color, alphaEdge, fill, alphaFill, alpha,
+        self.extendState([_data, start, end, color, alphaEdge, fill, alphaFill, alpha,
             width, dash, dashOffset, origin, rotation, _transform]
             )
 
@@ -2447,7 +2447,7 @@ class EllipticalArc(morpho.Figure):
         color = morpho.Tweenable("color", list(color), tags=["color"])
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
 
-        self.update([pos, xradius, yradius, theta0, theta1, strokeWeight, color, alpha])
+        self.extendState([pos, xradius, yradius, theta0, theta1, strokeWeight, color, alpha])
 
     # Setting `radius` property sets both `xradius` and `yradius` to
     # the same value.
