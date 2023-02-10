@@ -1784,6 +1784,10 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
             path = self._basetype(seq, *args, **kwargs)
             super().__init__([path])
 
+        self.Tweenable("background", (1,1,1), tags=["color"])
+        self.Tweenable("backAlpha", 0, tags=["scalar"])
+        self.Tweenable("backPad", 0, tags=["scalar"])
+
     # anchorPoint = Path.anchorPoint
     realign = Path.realign
     boxAlign = Path.boxAlign
@@ -1806,8 +1810,8 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
     # Compute bounding box of the entire figure taking `origin`
     # attribute into account, but no other transformation attributes.
     # Returned as [xmin, xmax, ymin, ymax]
-    def box(self):
-        return shiftBox(totalBox(path.box() for path in self.figures), self.origin)
+    def box(self, raw=False):
+        return shiftBox(totalBox(path.box() for path in self.figures), self.origin if not raw else 0)
 
     # Joins all of the subpaths into a single Path
     # with the jumps between different subpaths being implemented
@@ -1843,6 +1847,18 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
             if path.nodeCount() < 2:
                 self.figures.remove(path)
         return self
+
+    def draw(self, camera, ctx):
+        # Replace this with self._drawBackgroundBox(camera, ctx)
+        # once rotation and transform are implemented for MultiPath!
+        if self.backAlpha > 0:
+            # Draw background box
+            brect = morpho.grid.rect(padbox(self.box(raw=False), self.backPad))
+            brect.set(
+                width=0, fill=self.background, alpha=self.backAlpha
+                )
+            brect.draw(camera, ctx)
+        MultiFigure.draw(self, camera, ctx)
 
     ### TWEEN METHODS ###
 
