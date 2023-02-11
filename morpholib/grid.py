@@ -1190,7 +1190,7 @@ class Path(BoundingBoxFigure):
         # streamlined, but I'm so scared of breaking it! There are so many cases
         # to test and the Path figure is a critically important figure.
 
-        self._drawBackgroundBox(camera, ctx)
+        self._drawBackgroundBox(camera, ctx, self.origin, self.rotation, self._transform)
 
         # Don't bother drawing an invisible path.
         if self.alpha == 0:

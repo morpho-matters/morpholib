@@ -169,13 +169,13 @@ class BoundingBoxFigure(morpho.Figure):
     # `backAlpha`, and `backPad` defined and the general
     # `alpha` tweenable, along with a box() method that
     # accepts the `raw` kwarg.
-    def _drawBackgroundBox(self, camera, ctx):
+    def _drawBackgroundBox(self, camera, ctx, origin=0, rotation=0, transform=np.eye(2)):
         if self.backAlpha > 0:
             # Draw background box
             brect = morpho.grid.rect(padbox(self.box(raw=True), self.backPad))
             brect.set(
-                origin=self.origin, rotation=self.rotation,
-                _transform=self._transform,
+                origin=origin, rotation=rotation,
+                _transform=transform,
                 width=0, fill=self.background, alpha=self.backAlpha*self.alpha
                 )
             brect.draw(camera, ctx)

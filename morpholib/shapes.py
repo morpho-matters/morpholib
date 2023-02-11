@@ -1155,7 +1155,7 @@ class Spline(BoundingBoxFigure):
 
     def draw(self, camera, ctx):
 
-        self._drawBackgroundBox(camera, ctx)
+        self._drawBackgroundBox(camera, ctx, self.origin, self.rotation, self._transform)
 
         # Need at least two nodes to draw
         if self.data.shape[0] < 2:
