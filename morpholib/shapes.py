@@ -211,6 +211,14 @@ class Spline(BoundingBoxFigure):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
+    @property
+    def pos(self):
+        return self.origin
+
+    @pos.setter
+    def pos(self, value):
+        self.origin = value
+
 
     def copy(self):
         new = super().copy()

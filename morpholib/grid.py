@@ -586,6 +586,15 @@ class Path(BoundingBoxFigure):
         self.headExternal = value
         self.tailExternal = value
 
+    @property
+    def pos(self):
+        return self.origin
+
+    @pos.setter
+    def pos(self, value):
+        self.origin = value
+
+
     # Returns number of nodes in the path.
     # Equivalent to len(self.seq)
     def nodeCount(self):
@@ -1791,6 +1800,14 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
     # anchorPoint = Path.anchorPoint
     realign = Path.realign
     boxAlign = Path.boxAlign
+
+    @property
+    def pos(self):
+        return self.origin
+
+    @pos.setter
+    def pos(self, value):
+        self.origin = value
 
     # Transforms the path so that the `origin` attribute
     # is in the physical position indicated by the alignment
