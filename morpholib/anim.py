@@ -257,6 +257,7 @@ class Frame(morpho.Figure):
 
         # Extend the figure list
         self.figures.extend(other.figures)
+        return self
 
     @property
     def all(self):
