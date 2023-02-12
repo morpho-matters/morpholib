@@ -1710,7 +1710,7 @@ class MultiSpline(morpho.grid.MultiPath):
     # from morpho.latex.parse(). Intended to provide an easier
     # way to morph one LaTeX spline into another one, like this:
     #   myTexSpline.newendkey(30).replaceTex(r"E = mc^2")
-    def replaceTex(self, tex, *, align=None, boxWidth=None, boxHeight=None, **kwargs):
+    def replaceTex(self, tex, *, pos=None, align=None, boxWidth=None, boxHeight=None, **kwargs):
         box = self.box()
         if align is None:
             align = self.boxAlign(box=box, invalidValue=0)
@@ -1721,6 +1721,8 @@ class MultiSpline(morpho.grid.MultiPath):
             **kwargs
             )
         self.figures = multispline.figures
+        if pos is not None:
+            self.origin = pos
         return self
 
     ### TWEEN METHODS ###
