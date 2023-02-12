@@ -1121,8 +1121,10 @@ def morphFrom(actor, source, duration=30, atFrame=None):
     fig0.visible = False
 
     # Create new key for the start of the morph.
-    # It should be equal to the given source figure.
+    # It should be equal to the given source figure
+    # except for the metasettings (tween method, transition, etc.)
     fig1 = actor.newkey(atFrame, source.copy())
+    fig1._updateSettings(fig0, includeTweenMethod=True)
     fig1.set(visible=True)
 
     # Set destination figure to be the original last keyfigure.
