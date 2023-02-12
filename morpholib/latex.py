@@ -63,6 +63,11 @@ def iscached(tex):
 
 # Parses a string containing LaTeX code and returns a
 # MultiSpline figure representing it.
+#
+# By default, the MultiSpline is positioned at 0, but this
+# can be changed by passing in a complex number to the
+# optional keyword argument `pos`.
+#
 # Optionally a `preamble` keyword argument can be specified.
 # This is mainly to change which packages are imported when
 # the LaTeX is parsed. If unspecified, the preamble will be
@@ -70,13 +75,15 @@ def iscached(tex):
 #
 # Any other args/kwargs will be passed into the MultiSpline
 # constructor (e.g. boxWidth)
-def parse(tex, *args, preamble=None, **kwargs):
+def parse(tex, *args, preamble=None, pos=0, **kwargs):
     tex = _sanitizeTex(tex)
 
     # Check if the SVG for this TeX code is cached
     if cacheDir is not None and iscached(tex):
         filepath = cacheDir + os.sep + hashTex(tex)
-        return morpho.shapes.MultiSpline.fromsvg(filepath, *args, **kwargs)
+        spline = morpho.shapes.MultiSpline.fromsvg(filepath, *args, **kwargs)
+        spline.origin = pos
+        return spline
 
     if preamble is None:
         # Referencing the global scope `preamble` variable via
@@ -100,4 +107,5 @@ def parse(tex, *args, preamble=None, **kwargs):
         stream.write(svgcode)
         stream.seek(0)
         spline = morpho.shapes.MultiSpline.fromsvg(stream, *args, **kwargs)
+    spline.origin = pos
     return spline
