@@ -2528,8 +2528,10 @@ class EllipticalArc(morpho.Figure):
             ctx.set_line_width(self.strokeWeight)
             ctx.stroke()
 
-# Animates an e-arc actor appearing by "growing in" from a single point.
-# The starting point is always the initial node in the sequence.
+# Animates an e-arc actor appearing by "growing in" from theta0
+# toward theta1 unless reverse=True whereby it will grow from
+# theta1 toward theta0.
+#
 # See also: morpho.actions.fadeIn()
 @EllipticalArc.action
 def growIn(arc, duration=30, atFrame=None, *, reverse=False):
