@@ -539,6 +539,10 @@ class Path(BoundingBoxFigure):
         # The technique that should be used to render outlines
         self.NonTweenable("outlineMethod", self.defaultOutlineMethod)
 
+        # Should strokes occur behind fills?
+        # (currently this is an unimplemented future feature)
+        self.NonTweenable("backStroke", False)
+
         # For internal use.
         # The vertices of an arrow triangle will be expanded by this
         # amount. Mainly for use internally when rendering arrow
