@@ -313,6 +313,22 @@ def padbox(box, xpad, ypad=None, /):
 
     return box
 
+# Computes the total bounding box of a list of boxes.
+def totalBox(boxes):
+    XMIN, YMIN, XMAX, YMAX = oo, oo, -oo, -oo
+    for box in boxes:
+        xmin, xmax, ymin, ymax = box
+        XMIN = min(XMIN, xmin)
+        YMIN = min(YMIN, ymin)
+        XMAX = max(XMAX, xmax)
+        YMAX = max(YMAX, ymax)
+
+    bigbox = [XMIN, XMAX, YMIN, YMAX]
+    if isbadarray(bigbox):
+        raise ValueError("Total box is unbounded or undefined.")
+
+    return bigbox
+
 # Converts minutes with seconds into just seconds.
 # minsec(m,s) --> 60*m + s
 #

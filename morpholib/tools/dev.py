@@ -181,22 +181,6 @@ class BoundingBoxFigure(morpho.Figure):
             brect.draw(camera, ctx)
 
 
-# Computes the total bounding box of a list of boxes.
-def totalBox(boxes):
-    XMIN, YMIN, XMAX, YMAX = oo, oo, -oo, -oo
-    for box in boxes:
-        xmin, xmax, ymin, ymax = box
-        XMIN = min(XMIN, xmin)
-        YMIN = min(YMIN, ymin)
-        XMAX = max(XMAX, xmax)
-        YMAX = max(YMAX, ymax)
-
-    bigbox = [XMIN, XMAX, YMIN, YMAX]
-    if isbadarray(bigbox):
-        raise ValueError("Total box is unbounded or undefined.")
-
-    return bigbox
-
 # Shifts a bounding box of the form [xmin,xmax,ymin,ymax]
 # by the given 2d vector `shift` expressed as a complex number.
 # Returns the modified box.
