@@ -1809,6 +1809,13 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
     def pos(self, value):
         self.origin = value
 
+    @property
+    def boxWidth(self):
+        return lambda *args, **kwargs: BoundingBoxFigure.boxWidth(self, *args, **kwargs)
+
+    @property
+    def boxHeight(self):
+        return lambda *args, **kwargs: BoundingBoxFigure.boxHeight(self, *args, **kwargs)
     # Transforms the path so that the `origin` attribute
     # is in the physical position indicated by the alignment
     # parameter. The path should be visually unchanged after
