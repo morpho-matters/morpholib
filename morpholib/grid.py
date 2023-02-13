@@ -1831,8 +1831,8 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
             scale_y = scale_x
 
         for fig in self.figures:
-            if not(self.origin == 0 and self.rotation == 0 and np.array_equal(self._transform, I2)):
-                self.commitTransforms()
+            if not(fig.origin == 0 and fig.rotation == 0 and np.array_equal(fig._transform, I2)):
+                fig.commitTransforms()
             fig._transform = morpho.matrix.scale2d(scale_x, scale_y)
             fig.commitTransforms()
         return self
