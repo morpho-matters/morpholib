@@ -1816,6 +1816,47 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
     @property
     def boxHeight(self):
         return lambda *args, **kwargs: BoundingBoxFigure.boxHeight(self, *args, **kwargs)
+
+    # Rescales the MultiPath by the given scale factors.
+    # If a single scale factor is omitted it will copy its partner.
+    #
+    # Note this applies to the figure IN PLACE and will also commit
+    # the transforms of all subfigures.
+    def rescale(self, scale_x=None, scale_y=None):
+        if scale_x is None and scale_y is None:
+            raise TypeError("No scale factor provided to rescale()")
+        elif scale_x is None:
+            scale_x = scale_y
+        elif scale_y is None:
+            scale_y = scale_x
+
+        for fig in self.figures:
+            if not(self.origin == 0 and self.rotation == 0 and np.array_equal(self._transform, I2)):
+                self.commitTransforms()
+            fig._transform = morpho.matrix.scale2d(scale_x, scale_y)
+            fig.commitTransforms()
+        return self
+
+    # Resizes the MultiPath so that its absolute bounding box matches
+    # the dimensions given. If either dimension is omitted, the figure
+    # will be resized so as to keep the aspect ratio the same.
+    #
+    # Note this applies to the figure IN PLACE and will also commit
+    # the transforms of all subfigures.
+    def resize(self, boxWidth=None, boxHeight=None):
+        if boxWidth is None and boxHeight is None:
+            raise TypeError("No dimension provided to resize()")
+        elif boxWidth is None:
+            scale_x = scale_y = boxHeight / self.boxHeight()
+        elif boxHeight is None:
+            scale_x = scale_y = boxWidth / self.boxWidth()
+        else:
+            scale_x = boxWidth / self.boxWidth()
+            scale_y = boxHeight / self.boxHeight()
+
+        self.rescale(scale_x, scale_y)
+        return self
+
     # Transforms the path so that the `origin` attribute
     # is in the physical position indicated by the alignment
     # parameter. The path should be visually unchanged after
