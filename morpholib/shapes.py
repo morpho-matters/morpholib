@@ -288,6 +288,8 @@ class Spline(BoundingBoxFigure):
         # return totalBox(subboxes)
 
     boxAlign = morpho.grid.Path.boxAlign
+    rescale = morpho.grid.Path.rescale
+    resize = morpho.grid.Path.resize
 
     # Transforms the spline so that the `origin` attribute
     # is in the physical position indicated by the alignment
