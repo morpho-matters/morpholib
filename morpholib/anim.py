@@ -3239,20 +3239,20 @@ class Animation(object):
     # its lastID. Defaults to infinity.
     # Optionally specify a timeOffset. Positive means after lastID,
     # negative means before lastID.
-    def endDelay(self, f=oo, timeOffset=0):
+    def wait(self, f=oo, timeOffset=0):
         end = self.lastID() + timeOffset
         if end == -oo:
             raise IndexError("End of animation is undefined.")
         self.delays[end] = f
 
-        # # Remove delay if it is shorter than half of a single frame.
-        # if f < 0.5:
-        #     self.delays.pop(end)
+    @property
+    def endDelay(self):
+        return self.wait
 
     # Makes the animation delay at its current final frame for
     # however long is needed until the specified frame f is reached.
-    # This is usually equivalent to self.endDelay(f - self.length())
-    def endDelayUntil(self, f=oo):
+    # This is usually equivalent to self.wait(f - self.length())
+    def waitUntil(self, f=oo):
         f = f - self.length()
         if abs(f) != oo:
             f = round(f)
@@ -3272,7 +3272,12 @@ class Animation(object):
                 raise Exception("Final frame already has infinitely long delay.")
             f += currentEndDelay
 
-        self.endDelay(f)
+        self.wait(f)
+
+    @property
+    def endDelayUntil(self):
+        return self.waitUntil
+
 
     # Convert all infinite delays to the specified delay (units=frames).
     def finitizeDelays(self, delay):
