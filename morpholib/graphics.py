@@ -2,6 +2,7 @@
 import morpholib as morpho
 import morpholib.anim
 import morpholib.color
+import morpholib.grid
 from morpholib.tools.basics import *
 from morpholib.tools.dev import BoundingBoxFigure
 
@@ -802,7 +803,7 @@ selfmethods = ["rescaleAspectRatioWH", "scaleByWidth", "scaleByHeight",
 # Bottom line: It's just like Image except you can tween between different
 # underlying image files.
 @morpho.MultiFigure._modifyMethods(selfmethods, Image, morpho.MultiFigure._returnOrigCaller)
-class MultiImage(morpho.MultiFigure):
+class MultiImage(morpho.MultiFigure, BoundingBoxFigure):
 
     def __init__(self, source=None):
         if source is None:
@@ -832,6 +833,8 @@ class MultiImage(morpho.MultiFigure):
                 self.figures[n] = newfig
 
     # tween = morpho.Figure.tween
+
+    box = morpho.grid.MultiPath.box
 
     ### TWEEN METHODS ###
 
