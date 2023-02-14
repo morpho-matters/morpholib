@@ -313,6 +313,18 @@ def padbox(box, xpad, ypad=None, /):
 
     return box
 
+# Shifts a bounding box of the form [xmin,xmax,ymin,ymax]
+# by the given 2d vector `shift` expressed as a complex number.
+# Returns the modified box.
+def shiftBox(box, shift):
+    left, right, bottom, top = box
+    # Adjust by origin
+    left += shift.real
+    right += shift.real
+    bottom += shift.imag
+    top += shift.imag
+    return [left, right, bottom, top]
+
 # Computes the total bounding box of a list of boxes.
 def totalBox(boxes):
     XMIN, YMIN, XMAX, YMAX = oo, oo, -oo, -oo
