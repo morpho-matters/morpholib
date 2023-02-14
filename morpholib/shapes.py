@@ -237,7 +237,7 @@ class Spline(BoundingBoxFigure):
     # If optional kwarg `raw` is set to True, the
     # bounding box is computed without applying
     # the transformation attributes origin, rotation, transform.
-    def box(self, raw=False):
+    def box(self, *, raw=False):
         if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
             temp = self.copy()
             temp.commitTransforms()

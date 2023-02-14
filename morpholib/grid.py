@@ -1881,7 +1881,7 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
     # Compute bounding box of the entire figure taking `origin`
     # attribute into account, but no other transformation attributes.
     # Returned as [xmin, xmax, ymin, ymax]
-    def box(self, raw=False):
+    def box(self, *, raw=False):
         return shiftBox(totalBox(path.box() for path in self.figures), self.origin if not raw else 0)
 
     # Joins all of the subpaths into a single Path
