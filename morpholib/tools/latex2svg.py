@@ -53,6 +53,7 @@ default_preamble = r"""
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
+\usepackage{xcolor}
 """
 
 latex_cmd = 'latex -interaction nonstopmode -halt-on-error'
