@@ -45,7 +45,7 @@ def sha256(strng):
 # parser to work.
 def _sanitizeTex(tex):
     tex = tex.strip()
-    if r"$$" not in tex:
+    if not(tex.startswith("$$") and tex.endswith("$$")):
         tex = r"$$" + tex + r"$$"
     return tex
 
