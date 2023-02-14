@@ -872,7 +872,7 @@ def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, *, reverseMeth
 #
 # Bottom line: It's just like Text except you can tween between different
 # underlying text strings.
-class MultiText(morpho.MultiFigure):
+class MultiText(morpho.MultiFigure, BoundingBoxFigure):
     _baseFigure = Text
 
     def __init__(self, text="", *args, **kwargs):
@@ -911,6 +911,12 @@ class MultiText(morpho.MultiFigure):
         #         newfig = fig.images[0].copy()
         #         self.figures[n] = newfig
 
+    # Compute bounding box of the entire figure taking `origin`
+    # attribute into account, but no other transformation attributes.
+    # Returned as [xmin, xmax, ymin, ymax]
+    @typecastViewCtx
+    def box(self, view, ctx, pad=0, *, raw=False):
+        return padbox(shiftBox(totalBox(path.box(view, ctx) for path in self.figures), self.origin if not raw else 0), pad)
 
     ### TWEEN METHODS ###
 
