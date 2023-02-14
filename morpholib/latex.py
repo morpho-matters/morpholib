@@ -40,13 +40,13 @@ def sha256(strng):
     return sha.hexdigest()
 
 # Mainly for internal use.
-# Takes LaTeX code and surrounds it with \( \) if it
+# Takes LaTeX code and surrounds it with $$ if it
 # doesn't already. These are needed for the LaTeX
 # parser to work.
 def _sanitizeTex(tex):
     tex = tex.strip()
-    if r"\(" not in tex:
-        tex = r"\(" + tex + r"\)"
+    if r"$$" not in tex:
+        tex = r"$$" + tex + r"$$"
     return tex
 
 # Returns a filename for the given TeX code that can be
