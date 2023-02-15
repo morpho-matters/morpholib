@@ -940,6 +940,8 @@ class MultiText(morpho.MultiFigure, BoundingBoxFigure):
 class MultiPText(MultiText):
     _baseFigure = PText
 
+    box = morpho.grid.MultiPath.box
+
     # Converts the MultiPText figure into an equivalent MultiSpline.
     # The resulting MultiSpline will have its global origin set to the
     # position of the MultiPText's first component text figure's
