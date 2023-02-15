@@ -1292,7 +1292,7 @@ def formatNumber(*args, **kwargs):
 # function, and you probably don't want to use it directly.
 # If you just want something like a morphable single Text
 # figure, use vanilla MultiText instead.
-class FancyMultiText(MultiText, BoundingBoxFigure):
+class FancyMultiText(MultiText):
     _manuallyJump = True
 
     def __init__(self, text="", *args, **kwargs):
