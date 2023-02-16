@@ -385,7 +385,6 @@ class Spline(BoundingBoxFigure):
 
         return svgbbox
 
-    # EXPERIMENTAL!
     # Generates a Spine figure by parsing an SVG file/stream
     # and taking the first SVG path element found.
     #
@@ -1604,7 +1603,6 @@ def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
         spline1.end = 0
 
 
-# EXPERIMENTAL!
 # MultiFigure version of Spline.
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.
 #
@@ -1646,7 +1644,6 @@ class MultiSpline(morpho.grid.MultiPath):
         self.origin = anchor
         return self
 
-    # EXPERIMENTAL!
     # Parses an SVG file/stream to construct a MultiSpline
     # representation of it. See Spline.fromsvg() for more info.
     #

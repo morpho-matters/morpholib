@@ -670,7 +670,6 @@ class MultiFigure(Frame):
                 # super().__setattr__(name, value)
                 morpho.Figure.__setattr__(self, name, value)
 
-    # EXPERIMENTAL!
     # Decorator for the tween methods in a MultiFigure subclass.
     # Reworks ordinary base class tween methods so that they work
     # in a multifigure setting.

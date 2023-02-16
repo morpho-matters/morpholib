@@ -1732,7 +1732,6 @@ class Path(BoundingBoxFigure):
 
         #     T.seq[n] = r*cmath.exp(th*1j)
 
-        # EXPERIMENTAL WITH np.arrays
         pseq = np.array(p.seq, dtype=complex)
         qseq = np.array(q.seq, dtype=complex)
 
@@ -1808,7 +1807,6 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
         path1.end = 0
 
 
-# EXPERIMENTAL!
 # MultiFigure version of Path.
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.
 @MultiFigure._modifyMethods(
