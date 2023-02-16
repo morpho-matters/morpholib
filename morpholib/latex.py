@@ -75,11 +75,11 @@ def iscached(tex):
 #
 # Any other args/kwargs will be passed into the MultiSpline
 # constructor (e.g. boxWidth)
-def parse(tex, *args, preamble=None, pos=0, **kwargs):
+def parse(tex, *args, preamble=None, pos=0, useCache=True, **kwargs):
     tex = _sanitizeTex(tex)
 
     # Check if the SVG for this TeX code is cached
-    if cacheDir is not None and iscached(tex):
+    if useCache and cacheDir is not None and iscached(tex):
         filepath = cacheDir + os.sep + hashTex(tex)
         spline = morpho.shapes.MultiSpline.fromsvg(filepath, *args, **kwargs)
         spline.origin = pos
@@ -98,7 +98,7 @@ def parse(tex, *args, preamble=None, pos=0, **kwargs):
 
     # If caching is enabled, save the output svg code
     # as a file in the specified cache directory.
-    if cacheDir is not None:
+    if useCache and cacheDir is not None:
         filepath = cacheDir + os.sep + hashTex(tex)
         with open(filepath, "w") as file:
             file.write(svgcode)
