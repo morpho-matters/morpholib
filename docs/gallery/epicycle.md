@@ -36,7 +36,7 @@ def epicycle():
             circ0 = morpho.shapes.Ellipse(
                 pos=arrow0.tail, xradius=r0, yradius=r0,
                 strokeWeight=1.5, color=arrow0.color,
-                fillAlpha=0, alpha=0.5
+                alphaFill=0, alpha=0.5
                 )
 
             arrow1 = morpho.grid.Arrow(0, v1)
@@ -48,7 +48,7 @@ def epicycle():
             circ1 = morpho.shapes.Ellipse(
                 pos=arrow1.tail, xradius=r1, yradius=r1,
                 strokeWeight=1.5, color=arrow1.color,
-                fillAlpha=0, alpha=0.5
+                alphaFill=0, alpha=0.5
                 )
 
             path = morpho.grid.line(0, t, steps=60*t)
