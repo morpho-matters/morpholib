@@ -4291,6 +4291,17 @@ class Arrow(Path):
     def angle(self, value):
         self.head = self.tail + self.length*cmath.exp(value*1j)
 
+    # Returns a complex number representing the
+    # tail-to-head vector.
+    @property
+    def vector(self):
+        return self.head - self.tail
+
+    @vector.setter
+    def vector(self, value):
+        self.head = self.tail + value
+
+
     # Return midpoint between head and tail.
     def midpoint(self):
         return (self.head + self.tail) / 2
