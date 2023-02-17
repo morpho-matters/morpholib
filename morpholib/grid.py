@@ -490,7 +490,7 @@ class Path(BoundingBoxFigure):
         end = morpho.Tweenable(name="end", value=1, tags=["scalar"])
         color = morpho.Tweenable(name="color", value=color, tags=["color", "gradient", "notween"])
         alphaEdge = morpho.Tweenable(name="alphaEdge", value=1, tags=["scalar"])
-        fill = morpho.Tweenable(name="fill", value=[1,0,0], tags=["color", "gradientfill", "nolinear", "nospiral"])
+        fill = morpho.Tweenable(name="fill", value=[1,0,0], tags=["color", "gradientfill", "notween"])
         alphaFill = morpho.Tweenable(name="alphaFill", value=0, tags=["scalar"])
         alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         width = morpho.Tweenable(name="width", value=width, tags=["size"])
@@ -1704,7 +1704,7 @@ class Path(BoundingBoxFigure):
 
         # Use standard figure linear tween to tween every tweenable
         # except color, alpha, and seq.
-        T = morpho.Figure.tweenLinear(self, other, t, ignore="seq")
+        T = morpho.Figure.tweenSpiral(self, other, t, ignore={"seq"})
         # T.color = morpho.tools.color.colorTween(p.color, q.color, t)
         # # Tween the stroke widths if necessary
         # if p.width != q.width:
