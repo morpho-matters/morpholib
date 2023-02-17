@@ -153,7 +153,7 @@ class Spline(BoundingBoxFigure):
         end = morpho.Tweenable(name="end", value=1, tags=["scalar"])
         color = morpho.Tweenable(name="color", value=color, tags=["color"])
         alphaEdge = morpho.Tweenable(name="alphaEdge", value=1, tags=["scalar"])
-        fill = morpho.Tweenable(name="fill", value=[1,0,0], tags=["color", "gradientfill", "nolinear", "nospiral"])
+        fill = morpho.Tweenable(name="fill", value=[1,0,0], tags=["color", "gradientfill", "notween"])
         alphaFill = morpho.Tweenable(name="alphaFill", value=0, tags=["scalar"])
         alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         width = morpho.Tweenable(name="width", value=width, tags=["size"])

@@ -3475,7 +3475,7 @@ class Polygon(BoundingBoxFigure):
         # To have the gradient fill independent, the easiest way is to
         # call commitTransforms() after setting all the transformation
         # tweenables.
-        fill = morpho.Tweenable(name="fill", value=fill, tags=["color", "gradientfill", "nolinear", "nospiral"])
+        fill = morpho.Tweenable(name="fill", value=fill, tags=["color", "gradientfill", "notween"])
         alphaFill = morpho.Tweenable(name="alphaFill", value=alphaFill, tags=["scalar"])
         alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         width = morpho.Tweenable(name="width", value=width, tags=["size"])
