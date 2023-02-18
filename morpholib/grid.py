@@ -1939,16 +1939,33 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
                 )
             brect.draw(camera, ctx)
 
-        # Apply additional transforms to subfigures if global
+        # Temporarily apply additional transforms to subfigures if global
         # rotation/transform are non-identity
         if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
-            selfcopy = self.copy()  # Don't actually change underlying subfigures
+            # Calculate as a single matrix the overall effect
+            # of both the global rotation and transform.
             rotateAndTransform = self._transform @ morpho.matrix.rotation2d(self.rotation)
             rotateAndTransform_mat = morpho.matrix.Mat(rotateAndTransform)
-            for fig in selfcopy.figures:
-                fig.origin = rotateAndTransform_mat * fig.origin
+
+            # Initialize lists to store original origin/transform values
+            # so they can be restored after being modified
+            orig_origins = []
+            orig_transforms = []
+            for fig in self.figures:
+                # Save original origin and transform values
+                orig_origins.append(fig.origin)
+                orig_transforms.append(fig._transform)
+
+                # Temporarily modify origin and transform
+                if fig.origin != 0:
+                    fig.origin = rotateAndTransform_mat * fig.origin
                 fig._transform = rotateAndTransform @ fig._transform
-            MultiFigure.draw(selfcopy, camera, ctx)
+            MultiFigure.draw(self, camera, ctx)
+
+            # Restore original transformation values
+            for fig, origin, transform in zip(self.figures, orig_origins, orig_transforms):
+                fig.origin = origin
+                fig._transform = transform
         else:
             MultiFigure.draw(self, camera, ctx)
 
