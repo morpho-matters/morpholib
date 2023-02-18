@@ -1001,13 +1001,8 @@ class Path(BoundingBoxFigure):
     # Returns the center of mass of all nodes in the Path
     # ignoring transformation attributes.
     # That is, returns mean(path.seq)
-    def center(self):
+    def centroid(self):
         return mean(self.seq)
-
-    # Returns the center of the path's bounding box
-    # ignoring rotation and transform.
-    def boxCenter(self):
-        return BoundingBoxFigure.center(self)
 
     # NOTE: FOR INTERNAL USE ONLY! NOT WELL-MAINTAINED. USE AT OWN RISK!
     # Returns boolean on whether a path has the same
@@ -3580,13 +3575,8 @@ class Polygon(BoundingBoxFigure):
     # Returns the center of mass of all vertices
     # ignoring transformation attributes.
     # That is, returns mean(polygon.vertices)
-    def center(self):
+    def centroid(self):
         return mean(self.vertices)
-
-    # Returns the center of the polygon's bounding box
-    # ignoring rotation and transform.
-    def boxCenter(self):
-        return BoundingBoxFigure.center(self)
 
     # Specifies which class to use in constructing the edge path.
     # Mainly useful under the hood with how SpacePolygon inherits from Polygon.
