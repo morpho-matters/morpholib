@@ -1913,10 +1913,17 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
 
 
     def commitTransforms(self):
+        # Calculate as a single matrix the overall effect
+        # of both the global rotation and transform.
+        rotateAndTransform = self._transform @ morpho.matrix.rotation2d(self.rotation)
+        rotateAndTransform_mat = morpho.matrix.Mat(rotateAndTransform)
         for path in self.figures:
-            path.origin += self.origin
+            path.origin = (rotateAndTransform_mat * path.origin) + self.origin
+            path._transform = rotateAndTransform @ path._transform
             path.commitTransforms()
         self.origin = 0
+        self.rotation = 0
+        self._transform = np.eye(2)
         return self
 
     # Removes subpaths IN PLACE whose node counts are less than 2
