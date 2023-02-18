@@ -295,17 +295,24 @@ class Spline(BoundingBoxFigure):
     # is in the physical position indicated by the alignment
     # parameter. The spline should be visually unchanged after
     # this transformation.
-    #
-    # Note that this method currently does not support splines
-    # with non-identity rotation or transform values. It won't
-    # fail, but it may act unpredictably. This may be changed
-    # in a future version.
     def alignOrigin(self, align):
-        anchor = self.anchorPoint(align)
+        anchor = self.anchorPoint(align, raw=True)
+        # Apply transforms
+        rotator = cmath.exp(self.rotation*1j)
+        transformer = morpho.matrix.Mat(self._transform)
+        anchor = transformer*(rotator*anchor) + self.origin
+
+        # Move origin to anchor point while transforming
+        # the internal spline data in the opposite way so
+        # that the appearance of the spline will not change.
         self._data = self._data.copy()
-        self._data += self.origin - anchor
+        try:
+            self._data += (transformer.inv*(self.origin - anchor))/rotator
+        except np.linalg.LinAlgError:
+            raise ValueError("Cannot compute alignOrigin() with singular transform matrix.")
         nan2inf(self._data)
         self.origin = anchor
+
         return self
 
     realign = morpho.grid.Path.realign

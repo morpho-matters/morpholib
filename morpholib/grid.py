@@ -638,7 +638,7 @@ class Path(BoundingBoxFigure):
     # so that it doesn't have to be computed on the fly.
     def boxAlign(self, *, box=None, invalidValue=nan):
         if box is None:
-            box = self.box()
+            box = shiftBox(self.box(raw=True), self.origin)
         xmin, xmax, ymin, ymax = box
         anchor_x = invalidValue if xmin == xmax else morpho.lerp(-1, 1, self.origin.real, start=xmin, end=xmax)
         anchor_y = invalidValue if ymin == ymax else morpho.lerp(-1, 1, self.origin.imag, start=ymin, end=ymax)
@@ -649,21 +649,29 @@ class Path(BoundingBoxFigure):
     # parameter. The path should be visually unchanged after
     # this transformation.
     def alignOrigin(self, align):
-        anchor = self.anchorPoint(align)
+        anchor = self.anchorPoint(align, raw=True)
+        # Apply transforms
+        rotator = cmath.exp(self.rotation*1j)
+        transformer = morpho.matrix.Mat(self._transform)
+        anchor = transformer*(rotator*anchor) + self.origin
+
+        # Move origin to anchor point while transforming
+        # the internal path data in the opposite way so
+        # that the appearance of the path will not change.
         array = np.array(self.seq, dtype=complex)
-        array += self.origin - anchor
+        try:
+            array += (transformer.inv*(self.origin - anchor))/rotator
+        except np.linalg.LinAlgError:
+            raise ValueError("Cannot compute alignOrigin() with singular transform matrix.")
         self.seq = array.tolist()
         self.origin = anchor
+
         return self
 
     # Translates the path so that the current origin point
     # agrees with the given alignment parameter.
     # Can also be invoked by setting the `align` property:
     #   mypath.align = [-1,1]
-    #
-    # Note that this method will probably work incorrectly
-    # on paths with non-identity rotation or transform.
-    # This behavior may be fixed in a future version.
     def realign(self, align):
         origOrigin = self.origin
         self.alignOrigin(align)
