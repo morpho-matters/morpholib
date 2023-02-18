@@ -1886,10 +1886,17 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
 
     align = Path.align
 
-    # Compute bounding box of the entire figure taking `origin`
-    # attribute into account, but no other transformation attributes.
+    # Computes the bounding box of the entire figure.
     # Returned as [xmin, xmax, ymin, ymax]
+    #
+    # If optional kwarg `raw` is set to True, the
+    # bounding box is computed without applying
+    # the transformation attributes origin, rotation, transform.
     def box(self, *, raw=False):
+        if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+            temp = self.copy()
+            temp.commitTransforms()
+            return temp.box(raw=True)
         return shiftBox(totalBox(path.box() for path in self.figures), self.origin if not raw else 0)
 
     # Joins all of the subpaths into a single Path
@@ -1935,16 +1942,7 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
         return self
 
     def draw(self, camera, ctx):
-        # Replace this with self._drawBackgroundBox(camera, ctx)
-        # once rotation and transform are implemented for MultiPath!
-        if self.backAlpha > 0:
-            # Draw background box
-            brect = morpho.grid.rect(shiftBox(padbox(self.box(raw=False), self.backPad), -self.origin))
-            brect.set(
-                width=0, fill=self.background, alpha=self.backAlpha*self.alpha,
-                origin=self.origin, rotation=self.rotation, _transform=self._transform
-                )
-            brect.draw(camera, ctx)
+        self._drawBackgroundBox(camera, ctx, self.origin, self.rotation, self._transform)
 
         # Temporarily apply additional transforms to subfigures if global
         # rotation/transform are non-identity
