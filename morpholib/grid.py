@@ -1944,7 +1944,9 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
         if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
             selfcopy = self.copy()  # Don't actually change underlying subfigures
             rotateAndTransform = self._transform @ morpho.matrix.rotation2d(self.rotation)
+            rotateAndTransform_mat = morpho.matrix.Mat(rotateAndTransform)
             for fig in selfcopy.figures:
+                fig.origin = rotateAndTransform_mat * fig.origin
                 fig._transform = rotateAndTransform @ fig._transform
             MultiFigure.draw(selfcopy, camera, ctx)
         else:
