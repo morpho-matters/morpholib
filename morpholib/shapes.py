@@ -3,7 +3,7 @@ import morpholib as morpho
 import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    totalBox, shiftBox
+    totalBox, shiftBox, translateArrayUnderTransforms
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 
@@ -306,10 +306,7 @@ class Spline(BoundingBoxFigure):
         # the internal spline data in the opposite way so
         # that the appearance of the spline will not change.
         self._data = self._data.copy()
-        try:
-            self._data += (transformer.inv*(self.origin - anchor))/rotator
-        except np.linalg.LinAlgError:
-            raise ValueError("Cannot compute alignOrigin() with singular transform matrix.")
+        translateArrayUnderTransforms(self._data, self.origin-anchor, rotator, transformer)
         nan2inf(self._data)
         self.origin = anchor
 

@@ -247,3 +247,11 @@ class Slicer(object):
 
     def __setitem__(self, index, value):
         self.setter(index, value)
+
+
+def translateArrayUnderTransforms(array, shift, rotator, transformer):
+    try:
+        array += (transformer.inv*shift)/rotator
+    except np.linalg.LinAlgError:
+        raise ValueError("transform is singular.")
+    return array

@@ -6,7 +6,7 @@ from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    totalBox, shiftBox
+    totalBox, shiftBox, translateArrayUnderTransforms
 
 from morpholib import object_hasattr
 
@@ -659,10 +659,7 @@ class Path(BoundingBoxFigure):
         # the internal path data in the opposite way so
         # that the appearance of the path will not change.
         array = np.array(self.seq, dtype=complex)
-        try:
-            array += (transformer.inv*(self.origin - anchor))/rotator
-        except np.linalg.LinAlgError:
-            raise ValueError("Cannot compute alignOrigin() with singular transform matrix.")
+        translateArrayUnderTransforms(array, self.origin-anchor, rotator, transformer)
         self.seq = array.tolist()
         self.origin = anchor
 
