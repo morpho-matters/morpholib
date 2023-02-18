@@ -1838,6 +1838,8 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
         self.Tweenable("background", (1,1,1), tags=["color"])
         self.Tweenable("backAlpha", 0, tags=["scalar"])
         self.Tweenable("backPad", 0, tags=["scalar"])
+        self.Tweenable("rotation", 0, tags=["scalar"])
+        self.Tweenable("_transform", np.eye(2), tags=["nparray"])
 
     # anchorPoint = Path.anchorPoint
     realign = Path.realign
@@ -1850,6 +1852,14 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
     @pos.setter
     def pos(self, value):
         self.origin = value
+
+    @property
+    def transform(self):
+        return self._transform
+
+    @transform.setter
+    def transform(self, value):
+        self._transform = morpho.matrix.array(value)
 
     @property
     def boxWidth(self):
@@ -1922,12 +1932,23 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
         # once rotation and transform are implemented for MultiPath!
         if self.backAlpha > 0:
             # Draw background box
-            brect = morpho.grid.rect(padbox(self.box(raw=False), self.backPad))
+            brect = morpho.grid.rect(shiftBox(padbox(self.box(raw=False), self.backPad), -self.origin))
             brect.set(
-                width=0, fill=self.background, alpha=self.backAlpha*self.alpha
+                width=0, fill=self.background, alpha=self.backAlpha*self.alpha,
+                origin=self.origin, rotation=self.rotation, _transform=self._transform
                 )
             brect.draw(camera, ctx)
-        MultiFigure.draw(self, camera, ctx)
+
+        # Apply additional transforms to subfigures if global
+        # rotation/transform are non-identity
+        if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+            selfcopy = self.copy()  # Don't actually change underlying subfigures
+            rotateAndTransform = self._transform @ morpho.matrix.rotation2d(self.rotation)
+            for fig in selfcopy.figures:
+                fig._transform = rotateAndTransform @ fig._transform
+            MultiFigure.draw(selfcopy, camera, ctx)
+        else:
+            MultiFigure.draw(self, camera, ctx)
 
     ### TWEEN METHODS ###
 
