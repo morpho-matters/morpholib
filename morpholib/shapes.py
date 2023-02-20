@@ -1634,11 +1634,6 @@ class MultiSpline(morpho.grid.MultiPath):
     # is in the physical position indicated by the alignment
     # parameter. The spline should be visually unchanged after
     # this transformation.
-    #
-    # Note that this method currently does not support splines
-    # with non-identity rotation or transform values. It won't
-    # fail, but it may act unpredictably. This may be changed
-    # in a future version.
     def alignOrigin(self, align):
         anchor = self.anchorPoint(align, raw=True)
         # Apply transforms
