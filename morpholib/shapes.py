@@ -1640,10 +1640,20 @@ class MultiSpline(morpho.grid.MultiPath):
     # fail, but it may act unpredictably. This may be changed
     # in a future version.
     def alignOrigin(self, align):
-        anchor = self.anchorPoint(align)
+        anchor = self.anchorPoint(align, raw=True)
+        # Apply transforms
+        rotator = cmath.exp(self.rotation*1j)
+        transformer = morpho.matrix.Mat(self._transform)
+        anchor = transformer*(rotator*anchor) + self.origin
+
+        # Shift subpath arrays so that the global translation leaves
+        # the multipath visually unchanged.
+        shift = self.origin - anchor
+        globalFullTransformer = self._transform @ morpho.matrix.rotation2d(self.rotation)
         for fig in self.figures:
             fig._data = fig._data.copy()
-            fig._data += self.origin - anchor
+            mat = morpho.matrix.Mat(globalFullTransformer @ fig._transform @ morpho.matrix.rotation2d(fig.rotation))
+            translateArrayUnderTransforms(fig._data, shift, 1, mat)
             nan2inf(fig._data)
         self.origin = anchor
         return self

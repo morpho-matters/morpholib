@@ -1876,11 +1876,22 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
     # parameter. The path should be visually unchanged after
     # this transformation.
     def alignOrigin(self, align):
-        anchor = self.anchorPoint(align)
+        anchor = self.anchorPoint(align, raw=True)
+        # Apply transforms
+        rotator = cmath.exp(self.rotation*1j)
+        transformer = morpho.matrix.Mat(self._transform)
+        anchor = transformer*(rotator*anchor) + self.origin
+
+        # Shift subpath arrays so that the global translation leaves
+        # the multipath visually unchanged.
+        shift = self.origin - anchor
+        globalFullTransformer = self._transform @ morpho.matrix.rotation2d(self.rotation)
         for fig in self.figures:
             array = np.array(fig.seq, dtype=complex)
-            array += self.origin - anchor
+            mat = morpho.matrix.Mat(globalFullTransformer @ fig._transform @ morpho.matrix.rotation2d(fig.rotation))
+            translateArrayUnderTransforms(array, shift, 1, mat)
             fig.seq = array.tolist()
+
         self.origin = anchor
         return self
 
