@@ -702,6 +702,7 @@ class PText(Text):
 
         return stream
 
+    # EXPERIMENTAL! May be changed in a future version!
     # Converts the text figure into an equivalent MultiSpline figure.
     # The `origin` attribute of the resulting MultiSpline will be set
     # as the position of the text figure.
@@ -942,6 +943,7 @@ class MultiPText(MultiText):
 
     box = morpho.grid.MultiPath.box
 
+    # EXPERIMENTAL! May be changed in a future version!
     # Converts the MultiPText figure into an equivalent MultiSpline.
     # The resulting MultiSpline will have its global origin set to the
     # position of the MultiPText's first component text figure's
@@ -1119,6 +1121,7 @@ Spacetext = SpaceText  # Synonym
 class SpacePText(PText, SpaceText):
     _baseFigure = PText
 
+    # NOT IMPLEMENTED!
     # Converts the text figure into an equivalent SpaceSpline figure.
     # The `origin` attribute of the resulting Spline will be set
     # as the position of the text figure.
@@ -1652,6 +1655,7 @@ class FancyMultiPText(FancyMultiText):
 
         return self._makeFrameFromBoxes(boxes, ignoreBackground=ignoreBackground)
 
+    # EXPERIMENTAL! May be changed in a future version!
     # Converts the text figure into an equivalent MultiSpline figure.
     # The origin attribute of the MultiSpline will match the pos
     # attribute of the text figure.
