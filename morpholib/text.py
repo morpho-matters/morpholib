@@ -712,8 +712,8 @@ class PText(Text):
                 tightbox=True
                 )
         spline.origin = self.pos
-        # spline.rotation = self.rotation
-        # spline.transform = self.transform
+        spline.rotation = self.rotation
+        spline._transform = self._transform
         return spline
 
     # Returns equivalent non-physical Text object
