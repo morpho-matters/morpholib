@@ -712,11 +712,17 @@ class Path(BoundingBoxFigure):
         array = np.array(self.seq)
         return self._calculateBox(array, self.origin if not raw else 0)
 
-    # Rescales the MultiPath by the given scale factors.
+    # Rescales the path by the given scale factors by applying
+    # it to the path's current `transform` attribute.
     # If a single scale factor is omitted it will copy its partner.
     #
-    # Note this applies to the figure IN PLACE and will also commit
-    # the transforms of all subfigures.
+    # This is a "pre-rescaling", meaning the scale factors should
+    # be interpreted as applying BEFORE the transformation
+    # attributes. However, the effect is achieved by modifying
+    # the path's `transform` attribute, so the underlying path
+    # data will remain unchanged.
+    #
+    # This method acts on the figure IN PLACE.
     def rescale(self, scale_x=None, scale_y=None):
         if scale_x is None and scale_y is None:
             raise TypeError("No scale factor provided to rescale()")
@@ -725,29 +731,32 @@ class Path(BoundingBoxFigure):
         elif scale_y is None:
             scale_y = scale_x
 
-        if not(self.origin == 0 and self.rotation == 0 and np.array_equal(self._transform, I2)):
-            self.commitTransforms()
-        self._transform = morpho.matrix.scale2d(scale_x, scale_y)
-        self.commitTransforms()
+        # Need to conjugate by the rotation matrix since
+        # rotational action is applied before transform action.
+        rotator = morpho.matrix.rotation2d(self.rotation)
+        self._transform = self._transform @ rotator @ morpho.matrix.scale2d(scale_x, scale_y) @ rotator.T
 
         return self
 
-    # Resizes the MultiPath so that its absolute bounding box matches
+    # Resizes the path so that its absolute bounding box matches
     # the dimensions given. If either dimension is omitted, the figure
     # will be resized so as to keep the aspect ratio the same.
     #
-    # Note this applies to the figure IN PLACE and will also commit
-    # the transforms of all subfigures.
+    # This is a "pre-resizing", meaning boxWidth and boxHeight
+    # should be interepreted as referring to the path BEFORE
+    # transformations are applied.
+    #
+    # Note this applies to the figure IN PLACE.
     def resize(self, boxWidth=None, boxHeight=None):
         if boxWidth is None and boxHeight is None:
             raise TypeError("No dimension provided to resize()")
         elif boxWidth is None:
-            scale_x = scale_y = boxHeight / self.boxHeight()
+            scale_x = scale_y = boxHeight / self.boxHeight(raw=True)
         elif boxHeight is None:
-            scale_x = scale_y = boxWidth / self.boxWidth()
+            scale_x = scale_y = boxWidth / self.boxWidth(raw=True)
         else:
-            scale_x = boxWidth / self.boxWidth()
-            scale_y = boxHeight / self.boxHeight()
+            scale_x = boxWidth / self.boxWidth(raw=True)
+            scale_y = boxHeight / self.boxHeight(raw=True)
 
         self.rescale(scale_x, scale_y)
         return self
@@ -1810,7 +1819,7 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
 # MultiFigure version of Path.
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.
 @MultiFigure._modifyMethods(
-    ["close", "rescale"],
+    ["close"],
     Path, MultiFigure._applyToSubfigures
     )
 @MultiFigure._modifyMethods(
@@ -1869,6 +1878,7 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
     def boxHeight(self):
         return lambda *args, **kwargs: BoundingBoxFigure.boxHeight(self, *args, **kwargs)
 
+    rescale = Path.rescale
     resize = Path.resize
 
     # Transforms the path so that the `origin` attribute
