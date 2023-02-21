@@ -598,6 +598,14 @@ class Path(BoundingBoxFigure):
     def pos(self, value):
         self.origin = value
 
+    @property
+    def data(self):
+        return self.seq
+
+    @data.setter
+    def data(self, value):
+        self.seq = value
+
 
     # Returns number of nodes in the path.
     # Equivalent to len(self.seq)
@@ -712,15 +720,12 @@ class Path(BoundingBoxFigure):
         array = np.array(self.seq)
         return self._calculateBox(array, self.origin if not raw else 0)
 
-    # Rescales the path by the given scale factors by applying
-    # it to the path's current `transform` attribute.
+    # Rescales the path by the given scale factors.
     # If a single scale factor is omitted it will copy its partner.
     #
     # This is a "pre-rescaling", meaning the scale factors should
-    # be interpreted as applying BEFORE the transformation
-    # attributes. However, the effect is achieved by modifying
-    # the path's `transform` attribute, so the underlying path
-    # data will remain unchanged.
+    # be interpreted as applying to the raw path data BEFORE the
+    # transformation attributes are applied.
     #
     # This method acts on the figure IN PLACE.
     def rescale(self, scale_x=None, scale_y=None):
@@ -731,10 +736,27 @@ class Path(BoundingBoxFigure):
         elif scale_y is None:
             scale_y = scale_x
 
-        # Need to conjugate by the rotation matrix since
-        # rotational action is applied before transform action.
-        rotator = morpho.matrix.rotation2d(self.rotation)
-        self._transform = self._transform @ rotator @ morpho.matrix.scale2d(scale_x, scale_y) @ rotator.T
+        # Old technique where transform attribute was modified
+        # instead of path data. Decided modifying path data was
+        # the better approach for LaTeX rendering.
+        # # Need to conjugate by the rotation matrix since
+        # # rotational action is applied before transform action.
+        # rotator = morpho.matrix.rotation2d(self.rotation)
+        # self._transform = self._transform @ rotator @ morpho.matrix.scale2d(scale_x, scale_y) @ rotator.T
+
+        # Transform underlying data by sneakily using commitTransforms().
+        # This makes this method usable without modification by
+        # the MultiPath class.
+        origin_orig = self.origin         # Save
+        rotation_orig = self.rotation     # original
+        transform_orig = self._transform  # transform data
+        self.origin = 0
+        self.rotation = 0
+        self._transform = morpho.matrix.scale2d(scale_x, scale_y)
+        self.commitTransforms()
+        self.origin = origin_orig         # Restore
+        self.rotation = rotation_orig     # original
+        self._transform = transform_orig  # transform data
 
         return self
 
@@ -747,6 +769,7 @@ class Path(BoundingBoxFigure):
     # transformations are applied.
     #
     # Note this applies to the figure IN PLACE.
+    # See also: rescale()
     def resize(self, boxWidth=None, boxHeight=None):
         if boxWidth is None and boxHeight is None:
             raise TypeError("No dimension provided to resize()")
