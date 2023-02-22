@@ -3688,6 +3688,7 @@ class Polygon(BoundingBoxFigure):
                 ctx.rotate(self.rotation)
 
             z = self.vertices[0]
+            zprev = z
             x,y = z.real, z.imag
             ctx.move_to(x,y)
             for n in range(1, len(self.vertices)):
@@ -3695,7 +3696,11 @@ class Polygon(BoundingBoxFigure):
                 z = self.vertices[n]
                 x,y = z.real, z.imag
                 # ctx.line_to(X,Y)
-                ctx.line_to(x,y)
+                if isbadnum(z) or isbadnum(zprev):
+                    ctx.move_to(x,y)
+                else:
+                    ctx.line_to(x,y)
+                zprev = z
             ctx.close_path()
             # ctx.restore()
 
