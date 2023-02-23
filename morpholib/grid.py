@@ -4007,8 +4007,8 @@ class Quadmesh(morpho.Figure):
         self.extendState([_array, color, alphaEdge, fill, fill2, alphaFill, alpha, width])
 
         # Other attributes
-        self.shading = False
-        self.colormapDomain = "physical"
+        self.NonTweenable("shading", False)
+        self.NonTweenable("colormapDomain", "physical")
 
     @property
     def array(self):
