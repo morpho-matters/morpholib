@@ -165,39 +165,39 @@ def latex2svg(code, params=default_params, working_directory=None):
     return {'svg': svg, 'depth': depth, 'width': width, 'height': height}
 
 
-def main():
-    """Simple command line interface to latex2svg.
+# def main():
+#     """Simple command line interface to latex2svg.
 
-    - Read from `stdin`.
-    - Write SVG to `stdout`.
-    - Write metadata as JSON to `stderr`.
-    - On error: write error messages to `stdout` and return with error code.
-    """
-    import json
-    import argparse
-    parser = argparse.ArgumentParser(description="""
-    Render LaTeX code from stdin as SVG to stdout. Writes metadata (baseline
-    position, width, height in em units) as JSON to stderr.
-    """)
-    parser.add_argument('--preamble',
-                        help="LaTeX preamble code to read from file")
-    args = parser.parse_args()
-    preamble = default_preamble
-    if args.preamble is not None:
-        with open(args.preamble) as f:
-            preamble = f.read()
-    latex = sys.stdin.read()
-    try:
-        params = default_params.copy()
-        params['preamble'] = preamble
-        out = latex2svg(latex, params)
-        sys.stdout.write(out['svg'])
-        meta = {key: out[key] for key in out if key != 'svg'}
-        sys.stderr.write(json.dumps(meta))
-    except subprocess.CalledProcessError as exc:
-        print(exc.output.decode('utf-8'))
-        sys.exit(exc.returncode)
+#     - Read from `stdin`.
+#     - Write SVG to `stdout`.
+#     - Write metadata as JSON to `stderr`.
+#     - On error: write error messages to `stdout` and return with error code.
+#     """
+#     import json
+#     import argparse
+#     parser = argparse.ArgumentParser(description="""
+#     Render LaTeX code from stdin as SVG to stdout. Writes metadata (baseline
+#     position, width, height in em units) as JSON to stderr.
+#     """)
+#     parser.add_argument('--preamble',
+#                         help="LaTeX preamble code to read from file")
+#     args = parser.parse_args()
+#     preamble = default_preamble
+#     if args.preamble is not None:
+#         with open(args.preamble) as f:
+#             preamble = f.read()
+#     latex = sys.stdin.read()
+#     try:
+#         params = default_params.copy()
+#         params['preamble'] = preamble
+#         out = latex2svg(latex, params)
+#         sys.stdout.write(out['svg'])
+#         meta = {key: out[key] for key in out if key != 'svg'}
+#         sys.stderr.write(json.dumps(meta))
+#     except subprocess.CalledProcessError as exc:
+#         print(exc.output.decode('utf-8'))
+#         sys.exit(exc.returncode)
 
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
