@@ -1269,11 +1269,11 @@ class Path(BoundingBoxFigure):
 
         return vertices, base
 
-    def _drawStroke(self, ctx, RGBA_start):
+    def _drawStroke(self, ctx, rgba):
         # Set line width & color & alpha
         if self.width >= 0.5:  # Don't stroke if width is too small
             ctx.set_line_width(self.width)
-            ctx.set_source_rgba(*RGBA_start)
+            ctx.set_source_rgba(*rgba)
             ctx.set_dash(self.dash, self.dashOffset)
             ctx.stroke_preserve()
             ctx.set_dash([])  # Remove dash pattern and restore to solid strokes
