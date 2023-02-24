@@ -193,6 +193,9 @@ class Spline(BoundingBoxFigure):
         # should be shown. This is mainly for debugging purposes.
         self.NonTweenable("showTangents", False)
 
+        # Should strokes occur behind fills?
+        self.NonTweenable("backstroke", False)
+
 
     @property
     def data(self):
@@ -1165,6 +1168,8 @@ class Spline(BoundingBoxFigure):
         self._transform = np.eye(2)
         return self
 
+    _drawStroke = morpho.grid.Path._drawStroke
+    _drawFill = morpho.grid.Path._drawFill
 
     def draw(self, camera, ctx):
 
@@ -1346,26 +1351,19 @@ class Spline(BoundingBoxFigure):
 
             #     ctx.curve_to(x1,y1, x2,y2, x,y)
 
-            # Handle gradients
-            if self.alphaFill > 0:
-                if isinstance(self.fill, morpho.color.GradientFill):
-                    self.fill.draw(camera, ctx, self.alphaFill*self.alpha, pushPhysicalCoords=False)
-                # Handle normal colors
-                else:
-                    ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
-                    ctx.fill_preserve()
-
-        # ctx.restore()
-
-        # Set line width & color & alpha
-        if self.width < 0.5:  # Don't stroke if width is too small
-            ctx.new_path()
+        # Stroke and fill the path
+        rgba = list(self.color) + [self.alpha*self.alphaEdge]
+        if self.backstroke:
+            # Draw stroke first, then fill
+            self._drawStroke(ctx, rgba)
+            with morpho.pushPhysicalCoords(camera.view, ctx):
+                self._drawFill(camera, ctx)
         else:
-            ctx.set_line_width(self.width)
-            ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
-            ctx.set_dash(self.dash, self.dashOffset)
-            ctx.stroke()
-            ctx.set_dash([])
+            # Fill first, then draw stroke
+            with morpho.pushPhysicalCoords(camera.view, ctx):
+                self._drawFill(camera, ctx)
+            self._drawStroke(ctx, rgba)
+        ctx.new_path()  # Reset cairo path
 
         # Restore original data array if splits occurred
         if needSplits:
