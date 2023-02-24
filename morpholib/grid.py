@@ -541,7 +541,7 @@ class Path(BoundingBoxFigure):
 
         # Should strokes occur behind fills?
         # (currently this is an unimplemented future feature)
-        self.NonTweenable("backStroke", False)
+        self.NonTweenable("backstroke", False)
 
         # For internal use.
         # The vertices of an arrow triangle will be expanded by this
