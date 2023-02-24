@@ -540,7 +540,6 @@ class Path(BoundingBoxFigure):
         self.NonTweenable("outlineMethod", self.defaultOutlineMethod)
 
         # Should strokes occur behind fills?
-        # (currently this is an unimplemented future feature)
         self.NonTweenable("backstroke", False)
 
         # For internal use.
@@ -1270,6 +1269,25 @@ class Path(BoundingBoxFigure):
 
         return vertices, base
 
+    def _drawStroke(self, ctx, RGBA_start):
+        # Set line width & color & alpha
+        if self.width >= 0.5:  # Don't stroke if width is too small
+            ctx.set_line_width(self.width)
+            ctx.set_source_rgba(*RGBA_start)
+            ctx.set_dash(self.dash, self.dashOffset)
+            ctx.stroke_preserve()
+            ctx.set_dash([])  # Remove dash pattern and restore to solid strokes
+
+    def _drawFill(self, camera, ctx):
+        # Handle gradients
+        if self.alphaFill > 0:
+            if isinstance(self.fill, morpho.color.GradientFill):
+                self.fill.draw(camera, ctx, self.alphaFill*self.alpha, pushPhysicalCoords=False)
+            # Handle normal colors
+            else:
+                ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
+                ctx.fill_preserve()
+
     def draw(self, camera, ctx):
         # This method is admittedly a mess. It should really be cleaned up and
         # streamlined, but I'm so scared of breaking it! There are so many cases
@@ -1602,26 +1620,19 @@ class Path(BoundingBoxFigure):
                 # Update zn to z
                 zn = z
 
-            # Handle gradients
-            if self.alphaFill > 0:
-                if isinstance(self.fill, morpho.color.GradientFill):
-                    self.fill.draw(camera, ctx, self.alphaFill*self.alpha, pushPhysicalCoords=False)
-                # Handle normal colors
-                else:
-                    ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
-                    ctx.fill_preserve()
-
-            ctx.restore()
-
-            # Set line width & color & alpha
-            if self.width < 0.5:  # Don't stroke if width is too small
-                ctx.new_path()
+            # Stroke and fill the path
+            if self.backstroke:
+                # Draw stroke first, then fill
+                ctx.restore()
+                self._drawStroke(ctx, RGBA_start)
+                with morpho.pushPhysicalCoords(view, ctx):
+                    self._drawFill(camera, ctx)
             else:
-                ctx.set_line_width(self.width)
-                ctx.set_source_rgba(*RGBA_start)
-                ctx.set_dash(self.dash, self.dashOffset)
-                ctx.stroke()
-                ctx.set_dash([])  # Remove dash pattern and restore to solid strokes
+                # Fill first, then draw stroke
+                self._drawFill(camera, ctx)
+                ctx.restore()
+                self._drawStroke(ctx, RGBA_start)
+            ctx.new_path()  # Reset cairo path
 
         # Handle actually drawing head and tail now.
         # The delay is so that the triangles are drawn in front
