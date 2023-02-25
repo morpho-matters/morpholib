@@ -25,6 +25,7 @@ import os, shutil, tempfile, ctypes
 import subprocess as sp
 import pyperclip
 from warnings import warn
+from tempfile import TemporaryDirectory
 
 # # Get location of the Morpho directory.
 # # pwd = os.sep.join(sys.argv[0].split(os.sep)[:-1])
@@ -3453,44 +3454,34 @@ class Animation(object):
         Dir = os.sep.join(filepath.split(os.sep)[:-1])
 
         if extension.lower() in ("gif", "mp4"):
-            # Make temp directory for PNG files
-            tempDir = tempdir.replace("/", os.sep).replace("\\", os.sep) + os.sep + "Morpho-export"+exportSignature
-            try:
-                if os.path.isdir(tempDir):
-                    shutil.rmtree(tempDir)
-                os.makedirs(tempDir)
-            except Exception:
-                raise PermissionError
+            # Prepare to compile GIF by defining gifDelays.
+            # It describes the delay of each gif frame of animation.
+            # It is equal to 1/frameRate unless there's an animation delay.
 
-            try:
+            # Initialize gifDelays to just be based on the framerate
+            # for all frames
+            gifDelays = [1.0/self.frameRate]*(finalIndex - firstIndex + 1)
 
-                # Prepare to compile GIF by defining gifDelays.
-                # It describes the delay of each gif frame of animation.
-                # It is equal to 1/frameRate unless there's an animation delay.
+            # Look into the mation.delays dict to decide what
+            # indices of gifDelays need to be changed to.
+            for index in self.delays:
+                # Skip if delay index is out of range OR
+                # the delay is only one frame long or shorter.
+                if not(firstIndex <= index <= finalIndex) or self.delays[index] <= 1:
+                    continue
 
-                # Initialize gifDelays to just be based on the framerate
-                # for all frames
-                gifDelays = [1.0/self.frameRate]*(finalIndex - firstIndex + 1)
+                # Update gifDelays with the delay value
+                # (converted into units of seconds)
+                gifDelays[index - firstIndex] += self.delays[index]/self.frameRate
 
-                # Look into the mation.delays dict to decide what
-                # indices of gifDelays need to be changed to.
-                for index in self.delays:
-                    # Skip if delay index is out of range OR
-                    # the delay is only one frame long or shorter.
-                    if not(firstIndex <= index <= finalIndex) or self.delays[index] <= 1:
-                        continue
+            if extension.lower() == "mp4":
+                # Check for infinite delays
+                if max(gifDelays) == oo:
+                    raise ValueError("Animation contains infinitely-long pauses. You must finitize them before exporting to mp4.")
 
-                    # Update gifDelays with the delay value
-                    # (converted into units of seconds)
-                    gifDelays[index - firstIndex] += self.delays[index]/self.frameRate
-
-                if extension.lower() == "mp4":
-                    # Check for infinite delays
-                    if max(gifDelays) == oo:
-                        raise ValueError("Animation contains infinitely-long pauses. You must finitize them before exporting to mp4.")
-
-                # Export PNG sequence to temp dir
-                print("Exporting temporary PNG sequence...")
+            # Export PNG sequence to temp dir
+            print("Exporting temporary PNG sequence...")
+            with TemporaryDirectory(exportSignature) as tempDir:
                 self.export(tempDir + os.sep + filename.replace("'", "_") + ".png", scale)
 
                 if extension.lower() == "gif":
@@ -3561,15 +3552,9 @@ class Animation(object):
                     # sp.call(cmd)
                     # print()
 
-            finally:
                 # Clean up temp dir
                 print("Cleaning up temp directory...")
-                try:
-                    if os.path.isdir(tempDir):
-                        shutil.rmtree(tempDir)
-                except Exception:
-                    raise PermissionError
-                print("DONE!")
+            print("DONE!")
 
         elif extension.lower() == "png":
             if scale != 1:
