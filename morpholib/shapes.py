@@ -450,7 +450,7 @@ class Spline(BoundingBoxFigure):
     @classmethod
     def fromsvg(cls, source, *,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
-        index=0, flip=True, arcError=0.1, tightbox=False):
+        index=0, flip=True, arcError=0.1, tightbox=False, **kwargs):
 
         if isinstance(source, se.Shape):
             svgpath = source
@@ -520,6 +520,7 @@ class Spline(BoundingBoxFigure):
             svgbbox = np.array(svgpath.bbox()).tolist()
         spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
 
+        spline.set(**kwargs)  # Pass any additional kwargs to set()
         return spline
 
 
@@ -1662,7 +1663,8 @@ class MultiSpline(morpho.grid.MultiPath):
     @classmethod
     def fromsvg(cls, source, *,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
-        index=(None,), flip=True, arcError=0.1, tightbox=False):
+        index=(None,), flip=True, arcError=0.1, tightbox=False,
+        **kwargs):
 
         svg = parseSVG(source)
         svgpaths = list(svg.elements(lambda elem: isinstance(elem, se.Shape)))
@@ -1702,6 +1704,7 @@ class MultiSpline(morpho.grid.MultiPath):
 
         multispline = cls(splines)
         multispline.squeeze()  # Remove empty and singleton splines
+        multispline.set(**kwargs)  # Pass additional kwargs to set()
         return multispline
 
     # Converts the MultiSpline into a similar looking MultiPath figure.
