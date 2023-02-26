@@ -447,6 +447,8 @@ class Spline(BoundingBoxFigure):
     #       Setting it to False allows for isolated points (which are
     #       normally invisible) to contribute the bounding box.
     #       Default: False
+    # Any additional keyword arguments are set as attributes of
+    # the returned figure.
     @classmethod
     def fromsvg(cls, source, *,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
@@ -1660,6 +1662,8 @@ class MultiSpline(morpho.grid.MultiPath):
     # in a tuple for the `index` input:
     #      index=(start, stop, step)
     # The tuple is interpreted identically to how range() works.
+    # Any additional keyword arguments are set as attributes of
+    # the returned figure.
     @classmethod
     def fromsvg(cls, source, *,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
