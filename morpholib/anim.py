@@ -1862,7 +1862,7 @@ class Layer(object):
     # method. But if optional keyword argument `atFrame` is
     # passed in, merge() will be used instead of affix().
     def Actor(self, figure, *args, atFrame=None, **kwargs):
-        if isinstance(figure, morpho.Actor):
+        if isinstance(figure, (morpho.Actor, Layer)):
             actor = figure
         else:
             actor = morpho.Actor(figure)
