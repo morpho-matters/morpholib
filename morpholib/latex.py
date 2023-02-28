@@ -73,9 +73,15 @@ def iscached(tex):
 # the LaTeX is parsed. If unspecified, the preamble will be
 # taken from morpho.latex.preamble.
 #
+# If keyword argument `useCache` is set to False, the
+# TeX cache will be skipped if one was defined.
+#
 # Any other args/kwargs will be passed into the MultiSpline
-# constructor (e.g. boxWidth)
-def parse(tex, *args, preamble=None, pos=0, useCache=True, **kwargs):
+# fromsvg() constructor (e.g. boxWidth)
+def parse(tex, *args,
+    preamble=None, pos=0, useCache=True,
+    **kwargs):
+
     tex = _sanitizeTex(tex)
 
     # Check if the SVG for this TeX code is cached
@@ -108,4 +114,5 @@ def parse(tex, *args, preamble=None, pos=0, useCache=True, **kwargs):
         stream.seek(0)
         spline = morpho.shapes.MultiSpline.fromsvg(stream, *args, **kwargs)
     spline.origin = pos
+    spline.all.backstroke = True
     return spline
