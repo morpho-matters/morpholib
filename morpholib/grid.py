@@ -539,8 +539,8 @@ class Path(BoundingBoxFigure):
         # The technique that should be used to render outlines
         self.NonTweenable("outlineMethod", self.defaultOutlineMethod)
 
-        # Should strokes occur behind fills?
-        self.NonTweenable("backstroke", False)
+        # # Should strokes occur behind fills?
+        # self.NonTweenable("backstroke", False)
 
         # For internal use.
         # The vertices of an arrow triangle will be expanded by this
@@ -1142,6 +1142,7 @@ class Path(BoundingBoxFigure):
         # Create a temporary copy of the path which will serve as
         # the outline
         back = self.copy()
+        back.width = abs(self.width)
 
         # Take only a slice of the original sequence if needed
         if back.start != 0 or back.end != 1:
@@ -1271,8 +1272,9 @@ class Path(BoundingBoxFigure):
 
     def _drawStroke(self, ctx, rgba):
         # Set line width & color & alpha
-        if self.width >= 0.5:  # Don't stroke if width is too small
-            ctx.set_line_width(self.width)
+        width = abs(self.width)
+        if width >= 0.5:  # Don't stroke if width is too small
+            ctx.set_line_width(width)
             ctx.set_source_rgba(*rgba)
             ctx.set_dash(self.dash, self.dashOffset)
             ctx.stroke_preserve()
@@ -1504,7 +1506,7 @@ class Path(BoundingBoxFigure):
         # X,Y = morpho.screenCoords(zn, view, ctx)
         x,y = zn.real, zn.imag
         # Convert width from pixels to physical
-        p_width = morpho.physicalWidth(self.width, view, ctx)
+        p_width = morpho.physicalWidth(abs(self.width), view, ctx)
         p_semiwidth = p_width / 2
         p_semiwidth_i = 1j*p_semiwidth
 
@@ -1621,7 +1623,7 @@ class Path(BoundingBoxFigure):
                 zn = z
 
             # Stroke and fill the path
-            if self.backstroke:
+            if self.width < 0:
                 # Draw stroke first, then fill
                 ctx.restore()
                 self._drawStroke(ctx, RGBA_start)

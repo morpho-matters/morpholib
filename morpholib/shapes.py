@@ -193,8 +193,8 @@ class Spline(BoundingBoxFigure):
         # should be shown. This is mainly for debugging purposes.
         self.NonTweenable("showTangents", False)
 
-        # Should strokes occur behind fills?
-        self.NonTweenable("backstroke", False)
+        # # Should strokes occur behind fills?
+        # self.NonTweenable("backstroke", False)
 
 
     @property
@@ -1356,7 +1356,7 @@ class Spline(BoundingBoxFigure):
 
         # Stroke and fill the path
         rgba = list(self.color) + [self.alpha*self.alphaEdge]
-        if self.backstroke:
+        if self.width < 0:
             # Draw stroke first, then fill
             self._drawStroke(ctx, rgba)
             with morpho.pushPhysicalCoords(camera.view, ctx):
@@ -1390,7 +1390,7 @@ class Spline(BoundingBoxFigure):
             return
 
         # Draw each tangent
-        width = max(self.width/2, 1)
+        width = max(abs(self.width/2), 1)
         for n in range(self.data.shape[0]):
             # Get next node, inhandle, and outhandle
             z, inhandle, outhandle = self.data[n,:].tolist()
