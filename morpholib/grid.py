@@ -2149,7 +2149,7 @@ class Track(Path):
         return backpath
 
     def draw(self, camera, ctx):
-        super().draw(camera, ctx)
+        Path.draw(self, camera, ctx)
         # Only draw ticks if necessary
         if self.tickWidth > 0 and self.tickAlpha > 0 and \
             self.tickStart < self.tickEnd:
