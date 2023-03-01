@@ -88,31 +88,29 @@ def parse(tex, *args,
     if useCache and cacheDir is not None and iscached(tex):
         filepath = cacheDir + os.sep + hashTex(tex)
         spline = morpho.shapes.MultiSpline.fromsvg(filepath, *args, **kwargs)
-        spline.origin = pos
-        return spline
+    else:  # Generate TeX Spline in house
+        if preamble is None:
+            # Referencing the global scope `preamble` variable via
+            # the module itself is required here since the local
+            # variable and global variable have the same name.
+            preamble = morpho.latex.preamble
+        params = morpho.latex.params.copy()
+        params["preamble"] = preamble
 
-    if preamble is None:
-        # Referencing the global scope `preamble` variable via
-        # the module itself is required here since the local
-        # variable and global variable have the same name.
-        preamble = morpho.latex.preamble
-    params = morpho.latex.params.copy()
-    params["preamble"] = preamble
+        out = latex2svg.latex2svg(tex, params)
+        svgcode = out["svg"]
 
-    out = latex2svg.latex2svg(tex, params)
-    svgcode = out["svg"]
+        # If caching is enabled, save the output svg code
+        # as a file in the specified cache directory.
+        if useCache and cacheDir is not None:
+            filepath = cacheDir + os.sep + hashTex(tex)
+            with open(filepath, "w") as file:
+                file.write(svgcode)
 
-    # If caching is enabled, save the output svg code
-    # as a file in the specified cache directory.
-    if useCache and cacheDir is not None:
-        filepath = cacheDir + os.sep + hashTex(tex)
-        with open(filepath, "w") as file:
-            file.write(svgcode)
-
-    with io.StringIO() as stream:
-        stream.write(svgcode)
-        stream.seek(0)
-        spline = morpho.shapes.MultiSpline.fromsvg(stream, *args, **kwargs)
+        with io.StringIO() as stream:
+            stream.write(svgcode)
+            stream.seek(0)
+            spline = morpho.shapes.MultiSpline.fromsvg(stream, *args, **kwargs)
     spline.origin = pos
     spline.all.backstroke = True
     return spline
