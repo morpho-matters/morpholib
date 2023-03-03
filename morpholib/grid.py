@@ -224,13 +224,39 @@ class SpacePoint(Point):
 
 Spacepoint = SpacePoint
 
+
+# Wrapper around MultiFigure.Multi() which adds the effect
+# of segmenting the added subpaths so that tweening between
+# glyphs of different topological genus works better
+# (e.g. morphing "B" to "O" doesn't have a fill discontinuity).
+def PathlikeMulti(*args, **kwargs):
+        base_tweenMethod = MultiFigure.Multi(*args, **kwargs)
+        def tweenmethod(self, other, t, *args, **kwargs):
+            tw = base_tweenMethod(self, other, t, *args, **kwargs)
+            if len(tw.figures) > len(self.figures):
+                # self's subfigures have been supplemented,
+                # so apply segmentation to them
+                diff = len(tw.figures) - len(self.figures)
+                for n in range(diff):
+                    subfig = tw.figures[n]
+                    tw.figures[n] = tw.figures[n].segment(0, t)
+            elif len(tw.figures) > len(other.figures):
+                # other's subfigures have been supplemented,
+                # so apply segmentation to them
+                diff = len(tw.figures) - len(other.figures)
+                for n in range(diff):
+                    subfig = tw.figures[n]
+                    tw.figures[n] = tw.figures[n].segment(0, 1-t)
+            return tw
+        return tweenmethod
+
 # Decorator enables a Pathlike tween method to smoothly tween paths
 # with non-matching deadends.
 def handleDeadendInterp(tweenmethod):
 
     # Convert given tweenmethod into a MultiFigure tween method
     # so it can be applied to multiself and multiother.
-    multiTweenMethod = MultiFigure.Multi(tweenmethod, MultiFigure.tweenLinear)
+    multiTweenMethod = PathlikeMulti(tweenmethod, MultiFigure.tweenLinear)
 
     def wrapper(self, other, t, *args, **kwargs):
         # Do nothing fancy if both paths have identical deadends and node counts
