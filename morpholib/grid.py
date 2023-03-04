@@ -238,14 +238,12 @@ def PathlikeMulti(*args, **kwargs):
                 # so apply segmentation to them
                 diff = len(tw.figures) - len(self.figures)
                 for n in range(diff):
-                    subfig = tw.figures[n]
                     tw.figures[n] = tw.figures[n].segment(0, t)
             elif len(tw.figures) > len(other.figures):
                 # other's subfigures have been supplemented,
                 # so apply segmentation to them
                 diff = len(tw.figures) - len(other.figures)
                 for n in range(diff):
-                    subfig = tw.figures[n]
                     tw.figures[n] = tw.figures[n].segment(0, 1-t)
             return tw
         return tweenmethod
