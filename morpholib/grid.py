@@ -4056,13 +4056,6 @@ class Quadmesh(morpho.Figure):
     def array(self, value):
         self._array = morpho.matrix.array(value)
 
-    def copy(self):
-        new = super().copy()
-
-        new.shading = self.shading
-        new.colormapDomain = self.colormapDomain
-        return new
-
     # Returns a list containing all of the polygons to display when the quadmesh
     # is drawn with the given orient and focus. Packaging this list into
     # a frame and drawing the frame will render the quadmesh to the screen
