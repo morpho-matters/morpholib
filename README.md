@@ -6,6 +6,8 @@
 - Animate basic figures like Points, Paths, Polygons, Splines, Images, and Text
 - Helper functions to build more complex composite figures like grids
 - Tools for quickly creating custom figures that animate in precisely specified ways
+- Support for rendering and animating LaTeX.
+  + Requires a LaTeX distribution to be preinstalled, as well as [dvisvgm](https://dvisvgm.de/)
 - Multiple tweening options and the ability to define custom tweens
 - Apply custom transformations to figures to create complex patterns
 - Support for multiple layers each with its own independent dynamic camera
@@ -37,6 +39,8 @@ Installation on other platforms has not been well-tested, unfortunately, and doe
 If you want to export animations as MP4s or small-sized GIFs, you will need to install [FFmpeg](https://ffmpeg.org/) for MP4 and/or [Gifsicle](https://www.lcdf.org/gifsicle/) for GIF. But if that doesn't matter to you (or if you just want to try out Morpho), you can still preview animations and export them as PNG sequences and large-sized GIFs just using the base installation of Morpho.
 
 Please note that FFmpeg and Gifsicle will need to be added to your PATH environment variable for Morpho to be able to access them by default.
+
+For Morpho to be able to parse LaTeX code, you must have a LaTeX distribution installed along with [dvisvgm](https://dvisvgm.de/). But if you're okay with not using Morpho's LaTeX features, this requirement is optional.
 
 ### Testing the installation
 
