@@ -1594,14 +1594,15 @@ start and end may be removed in a later update!!
 # view/camera = Camera actor associated with this layer. Default: Camera()
 #               Note that layer visibility is linked to camera visibility.
 #               Whenever the camera is invisible, so will the layer be.
-# timeOffset = Number of frames the indices should be offset to line up
+# timeOffset = (DEPRECATED)
+#              Number of frames the indices should be offset to line up
 #              with the index system used by the Animation class. Basically
 #              allows you to setup a local time axis offset from the global
 #              Animation time axis. Increasing timeOffset causes the layer to
 #              be animated at later points in the Animation.
 # visible = Global visibility attribute. If set to False, the layer is never drawn
 #           regardless of the state of the camera actor.
-# start/end = Recommend not using these. These attributes may be deprecated later!
+# start/end = (DEPRECATED)
 #             Specify a time window where the layer will be visible.
 #             They are specified relative to the layer's LOCAL time axis.
 # mask = Specify another layer object which will serve as the "mask" for this layer.

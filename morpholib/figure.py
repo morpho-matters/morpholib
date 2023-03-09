@@ -94,6 +94,7 @@ class Figure(object):
         # structures that incorporate figures.
         self.static = False
 
+        # (DEPRECATED)
         # How many frames should the figure persist in an animation.
         # If set to oo (infinity), then the figure will
         # never disappear until the next keyfigure (if any).
