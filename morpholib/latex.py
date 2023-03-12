@@ -63,7 +63,7 @@ def hashTex(tex):
     texhash = hashlist([template, preamble, tex])[:cacheHashLength]
     return f"tex-{texhash}.svg"
 
-# Returns boolean on whether the given filename is
+# Returns boolean on whether the given TeX code is cached
 # in the current cache directory.
 def iscached(tex):
     filename = hashTex(tex)
