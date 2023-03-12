@@ -288,7 +288,7 @@ class Spline(BoundingBoxFigure):
         #     p3 = data[n+1, 0].tolist()
         #     subboxes.append(morpho.bezier.cubicbox(p0, p1, p2, p3))
 
-        # return totalBox(subboxes)
+        # return shiftBox(totalBox(subboxes), self.origin if not raw else 0)
 
     boxAlign = morpho.grid.Path.boxAlign
     rescale = morpho.grid.Path.rescale
