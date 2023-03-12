@@ -39,6 +39,12 @@ def sha256(strng):
     sha.update(bytes(strng, "utf-8"))
     return sha.hexdigest()
 
+# Hashes an ordered list of strings into a single hash
+# using SHA-256. The return value is a string representing
+# the hash in hexadecimal notation.
+def hashlist(iterable):
+    return sha256("".join(sha256(item) for item in iterable))
+
 # Mainly for internal use.
 # Takes LaTeX code and surrounds it with $$ if it
 # doesn't already. These are needed for the LaTeX
@@ -51,8 +57,10 @@ def _sanitizeTex(tex):
 
 # Returns a filename for the given TeX code that can be
 # used to cache the SVG the TeX code was converted into.
+# The hash is generated from the given TeX code itself,
+# along with the current template and preamble.
 def hashTex(tex):
-    texhash = sha256(tex)[:cacheHashLength]
+    texhash = hashlist([template, preamble, tex])[:cacheHashLength]
     return f"tex-{texhash}.svg"
 
 # Returns boolean on whether the given filename is
