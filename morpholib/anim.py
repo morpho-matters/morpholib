@@ -2501,6 +2501,11 @@ class SpaceLayer(Layer):
 # locaterLayer = Given layer or layer list index, prints the physical coordinates
 #                of a mouse click relative to that layer whenever the animation
 #                playback is clicked. Default: None
+# locaterModifier = Complex to complex function which modifies
+#       complex number positions generated from the locater layer.
+#       The generated locator layer positions are passed into this
+#       function and the return value is printed to the console instead.
+#       Default: Identity (do nothing) function z |--> z
 # clickTime = Boolean if set to True, prints current frame index to console
 #             whenever animation is clicked to pause.
 #             Options: "frames", "seconds"
@@ -2578,6 +2583,11 @@ class Animation(object):
         # relative to the specified layer.
         self.locaterLayer = None
 
+        # Function that will be applied to the complex number
+        # position computed from the locater layer. By default
+        # it's the identity function z |--> z
+        self.locaterModifier = lambda z: z
+
         # Makes the animation print the current frame/time when
         # clicked to pause.
         # Options: "frames", "seconds"
@@ -2645,6 +2655,15 @@ class Animation(object):
     def locatorLayer(self, value):
         self.locaterLayer = value
 
+    # Alternate name for the locater modifier using "o" instead of "e".
+    @property
+    def locatorModifier(self):
+        return self.locaterModifier
+
+    @locatorModifier.setter
+    def locatorModifier(self, value):
+        self.locaterModifier = value
+
     @property
     def start(self):
         return self.firstIndex
@@ -2697,6 +2716,7 @@ class Animation(object):
         ani.fullscreen = self.fullscreen
         ani.screen = self.screen
         ani.locaterLayer = self.locaterLayer
+        ani.locaterModifier = self.locaterModifier
         ani.clickTime = self.clickTime
         ani.transition = self.transition
         ani.currentIndex = self.currentIndex
@@ -3763,6 +3783,9 @@ class Animation(object):
 
                 z = physicalCoords(X, Y, view, mation.context)
                 z *= cmath.exp(-1j*cam.rotation)  # Adjust by camera rotation
+
+                # Apply modifier
+                z = mation.locaterModifier(z)
 
                 # Round the real and imag components of z if needed.
                 if self.clickRound is not None:
