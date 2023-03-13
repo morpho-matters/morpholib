@@ -156,6 +156,17 @@ class BoundingBoxFigure(morpho.Figure):
         y = morpho.lerp(bottom, top, anchor_y, start=-1, end=1)
         return complex(x,y)
 
+    # Converts a complex number position into box coordinates
+    # where the bounds of the box are -1,1.
+    # Essentially the inverse of anchorPoint().
+    def boxCoords(self, pos, *args, **kwargs):
+        x,y = pos.real, pos.imag
+        left, right, bottom, top = self.box(*args, **kwargs)
+
+        anchor_x = morpho.lerp(-1, 1, x, start=left, end=right)
+        anchor_y = morpho.lerp(-1, 1, y, start=bottom, end=top)
+        return (anchor_x, anchor_y)
+
     def boxWidth(self, *args, **kwargs):
         box = self.box(*args, **kwargs)
         return box[1] - box[0]
