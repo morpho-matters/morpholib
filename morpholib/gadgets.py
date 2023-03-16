@@ -5,6 +5,20 @@ from morpholib.tools.basics import *
 
 import math, cmath
 
+# Decorator for gadget functions that operate on a box.
+# Allows such a gadget function to accept a Figure type input
+# whereby it will attempt to infer a box by calling the
+# figure's `box()` method, assuming it exists.
+def handleBoxTypecasting(gadgetfunc):
+    def wrapper(box, *args, **kwargs):
+        if isinstance(box, morpho.Figure):
+            try:
+                box = box.box()
+            except Exception:
+                raise TypeError(f"`{type(box).__name__}` type figure does not support box() method.")
+        return gadgetfunc(box, *args, **kwargs)
+    return wrapper
+
 # DEPRECATED! Use crossout() or crossoutPath() instead.
 # Returns a layer which when animated makes a colored X cross
 # out the box you specify.
@@ -50,6 +64,7 @@ def crossout_old(box, time=30, width=3, color=(1,0,0), view=None):
 # relative = Boolean indicating whether the box values are relative to the origin
 #            point, or are in absolute physical coordinates of the layer.
 #            Default: False (absolute coordinates)
+@handleBoxTypecasting
 def crossoutPath(box, time=30, width=3, color=(1,0,0),
     transition=None, origin=0, relative=False,
     *, duration=None, pad=0, **kwargs):
@@ -96,6 +111,7 @@ crossout = crossoutPath
 # relative = Boolean indicating whether the box values are relative to the origin
 #            point, or are in absolute physical coordinates of the layer.
 #            Default: False (absolute coordinates)
+@handleBoxTypecasting
 def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
     CCW=True, steps=75, transition=None, origin=0, relative=False,
     *, duration=None, pad=0, **kwargs):
@@ -146,6 +162,7 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
 # transition = Transition function assigned to path.
 #              Default: morpho.transition.default
 # origin = origin point of path (complex number). Default: 0
+@handleBoxTypecasting
 def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
     transition=None, origin=0, *, duration=None, pad=0, **kwargs):
 
