@@ -321,7 +321,7 @@ class Figure(object):
         # Update tweenables
         for name in target._state:
             if ((not common) or (name in self._state)) and name not in ignore:
-                self._state[name] = target._state[name]
+                self._state[name] = target._state[name] if copy else target._state[name].copy(deep=False)
         # Update non-tweenables
         for name in target._nontweenables:
             if ((not common) or (name in self._nontweenables)) and name not in ignore:

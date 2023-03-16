@@ -130,20 +130,21 @@ class Tweenable(object):
     # it doesn't attempt to copy any of the other
     # attributes of the tweenable such as name, or metadata
     # as it assumes these are strings and hence immutable.
-    def copy(self):
+    def copy(self, deep=True):
         twCopy = Tweenable(
             name=self.name,
             tags=self.tags.copy(),
             value=self.value,
             metadata=self.metadata)
 
-        try:
-            twCopy.value = self.value.copy()
-        except Exception:  # Upon failure, just reassign and hope for the best.
-            # Actually, I think I DO want this line. It looks redundant,
-            # but if the try clause somehow messed up the assignment
-            # process itself, I'd like to reassign the initial value.
-            twCopy.value = self.value
+        if deep:
+            try:
+                twCopy.value = self.value.copy()
+            except Exception:  # Upon failure, just reassign and hope for the best.
+                # Actually, I think I DO want this line. It looks redundant,
+                # but if the try clause somehow messed up the assignment
+                # process itself, I'd like to reassign the initial value.
+                twCopy.value = self.value
 
         return twCopy
 
