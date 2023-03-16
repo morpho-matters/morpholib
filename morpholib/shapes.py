@@ -1762,6 +1762,28 @@ Multispline = MultiSpline  # Alias
 Spline._multitype = MultiSpline
 
 
+# 3D version of MultiSpline meant to enable 2D MultiSplines to be
+# positionable and orientable in 3D space. Its main use case is
+# for rendering 3D LaTeX expressions via morpho.latex.parse3d().
+#
+# Note that this is NOT a full SpaceMultiSpline class, which would
+# be a MultiFigure of SpaceSplines! Rather, this is just a regular
+# 2D MultiSpline which can be rendered in a 3D space like SpaceImage
+# can.
+#
+# The main differences from 2D MultiSplines is three new attributes:
+# pos = 3D position as an np.array. Default: [0,0,0] (the origin)
+# orient = Orientation in 3D space as a 3x3 rotation matrix.
+#       Default: np.eye(3) (oriented on the xy-plane facing the
+#       +z direction)
+# orientable = Boolean denoting whether the MultiSpline should be
+#       treated as an orientable 3D object, or more like a
+#       2D "sticker" object. Default: False
+#
+# Note that `pos` is not merely an alias for `origin` like it is
+# for 2D MultiSplines. Here they are distinct: `pos` controls 3D
+# position, whereas `origin` controls 2D position within the
+# MultiSpline's local plane.
 class MultiSpline3D(morpho.grid.MultiPath3D, MultiSpline):
 
     ### TWEEN METHODS ###
