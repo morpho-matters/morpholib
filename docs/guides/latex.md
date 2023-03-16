@@ -105,7 +105,7 @@ equ.newendkey(30).select[-2:].set(fill=[1,1,0], width=-3, color=[0,0,0])
 All of this also applies to any other attributes that Splines have (e.g. `alpha`, `dash`, etc.)
 
 
-> ***CAUTION!*** If you forget to use `.all` or `.select[]` when attempting to change a subspline attribute will not cause an error to be thrown, but will instead apply the change only to the *first* subspline in the MultiSpline, which in the case of LaTeX figures will likely be the first glyph in the expression.
+> ***CAUTION!*** If you forget to use `.all` or `.select[]` when attempting to change a subspline attribute, it will *NOT* cause an error to be thrown, but will instead apply the change only to the *first* subspline in the MultiSpline, which in the case of LaTeX figures will likely be the first glyph in the expression. If you notice this behavior happening in your animation, you have likely forgotten to include an `.all` or `.select[]` somewhere.
 
 ### Changing the LaTeX dynamically
 
@@ -140,6 +140,7 @@ equ = morpho.Actor(equ)
 
 simp = morpho.latex.parse(r"a + b = 25", boxHeight=1,
     pos=equ.last().southwest()-0.75j, align=[-1,1])
+simp = morpho.Actor(simp)
 
 mation = morpho.Animation(morpho.Layer([equ, simp]))
 mation.background = (1,1,1)  # White background
@@ -278,6 +279,6 @@ class MySkit(morpho.Skit):
         ...
 ```
 
-> ***CAUTION!*** You should **NEVER** include *dynamic* LaTeX within the `makeFrame()` method of a Skit when caching is enabled! That is, you should **not** have LaTeX code that changes depending on the parameters of the Skit, e.g. a Tracker Skit with a dynamically updating LaTeX label. This will cause an SVG file to be written to the cache ***for every single frame of animation*** which will quickly fill up the LaTeX cache.
+> ***CAUTION!*** You should **NEVER** include ***dynamic*** LaTeX within the `makeFrame()` method of a Skit when caching is enabled! That is, you should **not** have LaTeX code that changes depending on the parameters of the Skit, e.g. a Tracker Skit with a dynamically updating LaTeX label. This will cause an SVG file to be written to the cache ***for every single frame of animation*** which will quickly fill up the LaTeX cache.
 >
 > Even without caching, rendering dynamic LaTeX will likely be *extremely* slow, so for all intents and purposes, dynamically updating LaTeX should not be considered a supported feature.
