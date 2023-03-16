@@ -200,6 +200,7 @@ class SpacePoint(Point):
             pos3d = orient @ self.pos
         else:
             pos3d = orient @ (self.pos - focus) + focus
+        pos3d = pos3d.tolist()
 
         pt = Point()
         pt.pos = pos3d[0] + 1j*pos3d[1]

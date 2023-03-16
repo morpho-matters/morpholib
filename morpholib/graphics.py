@@ -660,9 +660,10 @@ class SpaceImage(Image):
             pos3d = orient @ self.pos
         else:
             pos3d = orient @ (self.pos - focus) + focus
+        pos3d = pos3d.tolist()
 
         img = Image(self)
-        img.pos = (pos3d[0] + 1j*pos3d[1]).tolist()
+        img.pos = pos3d[0] + 1j*pos3d[1]
         img.zdepth = pos3d[2]
         img.align = self.align[:]
         img._width = self._width

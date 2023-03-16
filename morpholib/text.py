@@ -1079,10 +1079,11 @@ class SpaceText(Text):
             pos3d = orient @ self.pos
         else:
             pos3d = orient @ (self.pos - focus) + focus
+        pos3d = pos3d.tolist()
 
         txt = self._baseFigure()
         txt.text = self.text
-        txt.pos = (pos3d[0] + 1j*pos3d[1]).tolist()
+        txt.pos = pos3d[0] + 1j*pos3d[1]
         txt.zdepth = pos3d[2]
         txt.size = self.size
         txt.transform = self.transform
