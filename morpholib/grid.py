@@ -2078,6 +2078,66 @@ Multipath = MultiPath  # Alias
 # Assign MultiPath as the Path class's dedicated multifigure version.
 Path._multitype = MultiPath
 
+
+class MultiPath3D(MultiPath):
+    def __init__(self, seq=None, *args, **kwargs):
+        if isinstance(seq, MultiPath):
+            # Convert 2D MultiPath into 3D MultiPath
+            mpath = seq
+            super().__init__(None, *args, **kwargs)
+            self._updateFrom(mpath)
+        else:
+            super().__init__(seq, *args, **kwargs)
+
+        self.Tweenable("_pos", np.zeros(3), tags=["nparray", "nofimage"])
+        self.Tweenable("_orient", np.eye(3), tags=["nparray", "orient"])
+
+        self.NonTweenable("orientable", False)
+
+    @property
+    def pos(self):
+        return self._pos
+
+    @pos.setter
+    def pos(self, value):
+        self._pos = morpho.matrix.array(value)
+
+    @property
+    def orient(self):
+        return self._orient
+
+    @orient.setter
+    def orient(self, value):
+        self._orient = morpho.matrix.array(value)
+
+    def primitives(self, camera):
+        pos3d = camera.orient @ (self.pos - camera.focus) + camera.focus
+        pos3d = pos3d.tolist()
+
+        mpath = MultiPath()
+        mpath._updateFrom(self, common=True, copy=False)
+        if self.orientable:
+            totalOrientTransform = (camera.orient @ self.orient)[:2,:2]
+            mpath._transform = totalOrientTransform @ mpath._transform
+            mpath.origin = pos3d[0] + 1j*pos3d[1] + morpho.matrix.Mat(totalOrientTransform)*mpath.origin
+        else:
+            mpath.origin += pos3d[0] + 1j*pos3d[1]
+        mpath.zdepth = pos3d[2]
+
+        return [mpath]
+
+    draw = morpho.SpaceFigure.draw
+
+    ### TWEEN METHODS ###
+
+    def tweenSpiral(self, other, t):
+        raise NotImplementedError
+
+    @classmethod
+    def tweenPivot(cls, *args, **kwargs):
+        raise NotImplementedError
+
+
 class Track(Path):
     '''Path with tick marks - like a train track: --|--|--|--
 

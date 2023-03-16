@@ -1735,7 +1735,9 @@ class MultiSpline(morpho.grid.MultiPath):
             )
         self.figures = multispline.figures
         if pos is not None:
-            self.origin = pos
+            # Using self.pos is intentional here! Don't replace with self.origin!
+            # This is because self.pos means something different for MultiSpline3D!
+            self.pos = pos
         return self
 
     ### TWEEN METHODS ###
@@ -1758,6 +1760,13 @@ Multispline = MultiSpline  # Alias
 
 # Assign MultiSpline as the dedicated multifigure version of Spline.
 Spline._multitype = MultiSpline
+
+
+class MultiSpline3D(morpho.grid.MultiPath3D, MultiSpline):
+
+    ### TWEEN METHODS ###
+
+    tweenLinear = MultiSpline.tweenLinear
 
 
 # Space version of Spline figure. See "Spline" for more info.
