@@ -122,3 +122,25 @@ def parse(tex, *args,
     spline.origin = pos
     # spline.all.backstroke = True
     return spline
+
+# Identical to parse(), except the return value is a MultiSpline3D
+# figure. See parse() for more info.
+#
+# Also has an additional optional keyword argument `orient`
+# where an initial orientation can be set. Note that if a value is
+# supplied to the `orient` parameter in this function, the returned
+# MultiSpline3D figure will have `orientable=True`.
+def parse3d(*args, orient=None, **kwargs):
+    mspline = parse(*args, **kwargs)
+    # Extract and reset `origin` attribute because for 3D LaTeX,
+    # `pos` should map to the `pos` attribute, not `origin`.
+    pos = mspline.origin
+    mspline.origin = 0
+    mspline3d = morpho.shapes.MultiSpline3D(mspline)
+    mspline3d.pos = pos
+
+    if orient is not None:
+        mspline3d.orientable = True
+        mspline3d.orient = orient
+
+    return mspline3d
