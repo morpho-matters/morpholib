@@ -5,16 +5,20 @@ title: Morpho Guides
 
 # Morpho Guides
 
-Below you can find a collection of guides to help you get familiar with how Morpho works and how to use it. I recommend following them pretty much in the following order:
+Below you can find a collection of guides to help you get familiar with how Morpho works and how to use it.
 
 ### Fundamentals
-- [Guide 1: Basics](https://morpho-matters.github.io/morpholib/guides/basic-guide)
-- [Guide 2: Useful Figures and Gadgets](https://morpho-matters.github.io/morpholib/guides/figures-and-gadgets)
-- [Guide 3: Animation In-depth](https://morpho-matters.github.io/morpholib/guides/animation-in-depth) (possibly skippable if you're in a hurry)
-- [Guide 4: Skits](https://morpho-matters.github.io/morpholib/guides/skits)
+I recommend starting with these and following them pretty much in this order:
+1. [Basics](https://morpho-matters.github.io/morpholib/guides/basic-guide)
+2. [Useful Figures and Gadgets](https://morpho-matters.github.io/morpholib/guides/figures-and-gadgets)
+3. [Animation In-depth](https://morpho-matters.github.io/morpholib/guides/animation-in-depth) (possibly skippable if you're in a hurry)
+4. [Skits](https://morpho-matters.github.io/morpholib/guides/skits)
 
 ### Advanced
-- [Guide 5: Making Longer-Form Videos](https://morpho-matters.github.io/morpholib/guides/projects)
+- [Making Longer-Form Videos](https://morpho-matters.github.io/morpholib/guides/projects)
+
+### Other guides
+- [Incorporating LaTeX](https://morpho-matters.github.io/morpholib/guides/latex)
 
 Example code is provided in each guide, which I would encourage you to code up manually, as I think that will help you learn it better than merely copying and pasting the code. However, finished versions of the examples can be found [on this page](https://github.com/morpho-matters/morpholib/tree/master/examples) if you want to just quickly try them out or debug your own code.
 
