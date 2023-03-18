@@ -211,7 +211,7 @@ mation.play()
 
 Morpho's LaTeX parser does not have access to all possible LaTeX commands from all possible packages. By default, the parser only knows about commands from the LaTeX packages `amsmath`, `amsfonts`, `amssymb`, and `xcolor`, which cover a reasonably wide range of common commands. To allow it to use commands from other packages, as well as any custom commands of your own, modify the *preamble*.
 
-The *preamble* is the LaTeX code that is executed before the main document code is parsed. It's where all package inclusion statements go as well as any custom commands you might have written. For example, say we want the parser to have access to the `resize` package. We can extend the built-in preamble by including this lines at the top of your code:
+The *preamble* is the LaTeX code that is executed before the main document code is parsed. It's where all package inclusion statements go as well as any custom commands you might have written. For example, say we want the parser to have access to the `relsize` package. We can extend the built-in preamble by including this line at the top of your code:
 ```python
 morpho.latex.preamble += r"\usepackage{relsize}"
 ```
