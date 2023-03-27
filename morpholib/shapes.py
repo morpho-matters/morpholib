@@ -525,6 +525,41 @@ class Spline(BoundingBoxFigure):
         spline.set(**kwargs)  # Pass any additional kwargs to set()
         return spline
 
+    # Returns True if the compared spline has exactly the same size, shape,
+    # and position as self, ignoring transformation attributes.
+    def coincides(self, other):
+        self = self.copy()
+        other = other.copy()
+
+        self.commitHandles()
+        other.commitHandles()
+
+        with np.errstate(all="ignore"):  # Suppress numpy warnings
+            return self.deadends == other.deadends and \
+                self._data.shape == other._data.shape and \
+                np.allclose(self._data, other._data)
+
+    # Returns a "normalized" version of the spline where
+    # its box center is at the origin, all transformation attributes
+    # have been reset, and its boxHeight has been set to 1.
+    # Mainly for use by matchesShape() to compare different splines.
+    def _normalizedShape(self):
+        source = self.copy()
+        source.rotation = 0
+        source._transform = I2
+        source.resize(boxHeight=1)
+        source.origin -= source.center()
+        if source.origin != 0:
+            source.commitTransforms()
+        return source
+
+    # Checks if the given spline has the same shape as self,
+    # but only differs by size, position, or transformation
+    # attribute.
+    def matchesShape(self, other):
+        source = self._normalizedShape()
+        target = other._normalizedShape()
+        return source.coincides(target)
 
     # Returns the node count of the spline
     def length(self):

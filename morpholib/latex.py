@@ -144,3 +144,31 @@ def parse3d(*args, orient=None, **kwargs):
         mspline3d.orient = orient
 
     return mspline3d
+
+# Returns a function that checks whether a given Spline figure
+# matches a given LaTeX glyph. Mainly for use in .select[] and .sub[]
+# as a choice function:
+#   mytex.select[morpho.latex.matches(r"\pi")].set(...)
+#
+# Note this method only works if the given TeX code produces only a single
+# spline when parsed. It won't work on TeX that codes for multiple glyphs
+# (e.g. `x^2`) or certain glyphs that render as two splines (e.g. `\implies`)
+#
+# Optionally a list (or other non-string iterable) of TeX strings
+# can be inputted, in which case it will try to match on ANY of the
+# contained expressions.
+#   mytex.select[morpho.latex.matches([r"\pi", r"x"])].set(...)
+def matches(tex):
+    # Convert to list if just a string
+    if isinstance(tex, str):
+        tex = [tex]
+
+    targets = []
+    for expr in tex:
+        target = morpho.latex.parse(expr, pos=0, boxHeight=1) if isinstance(expr, str) else expr
+        if len(target.figures) != 1:
+            raise TypeError("Given LaTeX code results in more than one Spline.")
+        target = target.figures[0]
+        targets.append(target)
+
+    return lambda glyph: any(glyph.matchesShape(target) for target in targets)
