@@ -1775,6 +1775,22 @@ class MultiSpline(morpho.grid.MultiPath):
             self.pos = pos
         return self
 
+    # Checks if every corresponding subfigure between self and other
+    # coincides. See Spline.coincides() for more info.
+    def coincides(self, other):
+        return len(self.figures) == len(other.figures) and \
+            self.origin == other.origin and \
+            self.rotation == other.rotation and \
+            np.array_equal(self._transform, other._transform) and \
+            all(self_fig.coincides(other_fig) for self_fig, other_fig in zip(self.figures, other.figures))
+
+    # Checks if every corresponding subfigure between self and other
+    # have matching shapes. See Spline.matchesShape() for more info.
+    def matchesShape(self, other):
+        return len(self.figures) == len(other.figures) and \
+            all(self_fig.matchesShape(other_fig) for self_fig, other_fig in zip(self.figures, other.figures))
+
+
     ### TWEEN METHODS ###
 
     tweenLinear = MultiFigure.Multi(Spline.tweenLinear, MultiFigure.tweenLinear)
