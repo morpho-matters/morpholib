@@ -56,3 +56,41 @@ def realgraph(f, a, b, steps=50, width=3, color=(1,1,1), alpha=1):
 
 def revolution():
     pass
+
+
+# Given a point and a velocity field, returns as a Path figure
+# the path the point travels "flowing" along the velocity field.
+#
+# INPUTS
+# p0 = Initial point (complex number).
+# vfield = Velocity field. A function of the form vfield(t,z)
+#          where t is time and z is position (as a complex number)
+#          For a static velocity field, the function should not
+#          actually depend on t, though the `t` argument must still
+#          be present in vfield()'s function signature.
+# tstart = Initial time value. Default: 0
+# tend = Final time value. Default: 1
+#
+# KEYWORD ONLY INPUTS
+# rtol = Relative error tolerance of IVP solution (solve_ivp).
+#        Default: 1e-5
+# atol = Absolute error tolerance of IVP solution (solve_ivp).
+#        Default: 1e-6
+# steps = Number of steps to use in the solution. The outputted
+#         Path will have steps+1 nodes.
+def flowStreamer(p0, vfield, tstart=0, tend=1, *,
+    rtol=1e-5, atol=1e-6, steps=50
+    ):
+    try:
+        from scipy.integrate import solve_ivp
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("scipy library required to use this function. Install via `pip3 install scipy`.")
+
+    sol = solve_ivp(
+        vfield, [tstart, tend], [complex(p0)],
+        t_eval=np.linspace(tstart, tend, steps+1),
+        rtol=rtol, atol=atol
+        )
+
+    path = morpho.grid.Path(sol.y.squeeze().tolist())
+    return path
