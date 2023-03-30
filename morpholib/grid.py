@@ -1337,7 +1337,10 @@ class Path(BoundingBoxFigure):
 
         # Handle out-of-bounds start and end
         if not(0 <= self.start <= 1 and 0 <= self.end <= 1):
+            backAlpha_orig = self.backAlpha
+            self.backAlpha = 0
             drawOutOfBoundsStartEnd(self, camera, ctx)
+            self.backAlpha = backAlpha_orig
             return
 
         # Set initial transformation values to be identities
