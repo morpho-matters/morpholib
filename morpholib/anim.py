@@ -1783,6 +1783,10 @@ class Layer(object):
             # Compute time offset
             df = other.timeOffset - self.timeOffset + atFrame
 
+            # Set other owner's to self's owner just in case
+            # user wants to keep accessing `other` after the merge.
+            other.owner = self.owner
+
             # for actor in other.actors:
             # for n in range(len(other.actors)):
             for actor in reversed(other.actors):
