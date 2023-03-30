@@ -80,7 +80,7 @@ def revolution():
 # steps = Number of steps to use in the solution. The outputted
 #         Path will have steps+1 nodes.
 def flowStreamer(p0, vfield, tstart=0, tend=1, *,
-    rtol=1e-5, atol=1e-6, steps=50
+    rtol=1e-5, atol=1e-6, steps=50, **kwargs
     ):
     try:
         from scipy.integrate import solve_ivp
@@ -94,6 +94,7 @@ def flowStreamer(p0, vfield, tstart=0, tend=1, *,
         )
 
     path = morpho.grid.Path(sol.y.squeeze().tolist())
+    path.set(**kwargs)
     return path
 
 
@@ -122,22 +123,15 @@ class _FlowFrame(morpho.Frame):
 #          Default: 0 (no offset)
 # sectorSize = Portion of the cycle that will be visible at any given
 #              moment. Default: 0.5 (display half a cycle)
-# style = Dictionary that can be used to specify style attributes
-#         of the underlying streamer Paths. Example:
-#         dict(width=5, color=(1,0,0), ...)
-#         Default: dict() (empty dict)
+# transition = Transition function to use for each streamer.
+#              Default: Uniform transition
 # Any additional inputs will be passed to flowStreamer() for the
 # construction of each individual streamer.
-#
-# Also note that by default, the transition of the underlying
-# streamers will be set to uniform(). This can be overridden by
-# passing in a transition value into the style dict.
 class FlowField(morpho.Layer):
-    def __init__(self, points, *args, offset=0, sectorSize=0.5, style=dict(), **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__()
 
-        self.actors = self.generateStreamers(points, *args,
-            offset=offset, sectorSize=sectorSize, style=style, **kwargs)
+        self.actors = self.generateStreamers(*args, **kwargs)
 
     @property
     def streamers(self):
@@ -148,17 +142,15 @@ class FlowField(morpho.Layer):
         self.actors = value
 
     @staticmethod
-    def generateStreamers(points, *args, offset=0, sectorSize=0.5, style=None, **kwargs):
-        if style is None:
-            style = dict()
+    def generateStreamers(points, *args, offset=0, sectorSize=0.5,
+        transition=morpho.transitions.uniform, **kwargs):
 
         streamers = []
         for n,z in enumerate(points):
             streamer = flowStreamer(z, *args, **kwargs)
             streamer.start = n*offset
             streamer.end = streamer.start + sectorSize
-            streamer.transition = morpho.transitions.uniform
-            streamer.set(**style)
+            streamer.transition = transition
 
             streamer = morpho.Actor(streamer)
             streamers.append(streamer)
@@ -177,6 +169,12 @@ class FlowField(morpho.Layer):
     # time coordinate!
     def first(self):
         return _FlowFrame([streamer.first() for streamer in self.streamers])
+
+    def lastID(self):
+        return max(streamer.lastID() for streamer in self.streamers)
+
+    def firstID(self):
+        return min(streamer.firstID() for streamer in self.streamers)
 
     # Calls newkey() on all component streamers and returns
     # a selection of all the newly created keyfigures so
