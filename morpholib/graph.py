@@ -80,22 +80,28 @@ def revolution():
 # steps = Number of steps to use in the solution. The outputted
 #         Path will have steps+1 nodes.
 def flowStreamer(p0, vfield, tstart=0, tend=1, *,
-    rtol=1e-5, atol=1e-6, steps=50, **kwargs
+    rtol=1e-5, atol=1e-6, steps=50,
+    _3dmode=False, **kwargs
     ):
     try:
         from scipy.integrate import solve_ivp
     except ModuleNotFoundError:
         raise ModuleNotFoundError("scipy library required to use this function. Install via `pip3 install scipy`.")
 
+    dtype = float if _3dmode else complex
     sol = solve_ivp(
-        vfield, [tstart, tend], [complex(p0)],
+        vfield, [tstart, tend], np.array(p0, dtype=dtype).reshape(-1),
         t_eval=np.linspace(tstart, tend, steps+1),
         rtol=rtol, atol=atol
         )
 
-    path = morpho.grid.Path(sol.y.squeeze().tolist())
+    PathType = morpho.grid.SpacePath if _3dmode else morpho.grid.Path
+    path = PathType(sol.y.T.squeeze().tolist())
     path.set(**kwargs)
     return path
+
+def flowStreamer3d(*args, **kwargs):
+    return flowStreamer(*args, _3dmode=True, **kwargs)
 
 
 # Mainly for internal use.
