@@ -72,6 +72,13 @@ def mean(a):
         raise IndexError("Can't take mean of an empty list-like object!")
     return sum(a)/len(a)
 
+# Rounds a float x to an int if the float is sufficiently
+# close to an int. By default, it rounds if x is within
+# 1e-9 of an int.
+def snapround(x, tol=1e-9):
+    n = round(x)
+    return n if abs(n-x) < tol else x
+
 # Like round(), but truncates instead of rounding at the decimal digit you
 # specify
 def truncate(num, ndigits):
