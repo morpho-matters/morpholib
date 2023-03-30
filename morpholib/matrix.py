@@ -49,11 +49,12 @@ class Mat(object):
         # If given a scalar, treat it as a 2D vector and do
         # matrix multiplication
         if isinstance(other, complex) or isinstance(other, float) or \
-            isinstance(other, int) or isinstance(other, np.number):
+            isinstance(other, int) or isinstance(other, np.number) or \
+            (isinstance(other, np.ndarray) and other.size == 1):
 
             # Convert to 2D vector, compute matrix product, and
             # convert back to complex
-            Z = np.array([other.real, other.imag])
+            Z = np.array([other.real, other.imag]).squeeze()
             prod = (self.array @ Z).tolist()
             return prod[0] + 1j*prod[1]
 
