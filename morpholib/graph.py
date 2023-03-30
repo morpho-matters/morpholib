@@ -149,11 +149,12 @@ class FlowField(morpho.Layer):
 
     @staticmethod
     def generateStreamers(points, *args, offset=0, sectorSize=0.5,
-        transition=morpho.transitions.uniform, **kwargs):
+        transition=morpho.transitions.uniform, _3dmode=False, **kwargs):
 
+        makeStreamer = flowStreamer3d if _3dmode else flowStreamer
         streamers = []
         for n,z in enumerate(points):
-            streamer = flowStreamer(z, *args, **kwargs)
+            streamer = makeStreamer(z, *args, **kwargs)
             streamer.start = n*offset
             streamer.end = streamer.start + sectorSize
             streamer.transition = transition
@@ -231,3 +232,9 @@ class FlowField(morpho.Layer):
             for keyfig in self.last().figures:
                 # Avoiding using `+=` so it works with mutable np.arrays
                 keyfig.origin = keyfig.origin + jump
+
+# 3D version of FlowField class. See FlowField for more info.
+class FlowField3d(FlowField):
+    @staticmethod
+    def generateStreamers(*args, **kwargs):
+        return FlowField.generateStreamers(*args, _3dmode=True, **kwargs)
