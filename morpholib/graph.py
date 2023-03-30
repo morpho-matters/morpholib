@@ -198,3 +198,30 @@ class FlowField(morpho.Layer):
             frame.figures.append(keyfig)
         return frame
 
+    ### GADGET ACTIONS ###
+
+    # Retroactively makes the FlowField fade in from invisibility.
+    # The main difference with regular fadeIn() for Actors is
+    # this method should only be used RETROACTIVELY after the
+    # FlowField has some keyframes.
+    def prefadeIn(self, duration=30, *, jump=0):
+        self.newkey(self.firstID()+duration)
+
+        self.first().all.set(alpha=0)
+        if jump != 0:
+            for keyfig in self.first().figures:
+                # Avoiding using `-=` so it works with mutable np.arrays
+                keyfig.origin = keyfig.origin - jump
+
+    # Retroactively makes the FlowField fade out to invisibility.
+    # The main difference with regular fadeOut() for Actors is
+    # this method should only be used RETROACTIVELY after the
+    # FlowField has some keyframes.
+    def prefadeOut(self, duration=30, *, jump=0):
+        self.newkey(self.lastID()-duration)
+
+        self.last().all.set(alpha=0, visible=False)
+        if jump != 0:
+            for keyfig in self.last().figures:
+                # Avoiding using `+=` so it works with mutable np.arrays
+                keyfig.origin = keyfig.origin + jump
