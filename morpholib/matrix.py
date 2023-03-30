@@ -175,6 +175,17 @@ def rotationVector(mat):
 
     return (rho/s, math.atan2(s,c))
 
+# Returns the wedge product as a skew-symmetric matrix.
+# That is, returns outer(u,v) - outer(v,u)
+def wedge(u, v):
+    return np.outer(u,v) - np.outer(v,u)
+
+# Returns the tilt product of u and v.
+# That is, returns outer(v,u) - outer(u,v)
+# or equivalently: wedge(v,u)
+def tilt(u, v):
+    return wedge(v,u)
+
 # Returns the 2D rotation matrix associated with the
 # input angle.
 def rotation2d(angle):
