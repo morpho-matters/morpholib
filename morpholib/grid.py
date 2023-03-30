@@ -1327,15 +1327,17 @@ class Path(BoundingBoxFigure):
         if self.alpha == 0:
             return
 
-        # Handle out-of-bounds start and end
-        if not(0 <= self.start <= 1 and 0 <= self.end <= 1):
-            drawOutOfBoundsStartEnd(self, camera, ctx)
-            return
+        tol = 1e-9  # Floating point error tolerance
 
         # Handle trivial length path and start >= end.
         len_seq = len(self.seq)
         maxIndex = len(self.seq) - 1
-        if maxIndex < 1 or self.start >= self.end:
+        if maxIndex < 1 or self.start + tol > self.end:
+            return
+
+        # Handle out-of-bounds start and end
+        if not(0 <= self.start <= 1 and 0 <= self.end <= 1):
+            drawOutOfBoundsStartEnd(self, camera, ctx)
             return
 
         # Set initial transformation values to be identities
@@ -1354,7 +1356,6 @@ class Path(BoundingBoxFigure):
             mat_inv = mat.inv
 
         # Compute index bounds.
-        tol = 1e-9  # Snap to nearest integer if within this much of an integer.
         start = self.start*maxIndex
         if abs(start - round(start)) < tol:
             start = round(start)

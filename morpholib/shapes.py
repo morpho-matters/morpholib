@@ -1217,10 +1217,12 @@ class Spline(BoundingBoxFigure):
         if self.data.shape[0] < 2:
             return
 
+        tol = 1e-9  # Floating point error tolerance
+
         # Handle trivial length path and start >= end.
         len_seq = self.length()
         maxIndex = len_seq - 1
-        if maxIndex < 1 or self.start >= self.end or self.alpha == 0:
+        if maxIndex < 1 or self.start + tol > self.end or self.alpha == 0:
             return
 
         # # If determinant of the transform matrix is too small,
@@ -1238,7 +1240,6 @@ class Spline(BoundingBoxFigure):
             return
 
         # Compute index bounds
-        tol = 1e-9  # Snap to nearest integer if within this much of an integer.
         start = self.start*maxIndex
         if abs(start - round(start)) < tol:
             start = round(start)

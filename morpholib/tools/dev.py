@@ -214,9 +214,9 @@ def drawOutOfBoundsStartEnd(fig, camera, ctx):
 
     # Calculate local versions of start and end relative
     # to the interval [0,1]
-    start_local = snapround(fig.start - math.floor(fig.start))
+    start_local = fig.start - math.floor(fig.start)
     # end_local is 1 if end is an integer
-    end_local = snapround(fig.end - (math.ceil(fig.end)-1))
+    end_local = fig.end - (math.ceil(fig.end)-1)
     if start_local > end_local:
         # Draw a two-segment path
 
