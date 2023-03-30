@@ -81,8 +81,8 @@ def revolution():
 #         Path will have steps+1 nodes.
 def flowStreamer(p0, vfield, tstart=0, tend=1, *,
     rtol=1e-5, atol=1e-6, steps=50,
-    _3dmode=False, **kwargs
-    ):
+    _3dmode=False, **kwargs):
+
     try:
         from scipy.integrate import solve_ivp
     except ModuleNotFoundError:
