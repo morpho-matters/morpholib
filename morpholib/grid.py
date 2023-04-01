@@ -2386,6 +2386,13 @@ class OutlinedPath(Path):
 # Special modification of the list class so that whenever
 # an item is set, it converts it into a np.array of floats.
 class Arraylist(list):
+
+    # These lines have been commented out because I think
+    # the performance cost of looping over the array elements
+    # in python is too high. Also, this class is really only
+    # meant to be used internally, so it's fine if it doesn't
+    # behave ideally.
+
     # def __init__(self, *args, **kwargs):
     #     super().__init__(*args, **kwargs)
 
