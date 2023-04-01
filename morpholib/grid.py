@@ -3164,6 +3164,22 @@ def mathaxes(*,
 
     return frm
 
+# 3D version of mathaxes(). Creates a pair of axes in the xy-plane.
+# See "mathaxes" for more info.
+def mathaxes3d(*args, **kwargs):
+    axes = mathaxes(*args, **kwargs)
+    axes3d = SpaceMathGrid()
+
+    # Convert subfigures to SpaceAxis type
+    for subfig in axes.figures:
+        newfig = SpaceAxis()
+        newfig._updateFrom(subfig, copy=False, common=True)
+        newfig.seq = subfig.seq  # This will convert 2D to 3D implicitly
+        axes3d.figures.append(newfig)
+
+    return axes3d
+
+
 
 # Construct a grid-like frame figure.
 #
