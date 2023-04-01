@@ -2449,7 +2449,7 @@ class SpacePath(Path):
 
         # Update the seq attribute's value
         if seq is None:
-            seq = Arraylist([0,1])
+            seq = Arraylist([morpho.array(0), morpho.array(1)])
         elif type(seq) is Path:
             # Copy over state and all other attributes except seq
             for name in self._state:
