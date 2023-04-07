@@ -79,6 +79,8 @@ def revolution():
 #        Default: 1e-6
 # steps = Number of steps to use in the solution. The outputted
 #         Path will have steps+1 nodes.
+# Any additional keyword arguments are set as attributes of the
+# returned path.
 def flowStreamer(p0, vfield, tstart=0, tend=1, *,
     rtol=1e-5, atol=1e-6, steps=50,
     _3dmode=False, **kwargs):
