@@ -2772,7 +2772,9 @@ class SpaceTrack(SpacePath, Track):
 
     def primitives(self, camera):
         # Compute primitive 2D path
-        path = SpacePath.primitives(self, camera)[0]
+        primitives = SpacePath.primitives(self, camera)
+        if len(primitives) == 0: return []
+        path = primitives[0]
         # Turn it into a 2D Track figure
         track = Track()
         track.seq = path.seq  # No need to copy it.
@@ -2871,7 +2873,9 @@ class Axis(Track):
 # 3D version of the Axis class. See `Axis` for more info.
 class SpaceAxis(SpaceTrack):
     def primitives(self, camera):
-        track = SpaceTrack.primitives(self, camera)[0]
+        primitives = SpaceTrack.primitives(self, camera)
+        if len(primitives) == 0: return []
+        track = primitives[0]
         axis = Axis()
         axis._updateFrom(track, copy=True, common=True)
 
