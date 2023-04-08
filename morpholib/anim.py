@@ -13,6 +13,7 @@ import morpholib.transitions, morpholib.giffer
 from morpholib.tools.basics import *
 from morpholib.tools.ktimer import tic, toc
 import morpholib.tools.dev
+from morpholib.tools.dev import BoundingBoxFigure
 
 # Backward compatibility because these functions used to live in anim.py
 from morpholib import screenCoords, physicalCoords, \
@@ -1071,7 +1072,7 @@ def SkitParameters(params=None, /, **kwargs):
 # TWEENABLES
 # view = Viewbox of the complex plane ([xmin,xmax,ymin,ymax]).
 #        Default: [-5,5, -5,5]
-class Camera(morpho.Figure):
+class Camera(BoundingBoxFigure):
     def __init__(self, view=None):
         if view is None:
             view = [-5,5, -5,5]
@@ -1082,6 +1083,10 @@ class Camera(morpho.Figure):
         self.Tweenable("rotation", 0, tags=["scalar"])
 
         self.defaultTween = type(self).tweenZoom
+
+    # Returns the current viewbox.
+    def box(self):
+        return self.view[:]
 
     # Zoom out the camera IN PLACE by the specified factor.
     # Optionally specify a complex number as the "focus", meaning
@@ -1190,16 +1195,11 @@ class Camera(morpho.Figure):
 
     # Returns width of the viewbox: view[1] - view[0]
     def width(self):
-        return self.view[1] - self.view[0]
+        return self.boxWidth()
 
     # Returns height of the viewbox: view[3] - view[2]
     def height(self):
-        return self.view[3] - self.view[2]
-
-    # Returns the center of the view box as a complex number.
-    def center(self):
-        a,b,c,d = self.view
-        return ((a+b) + 1j*(c+d)) / 2
+        return self.boxHeight()
 
     # Given a complex number "pos" representing a position, this method returns
     # a new complex number corresponding to this position had the camera's
