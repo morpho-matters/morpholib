@@ -1765,6 +1765,12 @@ class SpaceParagraphPhys(SpaceParagraph):
     _baseMultiFigure = FancyMultiPText
 
 
+# Returns an invisible Text figure of a pair of periods.
+# A rough way to provide a one-off space between two clauses
+# in a paragraph figure.
+def space(**kwargs):
+    return Text("..", alpha=0).set(**kwargs)
+
 # Takes a collection of Text figures and returns a FancyMultiText
 # figure that concatenates all the individual Text figures.
 #
