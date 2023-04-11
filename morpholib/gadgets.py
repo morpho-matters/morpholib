@@ -12,10 +12,9 @@ import math, cmath
 def handleBoxTypecasting(gadgetfunc):
     def wrapper(box, *args, **kwargs):
         if isinstance(box, morpho.Figure):
-            try:
-                box = box.box()
-            except Exception:
+            if not hasattr(box, "box"):
                 raise TypeError(f"`{type(box).__name__}` type figure does not support box() method.")
+            box = box.box()
         return gadgetfunc(box, *args, **kwargs)
     return wrapper
 
