@@ -303,7 +303,43 @@ class Frame(morpho.Figure):
     def sub(self):
         return morpho.tools.dev.Slicer(getter=self._sub)
 
+    # Partitions the Frame into a Frame of subframes
+    # splitting at the given list of indices.
+    #
+    # For example, `frm.partition([3, 6, 10])`
+    # will return a new Frame consisting of the 4 subframes
+    # frm.sub[:3], frm.sub[3:6], frm.sub[6:10], frm.sub[10:]
+    # in that order.
+    #
+    # Note that partition() will leave the original Frame figure
+    # that called it unchanged, and will return a new Frame
+    # of copies of the underlying subfigures per chunk.
+    #
+    # Subfigure names currently do not transfer.
+    def partition(self, indices):
+        if len(indices) == 0:
+            return Frame([self.sub[:]])
 
+        chunks = []
+        chunks.append(self.sub[:indices[0]])
+        for n in range(len(indices)-1):
+            chunks.append(self.sub[indices[n] : indices[n+1]])
+        chunks.append(self.sub[indices[n+1]:])
+
+        return Frame(chunks)
+
+    # Given a Frame of subframes generated from calling partition(),
+    # combine() recombines them back into a single Frame figure.
+    #
+    # This method may not combine them perfectly if transformation
+    # tweenables of the underlying subframes were modified
+    # (e.g. `origin`) since these will not be transferred to the
+    # subfigures of those subframes.
+    def combine(self):
+        root = self.figures[0].copy()
+        for chunk in self.figures[1:]:
+            root.merge(chunk.copy())
+        return root
 
     # Allows you to give a name to a figure in the Frame that can
     # be referenced later using attribute access syntax.
@@ -913,6 +949,10 @@ class SpaceFrame(Frame):
             self._updateFrom(figures, common=True)
         else:
             super().__init__(figures)
+
+    # Space version of Frame.partition().
+    def partition(self, *args, **kwargs):
+        return SpaceFrame(Frame.partition(self, *args, **kwargs))
 
     # Only for frames consisting only of space figures
     # (i.e. figures possessing a primitives() method and a 5 input
