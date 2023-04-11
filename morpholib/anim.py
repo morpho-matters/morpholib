@@ -269,6 +269,12 @@ class Frame(morpho.Figure):
         if callable(index):
             condition = index
             selection = [fig for fig in self.figures if condition(fig)]
+        # Handle case of multiple index ranges provided
+        elif isinstance(index, tuple):
+            indices = index
+            selection = []
+            for index in indices:
+                selection.extend(self._select(index, _asFrame=True).figures)
         else:
             selection = self.figures[index]
 
