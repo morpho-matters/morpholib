@@ -319,6 +319,7 @@ def padbox(box, xpad, ypad=None, /):
     box[3] += ypad
 
     return box
+padBox = padbox  # Alias
 
 # Shifts a bounding box of the form [xmin,xmax,ymin,ymax]
 # by the given 2d vector `shift` expressed as a complex number.
