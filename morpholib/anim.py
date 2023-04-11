@@ -320,6 +320,13 @@ class Frame(morpho.Figure):
         if len(indices) == 0:
             return Frame([self.sub[:]])
 
+        # Divide any negative indices mod len(self.figures)
+        # so they will be in the correct order relative to
+        # positive indices.
+        for n, index in enumerate(indices):
+            if index < 0:
+                indices[n] = index % len(self.figures)
+
         chunks = []
         chunks.append(self.sub[:indices[0]])
         for n in range(len(indices)-1):
