@@ -335,9 +335,9 @@ class Frame(morpho.Figure):
 
         chunks = []
         chunks.append(self.sub[:indices[0]])
-        for n in range(len(indices)-1):
-            chunks.append(self.sub[indices[n] : indices[n+1]])
-        chunks.append(self.sub[indices[n+1]:])
+        for n in range(1,len(indices)):
+            chunks.append(self.sub[indices[n-1] : indices[n]])
+        chunks.append(self.sub[indices[n]:])
 
         return Frame(chunks)
 
