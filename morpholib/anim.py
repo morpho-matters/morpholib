@@ -279,7 +279,7 @@ class Frame(morpho.Figure):
             selection = self.figures[index]
 
         frm = type(self)(selection)
-        frm._updateFrom(self, ignore="figures")
+        frm._updateFrom(self, ignore={"figures", "visible", "static"})
         if _asFrame:
             return frm
         else:
