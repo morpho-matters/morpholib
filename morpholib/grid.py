@@ -2029,11 +2029,16 @@ class MultiPath(MultiFigure, BoundingBoxFigure):
         return self
 
     def draw(self, camera, ctx):
-        # _alpha=1 here because MultiPath has no top-level `alpha`
-        # attribute, and would instead use the `alpha` value from
-        # the first component subpath, which is not the desired
-        # behavior.
-        self._drawBackgroundBox(camera, ctx, self.origin, self.rotation, self._transform, _alpha=1)
+        # Don't draw empty MultiPath
+        if len(self.figures) == 0:
+            return
+
+        # Since there is no top-level alpha attribute for MultiPaths,
+        # it is inferred from the maximum alpha across all subpaths.
+        self._drawBackgroundBox(
+            camera, ctx, self.origin, self.rotation, self._transform,
+            _alpha=max(subpath.alpha for subpath in self.figures)
+            )
 
         # Temporarily apply additional transforms to subfigures if global
         # rotation/transform are non-identity
