@@ -1,3 +1,5 @@
+import morpholib as morpho
+
 import math, cmath
 import numpy as np
 from bisect import bisect_right, bisect_left
@@ -334,9 +336,13 @@ def shiftBox(box, shift):
     return [left, right, bottom, top]
 
 # Computes the total bounding box of a list of boxes.
-def totalBox(boxes):
+def totalBox(boxes, pad=0):
     XMIN, YMIN, XMAX, YMAX = oo, oo, -oo, -oo
     for box in boxes:
+        if isinstance(box, morpho.Actor):
+            box = box.last().box()
+        elif isinstance(box, morpho.Figure):
+            box = box.box()
         xmin, xmax, ymin, ymax = box
         XMIN = min(XMIN, xmin)
         YMIN = min(YMIN, ymin)
@@ -347,7 +353,7 @@ def totalBox(boxes):
     if isbadarray(bigbox):
         raise ValueError("Total box is unbounded or undefined.")
 
-    return bigbox
+    return padbox(bigbox, pad)
 
 # Converts minutes with seconds into just seconds.
 # minsec(m,s) --> 60*m + s
