@@ -9,8 +9,11 @@ import math, cmath
 # Allows such a gadget function to accept a Figure type input
 # whereby it will attempt to infer a box by calling the
 # figure's `box()` method, assuming it exists.
+# If given an Actor object, it will use the latest keyfigure.
 def handleBoxTypecasting(gadgetfunc):
     def wrapper(box, *args, **kwargs):
+        if isinstance(box, morpho.Actor):
+            box = box.last()
         if isinstance(box, morpho.Figure):
             if not hasattr(box, "box"):
                 raise TypeError(f"`{type(box).__name__}` type figure does not support box() method.")
