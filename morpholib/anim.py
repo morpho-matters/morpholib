@@ -14,7 +14,6 @@ from morpholib.tools.basics import *
 from morpholib.tools.ktimer import tic, toc
 import morpholib.tools.dev
 from morpholib.tools.dev import BoundingBoxFigure, makesubcopies
-copyitem = lambda item: item.copy()
 
 # Backward compatibility because these functions used to live in anim.py
 from morpholib import screenCoords, physicalCoords, \
@@ -771,10 +770,7 @@ class MultiFigure(Frame):
                 # amongst the original subfigures they came from.
                 orig_figures = other.figures
                 other.figures = other.figures[:]
-                makesubcopies(other.figures, subpool, diff, copyitem)
-                # for i in range(diff):
-                #     subindex = subpool[i%len(subpool)]
-                #     other.figures.insert(subindex+i, other.figures[subindex].copy())
+                makesubcopies(other.figures, subpool, diff)
                 tw = wrapper(self, other, t, *args, **kwargs)
                 # Restore other to its original state
                 other.figures = orig_figures
@@ -795,10 +791,7 @@ class MultiFigure(Frame):
                 # amongst the original subfigures they came from.
                 orig_figures = self.figures
                 self.figures = self.figures[:]
-                makesubcopies(self.figures, subpool, -diff, copyitem)
-                # for i in range(-diff):
-                #     subindex = subpool[i%len(subpool)]
-                #     self.figures.insert(subindex+i, self.figures[subindex].copy())
+                makesubcopies(self.figures, subpool, -diff)
                 tw = wrapper(self, other, t, *args, **kwargs)
                 # Restore self to its original state
                 self.figures = orig_figures
