@@ -609,7 +609,15 @@ class MultiFigure(Frame):
 
         # List of indices for subfigures that can be used for
         # making subfigure copies as part of a tween.
-        self.NonTweenable("subpool", set())
+        self.NonTweenable("_subpool", set())
+
+    @property
+    def subpool(self):
+        return self._subpool
+
+    @subpool.setter
+    def subpool(self, value):
+        self._subpool = value if type(value) is set else set(value)
 
     # # NOT IMPLEMENTED!!!
     # # Returns a StateStruct encapsulating all the tweenables
