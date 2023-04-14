@@ -745,56 +745,33 @@ class MultiFigure(Frame):
         def wrapper(self, other, t, *args, **kwargs):
             # wrapper function for a MultiFigure tween method
 
-            # TODO: The following two blocks can probably be refactored
-            # into one since I think the only difference between them is
-            # that self and other reverse roles.
-
             # Temporarily extend the figure list of self or other
             # so that both have exactly the same number of subfigures.
             len_self_figures = len(self.figures)
             len_other_figures = len(other.figures)
             diff = len_self_figures - len_other_figures
-            if diff > 0:
-                # Temporarily extend the figure list of other with copies of
-                # other's subfigures
+
+            target, len_target_figures = (other, len_other_figures) if diff > 0 else (self, len_self_figures)
+            if diff != 0:
+                # Temporarily extend the figure list of target with copies of
+                # target's subfigures
 
                 # Generate the sorted pool of indices from which
                 # subfigure copies are allowed to be drawn.
-                subpool = {index % len_other_figures for index in other.subpool if index < len_other_figures}
+                subpool = {index % len_target_figures for index in target.subpool if index < len_target_figures}
                 if len(subpool) == 0:
-                    subpool = range(len_other_figures)
+                    subpool = range(len_target_figures)
                 else:
                     subpool = sorted(subpool)
 
                 # Make the copies and insert them uniformly
                 # amongst the original subfigures they came from.
-                orig_figures = other.figures
-                other.figures = other.figures[:]
-                makesubcopies(other.figures, subpool, diff)
+                orig_figures = target.figures
+                target.figures = target.figures[:]
+                makesubcopies(target.figures, subpool, abs(diff))
                 tw = wrapper(self, other, t, *args, **kwargs)
-                # Restore other to its original state
-                other.figures = orig_figures
-                return tw
-            elif diff < 0:
-                # Temporarily extend the figure list of self with copies of
-                # self's subfigures
-
-                # Generate the sorted pool of indices from which
-                # subfigure copies are allowed to be drawn.
-                subpool = {index % len_self_figures for index in self.subpool if index < len_self_figures}
-                if len(subpool) == 0:
-                    subpool = range(len_self_figures)
-                else:
-                    subpool = sorted(subpool)
-
-                # Make the copies and insert them uniformly
-                # amongst the original subfigures they came from.
-                orig_figures = self.figures
-                self.figures = self.figures[:]
-                makesubcopies(self.figures, subpool, -diff)
-                tw = wrapper(self, other, t, *args, **kwargs)
-                # Restore self to its original state
-                self.figures = orig_figures
+                # Restore target to its original state
+                target.figures = orig_figures
                 return tw
 
             # Tween each subfigure in self with its partner in other
