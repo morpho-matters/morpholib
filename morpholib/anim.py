@@ -13,7 +13,8 @@ import morpholib.transitions, morpholib.giffer
 from morpholib.tools.basics import *
 from morpholib.tools.ktimer import tic, toc
 import morpholib.tools.dev
-from morpholib.tools.dev import BoundingBoxFigure
+from morpholib.tools.dev import BoundingBoxFigure, makesubcopies
+copyitem = lambda item: item.copy()
 
 # Backward compatibility because these functions used to live in anim.py
 from morpholib import screenCoords, physicalCoords, \
@@ -607,6 +608,10 @@ class MultiFigure(Frame):
         # each subfigure in the multifigure.
         self._state["origin"].tags.add("nojump")
 
+        # List of indices for subfigures that can be used for
+        # making subfigure copies as part of a tween.
+        self.NonTweenable("subpool", set())
+
     # # NOT IMPLEMENTED!!!
     # # Returns a StateStruct encapsulating all the tweenables
     # # of all the figures in the MultiFigure.
@@ -747,15 +752,29 @@ class MultiFigure(Frame):
 
             # Temporarily extend the figure list of self or other
             # so that both have exactly the same number of subfigures.
-            diff = len(self.figures) - len(other.figures)
+            len_self_figures = len(self.figures)
+            len_other_figures = len(other.figures)
+            diff = len_self_figures - len_other_figures
             if diff > 0:
                 # Temporarily extend the figure list of other with copies of
                 # other's subfigures
+
+                # Generate the sorted pool of indices from which
+                # subfigure copies are allowed to be drawn.
+                subpool = {index % len_other_figures for index in other.subpool if index < len_other_figures}
+                if len(subpool) == 0:
+                    subpool = range(len_other_figures)
+                else:
+                    subpool = sorted(subpool)
+
+                # Make the copies and insert them uniformly
+                # amongst the original subfigures they came from.
                 orig_figures = other.figures
-                extension = []
-                for i in range(diff):
-                    extension.append(other.figures[i%len(other.figures)].copy())
-                other.figures = extension + other.figures
+                other.figures = other.figures[:]
+                makesubcopies(other.figures, subpool, diff, copyitem)
+                # for i in range(diff):
+                #     subindex = subpool[i%len(subpool)]
+                #     other.figures.insert(subindex+i, other.figures[subindex].copy())
                 tw = wrapper(self, other, t, *args, **kwargs)
                 # Restore other to its original state
                 other.figures = orig_figures
@@ -763,11 +782,23 @@ class MultiFigure(Frame):
             elif diff < 0:
                 # Temporarily extend the figure list of self with copies of
                 # self's subfigures
+
+                # Generate the sorted pool of indices from which
+                # subfigure copies are allowed to be drawn.
+                subpool = {index % len_self_figures for index in self.subpool if index < len_self_figures}
+                if len(subpool) == 0:
+                    subpool = range(len_self_figures)
+                else:
+                    subpool = sorted(subpool)
+
+                # Make the copies and insert them uniformly
+                # amongst the original subfigures they came from.
                 orig_figures = self.figures
-                extension = []
-                for i in range(-diff):
-                    extension.append(self.figures[i%len(self.figures)].copy())
-                self.figures = extension + self.figures
+                self.figures = self.figures[:]
+                makesubcopies(self.figures, subpool, -diff, copyitem)
+                # for i in range(-diff):
+                #     subindex = subpool[i%len(subpool)]
+                #     self.figures.insert(subindex+i, self.figures[subindex].copy())
                 tw = wrapper(self, other, t, *args, **kwargs)
                 # Restore self to its original state
                 self.figures = orig_figures
