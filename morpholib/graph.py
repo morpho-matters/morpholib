@@ -125,10 +125,13 @@ class _FlowFrame(morpho.Frame):
 # points = List of initial points for each streamer
 #
 # KEYWORD ONLY INPUTS
-# offset = Sector offset between consecutive streamers.
-#          For example, offset=0.25 means each consecutive streamer
-#          will be a quarter cycle offset from the previous one.
-#          Default: 0 (no offset)
+# stagger = Cycle offset between consecutive streamers.
+#           For example, stagger=0.25 means each consecutive streamer
+#           will be a quarter cycle offset from the previous one.
+#           Default: 0 (no stagger)
+# offset = Cycle position the first streamer should start in.
+#          Essentially, this advances all the initial streamers
+#          by the given amount. Default: 0 (no offset)
 # sectorSize = Portion of the cycle that will be visible at any given
 #              moment. Default: 0.5 (display half a cycle)
 # transition = Transition function to use for each streamer.
@@ -150,14 +153,14 @@ class FlowField(morpho.Layer):
         self.actors = value
 
     @staticmethod
-    def generateStreamers(points, *args, offset=0, sectorSize=0.5,
+    def generateStreamers(points, *args, stagger=0, offset=0, sectorSize=0.5,
         transition=morpho.transitions.uniform, _3dmode=False, **kwargs):
 
         makeStreamer = flowStreamer3d if _3dmode else flowStreamer
         streamers = []
         for n,z in enumerate(points):
             streamer = makeStreamer(z, *args, **kwargs)
-            streamer.start = n*offset
+            streamer.start = n*stagger + offset
             streamer.end = streamer.start + sectorSize
             streamer.transition = transition
 
