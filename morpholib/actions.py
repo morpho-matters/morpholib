@@ -26,7 +26,7 @@ def _applyJump(figure, dz):
         if (tweenable.name in autoJumpNames and "nojump" not in tweenable.tags) \
             or ("jump" in tweenable.tags):
 
-            tweenable.value += dz
+            tweenable.value = tweenable.value + dz
 
         # This clause works, but doesn't handle alpha.
         # I've decided not to use it for now.
