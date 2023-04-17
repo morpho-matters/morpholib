@@ -3363,7 +3363,7 @@ def mathgrid3d(*,
 # Equivalent to mathgrid(), but hsteps/vsteps default to 1,
 # and `BGgrid` and `axes` default to False.
 # See mathgrid() for more info.
-def basicgrid(
+def basicgrid(*,
     hsteps=1, vsteps=1,
     BGgrid=False, axes=False,
     **kwargs):
@@ -3377,7 +3377,7 @@ def basicgrid(
 # Equivalent to mathgrid3d(), but hsteps/vsteps default to 1,
 # and `axes` defaults to False.
 # See mathgrid3d() for more info.
-def basicgrid3d(
+def basicgrid3d(*,
     hsteps=1, vsteps=1,
     axes=False,
     **kwargs):
