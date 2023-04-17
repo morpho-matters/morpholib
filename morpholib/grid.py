@@ -2169,6 +2169,19 @@ class MultiPath3D(MultiPath):
     def tweenPivot(cls, *args, **kwargs):
         raise NotImplementedError
 
+@MultiPath3D.action
+def fadeIn(mpath, duration=30, atFrame=None, jump=0, alpha=1):
+    morpho.Frame.actions["fadeIn"](mpath, duration, atFrame, 0, alpha)
+    jump = morpho.array(jump)
+    if duration > 0:
+        mpath.key[-2].pos = mpath.key[-2].pos - jump
+
+@MultiPath3D.action
+def fadeOut(mpath, duration=30, atFrame=None, jump=0):
+    morpho.Frame.actions["fadeOut"](mpath, duration, atFrame, 0)
+    jump = morpho.array(jump)
+    if duration > 0:
+        mpath.last().pos = mpath.last().pos + jump
 
 class Track(Path):
     '''Path with tick marks - like a train track: --|--|--|--
