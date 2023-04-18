@@ -159,7 +159,7 @@ class SpacePoint(Point):
         super().__init__(0, size, strokeWeight, color, fill, alpha)
 
         # Redefine pos tweenable to be 3D.
-        _pos = morpho.Tweenable("_pos", morpho.matrix.array(pos), tags=["nparray", "fimage"])
+        _pos = morpho.Tweenable("_pos", morpho.matrix.array(pos), tags=["nparray", "fimage", "3d"])
         self._state.pop("pos")
         self._state["_pos"] = _pos
 

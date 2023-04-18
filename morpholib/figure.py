@@ -762,7 +762,7 @@ class Figure(object):
             ig = list(ig)
 
         # These tags are affected by the Spiral tween
-        tags = {"spiral", "complex"}
+        tags = {"spiral", "complex", "3d"}
 
         # Create new figure which will be the tweened figure
         # Initialize it to a copy of self.
@@ -792,9 +792,13 @@ class Figure(object):
                 Q.shape = 1
 
             # Perform spiral tween
-            tw = morpho.spiralInterpArray(P, Q, t).squeeze()
-            if not isinstance(tweenable.value, np.ndarray):
-                tw = type(tweenable.value)(tw.tolist())
+            if "3d" in tweenable.tags:
+                tw = morpho.spiralInterpArray3d(P, Q, t).squeeze()
+            else:
+                tw = morpho.spiralInterpArray(P, Q, t).squeeze()
+
+            if isinstance(tweenable.value, (list, tuple)):
+                tw = type(tweenable.value)(tw)
             newfig._state[tweenable.name].value = tw
 
         # Use tweenLinear() on the remaining tweenables that this tween method
@@ -1120,6 +1124,7 @@ class SpaceFigure(Figure):
 
         # prim = primlist[0]
         # prim.draw(camera, ctx)
+
 
 ### OTHER RELATED FUNCTIONS ###
 

@@ -1009,7 +1009,7 @@ class SpaceText(Text):
                 pos = np.zeros(3)
 
         # Redefine pos tweenable to be 3D.
-        _pos = morpho.Tweenable("_pos", morpho.matrix.array(pos), tags=["nparray", "fimage"])
+        _pos = morpho.Tweenable("_pos", morpho.matrix.array(pos), tags=["nparray", "fimage", "3d"])
         self._state.pop("pos")
         self._state["_pos"] = _pos
         _orient = morpho.Tweenable("_orient", np.identity(3), tags=["nparray", "orient"])
@@ -1685,7 +1685,7 @@ class SpaceParagraph(FancyMultiText):
             super().__init__(text, *args, **kwargs)
 
         # Redefine pos tweenable to be 3D.
-        self.Tweenable("_pos", morpho.matrix.array(self.pos), tags=["nparray", "fimage"])
+        self.Tweenable("_pos", morpho.matrix.array(self.pos), tags=["nparray", "fimage", "3d"])
         self._state.pop("pos")
         self.Tweenable("_orient", np.identity(3), tags=["nparray", "orient"])
 

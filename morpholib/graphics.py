@@ -573,7 +573,7 @@ class SpaceImage(Image):
         super().__init__(source)
 
         # Redefine pos tweenable to be 3D.
-        _pos = morpho.Tweenable("_pos", np.zeros(3), tags=["nparray", "fimage"])
+        _pos = morpho.Tweenable("_pos", np.zeros(3), tags=["nparray", "fimage", "3d"])
         self._state.pop("pos")
         self._state["_pos"] = _pos
         _orient = morpho.Tweenable("_orient", np.identity(3), tags=["nparray", "orient"])

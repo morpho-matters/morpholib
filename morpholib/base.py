@@ -251,6 +251,11 @@ def spiralInterpArray(p,q,t):
 
 # Performs spiral tween interpolation on two arrays of 3D nodes
 def spiralInterpArray3d(pseq, qseq, t, *, verbose=False):
+    if pseq.ndim < 2:
+        pseq = pseq.reshape(1,-1)
+    if qseq.ndim < 2:
+        qseq = qseq.reshape(1,-1)
+
     r1 = np.linalg.norm(pseq, axis=1)  # N-vector
     r2 = np.linalg.norm(qseq, axis=1)  # N-vector
 
@@ -283,10 +288,13 @@ def spiralInterpArray3d(pseq, qseq, t, *, verbose=False):
 
         # Apply rotators to pseq
         pseq_rotated = np.matmul(rotators, pseq[:,:,None])  # N x 3 x 1 array of new nodes
+        pseq_rotated = pseq_rotated.squeeze()  # N x 3 array
+        if pseq_rotated.ndim < 2:
+            pseq_rotated = pseq_rotated.reshape(1,-1)  # Force 1 x 3 array if just a single vector
 
     # Apply radii
     twseq = np.zeros(pseq.shape)
-    twseq[good] = radii[good][:,None] * pseq_rotated.squeeze()[good] / r1[good][:,None]  # N x 3 array
+    twseq[good] = radii[good][:,None] * pseq_rotated[good] / r1[good][:,None]  # N x 3 array
 
     twseq[bad] = lerp0(pseq[bad], qseq[bad], t)
 
