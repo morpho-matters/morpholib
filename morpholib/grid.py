@@ -3402,14 +3402,15 @@ def mathgrid3d(*,
         BGgrid=False, axes=axes, axesColor=axesColor,
         xaxisWidth=xaxisWidth, yaxisWidth=yaxisWidth, axisWidth=axisWidth,
         axesStatic=False, polar=False,
-        tweenMethod=tweenMethod,
         transition=transition,
         optimize=optimize
         )
     wire = SpaceMathGrid(wire)
     for n in range(len(wire.figures)):
         # wire.figures[n] = Spacepath(wire.figures[n], orient.copy(), offset)
-        wire.figures[n] = SpacePath(wire.figures[n])
+        subfig = SpacePath(wire.figures[n])
+        subfig.set(tweenMethod=tweenMethod)
+        wire.figures[n] = subfig
 
     return wire
 
