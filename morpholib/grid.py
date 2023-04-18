@@ -2762,8 +2762,83 @@ class SpacePath(Path):
 
         return tw
 
-    # There is no spiral tween for spacepaths (yet, at least)
-    tweenSpiral = tweenLinear
+    # 3D spiral tween method
+    @morpho.TweenMethod
+    @handleDash
+    @morpho.color.handleGradients(["color"])
+    @morpho.color.handleGradientFills(["fill"])
+    @handlePathNodeInterp
+    def tweenSpiral(self, other, t):
+
+        # Tween everything except the node sequence.
+        tw = morpho.Figure.tweenSpiral(self, other, t, ignore="_seq")
+
+        pseq = np.array(self._seq, dtype=float)   # N x 3 array of nodes
+        qseq = np.array(other._seq, dtype=float)  # N x 3 array of nodes
+
+        r1 = np.linalg.norm(pseq, axis=1)  # N-vector
+        r2 = np.linalg.norm(qseq, axis=1)  # N-vector
+
+        # Suppress numpy warnings from nans that may develop
+        with np.errstate(all="ignore"):
+            dr = r2 - r1  # N-vector
+            crossProds = np.cross(pseq, qseq)  # N x 3 array
+            crossProdNorms = np.linalg.norm(crossProds, axis=1)  # N-vector
+
+            # Flag any node pairs that don't define a
+            # meaningful plane of rotation
+            bad = (np.abs(crossProdNorms) < 1e-10)
+            good = ~bad
+
+            angles = np.arccos(np.sum(pseq*qseq, axis=1)/(r1*r2))  # N-vector of angles between each node pair
+            angles[np.isnan(angles)] = pi
+
+            # angles = np.arcsin(crossProdNorms/(r1*r2))
+            # angles[np.isnan(angles)] = pi/2
+
+            radii = r1 + t*dr  # New radii of tweened nodes (N-vector)
+            thetas = t*angles  # Angles to tilt p-nodes toward q-nodes (N-vector)
+            tilts = qseq[:,:,None]*pseq[:,None,:] - pseq[:,:,None]*qseq[:,None,:]  # N x 3 x 3 array of tilt products
+
+            normalizedTilts = tilts / crossProdNorms[:,None,None]  # N x 3 x 3 array
+            normalizedTilts_squared = np.matmul(normalizedTilts, normalizedTilts)  # N x 3 x 3
+            sin_thetas = np.sin(thetas)  # N-vector
+            one_minus_cos_thetas = 1-np.cos(thetas)  # N-vector
+
+            # N x 3 x 3 array of rotation matrices
+            rotators = np.eye(3)[None,:,:] + normalizedTilts*sin_thetas[:,None,None] \
+                + normalizedTilts_squared*one_minus_cos_thetas[:,None,None]
+
+            # Apply rotators to pseq
+            pseq_rotated = np.matmul(rotators, pseq[:,:,None])  # N x 3 x 1 array of new nodes
+
+        # Apply radii
+        twseq = np.zeros(pseq.shape)
+        twseq[good] = radii[good][:,None] * pseq_rotated.squeeze()[good] / r1[good][:,None]  # N x 3 array
+
+        twseq[bad] = morpho.lerp0(pseq[bad], qseq[bad], t)
+
+        tw._seq = list(twseq)
+
+        # This clause disconnects two nodes if they are
+        # revolving in different directions too much.
+        # The value angle_tol represents how far two oppositely
+        # revolving nodes have to angularly differ before
+        # we disconnect them.
+        if 0.01 < t < 0.99:
+            crossProds1 = crossProds[:-1]
+            crossProds2 = crossProds[1:]
+
+            # Deadends should occur whenever the rotation axes of two
+            # neighboring nodes are anti-aligned OR whenever a good node
+            # is adjacent to a bad node.
+            flagset = (np.sum(crossProds1*crossProds2, axis=1) < 0) | (good[:-1]^good[1:])
+
+            tw.deadends.update(np.where(flagset)[0].tolist())
+
+        return tw
+
+
 
 Spacepath = SpacePath  # Synonym for SpacePath
 
