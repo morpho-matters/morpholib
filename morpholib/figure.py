@@ -782,52 +782,20 @@ class Figure(object):
 
             P = tweenable.value
             Q = other._state[tweenable.name].value
-            if isinstance(P, list) or isinstance(P, tuple) \
-                or isinstance(P, np.ndarray):
-                listMode = True
-            else:
-                listMode = False
-                P = [P]
-                Q = [Q]
 
-            # Perform spiral tween on each component
-            # FUTURE: Re-implement this like the modern tweenLinear()
-            # so that it converts the data into np.array form and
-            # then applies morpho.spiralInterpArray() to it and then
-            # converts back into the original type.
-            for i in range(len(P)):
-                p = P[i]
-                q = Q[i]
-                if type(p) in (list, tuple):
-                    p = p[0] + 1j*p[1]
-                if type(q) in (list, tuple):
-                    q = q[0] + 1j*q[1]
-                p = complex(p)
-                q = complex(q)
+            # Convert into np.arrays with at least 1 dimension
+            P = np.array(P)
+            Q = np.array(Q)
+            if P.size == 1:
+                P.shape = 1
+            if Q.size == 1:
+                Q.shape = 1
 
-                r1 = abs(p)
-                r2 = abs(q)
-
-                th1 = cmath.phase(p) % tau
-                th2 = cmath.phase(q) % tau
-                dth = argShift(th1, th2)
-
-                dr = r2 - r1
-
-                r = morpho.numTween(r1, r2, t)
-                th = th1 + t*dth
-
-                tw = r*cmath.exp(th*1j)
-
-                # FUTURE: Complex should be converted back into whatever
-                # vectory type it was in originally.
-                if listMode:
-                    # NOTE: This line assumes the vector is mutable.
-                    # Thus this will fail if given tuple (I think)!
-                    # Fix in the future!!
-                    newfig._state[tweenable.name].value[i] = tw
-                else:
-                    newfig._state[tweenable.name].value = tw
+            # Perform spiral tween
+            tw = morpho.spiralInterpArray(P, Q, t).squeeze()
+            if not isinstance(tweenable.value, np.ndarray):
+                tw = type(tweenable.value)(tw.tolist())
+            newfig._state[tweenable.name].value = tw
 
         # Use tweenLinear() on the remaining tweenables that this tween method
         # did not act on (e.g. scalars)
