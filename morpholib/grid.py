@@ -1003,6 +1003,9 @@ class Path(BoundingBoxFigure):
 
         return self.segment(a,b)
 
+    def __iter__(self):
+        raise TypeError("Paths are not iterable")
+
 
     # Returns the physical length of the path
     # NOTE: ignores deadends and pretends all nodes are connected!
@@ -3540,6 +3543,11 @@ def standardGrid(*,
         hnodes = hsteps + 1
     if vnodes is None:
         vnodes = vsteps + 1
+
+    if isinstance(hcolor, morpho.color.Gradient):
+        raise TypeError("hcolor cannot be a gradient")
+    if isinstance(vcolor, morpho.color.Gradient):
+        raise TypeError("vcolor cannot be a gradient")
 
     hcolor = list(hcolor)
     vcolor = list(vcolor)

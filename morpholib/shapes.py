@@ -1048,6 +1048,9 @@ class Spline(BoundingBoxFigure):
     def __getitem__(self, t):
         return morpho.grid.Path.__getitem__(self, t)
 
+    def __iter__(self):
+        raise TypeError("Splines are not iterable")
+
 
     # Inserts the specified number of additional nodes to the
     # spline by interpolating along it. For large numNodes, the new

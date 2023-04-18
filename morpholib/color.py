@@ -254,6 +254,9 @@ class Gradient(morpho.Figure):
     def __setitem__(self, key, value):
         self.data[key] = value
 
+    def __iter__(self):
+        return iter(self.data)
+
     def __len__(self):
         return len(self.data)
 
