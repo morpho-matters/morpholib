@@ -2124,7 +2124,7 @@ class MultiPath3D(MultiPath):
         else:
             super().__init__(seq, *args, **kwargs)
 
-        self.Tweenable("_pos", np.zeros(3), tags=["nparray", "nofimage"])
+        self.Tweenable("_pos", np.zeros(3), tags=["nparray", "nofimage", "3d"])
         self.Tweenable("_orient", np.eye(3), tags=["nparray", "orient"])
 
         self.NonTweenable("orientable", False)
@@ -2164,9 +2164,6 @@ class MultiPath3D(MultiPath):
     draw = morpho.SpaceFigure.draw
 
     ### TWEEN METHODS ###
-
-    def tweenSpiral(self, other, t):
-        raise NotImplementedError
 
     @classmethod
     def tweenPivot(cls, *args, **kwargs):
