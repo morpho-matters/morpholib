@@ -89,6 +89,16 @@ def glide(a, b=None, /):
             return 0.5*m*(b-a+1 - (t-1)**2/(1-b))
     return glideTransition
 
+# Equivalent to glide(), but the second inflection is specified
+# in terms of how far away it is from 1.
+# e.g. The following are equivalent:
+#   coast(a, b)
+#   glide(a, 1-b)
+def coast(a, b=None, /):
+    if b is not None:
+        b = 1-b
+    return glide(a,b)
+
 
 halfpi = math.pi/2
 # sinetoss = lambda t: math.sin(halfpi*t)
