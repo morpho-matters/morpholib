@@ -222,7 +222,6 @@ class SpacePoint(Point):
         pt = primlist[0]
         pt.draw(camera, ctx)
 
-
 Spacepoint = SpacePoint
 
 
@@ -2168,6 +2167,8 @@ class MultiPath3D(MultiPath):
     @classmethod
     def tweenPivot(cls, *args, **kwargs):
         raise NotImplementedError
+
+MultiPath3d = MultiPath3D
 
 @MultiPath3D.action
 def fadeIn(mpath, duration=30, atFrame=None, jump=0, alpha=1):

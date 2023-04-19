@@ -247,7 +247,9 @@ class FlowField(morpho.Layer):
                 keyfig.origin = keyfig.origin + jump
 
 # 3D version of FlowField class. See FlowField for more info.
-class FlowField3d(FlowField):
+class FlowField3D(FlowField):
     @staticmethod
     def generateStreamers(*args, **kwargs):
         return FlowField.generateStreamers(*args, _3dmode=True, **kwargs)
+
+FlowField3d = FlowField3D
