@@ -192,10 +192,10 @@ class FlowField(morpho.Layer):
     # a selection of all the newly created keyfigures so
     # attributes can be modified en masse by calling .set()
     #   myflow.newkey(time).set(width=5, color=(1,0,0), ...)
-    def newkey(self, *args, **kwargs):
+    def newkey(self, f):
         frame = _FlowFrame()
         for streamer in self.streamers:
-            keyfig = streamer.newkey(*args, **kwargs)
+            keyfig = streamer.newkey(f)
             frame.figures.append(keyfig)
         return frame
 
@@ -205,15 +205,16 @@ class FlowField(morpho.Layer):
     #   myflow.newendkey(time).set(width=5, color=(1,0,0), ...)
     def newendkey(self, df=None, *, glob=False):
         frame = _FlowFrame()
+        if df is None:
+            df = 0
+            glob = True
         if glob:
-            # Apply global time offset only to the initial streamer
-            # actor. All the other streamer actors should then
-            # call newendkey() without arguments in order to stay
-            # sync'd with the initial streamer.
-            self.streamers[0].newendkey(df, glob=True)
-            df = None
+            f = self.glastID() + df
+        else:
+            f = max(streamer.lastID() for streamer in self.streamers) + df
+
         for streamer in self.streamers:
-            keyfig = streamer.newendkey(df)
+            keyfig = streamer.newkey(f)
             frame.figures.append(keyfig)
         return frame
 
