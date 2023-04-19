@@ -2796,8 +2796,16 @@ class SpacePath(Path):
 
             # Deadends should occur whenever the rotation axes of two
             # neighboring nodes are anti-aligned OR whenever a good node
-            # is adjacent to a bad node.
-            flagset = (np.sum(crossProds1*crossProds2, axis=1) < 0) | (good[:-1]^good[1:])
+            # is adjacent to a bad node. However, if either of the
+            # two neighboring nodes matches its respective destination
+            # node, then don't disconnect the node pair
+            # (this last condition is to allow cases like arrows
+            # where the tail sits at the origin (a "bad" node), but
+            # the head moves).
+            flagset = ((np.sum(crossProds1*crossProds2, axis=1) < -1e-10) | (good[:-1]^good[1:])) \
+                & ~np.all(np.isclose(pseq[:-1], qseq[:-1]), axis=1) \
+                & ~np.all(np.isclose(pseq[1:], qseq[1:]), axis=1)
+
 
             tw.deadends.update(np.where(flagset)[0].tolist())
 
