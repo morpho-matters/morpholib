@@ -1105,7 +1105,10 @@ def morphFrom(actor, source, duration=30, atFrame=None):
 
     # Keep only the first frame AFTER atFrame
     actor.newkey(atFrame+1)
-    actor.delkey(atFrame)
+    # Doing invisibility instead of delkey because preserving
+    # the initial keyframe can be important for puppet skits.
+    actor.time(atFrame).visible = False
+    # actor.delkey(atFrame)
 
 
 # Base class for certain space figures.
