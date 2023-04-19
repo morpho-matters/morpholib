@@ -684,6 +684,8 @@ class SpaceImage(Image):
         img.aspectRatioWH = self.aspectRatioWH
         img.physical = self.physical
 
+        img._updateSettings(self)
+
         return [img]
 
 

@@ -985,7 +985,8 @@ class SpaceFrame(Frame):
     def primitives(self, camera): # orient=np.identity(3), focus=np.array([0,0,0], dtype=float)):
         primlist = []
         for fig in self.figures:
-            primlist.extend(fig.primitives(camera))
+            if fig.visible:
+                primlist.extend(fig.primitives(camera))
 
         return primlist
 

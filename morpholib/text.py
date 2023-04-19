@@ -1105,6 +1105,8 @@ class SpaceText(Text):
         txt.bold = self.bold
         txt.italic = self.italic
 
+        txt._updateSettings(self)
+
         return [txt]
 
 
