@@ -79,9 +79,18 @@ class MaskConfigurationError(Exception):
 # Allows one to modify the attributes of the subfigures of a frame
 # all at once.
 class _SubAttributeManager(object):
-    def __init__(self, frame, /):
+    # `frame` is the Frame on which `.all` is being called.
+    # `origframe` is the Frame that should be returned by
+    # the set() method. If unspecified, it defaults to the
+    # value of `frame`. This is useful when calling .select[]
+    # since the return value of set() will be the true original
+    # Frame including unselected subfigures.
+    def __init__(self, frame, origframe=None, /):
+        if origframe is None:
+            origframe = frame
         # Bypass native setattr() because it's overridden below.
         object.__setattr__(self, "_subattrman_frame", frame)
+        object.__setattr__(self, "_subattrman_origframe", origframe)
 
     # Returns a function that when called will call the
     # corresponding method across all subfigures in the
@@ -146,7 +155,7 @@ class _SubAttributeManager(object):
     def set(self, **kwargs):
         for name, value in kwargs.items():
             setattr(self, name, value)
-        return self._subattrman_frame
+        return self._subattrman_origframe
 
 
 # Frame class. Groups figures together for simultaneous drawing.
@@ -277,13 +286,16 @@ class Frame(morpho.Figure):
                 selection.extend(self._select(index, _asFrame=True).figures)
         else:
             selection = self.figures[index]
+            if isinstance(selection, morpho.Figure):
+                # Convert single figure into singleton list
+                selection = [selection]
 
         frm = type(self)(selection)
         frm._updateFrom(self, ignore={"figures", "visible", "static"})
         if _asFrame:
             return frm
         else:
-            return frm.all
+            return _SubAttributeManager(frm, self)
 
     # Allows the modification of a subset of the subfigures
     # with the syntax:
