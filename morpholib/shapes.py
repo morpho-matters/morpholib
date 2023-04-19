@@ -9,9 +9,12 @@ from morpholib.anim import MultiFigure
 
 from morpholib import object_hasattr
 
-# Polygon and SpacePolygon can be accessed from the shapes
-# submodule as well as grid.
-from morpholib.grid import Polygon, SpacePolygon, Spacepolygon
+# Import these names from grid module so they can optionally
+# be accessed from the shapes module.
+from morpholib.grid import Polygon, SpacePolygon, Spacepolygon, \
+    Path, SpacePath, Spacepath, MultiPath, Multipath, MultiPath3D, \
+    MultiPath3d, Arrow, SpaceArrow, Point, SpacePoint, Spacepoint, \
+    Track, SpaceTrack
 
 import cairo
 cr = cairo
