@@ -188,6 +188,13 @@ class FlowField(morpho.Layer):
     def firstID(self):
         return min(streamer.firstID() for streamer in self.streamers)
 
+    def keyID(self, n):
+        indices = set()
+        for streamer in self.streamers:
+            indices.update(streamer.keyIDs)
+        indices = sorted(indices)
+        return indices[n]
+
     # Calls newkey() on all component streamers and returns
     # a selection of all the newly created keyfigures so
     # attributes can be modified en masse by calling .set()
@@ -225,9 +232,10 @@ class FlowField(morpho.Layer):
     # this method should only be used RETROACTIVELY after the
     # FlowField has some keyframes.
     def prefadeIn(self, duration=30, *, jump=0):
-        self.newkey(self.firstID()+duration)
+        initial = self.newkey(self.keyID(-2))
+        self.newkey(self.keyID(-2)+duration).all.set(visible=True)
 
-        self.first().all.set(alpha=0)
+        initial.all.set(alpha=0, visible=True)
         if jump != 0:
             for keyfig in self.first().figures:
                 # Avoiding using `-=` so it works with mutable np.arrays
