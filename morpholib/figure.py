@@ -1082,6 +1082,8 @@ def blink(actor, duration=15, atFrame=None, *, times=1):
 # keyfigure is taken as the source figure.
 @Figure.action
 def morphFrom(actor, source, duration=30, atFrame=None):
+    if duration < 2:
+        raise ValueError("Duration must be at least 2 frames.")
     if atFrame is None:
         atFrame = actor.lastID()
     if isinstance(source, Actor):
@@ -1103,8 +1105,11 @@ def morphFrom(actor, source, duration=30, atFrame=None):
     # Set destination figure to be the original last keyfigure.
     actor.newendkey(duration, target)
 
-    # Keep only the first frame AFTER atFrame
-    actor.newkey(atFrame+1)
+    # Keep only the first frame AFTER atFrame.
+    # We take a copy of the intial keyframe because we're not
+    # going to rely on creating perfectly seamless intermediate
+    # keyfigures (e.g. MultiText doesn't split tweens seamlessly).
+    actor.newkey(atFrame+1, actor.time(atFrame).copy())
     # Doing invisibility instead of delkey because preserving
     # the initial keyframe can be important for puppet skits.
     actor.time(atFrame).visible = False
