@@ -2481,14 +2481,9 @@ class SpacePath(Path):
         if seq is None:
             seq = Arraylist([morpho.array(0), morpho.array(1)])
         elif type(seq) is Path:
-            # Copy over state and all other attributes except seq
-            for name in self._state:
-                if name != "seq":
-                    self._state[name] = seq._state[name].copy()
-            # Copy other attributes
-            self.interp = seq.interp
-            # self.dash = seq.dash[:]
-            self.deadends = seq.deadends.copy()
+            # Copy over state and all other attributes except `seq`
+            # and `origin`
+            self._updateFrom(seq, common=True, ignore={"seq", "origin"})
             origin = morpho.matrix.array(seq.origin)
 
             # FUTURE: Have SpacePath detect non-trivial rotation
@@ -3806,7 +3801,8 @@ class Polygon(BoundingBoxFigure):
         # instead of self.color.
         # Mainly for use by the Quadmesh class to remove
         # seams when width is zero and fill is a color function.
-        self._strokeGradient = False
+        self.NonTweenable("_strokeGradient", False)
+        # self._strokeGradient = False
 
     @property
     def transform(self):
@@ -4009,11 +4005,9 @@ class SpacePolygon(Polygon):
         if vertices is None:
             vertices = Arraylist([])
         elif type(vertices) is Polygon:
-            # Copy over state and all other attributes except vertices
-            for name in self._state:
-                if name != "vertices":
-                    self._state[name] = vertices._state[name].copy()
-
+            # Copy over state and all other attributes except
+            # `vertices` and `origin`
+            self._updateFrom(vertices, common=True, ignore={"vertices", "origin"})
             origin = morpho.matrix.array(vertices.origin)
 
             # FUTURE: Have SpacePolygon detect non-trivial rotation
