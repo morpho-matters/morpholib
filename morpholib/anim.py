@@ -321,6 +321,27 @@ class Frame(morpho.Figure):
     def sub(self):
         return morpho.tools.dev.Slicer(getter=self._sub)
 
+    def _cut(self, index):
+
+        # Using _select() instead of sub[] here because
+        # we do NOT want to make copies of the subfigures
+        # in this case.
+        subframe = self._select(index, _asFrame=True)
+        figures = list(self.figures)
+        for subfig in subframe.figures:
+            while subfig in figures:
+                figures.remove(subfig)
+        self.figures = figures
+        return subframe
+
+    # Basically the same as sub[], but it also removes the selected
+    # subfigures from self's figure list. The selected subfiures
+    # are NOT copied since they are removed from self's figure list.
+    @property
+    def cut(self):
+        return morpho.tools.dev.Slicer(getter=self._cut)
+
+
     # Partitions the Frame into a Frame of subframes
     # splitting at the given list of indices.
     #
