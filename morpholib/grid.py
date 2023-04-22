@@ -3992,7 +3992,7 @@ class Polygon(BoundingBoxFigure):
 # Note that the transformation tweenables "rotation" and "transform"
 # are unsupported.
 class SpacePolygon(Polygon):
-    def __init__(self, vertices=None, width=3, color=(0,0,0), alphaEdge=1,
+    def __init__(self, vertices=None, width=3, color=(1,1,1), alphaEdge=1,
         fill=(1,0,0), alphaFill=1,
         alpha=1):
 
