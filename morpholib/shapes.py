@@ -2733,18 +2733,26 @@ class Pie(EllipticalArc):
             ctx.set_line_width(self.strokeWeight)
             ctx.stroke()
 
-    def toPath(self, dTheta=tau/72):
-        raise NotImplementedError
-
-    # Converts the figure into an equivalent polygon figure
+    # Converts the figure into an equivalent Path figure.
     # Optionally specify the angular steps (in rads).
     # Default: 2pi/72 (5 degrees)
-    # NOTE: Arc center will be assigned using Polygon.origin.
+    # NOTE: Arc center will be assigned using the `origin`
+    # transformation attribute.
     # You will need to call commitTransforms() on the resulting
-    # path figure if you want the vertex list to perfectly reflect
+    # Path if you want the vertex list to perfectly reflect
+    # points on the arc in true space.
+    def toPath(self, dTheta=tau/72):
+        return self.toPolygon(dTheta).toPath()
+
+    # Converts the figure into an equivalent Polygon figure.
+    # Optionally specify the angular steps (in rads).
+    # Default: 2pi/72 (5 degrees)
+    # NOTE: Arc center will be assigned using the `origin`
+    # transformation attribute.
+    # You will need to call commitTransforms() on the resulting
+    # Polygon if you want the vertex list to perfectly reflect
     # points on the arc in true space.
     def toPolygon(self, dTheta=tau/72):
-
         theta0, theta1 = self.theta0, self.theta1
         # If angular span is greater than tau,
         # just draw a circle
