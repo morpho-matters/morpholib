@@ -3870,6 +3870,15 @@ class Polygon(BoundingBoxFigure):
 
         return path
 
+    # Converts the Polygon into an equivalent Path figure.
+    def toPath(self):
+        path = type(self)._edgeType(self.vertices[:])
+        path.close()
+
+        path._updateFrom(self, common=True)
+
+        return path
+
     def draw(self, camera, ctx):
 
         if len(self.vertices) < 2 or self.alpha == 0: return
