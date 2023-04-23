@@ -2093,6 +2093,28 @@ Multipath = MultiPath  # Alias
 # Assign MultiPath as the Path class's dedicated multifigure version.
 Path._multitype = MultiPath
 
+# Like regular morphFrom(), except the source can optionally
+# be a list of actors/figures, in which case, the morph will
+# be performed from all of those figures.
+@MultiPath.action
+def morphFrom(actor, source, *args, **kwargs):
+    if isinstance(source, (list, tuple)):
+        if len(source) == 0:
+            raise TypeError("Source to morph from is empty.")
+        # Prepare the list of figures to morph from
+        mpaths = [mpath.last().copy() if isinstance(mpath, morpho.Actor) else mpath.copy() for mpath in source]
+        for mpath in mpaths:
+            mpath.commitTransforms()
+
+        # Combine into a single MultiPath figure
+        combined = mpaths[0]
+        for mpath in mpaths[1:]:
+            combined.merge(mpath)
+
+        return actor.morphFrom(combined, *args, **kwargs)
+    else:
+        return morpho.Figure.actions["morphFrom"](actor, source, *args, **kwargs)
+
 
 # 3D version of MultiPath meant to enable 2D MultiPaths to be
 # positionable and orientable in 3D space. This is NOT a full
@@ -2183,6 +2205,11 @@ def fadeOut(mpath, duration=30, atFrame=None, jump=0):
     jump = morpho.array(jump)
     if duration > 0:
         mpath.last().pos = mpath.last().pos + jump
+
+# Inherited morphFrom() from 2D MultiPath doesn't work for
+# 3D MultiPaths unfortunately, so default back to the original
+# morphFrom() for all figures.
+MultiPath3D.actions["morphFrom"] = morpho.Figure.actions["morphFrom"]
 
 class Track(Path):
     '''Path with tick marks - like a train track: --|--|--|--
