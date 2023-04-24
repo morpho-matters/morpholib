@@ -2132,8 +2132,10 @@ def highlight(actor, duration=15, atFrame=None, *,
         path2.rescale(rescale)
 
 # Highlights then immediately de-highlights the MultiPath actor.
+# Optional keyword input `pause` can be used to specify a number
+# of frames to pause after highlighting and before de-highlighting.
 @MultiPath.action
-def flourish(actor, duration=15, atFrame=None, **kwargs):
+def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
 
     if atFrame is None:
         atFrame = actor.lastID()
@@ -2142,6 +2144,8 @@ def flourish(actor, duration=15, atFrame=None, **kwargs):
     path1 = actor.newkey(atFrame)
 
     actor.highlight(duration, atFrame, **kwargs)
+    if pause > 0:
+        actor.newendkey(pause)
     actor.newendkey(duration, path1.copy())
 
 
