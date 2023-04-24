@@ -2115,6 +2115,35 @@ def morphFrom(actor, source, *args, **kwargs):
     else:
         return morpho.Figure.actions["morphFrom"](actor, source, *args, **kwargs)
 
+# Highlights the MultiPath actor
+@MultiPath.action
+def highlight(actor, duration=15, atFrame=None, *,
+    width=-3, fill=(1,1,0), color=(0,0,0), rescale=1):
+
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    path0 = actor.last()
+    path1 = actor.newkey(atFrame)
+    path2 = actor.newendkey(duration)
+
+    path2.all.set(width=width, fill=fill, color=color)
+    if rescale != 1:
+        path2.rescale(rescale)
+
+# Highlights then immediately de-highlights the MultiPath actor.
+@MultiPath.action
+def flourish(actor, duration=15, atFrame=None, **kwargs):
+
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    path0 = actor.last()
+    path1 = actor.newkey(atFrame)
+
+    actor.highlight(duration, atFrame, **kwargs)
+    actor.newendkey(duration, path1.copy())
+
 
 # 3D version of MultiPath meant to enable 2D MultiPaths to be
 # positionable and orientable in 3D space. This is NOT a full
