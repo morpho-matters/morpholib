@@ -239,6 +239,11 @@ class Frame(morpho.Figure):
 
         # self.defaultTween = Frame.tweenLinear
 
+    @property
+    def numfigs(self):
+        return len(self.figures)
+
+
     # # Returns True iff the "stylistic" attributes of two frames match
     # # i.e. their views, indices, and defaultTweens match.
     # # This can be used as a criterion on whether or not merging two frames
