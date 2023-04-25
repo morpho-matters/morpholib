@@ -17,6 +17,7 @@ cr = cairo
 
 import math, cmath
 import numpy as np
+from collections.abc import Iterable
 
 
 def dummy():
@@ -2118,16 +2119,21 @@ def morphFrom(actor, source, *args, **kwargs):
 # Highlights the MultiPath actor
 @MultiPath.action
 def highlight(actor, duration=15, atFrame=None, *,
-    width=-3, fill=(1,1,0), color=(0,0,0), rescale=1):
+    width=-3, fill=(1,1,0), color=(0,0,0), rescale=1, select=None):
 
     if atFrame is None:
         atFrame = actor.lastID()
+
+    if select is None:
+        select = sel[:]
+    elif isinstance(select, Iterable):
+        select = tuple(select)
 
     path0 = actor.last()
     path1 = actor.newkey(atFrame)
     path2 = actor.newendkey(duration)
 
-    path2.all.set(width=width, fill=fill, color=color)
+    path2.select[select].set(width=width, fill=fill, color=color)
     if rescale != 1:
         path2.rescale(rescale)
 
