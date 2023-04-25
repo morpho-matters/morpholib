@@ -2133,9 +2133,17 @@ def highlight(actor, duration=15, atFrame=None, *,
     path1 = actor.newkey(atFrame)
     path2 = actor.newendkey(duration)
 
-    path2.select[select].set(width=width, fill=fill, color=color)
+    # Assignment to subframe needs to happen because
+    # if `select` is a choice function, modifying the
+    # width/fill/color of the subpaths can change what
+    # the choice function selects on the second call.
+    subframe = path2.select[select]
+    subframe.set(width=width, fill=fill, color=color)
     if rescale != 1:
-        path2.rescale(rescale)
+        if select == sel[:]:
+            path2.rescale(rescale)
+        else:
+            subframe.rescale(rescale)
 
 # Highlights then immediately de-highlights the MultiPath actor.
 # Optional keyword input `pause` can be used to specify a number
