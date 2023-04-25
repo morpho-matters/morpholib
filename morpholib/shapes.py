@@ -1754,7 +1754,7 @@ class MultiSpline(morpho.grid.MultiPath):
 
         multispline = cls(splines)
         multispline.squeeze()  # Remove empty and singleton splines
-        multispline.smartset(**kwargs)  # Pass additional kwargs to set()
+        multispline.set(**kwargs)  # Pass additional kwargs to set()
         return multispline
 
     # Converts the MultiSpline into a similar looking MultiPath figure.

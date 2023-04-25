@@ -710,7 +710,8 @@ class MultiFigure(Frame):
         fig = self.figures[0]
         try:
             # return fig.__getattribute__(name)
-            return getattr(fig, name)
+            # return getattr(fig, name)
+            return getattr(self.all, name)
         # This attribute is nowhere to be found anywhere. So give up.
         except AttributeError:
             # raise AttributeError("First member figure of type '"+type(fig)+"'' does not have attribute '"+name+"'")
@@ -758,7 +759,8 @@ class MultiFigure(Frame):
 
                 # If you got here, we didn't get an attribute error,
                 # so it should be a real attribute! Go ahead and set it!
-                fig.__setattr__(name, value)
+                self.all.__setattr__(name, value)
+                # fig.__setattr__(name, value)
 
             # Got an attribute error, so the given attribute isn't
             # even in the first member figure. Therefore, just assign it
@@ -770,15 +772,19 @@ class MultiFigure(Frame):
     # Sets all given keyword inputs as toplevel attributes if they
     # already exist as toplevel attributes. Any others are assigned
     # as attributes of the subfigures.
-    def smartset(self, **kwargs):
+    def set(self, **kwargs):
         # Dictionary holds all attribute mappings that don't
-        # correspond to toplevel attributes and will instead
-        # be assigned at the subfigure level
+        # correspond to toplevel attributes BUT DO correspond to
+        # subfigure attributes. These attributes will be assigned
+        # at the subfigure level
         subset = dict()
-        for name in kwargs.copy():
-            if not object_hasattr(self, name) and name not in self._state:
-                subset[name] = kwargs.pop(name)
-        self.set(**kwargs)
+        if len(self.figures) > 0:
+            fig0 = self.figures[0]
+            for name in kwargs.copy():
+                if not object_hasattr(self, name) and name not in self._state \
+                and hasattr(fig0, name):
+                    subset[name] = kwargs.pop(name)
+        morpho.Figure.set(self, **kwargs)
         self.all.set(**subset)
         return self
 
