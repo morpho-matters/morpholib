@@ -115,11 +115,7 @@ class _SubAttributeManager(object):
         except IndexError:
             raise IndexError("Frame has no subfigures.")
 
-        # Convert tuple to list to facilitate possible
-        # cross-container comparisons later on.
-        # Also makes a copy of the list if it's already a list.
-        if isinstance(commonValue, (list, tuple)):
-            commonValue = list(commonValue)
+        commonValue_is_list_or_tuple = isinstance(commonValue, (list, tuple))
 
         # Check if the attribute is common to all the
         # subfigures and having the same value
@@ -129,17 +125,17 @@ class _SubAttributeManager(object):
             except AttributeError:
                 raise AttributeError(f"Subfigures do not all possess attribute `{name}`")
 
-            # Convert tuple to list so that cross-container comparison
-            # with commonValue will work
-            if isinstance(value, tuple) and isinstance(commonValue, list):
-                value = list(value)
+            if commonValue_is_list_or_tuple and isinstance(value, (list, tuple)):
+                # Convert value to commonValue's type so that cross-container
+                # comparison with commonValue will work
+                value = type(commonValue)(value)
             # Check if they are unequal
             if not isequal(value, commonValue):  # isequal() handles np.arrays too
                 if callable(commonValue):
                     return self._subattrman_createSubmethod(name)
                 raise ValueError(f"Subfigures do not have a common value for attribute `{name}`")
 
-        return commonValue
+        return commonValue if not isinstance(commonValue, (list, np.ndarray)) else commonValue.copy()
 
     def __setattr__(self, name, value):
         # Handle ordinary attribute sets if self possesses
