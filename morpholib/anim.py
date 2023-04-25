@@ -771,6 +771,22 @@ class MultiFigure(Frame):
                 # super().__setattr__(name, value)
                 morpho.Figure.__setattr__(self, name, value)
 
+    # Sets all given keyword inputs as toplevel attributes if they
+    # already exist as toplevel attributes. Any others are assigned
+    # as attributes of the subfigures.
+    def smartset(self, **kwargs):
+        # Dictionary holds all attribute mappings that don't
+        # correspond to toplevel attributes and will instead
+        # be assigned at the subfigure level
+        subset = dict()
+        for name in kwargs.copy():
+            if not object_hasattr(self, name) and name not in self._state:
+                subset[name] = kwargs.pop(name)
+        self.set(**kwargs)
+        self.all.set(**subset)
+        return self
+
+
     # Decorator for the tween methods in a MultiFigure subclass.
     # Reworks ordinary base class tween methods so that they work
     # in a multifigure setting.

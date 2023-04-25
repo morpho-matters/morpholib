@@ -1709,7 +1709,7 @@ class MultiSpline(morpho.grid.MultiPath):
     #      index=(start, stop, step)
     # The tuple is interpreted identically to how range() works.
     # Any additional keyword arguments are set as attributes of
-    # the returned figure.
+    # the returned figure or its subfigures.
     @classmethod
     def fromsvg(cls, source, *,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
@@ -1754,7 +1754,7 @@ class MultiSpline(morpho.grid.MultiPath):
 
         multispline = cls(splines)
         multispline.squeeze()  # Remove empty and singleton splines
-        multispline.set(**kwargs)  # Pass additional kwargs to set()
+        multispline.smartset(**kwargs)  # Pass additional kwargs to set()
         return multispline
 
     # Converts the MultiSpline into a similar looking MultiPath figure.
