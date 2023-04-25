@@ -14,6 +14,16 @@ import numpy as np
 from numbers import Number
 import colorsys
 
+# Checks if two color triplets code for the same color.
+# Works by seeing if each component is within 1/255 of
+# its partner.
+# e.g. matches([1,0,0], (0.99999,0,0)) --> True
+def matches(color1, color2):
+    color1 = np.array(color1, dtype=float)
+    color2 = np.array(color2, dtype=float)
+
+    return np.all(np.round(255*(color2-color1))==0).tolist()
+
 # Normalizes an RGB triplet in the range [0...255] into
 # the range [0.0, 1.0].
 # RGB can be specified as three separate inputs, or as a
