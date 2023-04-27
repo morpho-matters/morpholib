@@ -4585,6 +4585,7 @@ def quadgrid(*,
         array, width, color, alphaEdge,
         fill, alphaFill, alpha, fill2
         )
+    quadmesh.tweenMethod = tweenMethod
 
     if transition is None:
         transition = morpho.transition.default
