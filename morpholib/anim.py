@@ -72,6 +72,9 @@ class LayerMergeError(MergeError):
 class MaskConfigurationError(Exception):
     pass
 
+class AmbiguousValueError(ValueError):
+    pass
+
 ### CLASSES ###
 
 # Mainly for internal use.
@@ -133,7 +136,7 @@ class _SubAttributeManager(object):
             if not isequal(value, commonValue):  # isequal() handles np.arrays too
                 if callable(commonValue):
                     return self._subattrman_createSubmethod(name)
-                raise ValueError(f"Subfigures do not have a common value for attribute `{name}`")
+                raise AmbiguousValueError(f"Subfigures do not have a common value for attribute `{name}`")
 
         return commonValue if not isinstance(commonValue, (list, np.ndarray)) else commonValue.copy()
 
@@ -152,6 +155,45 @@ class _SubAttributeManager(object):
         for name, value in kwargs.items():
             setattr(self, name, value)
         return self._subattrman_origframe
+
+
+class _MetaArray(np.ndarray):
+    """Array with metadata.
+    Thanks to @Bertrand L on StackOverflow for this!
+    https://stackoverflow.com/a/34967782"""
+
+    def __new__(cls, array, dtype=None, order=None, **kwargs):
+        obj = np.asarray(array, dtype=dtype, order=order).view(cls)
+        obj.metadata = kwargs
+        return obj
+
+    def __array_finalize__(self, obj):
+        if obj is None: return
+        self.metadata = getattr(obj, 'metadata', None)
+
+# Special version of _SubAttributeManager which in the case of an
+# AmbiguousValueError, returns a MetaArray of the values across all
+# subfigures. Mainly used for enabling the .iall and .iselect
+# features for subfigure in-place operations.
+class _InPlaceSubAttributeManager(_SubAttributeManager):
+    def __getattr__(self, name):
+        try:
+            return _SubAttributeManager.__getattr__(self, name)
+        except AmbiguousValueError:
+            # A MetaArray is used in order to distinguish these object arrays
+            # from regular numpy object arrays just in case a user is trying
+            # to update a value that is already natively an object array.
+            return _MetaArray([getattr(subfig, name) for subfig in self._subattrman_frame.figures], dtype=object)
+
+    def __setattr__(self, name, value):
+        if isinstance(value, _MetaArray):
+            for subfig, subvalue in zip(self._subattrman_frame.figures, value.tolist()):
+                attrType = type(getattr(subfig, name))
+                # Typecast subvalue because MetaArrays turn lists and tuples
+                # into np.arrays internally by default
+                setattr(subfig, name, subvalue if issubclass(attrType, np.ndarray) else attrType(subvalue))
+        else:
+            _SubAttributeManager.__setattr__(self, name, value)
 
 
 # Frame class. Groups figures together for simultaneous drawing.
@@ -275,7 +317,14 @@ class Frame(morpho.Figure):
     def all(self):
         return _SubAttributeManager(self)
 
-    def _select(self, index, *, _asFrame=False):
+    # Version of .all that is only meant to be used for in-place
+    # operations like `+=`.
+    # Example: myframe.iall[:3].pos += 2j
+    @property
+    def iall(self):
+        return _InPlaceSubAttributeManager(self)
+
+    def _select(self, index, *, _asFrame=False, _iall=False):
         if callable(index):
             condition = index
             selection = [fig for fig in self.figures if condition(fig)]
@@ -296,7 +345,10 @@ class Frame(morpho.Figure):
         if _asFrame:
             return frm
         else:
-            return _SubAttributeManager(frm, self)
+            return _InPlaceSubAttributeManager(frm, self) if _iall else _SubAttributeManager(frm, self)
+
+    def _iselect(self, *args, **kwargs):
+        return self._select(*args, _iall=True, **kwargs)
 
     # Allows the modification of a subset of the subfigures
     # with the syntax:
@@ -308,6 +360,14 @@ class Frame(morpho.Figure):
     @property
     def select(self):
         return morpho.tools.dev.Slicer(getter=self._select)
+
+    # Version of .select[] that is only meant to be used for in-place
+    # operations like `+=`.
+    # Example: myframe.iselect[:3].pos += 2j
+    @property
+    def iselect(self):
+        return morpho.tools.dev.Slicer(getter=self._iselect)
+
 
     def _sub(self, index):
         return self._select(index, _asFrame=True).copy()
