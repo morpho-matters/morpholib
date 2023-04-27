@@ -166,7 +166,9 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
 # origin = origin point of path (complex number). Default: 0
 @handleBoxTypecasting
 def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
-    transition=None, origin=0, *, duration=None, pad=0, **kwargs):
+    transition=None, origin=0, *, duration=None, pad=0,
+    _debox=False, _pause=0,
+    **kwargs):
 
     # "duration" is a dominant alias for the "time" parameter
     if duration is not None:
@@ -206,20 +208,44 @@ def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
     path.origin = origin
     if transition is None:
         transition = morpho.transition.default
-    # if transition is None:
-    #     path.transition = lambda t: constTrans(morpho.transition.default(t))
-    path.transition = lambda t: constTrans(transition(t))
+
+    if _debox:
+        # Calculate in and out times
+        t1 = round(time/2)
+        t2 = time - t1
+        time = t1
+
+        # Split the transition between the in and out times
+        tran1, tran2 = morpho.transitions.split(transition, 0.5)
+        path.transition = lambda t: constTrans(tran1(t))
+    else:
+        path.transition = lambda t: constTrans(transition(t))
     path.end = 0
     path.set(**kwargs)  # Set any other attributes
 
     path = morpho.Actor(path)
     path.newkey(time)
     path.last().end = 1
+
+    if _debox:
+        if _pause > 0:
+            path.newendkey(_pause)
+        path.last().transition = lambda t: constTrans(tran2(t))
+        path.newendkey(t2).start = 1
+        path.last().visible = False
+
     path.last().transition = transition
 
     return path
 
 enbox = enboxPath  # Synonym for emboxPath()
+
+# Same as enbox(), but it deboxes immediately afterward.
+# Useful for briefly highlighting something with a box.
+# An additional keyword-only input `pause` can be specified
+# to provide a delay between enboxing and deboxing.
+def enboxHighlight(*args, pause=0, **kwargs):
+    return enbox(*args, _debox=True, _pause=pause, **kwargs)
 
 # Scales all the nodes of a path by the given factor about the given
 # centerpoint. If the center is unspecified, defaults to the center
