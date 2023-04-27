@@ -4295,7 +4295,7 @@ class Quadmesh(morpho.Figure):
         if array.dtype is not np.dtype(float):
             array = np.array(array, dtype=float)
 
-        _array = morpho.Tweenable(name="_array", value=morpho.matrix.array(array), tags=["nparray"])
+        _array = morpho.Tweenable(name="_array", value=morpho.matrix.array(array), tags=["nparray", "3d"])
         color = morpho.Tweenable(name="color", value=color, tags=["color"])
         alphaEdge = morpho.Tweenable(name="alphaEdge", value=alphaEdge, tags=["scalar"])
         fill = morpho.Tweenable(name="fill", value=fill, tags=["color", "nolinear"])
@@ -4501,7 +4501,7 @@ class Quadmesh(morpho.Figure):
 
     def tweenLinear(self, other, t, *args, **kwargs):
         # Do standard tween first
-        tw = super().tweenLinear(other, t, *args, **kwargs)
+        tw = morpho.Figure.tweenLinear(self, other, t, *args, **kwargs)
 
         # Handle tween fill if it's a color function
         if callable(self.fill):
@@ -4524,6 +4524,11 @@ class Quadmesh(morpho.Figure):
         self_fill2 = self.fill if self.fill2 is None else self.fill2
         other_fill2 = other.fill if other.fill2 is None else other.fill2
         tw.fill2 = [morpho.numTween(self_fill2[n], other_fill2[n], t) for n in range(3)]
+        return tw
+
+    def tweenSpiral(self, other, t):
+        tw = self.tweenLinear(other, t, ignore="_array")
+        tw._array = morpho.spiralInterpArray3d(self._array.reshape(-1,3), other._array.reshape(-1,3), t).reshape(self._array.shape)
         return tw
 
 QuadMesh = Quadmesh  # Synonym for Quadmesh class
