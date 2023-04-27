@@ -4103,7 +4103,7 @@ class SpacePolygon(Polygon):
 
         # Redefine vertices tweenable to be 3D.
         vertices = Arraylist(morpho.matrix.array(vertices[n]) for n in range(len(vertices)))
-        _vertices = morpho.Tweenable("_vertices", vertices, tags=["nparray", "list", "fimage", "nospiral"])
+        _vertices = morpho.Tweenable("_vertices", vertices, tags=["nparray", "list", "fimage", "3d"])
         self._state.pop("vertices")
         self._state["_vertices"] = _vertices
 
