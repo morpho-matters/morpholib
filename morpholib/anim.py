@@ -4023,7 +4023,13 @@ class Animation(object):
         # Schedule drawing at the specified frame rate.
         # Only schedule the updater for animations that are more
         # than a single frame.
-        if finalIndex - firstIndex > 0:
+        # UPDATE: pyglet will occasionally crash when trying to
+        # play a 1-frame animation. Disabling the `else` clause
+        # here seems to fix it. In the future, this if-else
+        # clause may be fully removed, but I'm keeping this funny
+        # `if True` to preserve the previous behavior in case
+        # I want to revert.
+        if True or finalIndex - firstIndex > 0:
             # If the first frame is a delay frame, manually call
             # the doDelay() method because the updater won't see it.
             if self.currentIndex in self.delays:
