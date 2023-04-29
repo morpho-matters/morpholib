@@ -39,7 +39,10 @@ def isequal(a, b):
     elif isinstance(a, np.ndarray) != isinstance(b, np.ndarray):
         return False
     else:
-        return (a == b)
+        try:
+            return (a == b)
+        except ValueError:
+            return np.array_equal(a,b)
 
 # Conversion factors between degrees and radians.
 deg = tau/360
