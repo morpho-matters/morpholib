@@ -12,7 +12,7 @@ lowercase letters since convention has it that package
 names are all lowercase letters.
 '''
 
-from morpholib.tools.basics import tau, argShift, argShiftArray, arcCenter, arcCenterArray
+from morpholib.tools.basics import tau, argShift, argShiftArray, arcCenter, arcCenterArray, isequal
 import math
 import numpy as np
 import cairo
@@ -147,6 +147,12 @@ class Tweenable(object):
                 twCopy.value = self.value
 
         return twCopy
+
+    def __eq__(self, other):
+        return self.name == other.name and \
+            self.tags == other.tags and \
+            isequal(self.value, other.value) and \
+            self.metadata == other.metadata
 
     def __repr__(self):
         return "<"+self.name+": " + repr(self.value) + ">"
