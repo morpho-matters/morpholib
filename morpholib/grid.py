@@ -3886,13 +3886,6 @@ class Polygon(BoundingBoxFigure):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
-    def copy(self):
-        new = super().copy()
-
-        new._strokeGradient = self._strokeGradient
-
-        return new
-
     # Applies all of the transformation attributes
     # origin, rotation, transform
     # to the actual vertices list itself and then

@@ -226,15 +226,6 @@ class Spline(BoundingBoxFigure):
     def pos(self, value):
         self.origin = value
 
-
-    def copy(self):
-        new = super().copy()
-        # new.dash = self.dash.copy() if "copy" in dir(self.dash) else self.dash
-        new.deadends = self.deadends.copy()
-        new.showTangents = self.showTangents
-
-        return new
-
     # Computes the loose bounding box of the spline.
     # That is, it returns the bounding box of all the
     # control points (positional and tangent) the spline contains.
