@@ -314,6 +314,12 @@ def boxCorners(box, initCorner="NW", CCW=True):
 # padded differently vertically vs horizontally:
 #       padbox(box, xpad, ypad) -> paddedBox
 def padbox(box, xpad, ypad=None, /):
+    # Typecast Actors/Figures to box
+    if isinstance(box, morpho.Actor):
+        box = box.last().box()
+    elif isinstance(box, morpho.Figure):
+        box = box.box()
+
     if ypad is None:
         ypad = xpad
 
@@ -330,6 +336,12 @@ padBox = padbox  # Alias
 # by the given 2d vector `shift` expressed as a complex number.
 # Returns the modified box.
 def shiftBox(box, shift):
+    # Typecast Actors/Figures to box
+    if isinstance(box, morpho.Actor):
+        box = box.last().box()
+    elif isinstance(box, morpho.Figure):
+        box = box.box()
+
     left, right, bottom, top = box
     # Adjust by origin
     left += shift.real
