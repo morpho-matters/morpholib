@@ -4552,6 +4552,9 @@ def handleColorTypeCasting(colorfunc):
 #         Default: None (match primary fill; i.e. no checkerboard pattern)
 # tweenMethod = Tween method to assign. Default: Quadmesh.tweenLinear
 # transition = Transition function to assign. Default: morpho.transition.default
+#
+# Any additional keyword inputs are set as attributes of the returned
+# Quadmesh.
 def quadgrid(*,
     view=(-5,5, -5,5),
     dx=1, dy=1,
@@ -4559,7 +4562,7 @@ def quadgrid(*,
     color=(0,0,0), alphaEdge=1,
     fill=(1,0,0), alphaFill=1, alpha=1, fill2=None,
     tweenMethod=Quadmesh.tweenLinear,
-    transition=None):
+    transition=None, **kwargs):
 
     xmin, xmax, ymin, ymax = view
     xmax += 1.0e-6  # +epsilon to deal with floating point error
@@ -4581,6 +4584,8 @@ def quadgrid(*,
     if transition is None:
         transition = morpho.transition.default
     quadmesh.transition = transition
+
+    quadmesh.set(**kwargs)
 
     return quadmesh
 
