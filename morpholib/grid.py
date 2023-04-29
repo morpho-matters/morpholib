@@ -3448,7 +3448,7 @@ mathGrid = mathgrid  # Alternate camel-case name.
 # See "mathgrid" for more info.
 def mathgrid3d(*,
     view=(-5,5, -5,5),
-    dx=1, dy=1,
+    dx=1, dy=1, spacing=None,
     hsteps=50, vsteps=50, steps=None,
     hnodes=None, vnodes=None, nodes=None,
     hcolor=(0,0,1), vcolor=(0,0,1), color=None, alpha=1,
@@ -3464,7 +3464,7 @@ def mathgrid3d(*,
 
     wire = mathgrid(
         view=view,
-        dx=dx, dy=dy,
+        dx=dx, dy=dy, spacing=spacing,
         hsteps=hsteps, vsteps=vsteps, steps=steps,
         hnodes=hnodes, vnodes=vnodes, nodes=nodes,
         hcolor=hcolor, vcolor=vcolor, color=color, alpha=alpha,
