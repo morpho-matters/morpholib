@@ -539,6 +539,8 @@ class Path(BoundingBoxFigure):
         self.Tweenable("background", (1,1,1), tags=["color"])
         self.Tweenable("backAlpha", 0, tags=["scalar"])
         self.Tweenable("backPad", 0, tags=["scalar"])
+        # Set of indices that represent where a path should terminate.
+        self.Tweenable("deadends", set(), tags=["notween"])
 
         # How to interpolate between the points given in the seq.
         # For now, the only interp method is "linear", which  means
@@ -554,10 +556,6 @@ class Path(BoundingBoxFigure):
         # as alternating that dash width ON and OFF.
         # Also note that dash pattern is ignored if gradient colors are used.
         # self.dash = []
-
-        # Set of indices that represent where a path should terminate.
-        # self.deadends = set()
-        self.NonTweenable("deadends", set())
 
         self.NonTweenable("headExternal", False)
         self.NonTweenable("tailExternal", False)
