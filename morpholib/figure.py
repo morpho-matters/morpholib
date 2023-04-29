@@ -94,6 +94,11 @@ class Figure(object):
         # structures that incorporate figures.
         self.static = False
 
+        # Special hidden attribute only meant to be used during
+        # animation playback. Helps to make animations run more
+        # quickly when tweening between equal keyfigures.
+        self._static_acute = False
+
         # (DEPRECATED)
         # How many frames should the figure persist in an animation.
         # If set to oo (infinity), then the figure will
@@ -123,6 +128,15 @@ class Figure(object):
     @tweenMethod.setter
     def tweenMethod(self, value):
         self.defaultTween = value
+
+    # Returns True iff self and other are both invisible, OR are
+    # exactly the same type AND their tweenables compare equal.
+    # Used to determine whether tweening will be required between
+    # two keyfigures in an Actor.
+    def _appearsEqual(self, other, ignore=()):
+        return not(self.visible or other.visible) or \
+            (type(self) is type(other) and \
+            all(self._state[name] == other._state[name] for name in self._state if name not in ignore))
 
     # Actor actions registry.
     # Maps action names to the action functions themselves.
@@ -1889,7 +1903,7 @@ class Actor(object):
             else:
                 return None
         # If the latest keyframe is static, don't tween.
-        elif keyfig.static:
+        elif keyfig._static_acute or keyfig.static:
             return keyfig if not copykeys else keyfig.copy()
             # return keyfig.copy()
         else:
@@ -1925,6 +1939,16 @@ class Actor(object):
 
         return fig
 
+    def _optimize(self):
+        for n in range(len(self.timeline)-1):
+            keyfig = self.key[n]
+            keyfigNext = self.key[n+1]
+            if keyfig._appearsEqual(keyfigNext):
+                keyfig._static_acute = True
+
+    def _deoptimize(self):
+        for keyfig in self.keys():
+            keyfig._static_acute = False
 
     # Should the final keyfigure persist after the final frame?
     # If set to True, to make an actor vanish, you will need to

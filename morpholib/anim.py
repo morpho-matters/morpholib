@@ -281,6 +281,16 @@ class Frame(morpho.Figure):
     def numfigs(self):
         return len(self.figures)
 
+    # Modified because checking if the two figure lists are
+    # equal via vanilla Python list equality will not work.
+    # Instead, it goes thru the figure lists of self and other
+    # and checks if all corresponding figures appear equal.
+    def _appearsEqual(self, other):
+        self_figures = self.figures
+        other_figures = other.figures
+        return morpho.Figure._appearsEqual(self, other, ignore={"figures"}) and \
+            len(self_figures) == len(other_figures) and \
+            all(self_subfig._appearsEqual(other_subfig) for self_subfig, other_subfig in zip(self_figures, other_figures))
 
     # # Returns True iff the "stylistic" attributes of two frames match
     # # i.e. their views, indices, and defaultTweens match.
@@ -2343,6 +2353,15 @@ class Layer(object):
     def slowDown(self, factor, center=0, useOffset=False, ignoreMask=False):
         self.speedUp(1/factor, center, useOffset, ignoreMask)
 
+    def _optimize(self):
+        self.camera._optimize()
+        for actor in self.actors:
+            actor._optimize()
+
+    def _deoptimize(self):
+        self.camera._deoptimize()
+        for actor in self.actors:
+            actor._deoptimize()
 
     # Pretweens all the actors in the layer including the camera actor.
     # See Actor.pretween() for more info.
@@ -3605,6 +3624,14 @@ class Animation(object):
             # Draw layer to current context
             layer.draw(f, self.context)
 
+    def _optimize(self):
+        for layer in self.layers:
+            layer._optimize()
+
+    def _deoptimize(self):
+        for layer in self.layers:
+            layer._deoptimize()
+
     # Export animation to file.
     # Can either be MP4, GIF animation, or PNG sequence depending on
     # the file extension given in the filepath.
@@ -3613,7 +3640,11 @@ class Animation(object):
     # animation while exporting test animations to speed up rendering.
     # Note: scaling seems to be done at the final pixel level, so specifying
     # scale > 1 will not actually increase the resolution of your animation.
-    def export(self, filepath, scale=1):
+    #
+    # Optional argument "optimize" can be set to False to prevent
+    # the animation from being optimized. This will probably rarely be
+    # desired.
+    def export(self, filepath, scale=1, *, optimize=True):
         # # Handle non-trivial scale factor.
         # if scale != 1:
         #     # Save original window shape
@@ -3627,6 +3658,9 @@ class Animation(object):
 
         if scale > 1:
             warn("scale > 1 will not actually improve resolution.")
+
+        if optimize:
+            self._optimize()
 
         # Get first and final indices if specified.
         if self.finalIndex is None:
@@ -3817,14 +3851,21 @@ class Animation(object):
     # from a much older version of Morpho, and should probably just be left
     # alone. In the future, one or both of them may be removed.
     #
+    # Optional argument "optimize" can be set to False to prevent
+    # the animation from being optimized. This will probably rarely be
+    # desired.
+    #
     # KNOWN ISSUE: Morpho may sometimes crash if you attempt to call play()
     # multiple times in a single run of your code. To avoid, make sure you
     # only play one animation per execution of your code.
-    def play(self, window=None, autoclose=False):
+    def play(self, window=None, autoclose=False, *, optimize=True):
         # Verify the animation can be played.
         # if not self.verify():
         #     raise Exception("Animation can't be played because it is not configured properly!")
         self.sanityCheck()
+
+        if optimize:
+            self._optimize()
 
         if self.finalIndex is None:
             finalIndex = self.lastID()
@@ -4089,6 +4130,7 @@ class Animation(object):
         self.paused = False
         self.currentIndex = 0
         self._keyIDs = None  # This var is only used once play() is called.
+        self._deoptimize()
 
     # This function verifies whether or not the animation is playable.
     # It's probably not perfect yet, so animations could still break
