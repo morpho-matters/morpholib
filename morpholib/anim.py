@@ -721,6 +721,8 @@ class MultiFigure(Frame):
 
     @subpool.setter
     def subpool(self, value):
+        if isinstance(value, slice):
+            value = range(self.numfigs)[value]
         self._subpool = value if type(value) is set else set(value)
 
     # # NOT IMPLEMENTED!!!
