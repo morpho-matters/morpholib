@@ -2454,7 +2454,7 @@ class Layer(object):
         figlist = []
         for actor in self.actors:
             if actor.visible:
-                fig = actor.time(f)
+                fig = actor.time(f, _skipTrivialTweens=True)
                 # if fig is None or not fig.visible:
                 #     continue
                 # else:
@@ -2615,7 +2615,7 @@ class SpaceLayer(Layer):
         figlist = []
         for actor in self.actors:
             if actor.visible:
-                fig = actor.time(f)
+                fig = actor.time(f, _skipTrivialTweens=True)
                 if fig is None or not fig.visible:
                     continue
                 figlist.append(fig)

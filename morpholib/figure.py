@@ -1865,7 +1865,14 @@ class Actor(object):
     # If optional keyword argument copykeys is set to True,
     # if a keyfigure is returned, a copy will be returned instead.
     # Also mainly for internal use.
-    def time(self, f, keyID=None, *, copykeys=False):
+    #
+    # `_skipTrivialTweens` is a hidden keyword-only argument mainly
+    # for internal use which tells time() to use the
+    # _static_acute attribute
+    # of a figure to decide whether tweening is necessary.
+    # By default, it's False so tweening behaves exactly as
+    # expected.
+    def time(self, f, keyID=None, *, copykeys=False, _skipTrivialTweens=False):
         # If f is a float, but it's really an int, make it an int.
         # This is so searching the timeline dict is done correctly
         # because all the keys in the dict are ints.
@@ -1903,7 +1910,7 @@ class Actor(object):
             else:
                 return None
         # If the latest keyframe is static, don't tween.
-        elif keyfig._static_acute or keyfig.static:
+        elif (_skipTrivialTweens and keyfig._static_acute) or keyfig.static:
             return keyfig if not copykeys else keyfig.copy()
             # return keyfig.copy()
         else:
