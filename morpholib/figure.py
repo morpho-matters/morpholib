@@ -1946,11 +1946,16 @@ class Actor(object):
 
         return fig
 
+    # Optimizes the Actor for playback by setting keyfigures to be
+    # acutely static if it looks like there's no reason to tween
+    # them e.g. the starting and ending keyfigures appear equal, or
+    # the current keyfigure is invisible (whereby the tweened figure
+    # will inherit the invisibility).
     def _optimize(self):
         for n in range(len(self.timeline)-1):
             keyfig = self.key[n]
             keyfigNext = self.key[n+1]
-            if keyfig._appearsEqual(keyfigNext):
+            if not keyfig.visible or keyfig._appearsEqual(keyfigNext):
                 keyfig._static_acute = True
 
     def _deoptimize(self):

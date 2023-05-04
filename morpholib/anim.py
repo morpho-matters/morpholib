@@ -2355,6 +2355,8 @@ class Layer(object):
     def slowDown(self, factor, center=0, useOffset=False, ignoreMask=False):
         self.speedUp(1/factor, center, useOffset, ignoreMask)
 
+    # Optimizes the Layer's actors for animation playback.
+    # See morpho.Actor._optimize() for more info.
     def _optimize(self):
         self.camera._optimize()
         for actor in self.actors:
@@ -3626,6 +3628,9 @@ class Animation(object):
             # Draw layer to current context
             layer.draw(f, self.context)
 
+    # Optimizes the animation for playback by optimizing
+    # all its actors.
+    # See morpho.Actor._optimize() for more info.
     def _optimize(self):
         for layer in self.layers:
             layer._optimize()
