@@ -13,7 +13,7 @@ import morpholib.transitions, morpholib.giffer
 from morpholib.tools.basics import *
 from morpholib.tools.ktimer import tic, toc
 import morpholib.tools.dev
-from morpholib.tools.dev import BoundingBoxFigure, makesubcopies
+from morpholib.tools.dev import BoundingBoxFigure, makesubcopies, listselect
 
 # Backward compatibility because these functions used to live in anim.py
 from morpholib import screenCoords, physicalCoords, \
@@ -335,20 +335,7 @@ class Frame(morpho.Figure):
         return _InPlaceSubAttributeManager(self)
 
     def _select(self, index, *, _asFrame=False, _iall=False):
-        if callable(index):
-            condition = index
-            selection = [fig for fig in self.figures if condition(fig)]
-        # Handle case of multiple index ranges provided
-        elif isinstance(index, tuple):
-            indices = index
-            selection = []
-            for index in indices:
-                selection.extend(self._select(index, _asFrame=True).figures)
-        else:
-            selection = self.figures[index]
-            if isinstance(selection, morpho.Figure):
-                # Convert single figure into singleton list
-                selection = [selection]
+        selection = list(listselect(self.figures, index).values())
 
         frm = type(self)(selection)
         frm._updateFrom(self, ignore="figures")
