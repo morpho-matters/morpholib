@@ -2164,7 +2164,7 @@ class Layer(object):
     #
     # Set returnCamera = True to make the function return
     # the actual camera figure instead of just the view 4-vector.
-    def viewtime(self, f, useOffset=False, returnCamera=False):
+    def viewtime(self, f, useOffset=False, returnCamera=False, *, _skipTrivialTweens=False):
         if len(self.camera.timeline) == 0:
             raise IndexError("Camera timeline is empty.")
 
@@ -2173,7 +2173,7 @@ class Layer(object):
             f -= self.timeOffset
 
         # Compute current view
-        viewFrame = self.camera.time(f)
+        viewFrame = self.camera.time(f, _skipTrivialTweens=_skipTrivialTweens)
         if viewFrame is None:
             # if len(self.camera.timeline) == 0:
             #     viewFrame = Frame()
@@ -2435,7 +2435,7 @@ class Layer(object):
             f -= self.timeOffset
 
         # Compute current view
-        cam = self.viewtime(f, returnCamera=True)  # Get camera figure
+        cam = self.viewtime(f, returnCamera=True, _skipTrivialTweens=True)  # Get camera figure
         if not cam.visible:
             return
 
@@ -2456,7 +2456,7 @@ class Layer(object):
 
         # NOTE: The "start" and "end" parameters of the masklayer are ignored
         # when drawing with masking!
-        if self.mask is None or not self.mask.visible or not self.mask.viewtime(f, returnCamera=True).visible:
+        if self.mask is None or not self.mask.visible or not self.mask.viewtime(f, returnCamera=True, _skipTrivialTweens=True).visible:
             # Draw all figures
             with cam._pushRotation(ctx):  # Apply camera rotation
                 for fig in figlist:
@@ -2585,7 +2585,7 @@ class SpaceLayer(Layer):
             f -= self.timeOffset
 
         # Compute current view
-        cam = self.viewtime(f, returnCamera=True)  # Get camera figure
+        cam = self.viewtime(f, returnCamera=True, _skipTrivialTweens=True)  # Get camera figure
         if not cam.visible:
             return
 
@@ -2622,7 +2622,7 @@ class SpaceLayer(Layer):
 
         # NOTE: The "start" and "end" parameters of the masklayer are ignored
         # when drawing with masking!
-        if self.mask is None or not self.mask.visible or not self.mask.viewtime(f, returnCamera=True).visible:
+        if self.mask is None or not self.mask.visible or not self.mask.viewtime(f, returnCamera=True, _skipTrivialTweens=True).visible:
             with cam._pushRotation(ctx):  # Apply camera rotation
                 # Draw all non-primitive figures
                 for fig in figlist:
