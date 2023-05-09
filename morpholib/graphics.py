@@ -542,6 +542,31 @@ class Image(BoundingBoxFigure):
 
         # self.sprite.draw()
 
+@Image.action
+def growIn(img, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = img.lastID()
+
+    img0 = img.last()
+    height = img0.height
+    linked = img0.linked
+    img0.visible = False
+    img1 = img.newkey(atFrame)
+    img1.link().set(height=0, visible=True)
+    img2 = img.newendkey(duration)
+    img2.set(height=height, linked=linked)
+
+@Image.action
+def shrinkOut(img, duration=30, atFrame=None):
+    if atFrame is None:
+        atFrame = img.lastID()
+
+    img.newkey(atFrame)
+    linked = img.last().linked
+    img.last().link()
+
+    img1 = img.newendkey(duration)
+    img1.set(height=0, visible=False, linked=linked)
 
 # Image class with winding number.
 # NOT IMPLEMENTED! I believe this class's purpose has been obsoleted by
