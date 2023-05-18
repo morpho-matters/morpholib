@@ -178,7 +178,8 @@ def rotationVector(mat):
 # Returns the wedge product as a skew-symmetric matrix.
 # That is, returns outer(u,v) - outer(v,u)
 def wedge(u, v):
-    return np.outer(u,v) - np.outer(v,u)
+    outprod = np.outer(u,v)
+    return outprod - outprod.T
 
 # Returns the tilt product of u and v.
 # That is, returns outer(v,u) - outer(u,v)
