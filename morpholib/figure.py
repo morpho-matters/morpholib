@@ -133,10 +133,15 @@ class Figure(object):
     # exactly the same type AND their tweenables compare equal.
     # Used to determine whether tweening will be required between
     # two keyfigures in an Actor.
-    def _appearsEqual(self, other, ignore=()):
+    #
+    # Optionally, keyword `compareNonTweenables` can be set to True
+    # to make the check stricter by also checking that corresponding
+    # non-tweenables match between both figures.
+    def _appearsEqual(self, other, ignore=(), *, compareNonTweenables=False):
         return not(self.visible or other.visible) or \
             (type(self) is type(other) and \
-            all(self._state[name] == other._state[name] for name in self._state if name not in ignore))
+            all(self._state[name] == other._state[name] for name in self._state if name not in ignore)) and \
+            (not compareNonTweenables or all(isequal(getattr(self, name), getattr(other, name)) for name in self._nontweenables if name not in ignore))
 
     # Actor actions registry.
     # Maps action names to the action functions themselves.

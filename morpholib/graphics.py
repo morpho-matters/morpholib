@@ -53,6 +53,8 @@ class Image(BoundingBoxFigure):
         # morpho.Figure.__init__(self)
         super().__init__()
 
+        self.NonTweenable("imageSurface", None)
+
         self.newSource(source)
 
         # Position in the complex plane
@@ -99,9 +101,9 @@ class Image(BoundingBoxFigure):
 
         # If set to True, changing the width or height will
         # automatically change the other to maintain the proportion.
-        self.linked = True
-        self.aspectRatioWH = self.width/self.height
-        self.physical = True  # Are width and height in physical units, or pixel?
+        self.NonTweenable("linked", True)
+        self.NonTweenable("aspectRatioWH", self.width/self.height)
+        self.NonTweenable("physical", True)  # Are width and height in physical units, or pixel?
 
     # The "width" and "height" attrs are set up as properties,
     # because we may need to dynamically modify one in response
@@ -237,14 +239,11 @@ class Image(BoundingBoxFigure):
 
 
     def copy(self):
-        # Do standard figure copy first.
-        # img = morpho.Figure.copy(self, self)
-        img = super().copy(self)
 
-        # Now copy the other parameters
-        img.linked = self.linked
-        img.aspectRatioWH = self.aspectRatioWH
-        img.physical = self.physical
+        # This is necessary because self needs to be passed
+        # into the constructor in order for the pixel dimensions
+        # to be correctly copied over!
+        img = super().copy(self)
 
         return img
 

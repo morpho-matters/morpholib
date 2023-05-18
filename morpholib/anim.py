@@ -285,12 +285,15 @@ class Frame(morpho.Figure):
     # equal via vanilla Python list equality will not work.
     # Instead, it goes thru the figure lists of self and other
     # and checks if all corresponding figures appear equal.
-    def _appearsEqual(self, other):
+    def _appearsEqual(self, other, ignore=(), *args,
+        compareNonTweenables=False, compareSubNonTweenables=False, **kwargs):
+
+        ignore = set(ignore)
         self_figures = self.figures
         other_figures = other.figures
-        return morpho.Figure._appearsEqual(self, other, ignore={"figures"}) and \
+        return morpho.Figure._appearsEqual(self, other, ignore=ignore.union({"figures"}), *args, compareNonTweenables=compareNonTweenables, **kwargs) and \
             len(self_figures) == len(other_figures) and \
-            all(self_subfig._appearsEqual(other_subfig) for self_subfig, other_subfig in zip(self_figures, other_figures))
+            all(self_subfig._appearsEqual(other_subfig, ignore, *args, compareNonTweenables=(compareSubNonTweenables or compareNonTweenables), **kwargs) for self_subfig, other_subfig in zip(self_figures, other_figures))
 
     # # Returns True iff the "stylistic" attributes of two frames match
     # # i.e. their views, indices, and defaultTweens match.
@@ -711,6 +714,9 @@ class MultiFigure(Frame):
         if isinstance(value, slice):
             value = range(self.numfigs)[value]
         self._subpool = value if type(value) is set else set(value)
+
+    def _appearsEqual(self, other, *args, compareSubNonTweenables=True, **kwargs):
+        return morpho.Frame._appearsEqual(self, other, *args, compareSubNonTweenables=compareSubNonTweenables, **kwargs)
 
     # # NOT IMPLEMENTED!!!
     # # Returns a StateStruct encapsulating all the tweenables
