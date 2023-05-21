@@ -338,11 +338,24 @@ class Frame(morpho.Figure):
         return _InPlaceSubAttributeManager(self)
 
     def _select(self, index, *, _asFrame=False, _iall=False):
-        selection = list(listselect(self.figures, index).values())
+        seldict = listselect(self.figures, index)
+        selection = list(seldict.values())
 
         frm = type(self)(selection)
-        frm._updateFrom(self, ignore="figures")
+        frm._updateFrom(self, ignore={"figures", "_names"})
         if _asFrame:
+            # If self has named subfigures, ensure the names transfer over
+            # to the returned subframe.
+            if len(self._names) > 0:
+                # Dict mapping selected indices in self to indices in the subframe.
+                # Eliminates the need to use list.index() which is slow.
+                subIDpositions = {subID : n for n, subID in enumerate(seldict.keys())}
+
+                # Go thru self's names dict and map names for subfigures
+                # that self has in common with the subframe
+                for name, subID in self._names.items():
+                    if subID in seldict:
+                        frm._names[name] = subIDpositions[subID]
             return frm
         else:
             return _InPlaceSubAttributeManager(frm, self) if _iall else _SubAttributeManager(frm, self)
@@ -367,7 +380,6 @@ class Frame(morpho.Figure):
     @property
     def iselect(self):
         return morpho.tools.dev.Slicer(getter=self._iselect)
-
 
     def _sub(self, index):
         return self._select(index, _asFrame=True).copy()
