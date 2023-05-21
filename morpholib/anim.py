@@ -405,6 +405,11 @@ class Frame(morpho.Figure):
             while subfig in figures:
                 figures.remove(subfig)
         self.figures = figures
+
+        # Remove cut subfigure names from self's names dict
+        for name in subframe._names:
+            del self._names[name]
+
         return subframe
 
     # Basically the same as sub[], but it also removes the selected
