@@ -469,16 +469,16 @@ class Frame(morpho.Figure):
     # frm.newendkey(30)
     # frm.last().pt.pos = 3+3j
     def setName(self, **kwargs):
-        for name, figure in kwargs.items():
-            if isinstance(figure, morpho.Figure):
+        for name, index in kwargs.items():
+            if isinstance(index, morpho.Figure):
                 try:
-                    figure = self.figures.index(figure)
+                    index = self.figures.index(index)
                 except ValueError:
                     raise ValueError("Given figure is not in the Frame's figure list.")
-            elif not isinstance(figure, int):
-                raise TypeError(f"`figure` must be Figure or int, not `{type(figure).__name__}`")
+            elif not isinstance(index, int):
+                raise TypeError(f"Value associated with name must be Figure or int, not `{type(index).__name__}`")
 
-            self._names[name] = figure
+            self._names[name] = index
 
     # Returns the subfigure of the given name.
     def getName(self, name):
