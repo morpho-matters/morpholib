@@ -952,9 +952,9 @@ class MultiPText(MultiText):
         multisplines = [ptxt.toSpline().commitTransforms() for ptxt in self.figures]
         finalspline = morpho.shapes.MultiSpline(morpho.flattenList([multispline.figures for multispline in multisplines]))
         for spline in finalspline.figures:
-            spline.origin -= self.pos
+            spline.origin -= self.figures[0].pos
             spline.commitTransforms()
-        finalspline.origin = self.pos
+        finalspline.origin = self.figures[0].pos
         return finalspline
 
 MultiPtext = MultiPText
