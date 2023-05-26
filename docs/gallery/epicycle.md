@@ -17,6 +17,8 @@ import math, cmath
 
 
 def epicycle():
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
 
     r0 = 2
     r1 = 1.5
@@ -56,11 +58,9 @@ def epicycle():
 
             return morpho.Frame([circ0, circ1, path, arrow0, arrow1])
 
-    ecycle = Epicycle()
-    ecycle = morpho.Actor(ecycle)
+    ecycle = mainlayer.Actor(Epicycle())
     ecycle.newendkey(6*30).t = 6
 
-    mation = morpho.Animation(ecycle)
     mation.play()
 
 epicycle()

@@ -23,12 +23,6 @@ violet = tuple(mo.color.parseHexColor("800080"))
 orange = tuple(mo.color.parseHexColor("ff6300"))
 lighttan = tuple(mo.color.parseHexColor("f4f1c1"))
 
-# Give a name unique to this scene file.
-# It's used to allow this scene file to export a video file
-# in parallel with other scene files.
-morpho.anim.exportSignature = "example-scene"
-
-
 
 def main():
     # Define layers here
@@ -42,34 +36,28 @@ def main():
     mainlayer.camera.first().zoomIn(2)
 
     # Define background grid
-    grid = mo.grid.mathgrid(
+    grid = mainlayer.Actor(mo.grid.mathgrid(
         view=[-9,9, -5,5],
-        hsteps=1, vsteps=1,
+        steps=1,
         hcolor=[0,0.6,0], vcolor=[0,0,1],
         axesColor=[0,0,0],
-        xaxisWidth=7, yaxisWidth=7
-        )
-    grid = mo.Actor(grid)
-    mainlayer.affix(grid)
+        axisWidth=7
+        ))
 
     # Define curve to initially be a line
-    curve = mo.graph.realgraph(lambda x: 2*x + 1, -3, 3)
-    curve.set(width=5, color=[1,0,0], end=0)
-    curve = mo.Actor(curve)
-    mainlayer.affix(curve)
+    curve = mainlayer.Actor(mo.graph.realgraph(lambda x: 2*x + 1, -3, 3))
+    curve.first().set(width=5, color=[1,0,0], end=0)
     curve.newendkey(30).end = 1  # Draw curve over 1 second (30 frames)
 
     # Create "Linear" label.
     # MultiText is used so that we can morph the text later
-    label = mo.text.MultiText("Linear",
+    label = mainlayer.Actor(mo.text.MultiText("Linear",
         pos=1+0.5j, size=64, color=[1,0,0], alpha=0
-        )
-    label = mo.Actor(label)
-    mainlayer.affix(label)
+        ))
     label.newendkey(20).alpha = 1
 
-    mation.endDelayUntil(3*30)
-    print("Morph to quadratic:", mation.seconds())
+    mation.waitUntil(3*30)
+    print("Morph line to parabola:", mation.seconds())
 
     curve.newendkey()
     label.newendkey()
@@ -80,22 +68,22 @@ def main():
 
     label.newendkey(30).set(text="Quadratic", pos=2.5+0.5j, color=violet)
 
-    mation.endDelayUntil(6.25*30)
+    mation.waitUntil(6.25*30)
     print("Fade everything out:", mation.seconds())
 
-    # Initialize keyfigures
+    # Create initial keyfigures
     curve.newendkey()
     label.newendkey()
 
     # Fade curve
     curve.newendkey(30).alpha = 0
+
     # Simultaneously fade the label
     label.newendkey(30).alpha = 0
 
 
-
     print("Animation length:", mation.seconds())
-    mation.endDelay(10*30)
+    mation.wait(10*30)
 
     mation.finitizeDelays(30)
 
@@ -121,34 +109,28 @@ def streamlined():
     mainlayer.camera.first().zoomIn(2)
 
     # Define background grid
-    grid = mo.grid.mathgrid(
+    grid = mainlayer.Actor(mo.grid.mathgrid(
         view=[-9,9, -5,5],
-        hsteps=1, vsteps=1,
+        steps=1,
         hcolor=[0,0.6,0], vcolor=[0,0,1],
         axesColor=[0,0,0],
-        xaxisWidth=7, yaxisWidth=7
-        )
-    grid = mo.Actor(grid)
-    mainlayer.affix(grid)
+        axisWidth=7
+        ))
 
     # Define curve to initially be a line
-    curve = mo.graph.realgraph(lambda x: 2*x + 1, -3, 3)
-    curve.set(width=5, color=[1,0,0])  # No longer need to say alpha=0
-    curve = mo.Actor(curve)
-    mainlayer.affix(curve)
+    curve = mainlayer.Actor(mo.graph.realgraph(lambda x: 2*x + 1, -3, 3))
+    curve.first().set(width=5, color=[1,0,0])  # No longer need to say end=0
     curve.growIn(duration=30)
 
     # Create "Linear" label.
     # MultiText is used so that we can morph the text later
-    label = mo.text.MultiText("Linear",
+    label = mainlayer.Actor(mo.text.MultiText("Linear",
         pos=1+0.5j, size=64, color=[1,0,0]  # No longer need to say alpha=0
-        )
-    label = mo.Actor(label)
-    mainlayer.affix(label)
+        ))
     label.fadeIn(duration=20, jump=1j)
 
-    mation.endDelayUntil(3*30)
-    print("Morph to quadratic:", mation.seconds())
+    mation.waitUntil(3*30)
+    print("Morph line to parabola:", mation.seconds())
 
     curve.newendkey()
     label.newendkey()
@@ -159,20 +141,19 @@ def streamlined():
 
     label.newendkey(30).set(text="Quadratic", pos=2.5+0.5j, color=violet)
 
-    mation.endDelayUntil(6.25*30)
+    mation.waitUntil(6.25*30)
     print("Fade everything out:", mation.seconds())
 
-    # Initialize keyfigures
+    # Create initial keyfigures
     curve.newendkey()
     label.newendkey()
 
-    # Fade curve and label
-    morpho.action.fadeOut([curve, label], duration=30, stagger=15, jump=2j)
-
+    # Fade curve and label in a staggered fashion with jumping
+    mo.action.fadeOut([curve, label], duration=30, stagger=15, jump=2j)
 
 
     print("Animation length:", mation.seconds())
-    mation.endDelay(10*30)
+    mation.wait(10*30)
 
     mation.finitizeDelays(30)
 

@@ -63,14 +63,13 @@ def torus():
 
         return morpho.array([x,y,z])
 
-    torus = morpho.grid.quadgrid(
+    torus = meshlayer.Actor(morpho.grid.quadgrid(
         view=[-3,3, -3,3],
         dx=6/16, dy=6/24,
         width=1.5, color=[0,0,0],
         fill=goodblue, fill2=(mo.array(goodblue)/2).tolist()
-        )
-    torus.shading = True
-    torus = morpho.Actor(torus)
+        ), atFrame=0)
+    torus.first().shading = True
     torus.newendkey(45)
     torus.newendkey(60, mesh.fimage(tubify))
     torus.newendkey(45)

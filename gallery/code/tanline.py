@@ -7,14 +7,17 @@ import math, cmath
 
 
 def tanline():
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
+
     f = lambda x: 0.2*(x**3 - 12*x)
-    path = morpho.graph.realgraph(f, -4, 4)
+    path = mainlayer.Actor(morpho.graph.realgraph(f, -4, 4))
 
     # Define a numerical derivative function
     dx = 0.000001  # A small change in x
     df = lambda x: (f(x+dx)-f(x-dx))/(2*dx)
 
-    @morpho.SkitParameters({"t":-4, "length":4, "alpha":1})
+    @morpho.SkitParameters(t=-4, length=4, alpha=1)
     class TangentLine(morpho.Skit):
         def makeFrame(self):
             # t will represent the input to the function f
@@ -42,8 +45,8 @@ def tanline():
             line.origin = x + 1j*y
 
             # Create derivative tracker
-            slopenum = morpho.text.Number(slope, decimal=3, rightDigits=3)
-            dlabel = morpho.text.Text("Slope = "+str(slopenum),
+            slopenum = morpho.text.formatNumber(slope, decimal=3, rightDigits=3)
+            dlabel = morpho.text.Text("Slope = "+slopenum,
                 pos=line.origin, anchor_y=-1,
                 size=36, color=[1,1,0], alpha=alpha
                 )
@@ -52,23 +55,15 @@ def tanline():
             return morpho.Frame([line, dlabel])
 
     # Initialize the tangent line Skit
-    tanline = TangentLine()
-    tanline.t = -4  # Set initial t to -4
-    tanline.transition = morpho.transitions.quadease
+    tanline = mainlayer.Actor(TangentLine(t=-4, length=0))
+    tanline.first().transition = morpho.transitions.quadease
 
-    # Convert to actor and set t to +4 over
-    # the course of 5 seconds (150 frames)
-    tanline = morpho.Actor(tanline)
-    tanline.newendkey(150)
-    tanline.last().t = 4
-    tanline.last().length = 4
+    # Set t to +4 over the course of 5 seconds (150 frames)
+    tanline.newendkey(150).set(t=4, length=4)
 
-    # Return to original
-    tanline.newendkey(150, tanline.first().copy())
+    # Finally, fade the tangent line to invisibility
+    tanline.newendkey(30).alpha = 0
 
-    movie = morpho.Animation(morpho.Layer([path, tanline]))
-    movie.delays[tanline.keyID(1)] = 30
-    movie.endDelay(30)
-    movie.play()
+    mation.play()
 
 tanline()

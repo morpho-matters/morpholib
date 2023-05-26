@@ -17,8 +17,11 @@ import math, cmath
 
 
 def pendulum():
-    thetamax = pi/6  # Hard code thetamax for now
-    length = 3  # Hard code pendulum string length for now
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
+
+    thetamax = pi/6  # Hard code thetamax
+    length = 3  # Hard code pendulum string length
     class Pendulum(morpho.Skit):
         def makeFrame(self):
             t = self.t
@@ -65,16 +68,13 @@ def pendulum():
 
             return morpho.Frame([neutral, arc, thetaLabel, string, ball, tracker])
 
-    pend = Pendulum()
+    pend = mainlayer.Actor(Pendulum())
 
-    # Set internal time parameter t to be 6pi
-    # after 5 seconds (150 frames) have passed
-    # in the animation's clock.
-    pend = morpho.Actor(pend)
+    # Set internal time parameter t to be 6pi after 5 seconds
+    # (150 frames) have passed in the animation's clock.
     pend.newendkey(150).t = 6*pi
 
-    movie = morpho.Animation(pend)
-    movie.play()
+    mation.play()
 
 pendulum()
 ```

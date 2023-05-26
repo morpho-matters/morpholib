@@ -5,6 +5,8 @@ title: Morpho Guide -- Skits
 
 # Morpho Guide: Skits
 
+> **Note:** This guide is only for Morpho 0.7.0+. For older versions, see [this guide](https://morpho-matters.github.io/morpholib/guides/old/skits).
+
 > **Note:** To properly run the example code snippets in this guide, you should include the following lines at the top of your code:
 > ```python
 > import morpholib as morpho
@@ -13,6 +15,9 @@ title: Morpho Guide -- Skits
 > from morpholib.tools.basics import *
 >
 > import math, cmath
+>
+> mainlayer = morpho.Layer()
+> mation = morpho.Animation(mainlayer)
 > ```
 
 Skits are perhaps the most powerful of Morpho's animation tools. In short, they give you a relatively quick way to construct a custom-tailored composite figure that behaves in ways that you can precisely control. I like to think of them as little animated machines. For example, with Skits, you can animate a pendulum swinging, a tangent line moving along a curve, a morphing shape with a label that dynamically keeps track of its area, etc.
@@ -51,8 +56,7 @@ class Tracker(morpho.Skit):
 
         return label
 ```
-<!-- > **Note:** The name ``makeFrame`` is important here! A Skit expects to have a method with this name defined, and calls it in order to construct the figures it needs to draw to the screen. -->
-> **Note:** Remember not to convert figures into actors within the ``makeFrame()`` method of a Skit definition; they should remain plain figures.
+> ***CAUTION!*** Unlike elsewhere in the guides, within the `makeFrame()` method, we work directly with *Figures* without converting them into *Actors* (note how we didn't call `mainlayer.Actor()` anywhere in there). Remember, the object returned by `makeFrame()` should be a *Figure*, not an *Actor*! Actors will be involved later, outside of the `makeFrame()` method.
 
 And that's it! The ``Tracker`` Skit is now fully defined! Now we just need to instantiate an instance of it so we can animate it and watch it in action. This can be done like any other figure:
 
@@ -72,16 +76,13 @@ class Tracker(morpho.Skit):
 
 # Construct an instance of our new Tracker Skit.
 # By default, t is initialized to t = 0.
-mytracker = Tracker()
+mytracker = mainlayer.Actor(Tracker())
 
-# Turn it into an actor, and have its t value progress
-# to the number 1 over the course of 2 seconds (60 frames)
-mytracker = morpho.Actor(mytracker)
-mytracker.newendkey(60)
-mytracker.last().t = 1
+# Have its t value progress to the number 1 over the course
+# of 2 seconds (60 frames)
+mytracker.newendkey(60).t = 1
 
-movie = morpho.Animation(mytracker)
-movie.play()
+mation.play()
 ```
 
 And.... well, it works, but it's honestly pretty ugly. This is because it's trying to display all 15 decimal places after the decimal point every single frame, but some values of ``t`` are nice and round (like ``t = 0.5`` or ``t = 0.25``) and so it's constantly shifting from showing 15 decimals to showing only a few, and so you can't really make anything out.
@@ -89,10 +90,19 @@ And.... well, it works, but it's honestly pretty ugly. This is because it's tryi
 One way to improve this would be to truncate the string in advance:
 
 ```python
-# The label's text is just the t-value converted
-# into a (truncated) string.
-# In this case, take only the first 5 characters.
-label = morpho.text.Text(str(t)[:5])
+class Tracker(morpho.Skit):
+    def makeFrame(self):
+        # The t value is stored as a tweenable attribute
+        # of the tracker itself. Let's extract it just
+        # to simplify the later syntax.
+        t = self.t
+
+        # The label's text is just the t-value converted
+        # into a (truncated) string.
+        # In this case, take only the first 5 characters.
+        label = morpho.text.Text(str(t)[:5])
+
+        return label
 ```
 
 This is admittedly better, though you can still see a bit of jumping as it passes very round numbers like ``0.5``. Another thing we can do is make the text left-aligned, so the presence or absence of trailing digits won't affect the position of the text:
@@ -135,14 +145,16 @@ Let's do an example. Let's say I want to have a ``Point`` figure move along a ``
 
 ```python
 # Create a curved path that begins at x = -4 and ends at x = +4
-path = morpho.graph.realgraph(lambda x: 0.2*(x**3 - 12*x), -4, 4)
+path = mainlayer.Actor(morpho.graph.realgraph(
+    lambda x: 0.2*(x**3 - 12*x), -4, 4))
 ```
 
 Now we'll define our *Follower* Skit:
 
 ```python
 # Create a curved path that begins at x = -4 and ends at x = +4
-path = morpho.graph.realgraph(lambda x: 0.2*(x**3 - 12*x), -4, 4)
+path = mainlayer.Actor(morpho.graph.realgraph(
+    lambda x: 0.2*(x**3 - 12*x), -4, 4))
 
 class Follower(morpho.Skit):
     def makeFrame(self):
@@ -152,7 +164,7 @@ class Follower(morpho.Skit):
         point = morpho.grid.Point()
         # Set the position of the point to be the path's
         # position at parameter t.
-        point.pos = path.positionAt(t)
+        point.pos = path.first().positionAt(t)
 
         return point
 ```
@@ -163,7 +175,8 @@ With that, the Skit is fully defined, so let's see it in action! To do it, we in
 
 ```python
 # Create a curved path that begins at x = -4 and ends at x = +4
-path = morpho.graph.realgraph(lambda x: 0.2*(x**3 - 12*x), -4, 4)
+path = mainlayer.Actor(morpho.graph.realgraph(
+    lambda x: 0.2*(x**3 - 12*x), -4, 4))
 
 class Follower(morpho.Skit):
     def makeFrame(self):
@@ -173,25 +186,19 @@ class Follower(morpho.Skit):
         point = morpho.grid.Point()
         # Set the position of the point to be the path's
         # position at parameter t.
-        point.pos = path.positionAt(t)
+        point.pos = path.first().positionAt(t)
 
         return point
 
 # Set the follower to begin at the END of the path,
 # just to change things up a little.
-myfollower = Follower(t=1)
+myfollower = mainlayer.Actor(Follower(t=1))
 
-# Turn it into an actor, and set its t value to be 0
+# Set its t value to be 0
 # after 2 seconds (60 frames) have passed.
-myfollower = morpho.Actor(myfollower)
-myfollower.newendkey(60)
-myfollower.last().t = 0
+myfollower.newendkey(60).t = 0
 
-# Include both the original path and the follower, so
-# we can clearly see that the follower is following the
-# intended path.
-movie = morpho.Animation(morpho.Layer([path, myfollower]))
-movie.play()
+mation.play()
 ```
 > **Note:** By default, the ``t`` value of a Skit is set to 0 when initialized. You can supply a different initial value by passing it to the constructor like in the above code with ``Follower(t=1)``, but note that this can only be done by *keyword*. So ``Follower(t=1)`` works, but ``Follower(1)`` will not.
 
@@ -206,7 +213,7 @@ class Follower(morpho.Skit):
         point = morpho.grid.Point()
         # Set the position of the point to be the path's
         # position at parameter t.
-        point.pos = path.positionAt(t)
+        point.pos = path.first().positionAt(t)
 
         # Format the coordinates
         # and handle rounding and trailing zeros.
@@ -243,16 +250,16 @@ That's looking pretty clean! And if you've understood what's been going on in th
 
 ## Tangent Line Skit
 
-Let's build a Skit that has a tangent line slide along the curve. As for the curve, we'll recycle the one we used for the Follower.
+Let's build a Skit that has a tangent line slide along the curve. As for the curve itself, we'll recycle the one we used for the Follower.
 ```python
 f = lambda x: 0.2*(x**3 - 12*x)
-path = morpho.graph.realgraph(f, -4, 4)
+path = mainlayer.Actor(morpho.graph.realgraph(f, -4, 4))
 ```
 To find the tangent line at a point, we'll need the derivative of this function. This function is simple enough that we can do it by hand if we really want to, but we can also just use a rough approximation:
 
 ```python
 f = lambda x: 0.2*(x**3 - 12*x)
-path = morpho.graph.realgraph(f, -4, 4)
+path = mainlayer.Actor(morpho.graph.realgraph(f, -4, 4))
 
 # Define a numerical derivative function
 dx = 0.000001  # A small change in x
@@ -292,18 +299,13 @@ And now let's initialize the Skit and have it slide from ``t = -4`` to ``t = +4`
 
 ```python
 # Initialize the tangent line Skit
-tanline = TangentLine()
-tanline.t = -4  # Set initial t to -4
-tanline.transition = morpho.transitions.quadease
+tanline = mainlayer.Actor(TangentLine(t=-4))
+tanline.first().transition = morpho.transitions.quadease
 
-# Convert to actor and set t to +4 over
-# the course of 5 seconds (150 frames)
-tanline = morpho.Actor(tanline)
-tanline.newendkey(150)
-tanline.last().t = 4
+# Set t to +4 over the course of 5 seconds (150 frames)
+tanline.newendkey(150).t = 4
 
-movie = morpho.Animation(morpho.Layer([path, tanline]))
-movie.play()
+mation.play()
 ```
 
 Cool! And just like before, we can easily add more frills to the Skit if we want: like a derivative tracker:
@@ -404,7 +406,7 @@ class TangentLine(morpho.Skit):
 class TangentLine(morpho.Skit):
 ```
 
-or just pass them in as keyword arguments:
+or, as is probably simplest, just pass them in as keyword arguments:
 
 ```python
 @morpho.SkitParameters(t=-4, length=4)
@@ -456,20 +458,13 @@ Now let's try it out. We'll recycle the code from before, but now let's have the
 
 ```python
 # Initialize the tangent line Skit
-tanline = TangentLine()
-tanline.t = -4  # Set initial t to -4
-tanline.length = 0  # Initial length is zero
-tanline.transition = morpho.transitions.quadease
+tanline = mainlayer.Actor(TangentLine(t=-4, length=0))
+tanline.first().transition = morpho.transitions.quadease
 
-# Convert to actor and set t to +4 over
-# the course of 5 seconds (150 frames)
-tanline = morpho.Actor(tanline)
-tanline.newendkey(150)
-tanline.last().t = 4
-tanline.last().length = 4
+# Set t to +4 over the course of 5 seconds (150 frames)
+tanline.newendkey(150).set(t=4, length=4)
 
-movie = morpho.Animation(morpho.Layer([path, tanline]))
-movie.play()
+mation.play()
 ```
 
 Let's go one step further and we'll call it done with this tangent line Skit: Let's add a transparency parameter (``alpha``) so that we can make the tangent line fade when we're done:
@@ -513,24 +508,16 @@ class TangentLine(morpho.Skit):
         return morpho.Frame([line, dlabel])
 
 # Initialize the tangent line Skit
-tanline = TangentLine()
-tanline.t = -4  # Set initial t to -4
-tanline.length = 0  # Initial length is zero
-tanline.transition = morpho.transitions.quadease
+tanline = mainlayer.Actor(TangentLine(t=-4, length=0))
+tanline.first().transition = morpho.transitions.quadease
 
-# Convert to actor and set t to +4 over
-# the course of 5 seconds (150 frames)
-tanline = morpho.Actor(tanline)
-tanline.newendkey(150)
-tanline.last().t = 4
-tanline.last().length = 4
+# Set t to +4 over the course of 5 seconds (150 frames)
+tanline.newendkey(150).set(t=4, length=4)
 
 # Finally, fade the tangent line to invisibility
-tanline.newendkey(30)
-tanline.last().alpha = 0
+tanline.newendkey(30).alpha = 0
 
-movie = morpho.Animation(morpho.Layer([path, tanline]))
-movie.play()
+mation.play()
 ```
 
 ## Making a Pendulum
@@ -541,11 +528,11 @@ We'll use the basic sinusoidal approximation for the motion of a pendulum---mean
 
 <p align="center">&theta;(<i>t</i>) = &theta;<sub>max</sub> sin(<i>t</i>)</p>
 
-Let's start out simple with just a single parameter Skit where the default parameter ``t`` represents time. Given time ``t``, we'll compute the angle the pendulum makes from its neutral position according to the above formula. For now, we'll just hard code some semi-arbitrary values for &theta;<sub>max</sub> and the string's length.
+Let's start out simple with just a single parameter Skit where the default parameter ``t`` represents time. Given time ``t``, we'll compute the angle the pendulum makes from its neutral position according to the above formula. For this example, we'll just hard code some semi-arbitrary values for &theta;<sub>max</sub> and the string's length.
 
 ```python
-thetamax = pi/6  # Hard code thetamax for now
-length = 3  # Hard code pendulum string length for now
+thetamax = pi/6  # Hard code thetamax
+length = 3  # Hard code pendulum string length
 class Pendulum(morpho.Skit):
     def makeFrame(self):
         t = self.t
@@ -610,8 +597,8 @@ ball.size = 40  # Make it 40 pixels wide
 And with that, I think we've got everything we need. So now let's package these two figures into a ``Frame`` and return them to complete the specification of ``makeFrame()``:
 
 ```python
-thetamax = pi/6  # Hard code thetamax for now
-length = 3  # Hard code pendulum string length for now
+thetamax = pi/6  # Hard code thetamax
+length = 3  # Hard code pendulum string length
 class Pendulum(morpho.Skit):
     def makeFrame(self):
         t = self.t
@@ -640,16 +627,13 @@ class Pendulum(morpho.Skit):
 Now let's try it out! Let's create an instance of our new Pendulum Skit and have it perform over the course of 5 seconds:
 
 ```python
-pend = Pendulum()
+pend = mainlayer.Actor(Pendulum())
 
-# Set internal time parameter t to be 6pi
-# after 5 seconds (150 frames) have passed
-# in the animation's clock.
-pend = morpho.Actor(pend)
+# Set internal time parameter t to be 6pi after 5 seconds
+# (150 frames) have passed in the animation's clock.
 pend.newendkey(150).t = 6*pi
 
-movie = morpho.Animation(pend)
-movie.play()
+mation.play()
 ```
 
 Not bad! Definitely looks like a pendulum swinging! Now let's add some extra stuff. How about we add a dashed vertical line representing the pendulum's neutral position, and also put in an arc that connects the neutral vertical line to the pendulum's string:
@@ -689,7 +673,7 @@ class Pendulum(morpho.Skit):
 
         return morpho.Frame([neutral, arc, string, ball])
 ```
-> ***CAUTION!*** When compiling the final ``Frame`` object at the end, make sure the figures go in the exact order above! This determines the draw order of the objects. We want the neutral dashed line behind everything else, followed by the arc and string, and finally have the ball drawn on top of everything else. If you change the order, the pendulum may not look quite like you expect (give it a try, if you want).
+> ***CAUTION!*** When compiling the final ``Frame`` object at the end, make sure the figures go in the exact order above! This determines the draw order of the objects. We want the neutral dashed line behind everything else, followed by the arc and string, and finally have the ball drawn on top of everything else. If you change the order, the pendulum may not look quite like you expect.
 
 > **Note:** Actually, since the neutral vertical line does not move or change whatsoever throughout the Skit (and we don't anticipate that we will want it to change), it doesn't actually *have* to be a part of the Skit: We could alternatively have constructed it as a separate figure independent of the Skit and just have it hang around in the background. But what we did works fine, so this is just an FYI.
 
