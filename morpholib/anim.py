@@ -188,10 +188,7 @@ class _InPlaceSubAttributeManager(_SubAttributeManager):
     def __setattr__(self, name, value):
         if isinstance(value, _MetaArray):
             for subfig, subvalue in zip(self._subattrman_frame.figures, value.tolist()):
-                attrType = type(getattr(subfig, name))
-                # Typecast subvalue because MetaArrays turn lists and tuples
-                # into np.arrays internally by default
-                setattr(subfig, name, subvalue if issubclass(attrType, np.ndarray) else attrType(subvalue))
+                setattr(subfig, name, subvalue)
         else:
             _SubAttributeManager.__setattr__(self, name, value)
 
