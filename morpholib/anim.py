@@ -789,7 +789,7 @@ class MultiFigure(Frame):
 
         # Try to find the attribute in the first member figure
         # and if found, return it.
-        fig = self.figures[0]
+        # fig = self.figures[0]
         try:
             # return fig.__getattribute__(name)
             # return getattr(fig, name)
