@@ -9,6 +9,9 @@ import math, cmath
 # morpho.transitions.default = morpho.transitions.quadease
 
 def tracker():
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
+
     class Tracker(morpho.Skit):
         def makeFrame(self):
             # The t value is stored as a tweenable attribute
@@ -31,20 +34,21 @@ def tracker():
 
     # Construct an instance of our new Tracker Skit.
     # By default, t is initialized to t = 0.
-    mytracker = Tracker()
+    mytracker = mainlayer.Actor(Tracker())
 
-    # Turn it into an actor, and have its t value progress
-    # to the number 1 over the course of 2 seconds (60 frames)
-    mytracker = morpho.Actor(mytracker)
-    mytracker.newendkey(60)
-    mytracker.last().t = 1
+    # Have its t value progress to the number 1 over the course
+    # of 2 seconds (60 frames)
+    mytracker.newendkey(60).t = 1
 
-    movie = morpho.Animation(mytracker)
-    movie.play()
+    mation.play()
 
 def follower():
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
+
     # Create a curved path that begins at x = -4 and ends at x = +4
-    path = morpho.graph.realgraph(lambda x: 0.2*(x**3 - 12*x), -4, 4)
+    path = mainlayer.Actor(morpho.graph.realgraph(
+        lambda x: 0.2*(x**3 - 12*x), -4, 4))
 
     class Follower(morpho.Skit):
         def makeFrame(self):
@@ -54,7 +58,7 @@ def follower():
             point = morpho.grid.Point()
             # Set the position of the point to be the path's
             # position at parameter t.
-            point.pos = path.positionAt(t)
+            point.pos = path.first().positionAt(t)
 
             # Format the coordinates
             # and handle rounding and trailing zeros.
@@ -73,67 +77,28 @@ def follower():
 
             return morpho.Frame([point, label])
 
-    myfollower = Follower()
     # Set the follower to begin at the END of the path,
     # just to change things up a little.
-    myfollower.t = 1
+    myfollower = mainlayer.Actor(Follower(t=1))
 
-    # Turn it into an actor, and set its t value to be 0
+    # Set its t value to be 0
     # after 2 seconds (60 frames) have passed.
-    myfollower = morpho.Actor(myfollower)
-    myfollower.newendkey(60)
-    myfollower.last().t = 0
+    myfollower.newendkey(60).t = 0
 
-    # Include both the original path and the follower, so
-    # we can clearly see that the follower is following the
-    # intended path.
-    movie = morpho.Animation(morpho.Layer([path, myfollower]))
-    movie.play()
-
-def imageFollower():
-    # Create a curved path that begins at x = -4 and ends at x = +4
-    path = morpho.graph.realgraph(lambda x: 0.2*(x**3 - 12*x), -4, 4)
-
-    ballimage = morpho.graphics.Image("./ball.png")
-    class Follower(morpho.Skit):
-        def makeFrame(self):
-            t = self.t
-
-            # Create an Image figure from "ball.png"
-            ball = morpho.graphics.Image(ballimage)
-            ball.height = 0.75
-            # Set the position of the image to be the path's
-            # position at parameter t.
-            ball.pos = path.positionAt(t)
-
-            return ball
-
-    myfollower = Follower()
-    # Set the follower to begin at the END of the path,
-    # just to change things up a little.
-    myfollower.t = 1
-
-    # Turn it into an actor, and set its t value to be 0
-    # after 2 seconds (60 frames) have passed.
-    myfollower = morpho.Actor(myfollower)
-    myfollower.newendkey(60)
-    myfollower.last().t = 0
-
-    # Include both the original path and the follower, so
-    # we can clearly see that the follower is following the
-    # intended path.
-    movie = morpho.Animation(morpho.Layer([path, myfollower]))
-    movie.play()
+    mation.play()
 
 def tanline():
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
+
     f = lambda x: 0.2*(x**3 - 12*x)
-    path = morpho.graph.realgraph(f, -4, 4)
+    path = mainlayer.Actor(morpho.graph.realgraph(f, -4, 4))
 
     # Define a numerical derivative function
     dx = 0.000001  # A small change in x
     df = lambda x: (f(x+dx)-f(x-dx))/(2*dx)
 
-    @morpho.SkitParameters({"t":-4, "length":4, "alpha":1})
+    @morpho.SkitParameters(t=-4, length=4, alpha=1)
     class TangentLine(morpho.Skit):
         def makeFrame(self):
             # t will represent the input to the function f
@@ -171,28 +136,55 @@ def tanline():
             return morpho.Frame([line, dlabel])
 
     # Initialize the tangent line Skit
-    tanline = TangentLine()
-    tanline.t = -4  # Set initial t to -4
-    tanline.length = 0  # Initial length is zero
-    tanline.transition = morpho.transitions.quadease
+    tanline = mainlayer.Actor(TangentLine(t=-4, length=0))
+    tanline.first().transition = morpho.transitions.quadease
 
-    # Convert to actor and set t to +4 over
-    # the course of 5 seconds (150 frames)
-    tanline = morpho.Actor(tanline)
-    tanline.newendkey(150)
-    tanline.last().t = 4
-    tanline.last().length = 4
+    # Set t to +4 over the course of 5 seconds (150 frames)
+    tanline.newendkey(150).set(t=4, length=4)
 
     # Finally, fade the tangent line to invisibility
-    tanline.newendkey(30)
-    tanline.last().alpha = 0
+    tanline.newendkey(30).alpha = 0
 
-    movie = morpho.Animation(morpho.Layer([path, tanline]))
-    movie.play()
+    mation.play()
+
+def imageFollower():
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
+
+    # Create a curved path that begins at x = -4 and ends at x = +4
+    path = mainlayer.Actor(morpho.graph.realgraph(
+        lambda x: 0.2*(x**3 - 12*x), -4, 4))
+
+    ballimage = morpho.graphics.Image("./ball.png")
+    class Follower(morpho.Skit):
+        def makeFrame(self):
+            t = self.t
+
+            # Create an Image figure from "ball.png"
+            ball = morpho.graphics.Image(ballimage)
+            ball.height = 0.75
+            # Set the position of the image to be the path's
+            # position at parameter t.
+            ball.pos = path.first().positionAt(t)
+
+            return ball
+
+    # Set the follower to begin at the END of the path,
+    # just to change things up a little.
+    myfollower = mainlayer.Actor(Follower(t=1))
+
+    # Set its t value to be 0
+    # after 2 seconds (60 frames) have passed.
+    myfollower.newendkey(60).t = 0
+
+    mation.play()
 
 def pendulum():
-    thetamax = pi/6  # Hard code thetamax for now
-    length = 3  # Hard code pendulum string length for now
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
+
+    thetamax = pi/6  # Hard code thetamax
+    length = 3  # Hard code pendulum string length
     class Pendulum(morpho.Skit):
         def makeFrame(self):
             t = self.t
@@ -239,19 +231,13 @@ def pendulum():
 
             return morpho.Frame([neutral, arc, thetaLabel, string, ball, tracker])
 
-    pend = Pendulum()
+    pend = mainlayer.Actor(Pendulum())
 
-    # Set internal time parameter t to be 6pi
-    # after 5 seconds (150 frames) have passed
-    # in the animation's clock.
-    pend = morpho.Actor(pend)
+    # Set internal time parameter t to be 6pi after 5 seconds
+    # (150 frames) have passed in the animation's clock.
     pend.newendkey(150).t = 6*pi
 
-    movie = morpho.Animation(pend)
-    movie.play()
-
-
-
+    mation.play()
 
 # tracker()
 # follower()

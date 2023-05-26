@@ -29,10 +29,12 @@ equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1, pos=1j, align=[1,0])
 
 Unlike `Text` figures, though, LaTeX is colored black by default, so to view it, we'll need to display it on a non-black background:
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-
-mation = morpho.Animation(equ)
+mainlayer = morpho.Layer()
+mation = morpho.Animation(mainlayer)
 mation.background = (1,1,1)  # White background
+
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
+
 mation.play()
 ```
 There are ways to change the color of the LaTeX both in Morpho and within the LaTeX code itself, but more on that later.
@@ -41,33 +43,25 @@ There are ways to change the color of the LaTeX both in Morpho and within the La
 
 Just like any other figure, the attributes of a LaTeX figure can be changed after construction and tweened to create animations:
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 equ.newendkey(30).set(pos=-3j, rotation=90*deg, align=[0,-1])
-
-mation = morpho.Animation(equ)
-mation.background = (1,1,1)  # White background
-mation.play()
 ```
 
 The size of a LaTeX figure can be changed after construction too, but the syntax is not as straightforward as simply reassigning a `boxHeight` or `boxWidth` attribute. To do it, use the `resize()` method:
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 equ.newendkey(30).resize(boxHeight=2)  # Change the boxHeight to be 2
 ```
 
 You can also specify `boxWidth` instead to `resize()` to change the box width of the LaTeX. By default, changing only one of these parameters will cause the other to change in tandem to preserve the aspect ratio, but this can be overridden by passing in values to both `boxWidth` ***and*** `boxHeight`
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 equ.newendkey(30).resize(boxWidth=2, boxHeight=3)  # Make a very warped equation
 ```
 
 Similarly there is a `rescale()` method that allows you to change the size of the LaTeX according to a scale factor instead of by setting a specific target box width/height:
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 equ.newendkey(30).rescale(2)  # Make it twice as big
 equ.newendkey(30).rescale(0.5, 1.5)  # Rescale width and height independently
 ```
@@ -76,22 +70,22 @@ equ.newendkey(30).rescale(0.5, 1.5)  # Rescale width and height independently
 
 Modifying other attributes like color and alpha are a bit more complicated for LaTeX figures owing to the fact that they are actually `MultiSpline` figures---that is, a collection of individual Spline figures that together form the shape of the LaTeX math. So to change, for example, the color of some LaTeX after construction, you have to change it for all the individual subsplines within the MultiSpline. Luckily, this can be done pretty easily by using the `.all` property:
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 equ.newendkey(30).all.set(fill=[1,0,0])
 ```
+> **Note:** Using the `.all` property is largely optional in Morpho v0.7.1+ since it will be done implicitly most of the time.
+
 Note that we need to modify the `fill` attribute, not the `color` attribute. This is because the individual LaTeX glyphs are rendered as strokeless Splines, so modifying the `color` attribute will change the color of the (invisible) strokes around each glyph. However, by changing the stroke width to a non-zero value, you can create outlined LaTeX text which can be useful for highlighting purposes:
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 equ.newendkey(30).all.set(fill=[1,1,0], width=-3, color=[0,0,0])
 ```
+
 You might notice the `width` in the above example is specified with a negative value. This causes the stroke to be drawn *behind* the fill, which I recommend for stroking LaTeX glyphs so that the stroke doesn't stand out too much and overwhelm the overall shape of the glyphs.
 
 It's also possible to modify only a *subset* of the LaTeX glyphs. This is done using the `.select[]` feature. In general (though not always) each individual glyph appearing in a LaTeX expression corresponds to a single subspline in the MultiSpline in order from left-to-right. So for example, if we wanted to highlight the _πi_ in the formula, we can do it like this by noting that _π_ is the second (index 1) glyph in the formula and _i_ is the third (index 2):
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 # We go from 1:3 since the final index is not included.
 # So 1:3 covers indices 1 and 2
 equ.newendkey(30).select[1:3].set(fill=[1,1,0], width=-3, color=[0,0,0])
@@ -104,15 +98,11 @@ equ.newendkey(30).select[-2:].set(fill=[1,1,0], width=-3, color=[0,0,0])
 
 All of this also applies to any other attributes that Splines have (e.g. `alpha`, `dash`, etc.)
 
-
-> ***CAUTION!*** If you forget to use `.all` or `.select[]` when attempting to change a subspline attribute, it will *NOT* cause an error to be thrown, but will instead apply the change only to the *first* subspline in the MultiSpline, which in the case of LaTeX figures will likely be the first glyph in the expression. If you notice this behavior happening in your animation, you have likely forgotten to include an `.all` or `.select[]` somewhere.
-
 ### Changing the LaTeX dynamically
 
 One LaTeX expression can be morphed into another by simply tweening between the starting and ending LaTeX figures. Within an actor, this is most easily done by using the `replaceTex()` method which, well, *replaces* the LaTeX expression for a given figure with another one:
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 equ.newendkey(30).replaceTex(r"a^2 + b^2 = c^2")
 ```
 
@@ -135,81 +125,55 @@ LaTeX figures (and MultiSplines more generally) possess the bounding box corner/
 
 For example, let's say we have written the equation "_a_ + _b_ = 9 + 16", and we want to place a simplified version of it directly beneath it. The corner/side methods make this easy. We'll just position the simplified equation a little lower than the original equation's southwest corner while having the simplified equation's position aligned with its northwest corner:
 ```python
-equ = morpho.latex.parse(r"a + b = 9 + 16", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 
-simp = morpho.latex.parse(r"a + b = 25", boxHeight=1,
-    pos=equ.last().southwest()-0.75j, align=[-1,1])
-simp = morpho.Actor(simp)
-
-mation = morpho.Animation(morpho.Layer([equ, simp]))
-mation.background = (1,1,1)  # White background
-mation.play()
+simp = mainlayer.Actor(morpho.latex.parse(r"a + b = 25", boxHeight=1,
+    pos=equ.last().southwest()-0.75j, align=[-1,1]))
 ```
 
 ## The `box()` method
 
 Like Images and Text figures, LaTeX figures (that is, MultiSplines) possess a `box()` method that returns the bounding box of the figure in the form `[xmin, xmax, ymin, ymax]`. This data is handy to pass into gadgets like the `enbox()` function in order to box in an equation or formula you want highlighted:
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 
-boxer = morpho.gadgets.enbox(equ.last().box(), pad=0.25,
-    width=5, color=[1,0,0])
-
-mation = morpho.Animation(morpho.Layer([equ, boxer]))
-mation.background = (1,1,1)  # White background
-mation.play()
+boxer = mainlayer.Actor(morpho.gadgets.enbox(equ.last().box(), pad=0.25,
+    width=5, color=[1,0,0]))
 ```
+
+> **Note:** In Morpho v0.7.1+, a figure/actor can be passed directly into methods like `enbox()` or `crossout()` without having to call the `box()` method.
 
 ## Subsetting
 
 A subset of glyphs can also be extracted from a LaTeX figure as its own separate figure using the `sub[]` feature. The syntax is the same as for `select[]`, except the return value is a new MultiSpline with copies of the selected subsplines:
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 
-equ2 = equ.last().sub[1:3]
-equ2 = morpho.Actor(equ2)
+equ2 = mainlayer.Actor(equ.last().sub[1:3])
 equ2.newendkey(30).pos -= 3j
-
-mation = morpho.Animation(morpho.Layer([equ, equ2]))
-mation.background = (1,1,1)  # White background
-mation.play()
 ```
 
 This feature can be useful in combination with `enbox()` to box in only a portion of an expression.
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 
-boxer = morpho.gadgets.enbox(equ.last().sub[1:3].box(), pad=0.15,
-    width=5, color=[1,0,0])
-
-mation = morpho.Animation(morpho.Layer([equ, boxer]))
-mation.background = (1,1,1)  # White background
-mation.play()
+boxer = mainlayer.Actor(morpho.gadgets.enbox(equ.last().sub[1:3].box(),
+    pad=0.15, width=5, color=[1,0,0]))
 ```
 
 ## Using `morphFrom()`
 
 `morphFrom()` is an actor action that facilitates animating a new figure "morphing" out of a copy of an old figure of the same type. This works especially well for animating a math equation morphing out of another.
 ```python
-equ = morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1)
-equ = morpho.Actor(equ)
+equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
 
-equ2 = morpho.latex.parse(r"a^2 + b^2 = c^2", boxHeight=1, pos=-2j)
-equ2 = morpho.Actor(equ2)
+equ2 = mainlayer.Actor(morpho.latex.parse(r"a^2 + b^2 = c^2", boxHeight=1, pos=-2j))
 equ2.morphFrom(equ, duration=20)
-
-mation = morpho.Animation(morpho.Layer([equ, equ2]))
-mation.background = (1,1,1)  # White background
-mation.play()
 ```
 
 ## Changing the preamble
 
-Morpho's LaTeX parser does not have access to all possible LaTeX commands from all possible packages. By default, the parser only knows about commands from the LaTeX packages `amsmath`, `amsfonts`, `amssymb`, and `xcolor`, which cover a reasonably wide range of common commands. To allow it to use commands from other packages, as well as any custom commands of your own, modify the *preamble*.
+Morpho's LaTeX parser does not have access to all possible LaTeX commands from all possible packages. By default, the parser only knows about commands from the LaTeX packages `amsmath`, `amsfonts`, `amssymb`, and `xcolor`, which cover a reasonably wide range of common commands. To allow it to use commands from other packages, as well as any custom commands of your own, modify the LaTeX *preamble*.
 
 The *preamble* is the LaTeX code that is executed before the main document code is parsed. It's where all package inclusion statements go as well as any custom commands you might have written. For example, say we want the parser to have access to the `relsize` package. We can extend the built-in preamble by including this line at the top of your code:
 ```python
@@ -230,7 +194,7 @@ morpho.latex.preamble += r"""
 
 The color of LaTeX can also be controlled from the LaTeX code itself. By default, Morpho's LaTeX parser has access to the `xcolor` package, so you can change the color of elements in the LaTeX with the `\textcolor{}` LaTeX command:
 ```python
-equ = morpho.latex.parse(r"\textcolor{red}{e^{\pi i}} = -1", boxHeight=1)
+morpho.latex.parse(r"\textcolor{red}{e^{\pi i}} = -1", boxHeight=1)
 ```
 
 You can also change the default color of all LaTeX by adding the following LaTeX code to the preamble:
@@ -266,7 +230,7 @@ morpho.latex.cacheDir = path_to_cache_directory  # e.g. "./tex"
 A couple of things to look out for when using caching:
 
 - Morpho does not automatically clean up the cache directory over time. This is generally not an issue since each cached SVG file is usually quite small (a handful of kilobytes), but for a large project involving a lot of LaTeX code that has been modified often, the cache directory can start to become quite large. If this happens, simply manually delete all the SVG files in the cache to reset it.
-- Currently, changing the preamble will not invalidate the cache, meaning the changes will not be reflected if the parser loads from the cache. So if you modify the preamble, you should empty the cache. This will likely be fixed in a future version.
+- Before Morpho v0.7.1, changing the preamble would not invalidate the cache, meaning the changes would not be reflected if the parser loads from the cache. So if you're using v0.7.0 and you modify the preamble, you should empty the cache. This has been fixed in v0.7.1 onward.
 
 ## Using LaTeX in Skits
 

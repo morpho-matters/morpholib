@@ -9,198 +9,164 @@ import math, cmath
 # morpho.transitions.default = morpho.transitions.quadease
 
 def pointEx():
-    mypoint = morpho.grid.Point()
-    mypoint.size = 50         # Diameter given in units of pixels
-    mypoint.fill = [0,1,0]    # Color in RGB, where 0 is min and 1 is max
-    mypoint.color = [1,1,1]
-    mypoint.strokeWeight = 5  # Thickness in pixels
-    mypoint.pos = 4 + 3*1j
-    mypoint.alpha = 0.5       # Takes values in [0,1] where 1 = opaque, 0 = invisible
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
 
-    movie = morpho.Animation(mypoint)
-    movie.play()
+    mypoint = mainlayer.Actor(morpho.grid.Point().set(
+        pos=3+4*1j,     # Position as a complex number
+        size=50,        # Diameter in pixels
+        fill=[0,1,0],   # Color in RGB, where 0 is min and 1 is max
+        color=[1,1,1],  # Border color
+        strokeWeight=5  # Border thickness in pixels
+        ))
+
+    mation.play()
 
 def pathEx():
-    mypath = morpho.grid.Path([3, 3*1j, -3, -3*1j])
-    mypath.close()
-    mypath.color = [0,0,1]  # Make the path blue
-    mypath.width = 5        # Make the path 5 pixels thick
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
 
-    movie = morpho.Animation(mypath)
-    movie.play()
+    mypath = mainlayer.Actor(morpho.grid.Path([3, 3*1j, -3, -3*1j]).close().set(
+        color=[0,0,1],  # Make the path blue
+        width=5         # Make the path 5 pixels thick
+        ))
+
+    mation.play()
 
 def lineEx():
-    # Make a linear path connecting -2-3i to 1+4i
-    myline = morpho.grid.line(-2-3*1j, 1+4*1j)
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
 
-    movie = morpho.Animation(myline)
-    movie.play()
+    # Make a linear path connecting -2-3j to 1+4j
+    # containing 100 segments
+    myline = mainlayer.Actor(morpho.grid.line(-2-3*1j, 1+4*1j, steps=100))
+
+    mation.play()
 
 def ellipseEx():
-    # Make an elliptical path centered at 1+1j with
-    # semi-width 3 and semi-height 1
-    myoval = morpho.grid.ellipse(1+1j, 3, 1)
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
 
-    movie = morpho.Animation(myoval)
-    movie.play()
+    # Make an elliptical path centered at 1+1j with
+    # x-radius 3 and y-radius 1
+    myoval = mainlayer.Actor(morpho.grid.ellipse(1+1j, 3, 1).edge())
+
+    mation.play()
 
 def gridEx():
-    mygrid = morpho.grid.mathgrid(
-        view=[-5,5, -4,4],  # read this as [xmin, xmax, ymin, ymax]
-        dx=1, dy=1  # Distance between major x and y tick marks
-        )
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
 
-    movie = morpho.Animation(mygrid)
-    movie.play()
+    mygrid = mainlayer.Actor(morpho.grid.mathgrid(
+        view=[-5,5, -4,4],  # read this as [xmin, xmax, ymin, ymax]
+        dx=1, dy=1          # Distance between major x and y tick marks
+        ))
+
+    mation.play()
 
 def polyEx():
-    mypoly = morpho.grid.Polygon([3, 3*1j, -3, -3*1j])
-    mypoly.color = [1,1,1]  # Make the border white
-    mypoly.width = 5        # Thicken the border
-    mypoly.fill = [1,0,0]   # Fill the interior with red
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
 
-    movie = morpho.Animation(mypoly)
-    movie.play()
+    mypoly = mainlayer.Actor(morpho.grid.Polygon([3, 3*1j, -3, -3*1j]).set(
+        width=5,        # Border is 5 pixels thick
+        color=[1,1,0],  # Border color is yellow
+        fill=[1,0,0]    # Fill color is red
+        ))
+
+    mation.play()
 
 def pointActor():
-    mypoint = morpho.grid.Point()
-    mypoint.size = 50         # Diameter given in units of pixels
-    mypoint.fill = [0,1,0]    # Color in RGB, where 0 is min and 1 is max
-    mypoint.color = [1,1,1]
-    mypoint.strokeWeight = 5  # Thickness in pixels
-    mypoint.pos = 4 + 3*1j
-    mypoint.transition = morpho.transitions.quadease  # New transition
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
 
-    mypoint = morpho.Actor(mypoint)
-    mypoint.newkey(60)  # Create a copy of the point at frame 60
-    mypoint.time(60).fill = [1,0,0]  # Change fill color to red
-    mypoint.time(60).size = 25  # Cut the size in half
-    mypoint.time(60).pos = 0  # Move the point to the origin
+    mypoint = mainlayer.Actor(morpho.grid.Point().set(
+        pos=3+4*1j,     # Position as a complex number
+        size=50,        # Diameter in pixels
+        fill=[0,1,0],   # Fill color in RGB, where 0 is min and 1 is max
+        color=[1,1,1],  # Border color
+        alpha=0.5,      # Value from 0 to 1 where 0 = invisible, 1 = opaque
+        strokeWeight=5  # Border thickness in pixels
+        ))
+    mypoint.newendkey(30).set(pos=0)  # Move to origin
+    mypoint.newendkey(30).set(size=20, fill=[1,0,0], alpha=1)  # Get smaller, change color, make opaque
+    mypoint.newendkey(30)  # Do nothing, just wait a second
+    mypoint.newendkey(20).set(pos=-3)  # Move to (-3,0) in 20 frames (2/3 sec)
+    mypoint.newendkey(30, morpho.grid.Point())  # Turn into a default Point figure
 
-    mypoint.newkey(120)
-    mypoint.time(120).size = 75        # Inflate size of point
-    mypoint.time(120).pos = -3 + 3*1j  # Move point to (-3+3i)
-    mypoint.time(120).alpha = 0        # Fade point to invisibility
-
-    mypoint.newkey(90)
-    mypoint.time(90).pos = -3  # Point takes a detour to -3.
-
-    mypoint.newkey(180, mypoint.time(0).copy())
-
-    movie = morpho.Animation(mypoint)
-    movie.play()
+    mation.play()
 
 
-def relativePoint():
-    mypoint = morpho.grid.Point()
-    mypoint.size = 50         # Diameter given in units of pixels
-    mypoint.fill = [0,1,0]    # Color in RGB, where 0 is min and 1 is max
-    mypoint.color = [1,1,1]
-    mypoint.strokeWeight = 5  # Thickness in pixels
-    mypoint.pos = 4 + 3*1j
-    mypoint.transition = morpho.transitions.quadease  # New transition
+def intermediateKeys():
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
 
-    mypoint = morpho.Actor(mypoint)
-    mypoint.newendkey(60)  # Create a copy of the point at frame 60
-    mypoint.last().fill = [1,0,0]  # Change fill color to red
-    mypoint.last().size = 25  # Cut the size in half
-    mypoint.last().pos = 0  # Move the point to the origin
+    mypoint = mainlayer.Actor(morpho.grid.Point().set(
+        pos=0,  # 0 is default, but it's nice to be explicit
+        size=20,
+        fill=[1,0,0]
+        ))
+    mypoint.newendkey(60).set(pos=3+4*1j, size=50, fill=[0,1,0])
+    mypoint.newendkey(-30).set(pos=3)
 
-    mypoint.newendkey(60)
-    mypoint.last().size = 75        # Inflate size of point
-    mypoint.last().pos = -3 + 3*1j  # Move point to (-3+3i)
-    mypoint.last().alpha = 0        # Fade point to invisibility
-
-    mypoint.newendkey(-30)  # New key 30 frames before last key
-    mypoint.key(-2).pos = -3  # key(-2) means second-to-last key
-
-    mypoint.newendkey(60, mypoint.first().copy())
-
-    movie = morpho.Animation(mypoint)
-    movie.play()
+    mation.play()
 
 def pathMorph():
-    grid = morpho.grid.mathgrid(
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
+
+    grid = mainlayer.Actor(morpho.grid.mathgrid(
         view=[-5,5, -5,5],  # read this as [xmin, xmax, ymin, ymax]
         dx=1, dy=1  # Distance between major x and y tick marks
-        )
-    fgrid = grid.fimage(lambda z: z**2/10)
+        ))
 
-    grid = morpho.Actor(grid)
+    fgrid = grid.last().fimage(lambda z: z**2/10)
     grid.newendkey(60, fgrid)
 
-    movie = morpho.Animation(grid)
-    movie.play()
+    mation.play()
 
 def layerEx():
-    ### DEFINING POINT ACTOR ###
+    mainlayer = morpho.Layer()
+    mation = morpho.Animation(mainlayer)
 
-    mypoint = morpho.grid.Point()
-    mypoint.size = 50         # Diameter given in units of pixels
-    mypoint.fill = [0,1,0]    # Color in RGB, where 0 is min and 1 is max
-    mypoint.color = [1,1,1]
-    mypoint.strokeWeight = 5  # Thickness in pixels
-    mypoint.pos = 4 + 3*1j
-    mypoint.transition = morpho.transitions.quadease  # New transition
+    # Create Point actor
+    mypoint = mainlayer.Actor(morpho.grid.Point().set(
+        pos=3+4*1j,     # Position as a complex number
+        size=50,        # Diameter in pixels
+        fill=[0,1,0],   # Fill color in RGB, where 0 is min and 1 is max
+        color=[1,1,1],  # Border color
+        strokeWeight=5, # Border thickness in pixels
+        transition=morpho.transitions.quadease,  # Quadease transition
+        zdepth=-10      # Initial zdepth is now -10
+        ))
 
-    mypoint.zdepth = -10  # Initial zdepth is now -10
-
-    mypoint = morpho.Actor(mypoint)
-    mypoint.newendkey(60)  # Create a copy of the point at frame 60
-    mypoint.last().fill = [1,0,0]  # Change fill color to red
-    mypoint.last().size = 25  # Cut the size in half
-    mypoint.last().pos = 0  # Move the point to the origin
-    mypoint.last().zdepth = 10  # Second key has zdepth = +10
-
-    mypoint.newendkey(60)
-    mypoint.last().size = 75        # Inflate size of point
-    mypoint.last().pos = -3 + 3*1j  # Move point to (-3+3i)
-    mypoint.last().alpha = 0        # Fade point to invisibility
-
-    mypoint.newendkey(-30)  # New key 30 frames before last key
-    mypoint.key(-2).pos = -3  # key(-2) means second-to-last key
-
-    mypoint.newendkey(60, mypoint.first().copy())
-
-    ### DEFINING GRID ACTOR ###
-
-    grid = morpho.grid.mathgrid(
+    # Create grid actor
+    grid = mainlayer.Actor(morpho.grid.mathgrid(
         view=[-5,5, -5,5],  # read this as [xmin, xmax, ymin, ymax]
         dx=1, dy=1  # Distance between major x and y tick marks
-        )
-    fgrid = grid.fimage(lambda z: z**2/10)
+        ))
 
-    grid = morpho.Actor(grid)
+    # Define mypoint's keyfigures
+    mypoint.newendkey(60).set(
+        pos=0,          # Move the point to the origin
+        size=25,        # Cut the size in half
+        fill=[1,0,0],   # Change fill color to red
+        zdepth=10       # Second keyfigure zdepth is now +10
+        )
+    mypoint.newendkey(60).set(
+        pos=-3+3*1j,    # Move point to (-3+3i)
+        size=75,        # Inflate size of point
+        alpha=0         # Fade point to invisibility
+        )
+    mypoint.newendkey(-30).set(pos=-3)  # New key 30 frames before last key
+    mypoint.newendkey(60, mypoint.first().copy())
+
+    # Define grid's keyfigures
+    fgrid = grid.last().fimage(lambda z: z**2/10)
     grid.newendkey(60, fgrid)
 
-    ### PACKAGE INTO A LAYER ###
+    mation.play()
 
-    # View of the complex plane is now [-10, 10] x [-10i, 10i]
-    layer = morpho.Layer([mypoint, grid], view=[-10,10, -10,10])
-
-    # Change the view after layer construction
-    layer.camera.time(0).view = [-10,10, -10,10]
-    layer.camera.newendkey(120)
-    layer.camera.last().view = [-5,5, -5,5]
-
-    # Use zoomIn() and zoomOut()
-    layer.camera.newendkey(60)
-    layer.camera.last().zoomOut(2)
-    layer.camera.newendkey(60)
-    layer.camera.last().zoomIn(10)
-    layer.camera.newendkey(30)
-    layer.camera.last().centerAt(1+2*1j)  # Center the camera at 1+2i
-    layer.camera.newendkey(30)
-    layer.camera.last().moveBy(-2-3j)  # Move the camera 2 units left, 3 down
-
-    # Package further into animation
-    movie = morpho.Animation(layer)
-    # movie.frameRate = 60  # Up the framerate to 60 fps
-    # movie.newFrameRate(12)
-    movie.background = [0.5, 0.5, 0.5]  # Make a gray background
-    movie.windowShape = (400, 400)
-
-    movie.play()
 
 # pointEx()
 # pathEx()
@@ -209,6 +175,6 @@ def layerEx():
 # gridEx()
 # polyEx()
 # pointActor()
-# relativePoint()
+# intermediateKeys()
 # pathMorph()
 # layerEx()

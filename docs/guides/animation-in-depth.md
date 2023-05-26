@@ -5,6 +5,8 @@ title: Morpho Guide -- Animation In-depth
 
 # Morpho Guide: Animation In-depth
 
+> **Note:** This guide is only for Morpho 0.7.0+. For older versions, see [this guide](https://morpho-matters.github.io/morpholib/guides/old/animation-in-depth).
+
 In [the previous guide](https://morpho-matters.github.io/morpholib/guides/figures-and-gadgets), we mostly dealt with static figures and went over their properties in great detail, but we didn't spend much time thinking about animation. So in this guide, we'll discuss Morpho's animation model in a bit more detail than we did in the first guide.
 
 Since we already covered the basics of Morpho's animation model in the first guide, I won't repeat the basics here. So if you're rusty on how Actors work, I'd encourage you to [re-read](https://morpho-matters.github.io/morpholib/guides/basic-guide#actors) some of that part of the first guide.
@@ -15,6 +17,9 @@ Since we already covered the basics of Morpho's animation model in the first gui
 > morpho.importAll()
 >
 > from morpholib.tools.basics import *
+>
+> mainlayer = morpho.Layer()
+> mation = morpho.Animation(mainlayer)
 > ```
 
 ## Tween Methods
@@ -30,63 +35,53 @@ The *spiral tween* method essentially interpolates a position by linearly interp
 ```python
 # Place a default grid in the background just to
 # make the motion clearer
-gridBG = morpho.grid.mathgrid()
+gridBG = mainlayer.Actor(morpho.grid.basicgrid(axes=True))
 
-# Setup point at the coordinates (3,2)
-mypoint = morpho.grid.Point(3+2j)
-# Set the tween method to be the Point class's
+# Setup point at the coordinates (3,2) and
+# set the tween method to be the Point class's
 # spiral tween method.
-mypoint.tweenMethod = morpho.grid.Point.tweenSpiral
+mypoint = mainlayer.Actor(morpho.grid.Point(3+2j).set(
+    tweenMethod=morpho.grid.Point.tweenSpiral
+    ))
 
-# Convert to an actor, and change the position to (-1,0)
-# over the course of 1 second (30 frames).
-mypoint = morpho.Actor(mypoint)
-mypoint.newendkey(30)
-mypoint.last().pos = -1
+# Change the position to (-1,0) over the course of 1 second (30 frames).
+mypoint.newendkey(30).pos = -1
 
-movie = morpho.Animation(morpho.Layer([gridBG, mypoint]))
-movie.play()
+mation.play()
 ```
 
 The code reveals how you set a tween method. You assign it to a figure's ``tweenMethod`` attribute. So in the above code, we're setting the tween method of ``mypoint`` to be the ``tweenSpiral`` method associated with the ``Point`` class.
 
-> ***CAUTION!*** There are two important things to remember about setting tween methods that are easy to get wrong if you're new to how they work. The first is that tween methods are assigned to a *Figure* object, NOT an *Actor* object. In the above code, ``mypoint`` was reassigned a tween method BEFORE converting it into an actor. To assign a tween method after converting a figure to an actor, you will have to remember to reference a keyfigure using a method like ``first()``, ``last()``, or ``key()``. Something like this: ``mypoint.first().tweenMethod = etc``.
+> ***CAUTION!*** There are two important things to remember about setting tween methods that are easy to get wrong if you're new to how they work. The first is that tween methods are assigned to a *Figure* object, NOT an *Actor* object. This means to assign a tween method after the actor has been defined, you will have to remember to reference a keyfigure using a method like ``first()``, ``last()``, or ``key()``. Something like this: ``mypoint.first().set(tweenMethod=etc)``.
 >
 > The second thing to remember about tween methods is that each figure type has its own personal set of tween methods that work on it. For example, the ``Point`` class has ``Point`` tween methods, and the ``Path`` class has ``Path`` tween methods. Be sure you assign a tween method that the given figure is designed to take. In the case of using the built-in tween methods, that means accessing the tween method as an attribute of the class's name. So for a point, you assign
 > ```python
-> mypoint.tweenMethod = morpho.grid.Point.tweenSpiral
+> mypoint.first().tweenMethod = morpho.grid.Point.tweenSpiral
 > ```
 > If you don't want to explicitly reference the figure's type when assigning a tween method, you can use Python's ``type()`` function:
 > ```python
-> mypoint.tweenMethod = type(mypoint).tweenSpiral
+> mypoint.first().tweenMethod = type(mypoint.first()).tweenSpiral
 > ```
-> Or if it's already an actor, use the actor's ``figureType`` attribute:
+> Or using the actor's ``figureType`` attribute:
 > ```python
 > mypoint.first().tweenMethod = mypoint.figureType.tweenSpiral
 > ```
 
-You can change the tween method for a grid as well, but it's a little trickier because a mathgrid is a composite figure made up of subpaths. The easiest way is to set it via a parameter in ``mathgrid()`` when initially constructing the grid:
+You can change the tween method for a grid as well. The easiest way is to set it via a parameter in ``mathgrid()`` when initially constructing the grid:
 
 ```python
 # Setup a standard grid, but with the spiral
 # tween method for a path.
-mygrid = morpho.grid.mathgrid(tweenMethod=morpho.grid.Path.tweenSpiral)
+mygrid = mainlayer.Actor(morpho.grid.mathgrid(
+    tweenMethod=morpho.grid.Path.tweenSpiral
+    ))
 
-# Convert to actor and have it tween into a
-# morphed version of itself
-mygrid = morpho.Actor(mygrid)
+# Have it tween into a morphed version of itself
 fgrid = mygrid.last().fimage(lambda z: z**2/10)
 mygrid.newendkey(60, fgrid)
 
-movie = morpho.Animation(mygrid)
-movie.play()
+mation.play()
 ```
-
-> **New in v0.6.1:** A mathgrid's tween method can be changed after construction, but you have to use the ``all`` property like this:
-> ```python
-> mygrid.all.tweenMethod = morpho.grid.Path.tweenSpiral
-> ```
-> This will propagate the tween method change to all the component paths inside the mathgrid figure.
 
 ### Pivot Tween
 
@@ -97,22 +92,19 @@ The syntax for setting up a Pivot Tween is a slightly different than all other b
 ```python
 # Place a default grid in the background just to
 # make the motion clearer
-gridBG = morpho.grid.mathgrid()
+gridBG = mainlayer.Actor(morpho.grid.basicgrid(axes=True))
 
-# Setup point at the coordinates (3,2)
-mypoint = morpho.grid.Point(3+2j)
-# Set the tween method to be the Point class's
-# pivot tween method, with an angle value of +pi.
-mypoint.tweenMethod = morpho.grid.Point.tweenPivot(pi)
+# Setup point at the coordinates (3,2) and
+# set the tween method to be the Point class's
+# pivot tween method with an angle of pi radians.
+mypoint = mainlayer.Actor(morpho.grid.Point(3+2j).set(
+    tweenMethod=morpho.grid.Point.tweenPivot(pi)
+    ))
 
-# Convert to an actor, and change the position to (-1,0)
-# over the course of 1 second (30 frames).
-mypoint = morpho.Actor(mypoint)
-mypoint.newendkey(30)
-mypoint.last().pos = -1
+# Change the position to (-1,0) over the course of 1 second (30 frames).
+mypoint.newendkey(30).pos = -1
 
-movie = morpho.Animation(morpho.Layer([gridBG, mypoint]))
-movie.play()
+mation.play()
 ```
 
 The important difference to note is that instead of just typing the tween method's *name*, like ``tweenPivot``, you actually have to *call* it with an input value (the angle): ``tweenPivot(pi)``. This tells Morpho that the trajectory of the tween should be along an arc of &pi; radians (180 degrees) traveling counter-clockwise from the starting figure to the ending figure.
@@ -121,7 +113,7 @@ The important difference to note is that instead of just typing the tween method
 > ```python
 > # This is WRONG! Never do this! You need to always call it
 > # with parentheses: tweenPivot(myangle) or tweenPivot()
-> mypoint.tweenMethod = type(mypoint).tweenPivot
+> mypoint.first().tweenMethod = mypoint.figureType.tweenPivot
 > ```
 > This is one of the major differences in syntax between ``tweenPivot`` and all the other built-in tween methods (like ``tweenLinear`` and ``tweenSpiral``).
 
@@ -130,7 +122,7 @@ The important difference to note is that instead of just typing the tween method
 You can reverse the direction of the pivot by making the angle value negative:
 
 ```python
-mypoint.tweenMethod = morpho.grid.Point.tweenPivot(-pi)
+mypoint.first().tweenMethod = morpho.grid.Point.tweenPivot(-pi)
 ```
 
 which results in the point traveling *clockwise* to its final destination.
@@ -146,57 +138,43 @@ As an example, let's consider our point animation from earlier, and let's say we
 ```python
 # Place a default grid in the background just to
 # make the motion clearer
-gridBG = morpho.grid.mathgrid()
+gridBG = mainlayer.Actor(morpho.grid.basicgrid(axes=True))
 
-# Setup point at the coordinates (3,2)
-mypoint = morpho.grid.Point(3+2j)
-# Set the tween method to be the Point class's
+# Setup point at the coordinates (3,2) and
+# set the tween method to be the Point class's
 # spiral tween method.
-mypoint.tweenMethod = morpho.grid.Point.tweenSpiral
+mypoint = mainlayer.Actor(morpho.grid.Point(3+2j).set(
+    tweenMethod=morpho.grid.Point.tweenSpiral
+    ))
 
-# Convert to an actor, and change the position to the
-# point (-1,0) over the course of 1 second (30 frames).
-mypoint = morpho.Actor(mypoint)
-mypoint.newendkey(30)
-mypoint.last().pos = -1
-
-# Reassign the tween method at this point to the linear
-# tween method.
-mypoint.last().tweenMethod = mypoint.figureType.tweenLinear
+# Change the position to (-1,0) over the course of 1 second (30 frames)
+# and also reassign the tween method at this point to be linear tween.
+mypoint.newendkey(30).set(
+    pos=-1,
+    tweenMethod=mypoint.figureType.tweenLinear
+    )
 
 # Create a new keyfigure returning the point to its
 # starting location. The tween method is governed by
 # the previous keyfigure's tween method: tweenLinear
 mypoint.newendkey(30, mypoint.first().copy())
 
-movie = morpho.Animation(morpho.Layer([gridBG, mypoint]))
-movie.play()
+mation.play()
 ```
 
 As you can see, the point first follows a spiral path getting to the point (-1,0) before rebounding back to its starting position along a straight line. So how is the code instructing this exactly?
 
 The key idea is that the tween method used for a tween between two keyfigures is controlled by the *earlier* keyfigure's ``tweenMethod`` setting. If we call the two keyfigures we're tweening *A* and *B*, where *A* is the earlier keyfigure, then *A*'s tween method determines the tween method used for the interpolation between *A* and *B*. Likewise, if keyfigure *B* is followed by keyfigure *C*, then *B*'s tween method controls the interpolation between *B* and *C*.
 
-So in the above code, we initialized ``mypoint`` with the spiral tween method ``tweenSpiral``, but after we set up the second keyfigure (after calling ``newendkey()``), we then edited its tween method by stating
+So in the above code, we initialized ``mypoint`` with the spiral tween method ``tweenSpiral``, but after we set up the second keyfigure (after calling ``newendkey(30)``), we then edited its tween method by stating
 ```python
-mypoint.last().tweenMethod = mypoint.figureType.tweenLinear
+tweenMethod = mypoint.figureType.tweenLinear
 ```
 which means that when we set up the third keyfigure with the second ``newendkey()`` declaration, the interpolation between the second and third keyfigures is controlled by ``tweenLinear``.
 
-```python
-# Reassign the tween method at this point to the linear
-# tween method.
-mypoint.last().tweenMethod = mypoint.figureType.tweenLinear
-
-# Create a new keyfigure returning the point to its
-# starting location. The tween method is governed by
-# the previous keyfigure's tween method: tweenLinear
-mypoint.newendkey(30, mypoint.first().copy())
-```
-
 This actually reflects a general convention about interpolation in Morpho: Whenever a property of a figure is not tweenable, the interpolated figure takes on the property of the *earlier* keyfigure in the interpolation.
 
-For example, all figures possess a visibility attribute called ``visible`` which indicates whether the figure should be drawn at all. It's just a boolean, so it's not tweenable. So if we have two keyfigures *A* and *B* in a row in an actor, where *A* is the earlier keyfigure, if *A*'s visibility is set to ``False``, then all tweened figures interpolated between *A* and *B* will inherit the visibility of *A*, which has the effect of making the actor disappear for the interval of time between the keyfigures *A* and *B*.
+For example, all figures possess a visibility attribute called ``visible`` which indicates whether the figure should be drawn at all. It's just a boolean, so it's not tweenable, and so if we have two keyfigures *A* and *B* one after the other in an actor's timeline, where *A* is the earlier keyfigure, if *A*'s visibility is set to ``False``, then all tweened figures interpolated between *A* and *B* will inherit the visibility of *A*, which has the effect of making the actor disappear for the interval of time between the keyfigures *A* and *B*.
 
 This convention also has the nice effect that if you want to set a tween method (or other such property) that applies to the entire actor, this can usually be accomplished by setting the first keyfigure's tween method to the desired value, and then it will propagate to all future keyfigures until you modify it again<sup>[</sup>[^2]<sup>]</sup>.
 
@@ -207,35 +185,31 @@ You can also use this technique to set up multiple different ``transitions`` for
 ```python
 # Place a default grid in the background just to
 # make the motion clearer
-gridBG = morpho.grid.mathgrid()
+gridBG = mainlayer.Actor(morpho.grid.basicgrid(axes=True))
 
-# Setup point at the coordinates (3,2)
-mypoint = morpho.grid.Point(3+2j)
-# Set the tween method to be the Point class's
-# spiral tween method.
-mypoint.tweenMethod = morpho.grid.Point.tweenSpiral
-# Set the initial transition to quadease
-mypoint.transition = morpho.transitions.quadease
+# Setup point at the coordinates (3,2) and
+# set the tween method to be the Point class's spiral tween method.
+# Also set the transition to be quadease.
+mypoint = mainlayer.Actor(morpho.grid.Point(3+2j).set(
+    tweenMethod=morpho.grid.Point.tweenSpiral,
+    transition=morpho.transitions.quadease
+    ))
 
-# Convert to an actor, and change the position to the
-# point (-1,0) over the course of 1 second (30 frames).
-mypoint = morpho.Actor(mypoint)
-mypoint.newendkey(30)
-mypoint.last().pos = -1
-
-# Reassign the tween method at this point to the linear
-# tween method.
-mypoint.last().tweenMethod = mypoint.figureType.tweenLinear
-# Reassign the transition to be the uniform transition
-mypoint.last().transition = morpho.transitions.uniform
+# Change the position to (-1,0) over the course of 1 second (30 frames)
+# and also reassign the tween method at this point to be linear tween.
+# Also set the transition from this point to be uniform
+mypoint.newendkey(30).set(
+    pos=-1,
+    tweenMethod=mypoint.figureType.tweenLinear,
+    transition=morpho.transitions.uniform
+    )
 
 # Create a new keyfigure returning the point to its
 # starting location. The tween method is governed by
 # the previous keyfigure's tween method: tweenLinear
 mypoint.newendkey(30, mypoint.first().copy())
 
-movie = morpho.Animation(morpho.Layer([gridBG, mypoint]))
-movie.play()
+mation.play()
 ```
 
 Here, the transition is initially set to ``quadease`` which leads to the organic easing in and out along the spiral trajectory, but then it switches back to a ``uniform`` transition when it takes the linear trajectory back to its starting point.
@@ -248,29 +222,26 @@ All figures have these two non-tweenable attributes associated with them. The fi
 
 ```python
 # Initialize point at the origin, but make it big.
-mypoint = morpho.grid.Point(0)
-mypoint.size = 50
-
-mypoint = morpho.Actor(mypoint)
+mypoint = mainlayer.Actor(morpho.grid.Point(0).set(size=50))
 
 # Move point off the left side of the screen
-mypoint.newendkey(30)
-mypoint.last().pos = -6
-mypoint.last().visible = False
+mypoint.newendkey(30).set(
+    pos=-6,
+    visible=False
+    )
 
 # While invisible, move to being off the
 # right side of the screen
-mypoint.newendkey(15)
-mypoint.last().pos = 6
-mypoint.last().visible = True
+mypoint.newendkey(15).set(
+    pos=6,
+    visible=True
+    )
 
 # After being made visible again, move
 # back to the origin.
-mypoint.newendkey(30)
-mypoint.last().pos = 0
+mypoint.newendkey(30).pos = 0
 
-movie = morpho.Animation(mypoint)
-movie.play()
+mation.play()
 ```
 
 The ``static`` attribute is a less commonly used attribute, but it's occasionally handy. It's ``False`` by default, but if set to ``True``, ``fimage()`` will ignore the figure if it's part of a composite figure like a ``Frame``, and the figure will no longer be tweened with a partner figure if it's part of an actor or ``Frame`` object.
@@ -291,61 +262,34 @@ Let's do an example. First let's take a standard grid and have it morph into som
 
 ```python
 # Setup a default grid
-mygrid = morpho.grid.mathgrid()
+mygrid = mainlayer.Actor(morpho.grid.mathgrid())
 
-# Turn it into an actor, and morph it into
-# a distorted version
-mygrid = morpho.Actor(mygrid)
+# Morph it into a distorted version
 mygrid.newendkey(30, mygrid.first().fimage(lambda z: z**2/10))
 
-# Setup animation
-movie = morpho.Animation(mygrid)
-# Set the first layer (the zeroth layer)
-# as the locator layer
-movie.locatorLayer = 0
-movie.play()
+# Set the first layer (the layer #0) as the locator layer
+mation.locatorLayer = 0
+mation.play()
 ```
 
-Try clicking on the screen! You'll find that every click results in the coordinates being printed to your console window. The way it works is we set the "locator layer" of the animation we called ``movie`` to be the bottommost layer it contains (index ``0``) which, in our simple animation, is actually the only layer it contains.
+Try clicking on the screen! You'll find that every click results in the coordinates being printed to your console window. The way it works is we set the "locator layer" of the animation we called ``mation`` to be the bottommost layer it contains (index ``0``) which, in our simple animation, is actually the only layer it contains.
 
-You could use this feature to, for example, get pretty precise coordinates of any of the lattice points in the distorted grid, if you wanted to label some of them, perhaps. However, at the moment it's a bit annoying to do so, because in addition to printing coordinates to the screen, every click causes the animation to either pause, unpause, or repeat itself from the beginning. And since the distorted grid is the final frame of the animation, every click on one of the distorted lattice points requires you to rewatch the entire animation again before you can click on another one. To get around this problem, what I often do is set the starting frame of the animation to coincide with the final frame. That way, the animation only ever displays the final frame and you can click as often as you like with no change to the view:
+You could use this feature to, for example, get pretty precise coordinates of any of the lattice points in the distorted grid, if you wanted to label some of them, perhaps. However, at the moment it's a bit annoying to do so, because in addition to printing coordinates to the screen, every click causes the animation to either pause, unpause, or repeat itself from the beginning. And since the distorted grid is the final frame of the animation, every click on one of the distorted lattice points requires you to rewatch the entire animation again before you can click on another one. To get around this, what I often do is set the starting frame of the animation to coincide with the final frame. That way, the animation only ever displays the final frame and you can click as often as you like with no change to the view:
 
 ```python
-# Setup animation
-movie = morpho.Animation(grid)
-# Set the first layer (the zeroth layer)
-# as the locator layer
-movie.locatorLayer = 0
-# Set the initial frame of the animation
-# to be its final frame
-movie.start = movie.lastID()
-movie.play()
+# Set the first layer (the layer #0) as the locator layer
+mation.locatorLayer = 0
+# Set the initial frame of the animation to be its final frame
+mation.start = mation.lastID()
+mation.play()
 ```
 
 There's actually another way to specify a locator layer which I find more useful when I'm creating an animation that contains many layers. Usually in a multi-layer animation, I have given names to the various layers (e.g. ``mainlayer`` or ``toplayer``). In this case, you can set the locator layer to be the actual *Layer* object itself instead of its position within the animation's internal stack:
 
 ```python
-# Setup layer and animation in advance
-mainlayer = morpho.Layer()
-movie = morpho.Animation([mainlayer])
-
-# Setup a default grid
-mygrid = morpho.grid.mathgrid()
-
-# Turn it into an actor, and morph it into
-# a distorted version
-mygrid = morpho.Actor(mygrid)
-mygrid.newendkey(30, mygrid.first().fimage(lambda z: z**2/10))
-
-# Append grid actor to the mainlayer
-mainlayer.append(mygrid)
-
-# Set the initial frame of the animation
-# to be its final frame
-movie.start = movie.lastID()
-# Set mainlayer to be the locator layer
-movie.locatorLayer = mainlayer
-movie.play()
+# Set `mainlayer` as the locator layer
+mation.locatorLayer = mainlayer
+mation.play()
 ```
 
 Finally, there are two additional attributes for locator layers called ``clickCopy`` and ``clickRound``.
@@ -355,8 +299,8 @@ Finally, there are two additional attributes for locator layers called ``clickCo
 ``clickRound`` takes an integer specifying the decimal place to round the coordinates to. By default, it's set to ``None``, meaning it doesn't round.
 
 ```python
-movie.clickCopy = True  # Coordinates will be copied to clipboard
-movie.clickRound = 2    # Coordinates round to the second decimal place
+mation.clickCopy = True  # Coordinates will be copied to clipboard
+mation.clickRound = 2    # Coordinates round to the second decimal place
 ```
 
 ### Still other tools
