@@ -335,11 +335,24 @@ class Frame(morpho.Figure):
         return _InPlaceSubAttributeManager(self)
 
     def _select(self, index, *, _asFrame=False, _iall=False):
-        selection = list(listselect(self.figures, index).values())
+        seldict = listselect(self.figures, index)
+        selection = list(seldict.values())
 
         frm = type(self)(selection)
-        frm._updateFrom(self, ignore="figures")
+        frm._updateFrom(self, ignore={"figures", "_names"})
         if _asFrame:
+            # If self has named subfigures, ensure the names transfer over
+            # to the returned subframe.
+            if len(self._names) > 0:
+                # Dict mapping selected indices in self to indices in the subframe.
+                # Eliminates the need to use list.index() which is slow.
+                subIDpositions = {subID : n for n, subID in enumerate(seldict.keys())}
+
+                # Go thru self's names dict and map names for subfigures
+                # that self has in common with the subframe
+                for name, subID in self._names.items():
+                    if subID in seldict:
+                        frm._names[name] = subIDpositions[subID]
             return frm
         else:
             return _InPlaceSubAttributeManager(frm, self) if _iall else _SubAttributeManager(frm, self)
@@ -365,7 +378,6 @@ class Frame(morpho.Figure):
     def iselect(self):
         return morpho.tools.dev.Slicer(getter=self._iselect)
 
-
     def _sub(self, index):
         return self._select(index, _asFrame=True).copy()
 
@@ -390,6 +402,11 @@ class Frame(morpho.Figure):
             while subfig in figures:
                 figures.remove(subfig)
         self.figures = figures
+
+        # Remove cut subfigure names from self's names dict
+        for name in subframe._names:
+            del self._names[name]
+
         return subframe
 
     # Basically the same as sub[], but it also removes the selected
@@ -466,16 +483,16 @@ class Frame(morpho.Figure):
     # frm.newendkey(30)
     # frm.last().pt.pos = 3+3j
     def setName(self, **kwargs):
-        for name, figure in kwargs.items():
-            if isinstance(figure, morpho.Figure):
+        for name, index in kwargs.items():
+            if isinstance(index, morpho.Figure):
                 try:
-                    figure = self.figures.index(figure)
+                    index = self.figures.index(index)
                 except ValueError:
                     raise ValueError("Given figure is not in the Frame's figure list.")
-            elif not isinstance(figure, int):
-                raise TypeError(f"`figure` must be Figure or int, not `{type(figure).__name__}`")
+            elif not isinstance(index, int):
+                raise TypeError(f"Value associated with name must be Figure or int, not `{type(index).__name__}`")
 
-            self._names[name] = figure
+            self._names[name] = index
 
     # Returns the subfigure of the given name.
     def getName(self, name):
@@ -769,7 +786,7 @@ class MultiFigure(Frame):
 
         # Try to find the attribute in the first member figure
         # and if found, return it.
-        fig = self.figures[0]
+        # fig = self.figures[0]
         try:
             # return fig.__getattribute__(name)
             # return getattr(fig, name)

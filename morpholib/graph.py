@@ -8,6 +8,8 @@ import pyglet as pg
 pyglet = pg
 from cmath import exp
 
+import numpy as np
+
 # Returns a Frame figure that defines axes over the given view.
 #
 # ARGUMENTS
@@ -132,6 +134,8 @@ class _FlowFrame(morpho.Frame):
 # offset = Cycle position the first streamer should start in.
 #          Essentially, this advances all the initial streamers
 #          by the given amount. Default: 0 (no offset)
+#          Can also be a list of N values which will generate N-many
+#          copies of each streamer offset by each amount in the list.
 # sectorSize = Portion of the cycle that will be visible at any given
 #              moment. Default: 0.5 (display half a cycle)
 # transition = Transition function to use for each streamer.
@@ -156,16 +160,23 @@ class FlowField(morpho.Layer):
     def generateStreamers(points, *args, stagger=0, offset=0, sectorSize=0.5,
         transition=morpho.transitions.uniform, _3dmode=False, **kwargs):
 
+        if isinstance(offset, np.ndarray):
+            offset = offset.tolist()
+        elif not isinstance(offset, (list, tuple)):
+            offset = [offset]
+
         makeStreamer = flowStreamer3d if _3dmode else flowStreamer
         streamers = []
-        for n,z in enumerate(points):
-            streamer = makeStreamer(z, *args, **kwargs)
-            streamer.start = n*stagger + offset
-            streamer.end = streamer.start + sectorSize
-            streamer.transition = transition
 
-            streamer = morpho.Actor(streamer)
-            streamers.append(streamer)
+        for shift in offset:
+            for n,z in enumerate(points):
+                streamer = makeStreamer(z, *args, **kwargs)
+                streamer.start = n*stagger + shift
+                streamer.end = streamer.start + sectorSize
+                streamer.transition = transition
+
+                streamer = morpho.Actor(streamer)
+                streamers.append(streamer)
         return streamers
 
     # Returns a Frame-like object consisting of all the final
