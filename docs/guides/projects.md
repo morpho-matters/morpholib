@@ -5,7 +5,7 @@ title: Morpho Guide -- Making Longer-Form Videos
 
 # Morpho Guide: Making Longer-Form Videos
 
-> **Note:** This guide is only for Morpho 0.6.1+. For older versions, see [this guide](https://morpho-matters.github.io/morpholib/guides/old/projects-old).
+> **Note:** This guide is only for Morpho 0.7.0+. For older versions, see [this guide](https://morpho-matters.github.io/morpholib/guides/old/projects-old).
 
 In this guide, we'll go over how to use Morpho to create longer animations and entire videos.
 
