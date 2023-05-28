@@ -42,7 +42,7 @@ Please note that FFmpeg and Gifsicle will need to be added to your PATH environm
 
 For Morpho to be able to parse LaTeX code, you must have a LaTeX distribution installed along with [dvisvgm](https://dvisvgm.de/). But if you're okay with not using Morpho's LaTeX features, this requirement is optional.
 
-SciPy is an optional, but recommended, dependency that is necessary currently for only few features (`flowStreamer` and `FlowField`). SciPy can be installed via pip with the command `pip install scipy`
+SciPy is an optional, but recommended, dependency that is necessary currently for only a few features (`flowStreamer` and `FlowField`). SciPy can be installed via pip with the command `pip install scipy`
 
 ### Testing the installation
 
