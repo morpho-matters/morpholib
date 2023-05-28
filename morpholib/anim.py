@@ -77,23 +77,19 @@ class AmbiguousValueError(ValueError):
 
 ### CLASSES ###
 
-# Mainly for internal use.
-# Object created when the `sub` property is used in a Frame object.
-# Allows one to modify the attributes of the subfigures of a frame
+# Mainly for internal use by the Frame class (and its derivatives)
+# for implementing the `all`, `select`, `sub`, and `cut` features.
+# Allows one to modify the attributes of a collection of objects
 # all at once.
 class _SubAttributeManager(object):
-    # `frame` is the Frame on which `.all` is being called.
-    # `origframe` is the Frame that should be returned by
-    # the set() method. If unspecified, it defaults to the
-    # value of `frame`. This is useful when calling .select[]
-    # since the return value of set() will be the true original
-    # Frame including unselected subfigures.
-    def __init__(self, frame, origframe=None, /):
-        if origframe is None:
-            origframe = frame
+    # `objects` is the sequence of objects whose attributes are
+    # getting accessed/modified en masse.
+    # `origCaller` is the original object that should be returned by
+    # the set() method (usually a Frame object).
+    def __init__(self, objects, origCaller, /):
         # Bypass native setattr() because it's overridden below.
-        object.__setattr__(self, "_subattrman_frame", frame)
-        object.__setattr__(self, "_subattrman_origframe", origframe)
+        object.__setattr__(self, "_subattrman_objects", objects)
+        object.__setattr__(self, "_subattrman_origCaller", origCaller)
 
     # Returns a function that when called will call the
     # corresponding method across all subfigures in the
@@ -102,31 +98,31 @@ class _SubAttributeManager(object):
     def _subattrman_createSubmethod(self, name):
         def submethod(*args, **kwargs):
             outputs = []
-            for fig in self._subattrman_frame.figures:
-                outputs.append(getattr(fig, name)(*args, **kwargs))
+            for obj in self._subattrman_objects:
+                outputs.append(getattr(obj, name)(*args, **kwargs))
             return outputs
         return submethod
 
     def __getattr__(self, name):
-        frame = self._subattrman_frame
+        objects = self._subattrman_objects
 
         # Extract initial value for the attribute (if possible)
         try:
-            commonValue = getattr(frame.figures[0], name)
+            commonValue = getattr(objects[0], name)
         except AttributeError:
-            raise AttributeError(f"Subfigures do not all possess attribute `{name}`")
+            raise AttributeError(f"Objects do not all possess attribute `{name}`")
         except IndexError:
-            raise IndexError("Frame has no subfigures.")
+            raise IndexError("No objects to find attributes for.")
 
         commonValue_is_list_or_tuple = isinstance(commonValue, (list, tuple))
 
         # Check if the attribute is common to all the
-        # subfigures and having the same value
-        for subfigure in frame.figures:
+        # objects and having the same value
+        for obj in objects:
             try:
-                value = getattr(subfigure, name)
+                value = getattr(obj, name)
             except AttributeError:
-                raise AttributeError(f"Subfigures do not all possess attribute `{name}`")
+                raise AttributeError(f"Objects do not all possess attribute `{name}`")
 
             if commonValue_is_list_or_tuple and isinstance(value, (list, tuple)):
                 # Convert value to commonValue's type so that cross-container
@@ -136,7 +132,7 @@ class _SubAttributeManager(object):
             if not isequal(value, commonValue):  # isequal() handles np.arrays too
                 if callable(commonValue):
                     return self._subattrman_createSubmethod(name)
-                raise AmbiguousValueError(f"Subfigures do not have a common value for attribute `{name}`")
+                raise AmbiguousValueError(f"Objects do not have a common value for attribute `{name}`")
 
         return commonValue if not isinstance(commonValue, (list, np.ndarray)) else commonValue.copy()
 
@@ -146,15 +142,15 @@ class _SubAttributeManager(object):
         if object_hasattr(self, name):
             object.__setattr__(self, name, value)
 
-        # Set every subfigure attribute
-        frame = self._subattrman_frame
-        for subfigure in frame.figures:
-            setattr(subfigure, name, value)
+        # Set every attribute of the given objects
+        objects = self._subattrman_objects
+        for obj in objects:
+            setattr(obj, name, value)
 
     def set(self, **kwargs):
         for name, value in kwargs.items():
             setattr(self, name, value)
-        return self._subattrman_origframe
+        return self._subattrman_origCaller
 
 
 class _MetaArray(np.ndarray):
@@ -183,12 +179,12 @@ class _InPlaceSubAttributeManager(_SubAttributeManager):
             # A MetaArray is used in order to distinguish these object arrays
             # from regular numpy object arrays just in case a user is trying
             # to update a value that is already natively an object array.
-            return _MetaArray([getattr(subfig, name) for subfig in self._subattrman_frame.figures], dtype=object)
+            return _MetaArray([getattr(obj, name) for obj in self._subattrman_objects], dtype=object)
 
     def __setattr__(self, name, value):
         if isinstance(value, _MetaArray):
-            for subfig, subvalue in zip(self._subattrman_frame.figures, value.tolist()):
-                setattr(subfig, name, subvalue)
+            for obj, subvalue in zip(self._subattrman_objects, value.tolist()):
+                setattr(obj, name, subvalue)
         else:
             _SubAttributeManager.__setattr__(self, name, value)
 
@@ -325,14 +321,14 @@ class Frame(morpho.Figure):
 
     @property
     def all(self):
-        return _SubAttributeManager(self)
+        return _SubAttributeManager(self.figures, self)
 
     # Version of .all that is only meant to be used for in-place
     # operations like `+=`.
     # Example: myframe.iall[:3].pos += 2j
     @property
     def iall(self):
-        return _InPlaceSubAttributeManager(self)
+        return _InPlaceSubAttributeManager(self.figures, self)
 
     def _select(self, index, *, _asFrame=False, _iall=False):
         seldict = listselect(self.figures, index)
@@ -355,7 +351,7 @@ class Frame(morpho.Figure):
                         frm._names[name] = subIDpositions[subID]
             return frm
         else:
-            return _InPlaceSubAttributeManager(frm, self) if _iall else _SubAttributeManager(frm, self)
+            return _InPlaceSubAttributeManager(frm.figures, self) if _iall else _SubAttributeManager(frm.figures, self)
 
     def _iselect(self, *args, **kwargs):
         return self._select(*args, _iall=True, **kwargs)
