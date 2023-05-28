@@ -8,11 +8,18 @@ An assortment of useful functions and classes.
 
 import morpholib as morpho
 import morpholib.anim
+from morpholib.figure import object_hasattr
 from morpholib.tools.basics import *
 
 import numpy as np
 import math, cmath
 from collections.abc import Iterable
+
+### SPECIAL EXCEPTIONS ###
+
+class AmbiguousValueError(ValueError):
+    pass
+
 
 # Decorator allows a method to extract the needed
 # `view` and `ctx` parameters from Layer/Camera/Animation
@@ -197,6 +204,118 @@ class BoundingBoxFigure(morpho.Figure):
                 width=0, fill=self.background, alpha=self.backAlpha*alpha
                 )
             brect.draw(camera, ctx)
+
+
+# Mainly for internal use by the Frame class (and its derivatives)
+# for implementing the `all`, `select`, `sub`, and `cut` features.
+# Allows one to modify the attributes of a collection of objects
+# all at once.
+class _SubAttributeManager(object):
+    # `objects` is the sequence of objects whose attributes are
+    # getting accessed/modified en masse.
+    # `origCaller` is the original object that should be returned by
+    # the set() method (usually a Frame object).
+    def __init__(self, objects, origCaller, /):
+        # Bypass native setattr() because it's overridden below.
+        object.__setattr__(self, "_subattrman_objects", objects)
+        object.__setattr__(self, "_subattrman_origCaller", origCaller)
+
+    # Returns a function that when called will call the
+    # corresponding method across all subfigures in the
+    # Frame and collect their return values into a list
+    # which will then be returned.
+    def _subattrman_createSubmethod(self, name):
+        def submethod(*args, **kwargs):
+            outputs = []
+            for obj in self._subattrman_objects:
+                outputs.append(getattr(obj, name)(*args, **kwargs))
+            return outputs
+        return submethod
+
+    def __getattr__(self, name):
+        objects = self._subattrman_objects
+
+        # Extract initial value for the attribute (if possible)
+        try:
+            commonValue = getattr(objects[0], name)
+        except AttributeError:
+            raise AttributeError(f"Objects do not all possess attribute `{name}`")
+        except IndexError:
+            raise IndexError("No objects to find attributes for.")
+
+        commonValue_is_list_or_tuple = isinstance(commonValue, (list, tuple))
+
+        # Check if the attribute is common to all the
+        # objects and having the same value
+        for obj in objects:
+            try:
+                value = getattr(obj, name)
+            except AttributeError:
+                raise AttributeError(f"Objects do not all possess attribute `{name}`")
+
+            if commonValue_is_list_or_tuple and isinstance(value, (list, tuple)):
+                # Convert value to commonValue's type so that cross-container
+                # comparison with commonValue will work
+                value = type(commonValue)(value)
+            # Check if they are unequal
+            if not isequal(value, commonValue):  # isequal() handles np.arrays too
+                if callable(commonValue):
+                    return self._subattrman_createSubmethod(name)
+                raise AmbiguousValueError(f"Objects do not have a common value for attribute `{name}`")
+
+        return commonValue if not isinstance(commonValue, (list, np.ndarray)) else commonValue.copy()
+
+    def __setattr__(self, name, value):
+        # Handle ordinary attribute sets if self possesses
+        # the attribute.
+        if object_hasattr(self, name):
+            object.__setattr__(self, name, value)
+
+        # Set every attribute of the given objects
+        objects = self._subattrman_objects
+        for obj in objects:
+            setattr(obj, name, value)
+
+    def set(self, **kwargs):
+        for name, value in kwargs.items():
+            setattr(self, name, value)
+        return self._subattrman_origCaller
+
+
+class _MetaArray(np.ndarray):
+    """Array with metadata.
+    Thanks to @Bertrand L on StackOverflow for this!
+    https://stackoverflow.com/a/34967782"""
+
+    def __new__(cls, array, dtype=None, order=None, **kwargs):
+        obj = np.asarray(array, dtype=dtype, order=order).view(cls)
+        obj.metadata = kwargs
+        return obj
+
+    def __array_finalize__(self, obj):
+        if obj is None: return
+        self.metadata = getattr(obj, 'metadata', None)
+
+# Special version of _SubAttributeManager which in the case of an
+# AmbiguousValueError, returns a MetaArray of the values across all
+# subfigures. Mainly used for enabling the .iall and .iselect
+# features for subfigure in-place operations.
+class _InPlaceSubAttributeManager(_SubAttributeManager):
+    def __getattr__(self, name):
+        try:
+            return _SubAttributeManager.__getattr__(self, name)
+        except AmbiguousValueError:
+            # A MetaArray is used in order to distinguish these object arrays
+            # from regular numpy object arrays just in case a user is trying
+            # to update a value that is already natively an object array.
+            return _MetaArray([getattr(obj, name) for obj in self._subattrman_objects], dtype=object)
+
+    def __setattr__(self, name, value):
+        if isinstance(value, _MetaArray):
+            for obj, subvalue in zip(self._subattrman_objects, value.tolist()):
+                setattr(obj, name, subvalue)
+        else:
+            _SubAttributeManager.__setattr__(self, name, value)
 
 # Draw a figure whose start or end attribute is outside the interval
 # [0,1] according to the cyclic rules.
