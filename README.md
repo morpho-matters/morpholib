@@ -22,7 +22,7 @@
 
 A gallery of animations made with Morpho [is available here](https://morpho-matters.github.io/morpholib/gallery/). For more, you can also take a look at the YouTube channels [Morphocular](https://www.youtube.com/channel/UCu7Zwf4X_OQ-TEnou0zdyRA) and [Serpentine Integral](https://www.youtube.com/channel/UCo-H6EyTbD-7inMwW70QdtA), which use Morpho to create most of the animations.
 
-Documentation is currently limited, but there are [a few guides](https://morpho-matters.github.io/morpholib/guides/) you can look thru which will help you learn how to use Morpho and get you started making your own animations.
+Documentation is currently limited, but there are [a few guides](https://morpho-matters.github.io/morpholib/guides/) you can look thru which will help you learn how to use Morpho and get you started making your own animations. Questions are welcome on the [Discussions page](https://github.com/morpho-matters/morpholib/discussions).
 
 ## Installation
 
