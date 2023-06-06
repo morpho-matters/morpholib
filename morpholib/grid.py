@@ -1653,6 +1653,14 @@ class Path(BoundingBoxFigure):
                 # Update zn to z
                 zn = z
 
+            # Auto-close path if the path has the simplest possible settings
+            if self.seq[0] == self.seq[-1] and \
+                self.start == 0 and self.end == 1 and \
+                len(self.deadends) == 0 and \
+                self.headSize == 0 and self.tailSize == 0:
+
+                ctx.close_path()
+
             # Stroke and fill the path
             if self.width < 0:
                 # Draw stroke first, then fill
