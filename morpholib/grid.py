@@ -1,7 +1,7 @@
 
 import morpholib as morpho
 mo = morpho
-import morpholib.tools.color, morpholib.anim
+import morpholib.tools.color, morpholib.anim, morpholib.transitions
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.tools.basics import *
@@ -2167,6 +2167,53 @@ def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
     if pause > 0:
         actor.newendkey(pause)
     actor.newendkey(duration, path1.copy())
+
+# Draws in a MultiPath actor Manim-style.
+#
+# OPTIONAL KEYWORD-ONLY INPUTS
+# tempWidth = Temporary stroke width to use in the animation
+#       if the stroke width is 0. Default: 3
+# transition = Transition to use in the animation.
+#       Note that this only applies to the portion of the actor's
+#       timeline affected by this action. After the action
+#       concludes, the original transition of this actor will
+#       be used for future keyfigures. Default: uniform.
+@MultiPath.action
+def drawIn(actor, duration=30, atFrame=None, *,
+    tempWidth=3, transition=morpho.transitions.uniform):
+
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    mpath0 = actor.last()
+    # Save current final state of the actor which should be
+    # the same final state when this action is finished.
+    final = mpath0.copy()
+    mpath0.all.set(start=0, end=0, alphaFill=0, alphaEdge=1)
+    mpath0.transition = transition
+    for path in mpath0.figures:
+        # Give a temporary stroke width and color to the subpath
+        # if its width is 0
+        if path.width == 0:
+            path.width = tempWidth
+            if not isinstance(path.fill, morpho.color.GradientFill):
+                path.color = path.fill[:]
+
+    mpath1 = actor.newkey(atFrame)
+    mpath0.visible = False
+
+    tstart = atFrame
+    tend = atFrame + duration
+    numfigs = mpath1.numfigs
+    dt = duration / (numfigs + 1)
+    for n in range(numfigs):
+        time = tstart + (n+1)*dt
+        mpath_n = actor.newkey(time)
+        if n > 0:
+            mpath_n.figures[n-1] = final.figures[n-1].copy()
+        mpath_n.figures[n].set(start=final.figures[n].start, end=final.figures[n].end)
+    actor.newkey(tend, final)
+
 
 
 # 3D version of MultiPath meant to enable 2D MultiPaths to be
