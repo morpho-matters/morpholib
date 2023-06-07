@@ -2180,7 +2180,13 @@ def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
 #       be used for future keyfigures. Default: uniform.
 @MultiPath.action
 def drawIn(actor, duration=30, atFrame=None, *,
-    tempWidth=3, transition=morpho.transitions.uniform):
+    tempWidth=3, transition=morpho.transitions.uniform,
+    overlap=0):
+
+    # (`overlap` is a currently unimplemented possible future feature
+    # that would control how much the animation of drawing in one
+    # subpath overlaps with the drawing in of the previous subpath.
+    # It's kind of like a reverse `stagger` parameter.)
 
     if atFrame is None:
         atFrame = actor.lastID()
