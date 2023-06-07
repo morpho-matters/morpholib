@@ -1439,16 +1439,10 @@ class Actor(object):
     # transition functions.
     def newkey(self, f, figure=None, *, seamless=True):
         f = round(f)
-        if type(f) is not int:
-            raise TypeError("Index is NOT an int.")
 
         if figure is None:
             # Default new keyfigure is given by tweening.
-            figure = self.time(f)
-            # if f in self.timeline:
-            #     figure = self.time(f).copy()
-            # else:
-            #     figure = self.time(f)
+            figure = self.time(f, copykeys=True)
 
             # If tweening fails somehow, then new keyfigure
             # is a copy of the previous keyfigure if it exists,
@@ -1460,8 +1454,6 @@ class Actor(object):
                 else:  # Else use latest keyfigure
                     # keyID = self.keyIDs[k]
                     figure = self.key(k).copy()
-            else:  # In case time() returned a keyfig.
-                figure = figure.copy()
         elif type(figure) is not self.figureType:
             raise TypeError("Given figure is not of actor's figure type.")
         elif figure in self.timeline.values():
