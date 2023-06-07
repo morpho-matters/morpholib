@@ -1390,6 +1390,17 @@ class Spline(BoundingBoxFigure):
 
             #     ctx.curve_to(x1,y1, x2,y2, x,y)
 
+        # Auto-close path if the path has the simplest possible settings
+        if self.node(0) == self.node(-1) and \
+            self.start == 0 and self.end == 1 and \
+            len(self.deadends) == 0 and \
+            self.headSize == 0 and self.tailSize == 0:
+            # (checking for headSize and tailSize is technically unnecessary
+            # since splines don't have arrow support, BUT THEY MIGHT IN THE FUTURE,
+            # so that's why the checks are here)
+
+            ctx.close_path()
+
         # Stroke and fill the path
         rgba = list(self.color) + [self.alpha*self.alphaEdge]
         if self.width < 0:
