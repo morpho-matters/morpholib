@@ -6,7 +6,7 @@ from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    totalBox, shiftBox, translateArrayUnderTransforms
+    totalBox, shiftBox, translateArrayUnderTransforms, handleBoxTypecasting
 
 from morpholib import object_hasattr
 
@@ -5031,6 +5031,7 @@ def ellipse_old(z0, a, b, dTheta=5, phase=0, polar=False):
 #
 # If optional keyword input `relative` is set to True, the rect
 # will be centered using the `origin` attribute.
+@handleBoxTypecasting
 def rect(box, pad=0, *, relative=False):
     a,b,c,d = box
     a -= pad

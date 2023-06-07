@@ -2,24 +2,9 @@ import morpholib as morpho
 import morpholib.anim
 import morpholib.grid
 from morpholib.tools.basics import *
+from morpholib.tools.dev import handleBoxTypecasting
 
 import math, cmath
-
-# Decorator for gadget functions that operate on a box.
-# Allows such a gadget function to accept a Figure type input
-# whereby it will attempt to infer a box by calling the
-# figure's `box()` method, assuming it exists.
-# If given an Actor object, it will use the latest keyfigure.
-def handleBoxTypecasting(gadgetfunc):
-    def wrapper(box, *args, **kwargs):
-        if isinstance(box, morpho.Actor):
-            box = box.last()
-        if isinstance(box, morpho.Figure):
-            if not hasattr(box, "box"):
-                raise TypeError(f"`{type(box).__name__}` type figure does not support box() method.")
-            box = box.box()
-        return gadgetfunc(box, *args, **kwargs)
-    return wrapper
 
 # DEPRECATED! Use crossout() or crossoutPath() instead.
 # Returns a layer which when animated makes a colored X cross
