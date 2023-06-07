@@ -861,8 +861,6 @@ class MultiImage(morpho.MultiFigure, BoundingBoxFigure):
 
     # tween = morpho.Figure.tween
 
-    box = morpho.grid.MultiPath.box
-
     ### TWEEN METHODS ###
 
     tweenLinear = Multi(Image.tweenLinear, mainMethod=morpho.MultiFigure.tweenLinear)

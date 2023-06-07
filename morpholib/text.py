@@ -941,7 +941,7 @@ class MultiText(morpho.MultiFigure, BoundingBoxFigure):
 class MultiPText(MultiText):
     _baseFigure = PText
 
-    box = morpho.grid.MultiPath.box
+    box = morpho.anim.MultiFigure.box
 
     # EXPERIMENTAL! May be changed in a future version!
     # Converts the MultiPText figure into an equivalent MultiSpline.

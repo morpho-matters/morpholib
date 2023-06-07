@@ -636,6 +636,13 @@ class MultiFigure(Frame):
 
     #     return StateStruct(tweenableNames, figures)
 
+    # Computes the bounding box of the entire MultiFigure,
+    # assuming all of its subfigures have implemented `box()`.
+    # Returned as [xmin, xmax, ymin, ymax].
+    # Additional arguments are passed to the box() methods
+    # of subfigures.
+    def box(self, *args, **kwargs):
+        return totalBox(subfig.box(*args, **kwargs) for subfig in self.figures)
 
     # If attempted to access a non-existent attribute,
     # check if it's an attribute of the first figure in
