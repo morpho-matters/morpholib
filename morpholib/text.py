@@ -211,26 +211,15 @@ class Text(BoundingBoxFigure):
 
     # Returns bounding box of the text in physical units.
     # Mainly of use internally to draw the background box.
-    # Note: Ignores rotation and transform, but includes
-    # the prescale factors
-    @typecastViewCtx
-    def box(self, view, ctx, pad=0):
-        width, height = self.dimensions(view, ctx)
-        # Modify by prescale factors
-        width *= self.prescale_x
-        height *= self.prescale_y
-        align_x, align_y = self.anchor_x, self.anchor_y
-        a = self.pos.real - width/2*(align_x + 1)
-        b = a + width
-        c = self.pos.imag - height/2*(align_y + 1)
-        d = c + height
-
-        return [a-pad, b+pad, c-pad, d+pad]
+    def box(self, *args, **kwargs):
+        a,b,c,d = self.relbox(*args, **kwargs)
+        x,y = self.pos.real, self.pos.imag
+        return [a+x, b+x, c+y, d+y]
 
     # Same as box(), but the coordinates are relative to
     # the text's position.
     @typecastViewCtx
-    def relbox(self, view, ctx, pad=0):
+    def relbox(self, view, ctx, pad=0, *, raw=False):
         width, height = self.dimensions(view, ctx)
         # Modify by prescale factors
         width *= self.prescale_x
@@ -241,30 +230,15 @@ class Text(BoundingBoxFigure):
         c = -height/2*(align_y + 1)
         d = c + height
 
-        return [a-pad, b+pad, c-pad, d+pad]
-
-    # Returns the four corners of the text's bounding box
-    # plus any optional padding. The sequence of the corners is
-    # NW, SW, SE, NE.
-    @typecastViewCtx
-    def corners(self, view, ctx, pad=0):
-        # NOTE: This method should actually be removable
-        # since its behavior should be identical to the corners()
-        # method inherited from BoundingBoxFigure.
-        a,b,c,d = self.box(view, ctx, pad)
-
-        NW = a + d*1j
-        SW = a + c*1j
-        SE = b + c*1j
-        NE = b + d*1j
-
-        return [NW,SW,SE,NE]
+        if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+            return BoundingBoxFigure._transformedBox([a,b,c,d], 0, self.rotation, self._transform, pad)
+        else:
+            return [a-pad, b+pad, c-pad, d+pad]
 
     # Same as corners(), but the coordinates are relative to wherever
     # the text's physical position is.
-    @typecastViewCtx
-    def relcorners(self, view, ctx, pad=0):
-        a,b,c,d = self.relbox(view, ctx, pad)
+    def relcorners(self, *args, **kwargs):
+        a,b,c,d = self.relbox(*args, **kwargs)
 
         NW = a + d*1j
         SW = a + c*1j
@@ -273,8 +247,7 @@ class Text(BoundingBoxFigure):
 
         return [NW,SW,SE,NE]
 
-    # Returns the visual centerpoint of the text, ignoring
-    # the transformation attributes.
+    # Returns the visual centerpoint of the text.
     @typecastViewCtx
     def center(self, view, ctx):
         return mean(self.corners(view, ctx))
@@ -370,7 +343,7 @@ class Text(BoundingBoxFigure):
 
         if self.backAlpha > 0:
             # Construct background rectangle and draw it
-            box = self.relbox(view, ctx, pad=self.backPad)
+            box = self.relbox(view, ctx, pad=self.backPad, raw=True)
             rect = morpho.grid.rect(box)
             rect.origin = self.pos
             rect.width = 0
@@ -582,44 +555,18 @@ class PText(Text):
         # return self._fontRatio*self.pixelHeight(view, ctx)
         return self._fontRatio*morpho.pixelHeight(self.size, view, ctx)
 
-    # Returns bounding box of the text in physical units.
-    # Mainly of use internally to draw the background box.
-    # Note: Ignores rotation and transform, but includes
-    # the prescale factors
-    def box(self, pad=0):
-        return Text.box(self, DUMMY, DUMMY, pad=pad)
-
     # Same as box(), but the coordinates are relative to
     # the text's position.
-    def relbox(self, pad=0):
-        return Text.relbox(self, DUMMY, DUMMY, pad=pad)
-
-    # Returns the four corners of the text's bounding box
-    # plus any optional padding. The sequence of the corners is
-    # NW, SW, SE, NE.
-    #
-    # Note: Since the physical width is merely estimated,
-    # x-coordinates of the corners may be slightly off.
-    def corners(self, pad=0):
-        # NOTE: This method should actually be removable
-        # since its behavior should be identical to the corners()
-        # method inherited from BoundingBoxFigure.
-        a,b,c,d = self.box(pad)
-
-        NW = a + d*1j
-        SW = a + c*1j
-        SE = b + c*1j
-        NE = b + d*1j
-
-        return [NW,SW,SE,NE]
+    def relbox(self, pad=0, *, raw=False):
+        return Text.relbox(self, DUMMY, DUMMY, pad=pad, raw=raw)
 
     # Same as corners(), but the coordinates are relative to wherever
     # the text's physical position is.
     #
     # Note: Since the physical width is merely estimated,
     # x-coordinates of the corners may be slightly off.
-    def relcorners(self, pad=0):
-        a,b,c,d = self.relbox(pad)
+    def relcorners(self, *args, **kwargs):
+        a,b,c,d = self.relbox(*args, **kwargs)
 
         NW = a + d*1j
         SW = a + c*1j
@@ -628,8 +575,7 @@ class PText(Text):
 
         return [NW,SW,SE,NE]
 
-    # Returns the visual centerpoint of the text, ignoring
-    # the transformation attributes.
+    # Returns the visual centerpoint of the text.
     def center(self):
         return mean(self.corners())
 
@@ -911,13 +857,6 @@ class MultiText(morpho.MultiFigure, BoundingBoxFigure):
         #     if not isinstance(fig, Text):
         #         newfig = fig.images[0].copy()
         #         self.figures[n] = newfig
-
-    # Compute bounding box of the entire figure taking `origin`
-    # attribute into account, but no other transformation attributes.
-    # Returned as [xmin, xmax, ymin, ymax]
-    @typecastViewCtx
-    def box(self, view, ctx, pad=0, *, raw=False):
-        return padbox(shiftBox(totalBox(path.box(view, ctx) for path in self.figures), self.origin if not raw else 0), pad)
 
     ### TWEEN METHODS ###
 
@@ -1444,70 +1383,71 @@ class FancyMultiText(MultiText):
                 else:
                     morpho.Figure.__setattr__(self, name, value)
 
+    # General version of totalBox() that can be used to implement totalBox()
+    # for both FancyMultiText and FancyMultiPText.
+    def _totalBoxGeneral(self, viewctx=(), pad=0, *, raw=False, _verbose=False):
+        boxes = [fig.box(*viewctx, pad=0, raw=False) for fig in self.figures]
+        left = min(box[0] for box in boxes)
+        right = max(box[1] for box in boxes)
+        bottom = min(box[2] for box in boxes)
+        top = max(box[3] for box in boxes)
+        rawbox = [left, right, bottom, top]
+
+        if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+            bigbox = BoundingBoxFigure._transformedBox(rawbox, 0, self.rotation, self._transform, pad)
+        else:
+            bigbox = padbox(rawbox, pad)
+
+        if _verbose:
+            return dict(rawbox=rawbox, bigbox=bigbox)
+        return bigbox
+
     # Returns the physical bounding box of the entire text group as
     # [xmin, xmax, ymin, ymax]
     # Note that this is with respect to the group's LOCAL origin,
     # meaning this method does not take the `pos` attribute into
     # account.
     @typecastViewCtx
-    def totalBox(self, view, ctx, pad=0):
-        boxes = [fig.box(view, ctx, pad) for fig in self.figures]
-        left = min(box[0] for box in boxes)
-        right = max(box[1] for box in boxes)
-        bottom = min(box[2] for box in boxes)
-        top = max(box[3] for box in boxes)
-
-        return [left, right, bottom, top]
+    def totalBox(self, view, ctx, *args, **kwargs):
+        return self._totalBoxGeneral((view, ctx), *args, **kwargs)
 
     # Returns the center of the text group's bounding box.
-    @typecastViewCtx
-    def totalCenter(self, view, ctx):
-        box = self.totalBox(view, ctx)
+    def totalCenter(self, *args, **kwargs):
+        box = self.totalBox(*args, **kwargs)
         return mean(box[:2]) + 1j*mean(box[2:])
 
-    # Mainly for internal use by the box() method.
-    # Takes the box outputted by totalBox() and adjusts
-    # it according to the global position and alignment of the
-    # text group so that it now encloses the actual bounding
-    # box of the text group in absolute coordinates.
-    def _alignBox(self, box, *, pad=0):
-        left, right, bottom, top = box
+    # Returns the physical bounding box of the whole text group as
+    # [xmin, xmax, ymin, ymax].
+    def box(self, *args, **kwargs):
+        boxdata = self.totalBox(*args, _verbose=True, **kwargs)
+        rawbox = boxdata["rawbox"]
+        bigbox = boxdata["bigbox"]
+
+        left, right, bottom, top = rawbox
         width = right - left
         height = top - bottom
 
-        offset_x = self.pos.real - self.anchor_x*width/2
-        offset_y = self.pos.imag - self.anchor_y*height/2
-        left += offset_x
-        right += offset_x
-        bottom += offset_y
-        top += offset_y
+        alignShift = complex(-self.anchor_x*width/2, -self.anchor_y*height/2)
+        alignShift = morpho.matrix.Mat(self._transform) * (cmath.exp(self.rotation*1j)*alignShift)
 
-        return [left-pad, right+pad, bottom-pad, top+pad]
-
-    # Returns the physical bounding box of the whole text group as
-    # [xmin, xmax, ymin, ymax]
-    # and takes into account the global position and alignment
-    # properties, but ignores transformation properties.
-    @typecastViewCtx
-    def box(self, view, ctx, pad=0):
-        box = self.totalBox(view, ctx, pad=0)
-        return self._alignBox(box, pad=pad)
+        return shiftBox(bigbox, alignShift+self.pos+self.origin)
 
     corners = Text.corners
 
+    @typecastViewCtx
     def width(self, view, ctx):
-        a,b,c,d = self.box(view, ctx)
+        a,b,c,d = self.box(view, ctx, raw=True)
         return b - a
 
+    @typecastViewCtx
     def height(self, view, ctx):
-        a,b,c,d = self.box(view, ctx)
+        a,b,c,d = self.box(view, ctx, raw=True)
         return d - c
 
     # Moves the text group so that its total center is at the origin.
     # This makes it so the alignment respects the `pos` attribute.
-    @typecastViewCtx
-    def recenter(self, view, ctx):
-        center = self.totalCenter(view, ctx)
+    def recenter(self, *args, **kwargs):
+        center = self.totalCenter(*args, **kwargs)
         for fig in self.figures:
             fig.pos -= center
 
@@ -1551,17 +1491,25 @@ class FancyMultiText(MultiText):
             rect.alpha = self.backAlpha*self.alpha
             rect.rotation = self.rotation
             rect._transform = self._transform
-            return morpho.Frame([rect, MultiText(figs)])
+
+            frm = morpho.Frame([rect, MultiText(figs)])
+            frm.origin = self.origin
+            return frm
 
         return MultiText(figs)
 
-    def makeFrame(self, camera, ctx):
-        boxes = [fig.box(camera, ctx) for fig in self.figures]
+    def makeFrame(self, *args, **kwargs):
+        boxes = [fig.box(*args, **kwargs) for fig in self.figures]
 
         return self._makeFrameFromBoxes(boxes)
 
     def draw(self, camera, ctx):
-        self.makeFrame(camera, ctx).draw(camera, ctx)
+        # NOTE: I *think* `raw=True` can be removed here
+        # which would allow for correct rendering of background
+        # boxes for paragraphs that contain transformed subfigures.
+        # However, I'm not 100% sure yet it's safe to remove
+        # `raw=True`, so that's why it's still here.
+        self.makeFrame(camera, ctx, raw=True).draw(camera, ctx)
 
     ### TWEEN METHODS ###
 
@@ -1610,51 +1558,21 @@ class FancyMultiPText(FancyMultiText):
 
     # Returns the physical bounding box of the entire text group as
     # [xmin, xmax, ymin, ymax]
-    def totalBox(self, pad=0):
-        boxes = [fig.box(pad) for fig in self.figures]
-        left = min(box[0] for box in boxes)
-        right = max(box[1] for box in boxes)
-        bottom = min(box[2] for box in boxes)
-        top = max(box[3] for box in boxes)
-
-        return [left, right, bottom, top]
-
-    # Returns the center of the text group's bounding box.
-    #
-    # The optional arguments `view` and `ctx` do nothing here,
-    # but they exist for internal implementation reasons.
-    def totalCenter(self, view=DUMMY, ctx=DUMMY):
-        box = self.totalBox()
-        return mean(box[:2]) + 1j*mean(box[2:])
-
-    # Returns the physical bounding box of the whole text group as
-    # [xmin, xmax, ymin, ymax]
-    # and takes into account the global position and alignment
-    # properties, but ignores transformation properties.
-    def box(self, pad=0):
-        box = self.totalBox(pad=0)
-        return self._alignBox(box, pad=pad)
+    def totalBox(self, *args, **kwargs):
+        return self._totalBoxGeneral((), *args, **kwargs)
 
     def width(self):
-        a,b,c,d = self.box()
+        a,b,c,d = self.box(raw=True)
         return b - a
 
     def height(self):
-        a,b,c,d = self.box()
+        a,b,c,d = self.box(raw=True)
         return d - c
 
     corners = PText.corners
 
-    # Moves the text group so that its total center is at the origin.
-    # This makes it so the alignment respects the `pos` attribute.
-    #
-    # The optional arguments `view` and `ctx` do nothing here,
-    # but they exist for internal implementation reasons.
-    def recenter(self, view=DUMMY, ctx=DUMMY):
-        FancyMultiText.recenter(self, DUMMY, DUMMY)
-
-    def makeFrame(self, camera=None, ctx=None, *, ignoreBackground=False):
-        boxes = [fig.box() for fig in self.figures]
+    def makeFrame(self, *args, ignoreBackground=False, **kwargs):
+        boxes = [fig.box(*args, **kwargs) for fig in self.figures]
 
         return self._makeFrameFromBoxes(boxes, ignoreBackground=ignoreBackground)
 
@@ -1663,12 +1581,20 @@ class FancyMultiPText(FancyMultiText):
     # The origin attribute of the MultiSpline will match the pos
     # attribute of the text figure.
     def toSpline(self):
-        multispline = MultiPText(self.makeFrame(ignoreBackground=True).figures).toSpline()
+        multispline = MultiPText(self.makeFrame(raw=True, ignoreBackground=True).figures).toSpline()
         for spline in multispline.figures:
             spline.origin += multispline.origin - self.pos
             spline.commitTransforms()
         multispline.origin = self.pos
         return multispline
+
+    def draw(self, camera, ctx):
+        # NOTE: I *think* `raw=True` can be removed here
+        # which would allow for correct rendering of background
+        # boxes for paragraphs that contain transformed subfigures.
+        # However, I'm not 100% sure yet it's safe to remove
+        # `raw=True`, so that's why it's still here.
+        self.makeFrame(raw=True).draw(camera, ctx)
 
 FancyMultiPtext = FancyMultiPText
 
@@ -2069,7 +1995,7 @@ def paragraph(textarray, view, windowShape=None,
     yPositions = [0]
     rowBoxes = []
     for i, row in enumerate(textarray[:-1]):
-        boxes = [fig.box(*camctx) for fig in row]
+        boxes = [fig.box(*camctx, raw=True) for fig in row]
         rowBoxes.append(boxes)
         rowHeight = max(box[-1]-box[-2] for box in boxes)
         yPositions.append(yPositions[-1]-ygaps[i]-rowHeight)
@@ -2077,7 +2003,7 @@ def paragraph(textarray, view, windowShape=None,
     yPositions = [y+adjust for y in yPositions]
 
     # Append final row of boxes
-    rowBoxes.append([fig.box(*camctx) for fig in textarray[-1]])
+    rowBoxes.append([fig.box(*camctx, raw=True) for fig in textarray[-1]])
 
     # Create rows
     rows = []
@@ -2106,7 +2032,7 @@ def paragraph(textarray, view, windowShape=None,
     parag.background = background
     parag.backAlpha = backAlpha
     parag.backPad = backPad
-    parag.recenter(*camctx)
+    parag.recenter(*camctx, raw=True)
 
     return parag
 
