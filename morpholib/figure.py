@@ -1941,6 +1941,12 @@ class Actor(object):
         f = currentIndex - self.owner.timeOffset
         fig = self.time(f, copykeys=True)  # Make a copy in case it's a keyfigure
 
+        # Lie and say that self owns this figure so that methods like
+        # Text.box() work correctly. I think it's okay for it to lie here since
+        # the primary use case of now() is within Skit.makeFrame(), so this lie
+        # is unlikely to cause harm.
+        fig.owner = self
+
         return fig
 
     # Optimizes the Actor for playback by setting keyfigures to be
