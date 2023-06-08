@@ -28,6 +28,7 @@ import subprocess as sp
 import pyperclip
 from warnings import warn
 from tempfile import TemporaryDirectory
+from collections.abc import Iterable
 
 # # Get location of the Morpho directory.
 # # pwd = os.sep.join(sys.argv[0].split(os.sep)[:-1])
@@ -312,9 +313,11 @@ class Frame(morpho.Figure):
     # of copies of the underlying subfigures per chunk.
     #
     # Subfigure names currently do not transfer.
-    def partition(self, indices):
+    def partition(self, *indices):
         if len(indices) == 0:
             return Frame([self.sub[:]])
+        if len(indices) == 1 and isinstance(indices[0], Iterable):
+            indices = indices[0]
 
         # Divide any negative indices mod len(self.figures)
         # so they will be in the correct order relative to
