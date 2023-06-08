@@ -227,6 +227,9 @@ class MultiActionSummoner(object):
         def multiaction(actors, *args, atFrame=None, stagger=0, **kwargs):
             if isinstance(actors, morpho.Actor):
                 actors = [actors]
+            elif isinstance(actors, morpho.Layer):
+                actors = actors.actors
+
             if atFrame is None:
                 atFrame = max(actor.lastID() for actor in actors)
             for n,actor in enumerate(actors):
