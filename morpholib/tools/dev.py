@@ -221,6 +221,23 @@ class BoundingBoxFigure(morpho.Figure):
                 )
             brect.draw(camera, ctx)
 
+    # Returns the bounding box of a box that is being subjected
+    # to a shift, rotation, and transformation.
+    @staticmethod
+    def _transformedBox(box, shift=0, rotation=0, transform=np.eye(2), pad=0):
+        a,b,c,d = box
+        corners = [complex(x,y) for x in [a,b] for y in [c,d]]
+        rotator = cmath.exp(rotation*1j)
+        mat = morpho.matrix.Mat(transform)
+
+        newcorners = [mat*(rotator*z) + shift for z in corners]
+        A = min(z.real for z in newcorners)
+        B = max(z.real for z in newcorners)
+        C = min(z.imag for z in newcorners)
+        D = max(z.imag for z in newcorners)
+
+        return [A-pad, B+pad, C-pad, D+pad]
+
 
 # Mainly for internal use by the Frame class (and its derivatives)
 # for implementing the `all`, `select`, `sub`, and `cut` features.

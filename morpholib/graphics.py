@@ -265,14 +265,6 @@ class Image(BoundingBoxFigure):
         self.linked = False
         return self
 
-    # # Allows you to specify the origin using a scheme
-    # # similar to the Text class's anchor scheme
-    # def align(self, x=None, y=None):
-    #     if x is not None:
-    #         self.origin[0] = self.imageWidth*(x + 1)/2
-    #     if y is not None:
-    #         self.origin[1] = self.imageHeight*(y + 1)/2
-
     @property
     def imageOrigin(self):
         x,y = self.align
@@ -283,42 +275,38 @@ class Image(BoundingBoxFigure):
         X,Y = value
         self.align = [2*X/self.imageWidth-1, 2*Y/self.imageHeight-1]
 
-    # Returns the bounding box (with possible padding) of the image
-    # ignoring any transformations like rotation, transform, or scale
-    # Also assumes the image has physical set to True.
-    def box(self, pad=0):
-        align_x, align_y = self.align
-        # a = self.pos.real - self.scale_x*self.width/2*(align_x + 1)
-        # b = a + self.scale_x*self.width
-        # c = self.pos.imag - self.scale_y*self.height/2*(align_y + 1)
-        # d = c + self.scale_y*self.height
-
-        a = self.pos.real - self.width/2*(align_x + 1)
-        b = a + self.width
-        c = self.pos.imag - self.height/2*(align_y + 1)
-        d = c + self.height
-
-        return [a-pad, b+pad, c-pad, d+pad]
+    # Returns the bounding box (with possible padding) of the image.
+    # If keyword `raw` is set to True, it will ignore `rotation`,
+    # `transform`, and `scale` attributes.
+    # Also assumes the image has `physical` set to True.
+    def box(self, *args, **kwargs):
+        a,b,c,d = self.relbox(*args, **kwargs)
+        x,y = self.pos.real, self.pos.imag
+        return [a+x, b+x, c+y, d+y]
 
     # Same as box(), but the coordinates are relative to the image's
     # physical position.
-    def relbox(self, pad=0):
+    def relbox(self, pad=0, *, raw=False):
         align_x, align_y = self.align
         a = -self.width/2*(align_x + 1)
         b = a + self.width
         c = -self.height/2*(align_y + 1)
         d = c + self.height
 
-        return [a-pad, b+pad, c-pad, d+pad]
+        if not raw and not(self.rotation == 0 and self.scale_x == 1 and self.scale_y == 1 and np.array_equal(self._transform, I2)):
+            transform = self._transform @ morpho.matrix.scale2d(self.scale_x, self.scale_y)
+            return BoundingBoxFigure._transformedBox([a,b,c,d], 0, self.rotation, transform, pad)
+        else:
+            return [a-pad, b+pad, c-pad, d+pad]
 
     # Returns the four corners of the image's bounding box
     # plus any optional padding. The sequence of the corners is
     # NW, SW, SE, NE.
-    def corners(self, pad=0):
+    def corners(self, *args, **kwargs):
         # NOTE: This method should actually be removable
         # since its behavior should be identical to the corners()
         # method inherited from BoundingBoxFigure.
-        a,b,c,d = self.box(pad)
+        a,b,c,d = self.box(*args, **kwargs)
 
         NW = a + d*1j
         SW = a + c*1j
@@ -330,8 +318,8 @@ class Image(BoundingBoxFigure):
 
     # Same as corners(), but the coordinates are relative to wherever
     # the image's physical position is.
-    def relcorners(self, pad=0):
-        a,b,c,d = self.relbox(pad)
+    def relcorners(self, *args, **kwargs):
+        a,b,c,d = self.relbox(*args, **kwargs)
 
         NW = a + d*1j
         SW = a + c*1j
@@ -454,7 +442,7 @@ class Image(BoundingBoxFigure):
         if self.backAlpha > 0:
             # Construct background rectangle and draw it
             rectTransform = premat
-            box = self.relbox(pad=self.backPad)
+            box = self.relbox(pad=self.backPad, raw=True)
             if not self.physical:
                 w1 = morpho.physicalWidth(1, view, ctx)
                 h1 = morpho.physicalHeight(1, view, ctx)

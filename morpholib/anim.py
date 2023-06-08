@@ -642,7 +642,7 @@ class MultiFigure(Frame):
     # Additional arguments are passed to the box() methods
     # of subfigures.
     def box(self, *args, **kwargs):
-        return totalBox(subfig.box(*args, **kwargs) for subfig in self.figures)
+        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), self.origin)
 
     # If attempted to access a non-existent attribute,
     # check if it's an attribute of the first figure in
