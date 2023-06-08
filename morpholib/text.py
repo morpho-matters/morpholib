@@ -560,21 +560,6 @@ class PText(Text):
     def relbox(self, pad=0, *, raw=False):
         return Text.relbox(self, DUMMY, DUMMY, pad=pad, raw=raw)
 
-    # Same as corners(), but the coordinates are relative to wherever
-    # the text's physical position is.
-    #
-    # Note: Since the physical width is merely estimated,
-    # x-coordinates of the corners may be slightly off.
-    def relcorners(self, *args, **kwargs):
-        a,b,c,d = self.relbox(*args, **kwargs)
-
-        NW = a + d*1j
-        SW = a + c*1j
-        SE = b + c*1j
-        NE = b + d*1j
-
-        return [NW,SW,SE,NE]
-
     # Returns the visual centerpoint of the text.
     def center(self):
         return mean(self.corners())
@@ -858,6 +843,15 @@ class MultiText(morpho.MultiFigure, BoundingBoxFigure):
         #         newfig = fig.images[0].copy()
         #         self.figures[n] = newfig
 
+    @typecastViewCtx
+    def relbox(self, view, ctx, pad=0):
+        return padbox(totalBox(subfig.box(view, ctx) for subfig in self.figures), pad)
+
+    def box(self, *args, **kwargs):
+        return shiftBox(self.relbox(*args, **kwargs), self.origin)
+
+    relcorners = Text.relcorners
+
     ### TWEEN METHODS ###
 
     tweenLinear = Multi(Text.tweenLinear, morpho.MultiFigure.tweenLinear)
@@ -880,7 +874,8 @@ class MultiText(morpho.MultiFigure, BoundingBoxFigure):
 class MultiPText(MultiText):
     _baseFigure = PText
 
-    box = morpho.anim.MultiFigure.box
+    def relbox(self, pad=0, *, raw=False):
+        return padbox(totalBox(subfig.box() for subfig in self.figures), pad)
 
     # EXPERIMENTAL! May be changed in a future version!
     # Converts the MultiPText figure into an equivalent MultiSpline.
