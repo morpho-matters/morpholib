@@ -14,6 +14,24 @@ ihat = np.array([1,0,0], dtype=float)
 jhat = np.array([0,1,0], dtype=float)
 khat = np.array([0,0,1], dtype=float)
 
+### DECORATORS ###
+
+# Decorator for functions that operate on a box.
+# Allows such a function to accept a Figure type input
+# whereby it will attempt to infer a box by calling the
+# figure's `box()` method, assuming it exists.
+# If given an Actor object, it will use the latest keyfigure.
+def handleBoxTypecasting(func):
+    def wrapper(box, *args, **kwargs):
+        if isinstance(box, morpho.Actor):
+            box = box.last()
+        if isinstance(box, morpho.Figure):
+            if not hasattr(box, "box"):
+                raise TypeError(f"`{type(box).__name__}` type figure does not support box() method.")
+            box = box.box()
+        return func(box, *args, **kwargs)
+    return wrapper
+
 ### FUNCTIONS ###
 
 isbadnum_old = lambda x: math.isnan(abs(x)*0)
@@ -280,6 +298,7 @@ def polyroots(coeffs):
 # the "initCorner" and "CCW" parameters. By default:
 # initCorner = "NW"
 # CCW = True
+@handleBoxTypecasting
 def boxCorners(box, initCorner="NW", CCW=True):
     initCorner = initCorner.upper()
     dirs = ["NW", "SW", "SE", "NE"]
@@ -313,13 +332,8 @@ def boxCorners(box, initCorner="NW", CCW=True):
 # Optionally, a ypad value can be specified, allowing the box to be
 # padded differently vertically vs horizontally:
 #       padbox(box, xpad, ypad) -> paddedBox
+@handleBoxTypecasting
 def padbox(box, xpad, ypad=None, /):
-    # Typecast Actors/Figures to box
-    if isinstance(box, morpho.Actor):
-        box = box.last().box()
-    elif isinstance(box, morpho.Figure):
-        box = box.box()
-
     if ypad is None:
         ypad = xpad
 
@@ -335,13 +349,8 @@ padBox = padbox  # Alias
 # Shifts a bounding box of the form [xmin,xmax,ymin,ymax]
 # by the given 2d vector `shift` expressed as a complex number.
 # Returns the modified box.
+@handleBoxTypecasting
 def shiftBox(box, shift):
-    # Typecast Actors/Figures to box
-    if isinstance(box, morpho.Actor):
-        box = box.last().box()
-    elif isinstance(box, morpho.Figure):
-        box = box.box()
-
     left, right, bottom, top = box
     # Adjust by origin
     left += shift.real

@@ -76,22 +76,6 @@ def typecastViewCtx(method):
         return method(self, view, ctx, *args, **kwargs)
     return wrapper
 
-# Decorator for functions that operate on a box.
-# Allows such a function to accept a Figure type input
-# whereby it will attempt to infer a box by calling the
-# figure's `box()` method, assuming it exists.
-# If given an Actor object, it will use the latest keyfigure.
-def handleBoxTypecasting(func):
-    def wrapper(box, *args, **kwargs):
-        if isinstance(box, morpho.Actor):
-            box = box.last()
-        if isinstance(box, morpho.Figure):
-            if not hasattr(box, "box"):
-                raise TypeError(f"`{type(box).__name__}` type figure does not support box() method.")
-            box = box.box()
-        return func(box, *args, **kwargs)
-    return wrapper
-
 # Abstract base class for figures that are meant to have
 # a bounding box (e.g. Image and Text).
 # Currently its main function is to automatically implement
