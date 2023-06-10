@@ -1891,11 +1891,6 @@ class Actor(object):
         if isinstance(actors[0], (list, tuple)):
             actors = actors[0]
 
-        # This frame will be used as the template for each individual
-        # keyframe.
-        blankFrame = morpho.Frame()
-        # blankFrame.set(transition=morpho.transitions.uniform)
-
         # Turn each individual actor into a singleton Frame Actor
         # (aka "Film") before combining them all into a single Film.
         films = []
