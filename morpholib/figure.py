@@ -14,9 +14,10 @@ names are all lowercase letters.
 
 
 import morpholib as morpho
-from morpholib.tools.basics import *
 import morpholib.matrix
 import morpholib.actions
+import morpholib.transitions
+from morpholib.tools.basics import *
 
 import math, cmath
 import numpy as np
@@ -1417,6 +1418,20 @@ class Actor(object):
         except ValueError:
             raise ValueError("Given keyfigure is not in the timeline.")
 
+    # Splits tween method and transition to make inserting a new
+    # intermediate keyfigure seamless.
+    @staticmethod
+    def _splitTweenAndTransition(keyfig, newkeyfig, t):
+        # Split the tween method
+        if hasattr(keyfig.tweenMethod, "splitter") and keyfig.tweenMethod.splitter is not None:
+            tween1, tween2 = keyfig.tweenMethod.splitter(keyfig.transition(t))
+            keyfig.tweenMethod = tween1
+            newkeyfig.tweenMethod = tween2
+        # Split the transition function
+        func1, func2 = morpho.transitions.split(keyfig.transition, t)
+        keyfig.transition = func1
+        newkeyfig.transition = func2
+
     # Creates a new keyfigure at index f and returns it.
     # If f is ahead of the last keyframe, the new keyfigure
     # will be a copy of the latest keyfigure. If f is before
@@ -1469,15 +1484,12 @@ class Actor(object):
             keyfig1 = self.prevkey(f)
             a,b = self.prevkeyID(f), self.nextkeyID(f)
             t_split = (f-a)/(b-a)
-            # Split the tween method
-            if hasattr(keyfig1.tweenMethod, "splitter") and keyfig1.tweenMethod.splitter is not None:
-                tween1, tween2 = keyfig1.tweenMethod.splitter(keyfig1.transition(t_split))
-                keyfig1.tweenMethod = tween1
-                figure.tweenMethod = tween2
-            # Split the transition function
-            func1, func2 = morpho.transitions.split(keyfig1.transition, t_split)
-            keyfig1.transition = func1
-            figure.transition = func2
+            Actor._splitTweenAndTransition(keyfig1, figure, t_split)
+
+            if issubclass(self.figureType, morpho.Frame):
+                # Split subfigure tween methods and transitions
+                for fig, twig in zip(keyfig1.figures, figure.figures):
+                    Actor._splitTweenAndTransition(fig, twig, t_split)
 
         # Add the figure to the timeline
         self.timeline[f] = figure
@@ -1834,6 +1846,69 @@ class Actor(object):
 
     # Alternate name for insert() is paste()
     # paste = insert
+
+    # For internal use only by Films (Frame Actors).
+    # Merges a given film into IN PLACE.
+    # Note that the secondary film may get modified by this function.
+    def _mergeFilm(self, film):
+        # film = film.copy()
+
+        # Manually create a new initial keyframe. This is to
+        # prevent the default behavior of newkey() to create a
+        # default (i.e. blank) keyfigure if it occurs before
+        # the earliest keyframe in the timeline.
+        mintime = min([self.firstID(), film.firstID()])
+        self.newkey(mintime, self.first().copy())
+        film.newkey(mintime, film.first().copy())
+
+        keytimes = set(self.keyIDs).union(film.keyIDs)
+        # Seamlessly introduce new keyframes into secondary film
+        # corresponding to the keyframes of the self. This
+        # way, the secondary film will still animate identically
+        # after being merged into the (possibly crowded) timeline
+        # of self.
+        for keytime in keytimes:
+            self.newkey(keytime)
+            film.newkey(keytime)
+        # Likewise, add new keyframes to self from those
+        # uniquely in film and then merge keyframes across the
+        # two films.
+        for keytime in keytimes:
+            self.time(keytime).merge(film.time(keytime))
+
+        return self
+
+    # Combines all the actors into a single Frame actor.
+    # Note this function may modify the underlying keyfigures of
+    # the supplied actors.
+    @staticmethod
+    def zip(*actors):
+        if len(actors) == 0:
+            raise TypeError("No actors to zip.")
+        if isinstance(actors[0], (list, tuple)):
+            actors = actors[0]
+
+        # This frame will be used as the template for each individual
+        # keyframe.
+        blankFrame = morpho.Frame()
+        # blankFrame.set(transition=morpho.transitions.uniform)
+
+        # Turn each individual actor into a singleton Frame Actor
+        # (aka "Film") before combining them all into a single Film.
+        films = []
+        for actor in actors:
+            film = Actor(morpho.Frame)
+            for time, keyfig in actor.timeline.items():
+                film.newkey(time, morpho.Frame([keyfig]))
+            films.append(film)
+
+        # Combine all the individual singleton films into
+        # a single film.
+        finalFilm = films[0]
+        for film in films[1:]:
+            finalFilm._mergeFilm(film)
+
+        return finalFilm
 
     # NOT IMPLEMENTED!
     # Like insert(), except it overwrites the original actor
