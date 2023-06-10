@@ -1881,8 +1881,11 @@ class Actor(object):
     # Combines all the actors into a single Frame actor.
     # Note this function may modify the underlying keyfigures of
     # the supplied actors.
+    # Optional keyword `stagger` can be given an integer
+    # to offset each actor from the previous in the sequence by
+    # a certain number of frames.
     @staticmethod
-    def zip(*actors):
+    def zip(*actors, stagger=0):
         if len(actors) == 0:
             raise TypeError("No actors to zip.")
         if isinstance(actors[0], (list, tuple)):
@@ -1896,10 +1899,10 @@ class Actor(object):
         # Turn each individual actor into a singleton Frame Actor
         # (aka "Film") before combining them all into a single Film.
         films = []
-        for actor in actors:
+        for n,actor in enumerate(actors):
             film = Actor(morpho.Frame)
             for time, keyfig in actor.timeline.items():
-                film.newkey(time, morpho.Frame([keyfig]))
+                film.newkey(time+n*stagger, morpho.Frame([keyfig]))
             films.append(film)
 
         # Combine all the individual singleton films into
