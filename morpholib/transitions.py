@@ -161,3 +161,38 @@ def split(func, t):
         return (func(morpho.lerp0(t,1, s))-y)/(1-y)
 
     return func1, func2
+
+# Mainly for internal use by incorporateTransition().
+# Generates the splitter for the modified tween method
+# returned by incorporateTransition().
+def _generateTransitionSplitter(transition, tweenmethod):
+    def newSplitter(t):
+        trans1, trans2 = split(transition, t)
+
+        if morpho.tweenSplittable(tweenmethod):
+            basetween1, basetween2 = tweenmethod.splitter(transition(t))
+        else:
+            # Assume the tween method respects splitting
+            basetween1 = basetween2 = tweenmethod
+
+        @morpho.TweenMethod(splitter=_generateTransitionSplitter(trans1, basetween1))
+        def tween1(self, other, t, *args, **kwargs):
+            return basetween1(self, other, trans1(t), *args, **kwargs)
+
+        @morpho.TweenMethod(splitter=_generateTransitionSplitter(trans2, basetween2))
+        def tween2(self, other, t, *args, **kwargs):
+            return basetween2(self, other, trans2(t), *args, **kwargs)
+
+        return tween1, tween2
+    return newSplitter
+
+# Incorporates the given transition function directly into the given
+# tween method, meaning using this tween method with a uniform
+# transition will produce the same effect as the original tween method
+# with the given transition function applied separately.
+# The modified tween method is returned and is not changed in place.
+def incorporateTransition(transition, tweenmethod):
+    @morpho.TweenMethod(splitter=_generateTransitionSplitter(transition, tweenmethod))
+    def newTween(self, other, t, *args, **kwargs):
+        return tweenmethod(self, other, transition(t), *args, **kwargs)
+    return newTween
