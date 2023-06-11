@@ -1861,7 +1861,7 @@ class Actor(object):
         self.newkey(mintime, self.first().copy())
         film.newkey(mintime, film.first().copy())
 
-        keytimes = set(self.keyIDs).union(film.keyIDs)
+        keytimes = sorted(set(self.keyIDs).union(film.keyIDs))
         # Seamlessly introduce new keyframes into secondary film
         # corresponding to the keyframes of the self. This
         # way, the secondary film will still animate identically
