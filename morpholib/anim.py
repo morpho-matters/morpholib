@@ -113,6 +113,14 @@ class MaskConfigurationError(Exception):
 # The transition of the Frame figure itself really only applies to its
 # own `origin` tweenable.
 class Frame(morpho.Figure):
+    # This is a (hopefully temporary) hack to fix a bug with
+    # MathGrid tween method splitting arising from the fact that
+    # under normal circumstances, splitting a Frame Actor's tween
+    # method automatically splits the subfigure tween methods.
+    # Setting this attribute to False (as it is with the MathGrid
+    # class) disables this behavior.
+    _allowSubfigureSplitting = True
+
     def __init__(self, figures=None, /, **kwargs):
         # By default, do what the superclass does.
         # morpho.Figure.__init__(self)

@@ -1486,7 +1486,7 @@ class Actor(object):
             t_split = (f-a)/(b-a)
             Actor._splitTweenAndTransition(keyfig1, figure, t_split)
 
-            if issubclass(self.figureType, morpho.Frame):
+            if issubclass(self.figureType, morpho.Frame) and self.figureType._allowSubfigureSplitting:
                 # Split subfigure tween methods and transitions
                 for fig, twig in zip(keyfig1.figures, figure.figures):
                     Actor._splitTweenAndTransition(fig, twig, t_split)

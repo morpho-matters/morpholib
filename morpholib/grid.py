@@ -3099,6 +3099,8 @@ def _gridSplitter(t):
 
 # Special Frame figure for mathgrids
 class MathGrid(morpho.Frame):
+    _allowSubfigureSplitting = False
+
     def __init__(self, *args, **kwargs):
         # Bypass Figure class special setattr() method to set the
         # hidden `_transition` attribute so that the `transition`
