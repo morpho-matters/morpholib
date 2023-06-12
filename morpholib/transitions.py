@@ -150,7 +150,7 @@ default = uniform
 # normalized to work as regular transition functions.
 def split(func, t):
     if not(0 < t < 1):
-        raise ValueError("t must be strictly between 0 and 1.")
+        raise ValueError(f"t must be strictly between 0 and 1. Got t={t}")
 
     y = func(t)
 
