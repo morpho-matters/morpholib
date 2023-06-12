@@ -1721,6 +1721,7 @@ class Path(BoundingBoxFigure):
             self.deadends.add(old_len-1)
 
         # Merge deadends from other into self
+        len_self = len(self.seq)
         for n in other.deadends:
             self.deadends.add(n+len_self)
 
