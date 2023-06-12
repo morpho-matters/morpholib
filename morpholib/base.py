@@ -405,6 +405,11 @@ my_figure.tween(my_other_figure, 0.5)
 # a given t-value. It's a function that takes a t-value as input
 # and returns a tuple of two tween methods. Splitters are used to
 # create a new keyfigure seamlessly between two existing keyfigures.
+# The splitter function can alternatively be assigned afterward with
+# the @newSplitter decorator:
+#   @myNewTweenMethod.newSplitter
+#   def splitter(t):
+#       ...
 def tweenMethod(tween=None, *, splitter=None):
     # If no tween method to decorate, assume we're trying to
     # modify the default behavior of tweenMethod(), so return
@@ -433,7 +438,17 @@ def tweenMethod(tween=None, *, splitter=None):
             # twfig.visible = self.visible  # Inherits visibility of self
             return twfig
 
-    wrapper.splitter = splitter
+    # The unwrapped version of the given tween method.
+    wrapper.interpolator = tween
+
+    # Decorator that assigns the given function as the splitter
+    # of this tween method.
+    def newSplitter(splitter):
+        wrapper.splitter = splitter
+        return splitter
+    wrapper.newSplitter = newSplitter
+    wrapper.newSplitter(splitter)
+
     return wrapper
 
 TweenMethod = tweenMethod  # Initial letter can optionally be uppercase.

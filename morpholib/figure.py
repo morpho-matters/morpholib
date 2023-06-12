@@ -1188,7 +1188,7 @@ def pivotTweenMethod(methodGenerator, angle, *args, **kwargs):
             tween2 = methodGenerator(angle2, *args, **kwargs)
 
             return (tween1, tween2)
-        pivotTween.splitter = pivotSplitter
+        pivotTween = morpho.TweenMethod(pivotTween, splitter=pivotSplitter)
         return pivotTween
     return decorator
 
