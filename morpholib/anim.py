@@ -999,13 +999,18 @@ class StateStruct(object):
 # However, most space figures support primitives(), so you probably
 # don't need to worry about this.
 class SpaceFrame(Frame):
-    def __init__(self, figures=None):
+    def __init__(self, figures=None, /, **kwargs):
         if isinstance(figures, Frame):
             # super().__init__(figures.figures)
             super().__init__()
             self._updateFrom(figures, common=True)
+            if not isinstance(self.figures, list):
+                self.figures = list(self.figures)
+
+            self.figures.extend(kwargs.values())
+            self.setName(**kwargs)
         else:
-            super().__init__(figures)
+            super().__init__(figures, **kwargs)
 
     # Space version of Frame.partition().
     def partition(self, *args, **kwargs):
