@@ -2348,15 +2348,6 @@ class Track(Path):
         if tickColor is None:
             tickColor = color[:]
 
-        # New tweenables
-        tickWidth = morpho.Tweenable("tickWidth", tickWidth, tags=["size"])
-        tickColor = morpho.Tweenable("tickColor", tickColor, tags=["color"])
-        tickAlpha = morpho.Tweenable("tickAlpha", tickAlpha, tags=["scalar"])
-        tickLength = morpho.Tweenable("tickLength", tickLength, tags=["scalar"])
-        tickGap = morpho.Tweenable("tickGap", tickGap, tags=["scalar"])
-        tickStart = morpho.Tweenable("tickStart", 0, tags=["scalar"])
-        tickEnd = morpho.Tweenable("tickEnd", 1, tags=["scalar"])
-
         if isinstance(seq, Path):
             path = seq
             super().__init__(path.seq[:], path.width, path.color, path.alpha)
@@ -2386,10 +2377,17 @@ class Track(Path):
         else:
             super().__init__(seq, width, color, alpha)
 
-        self.extendState(
-            [tickWidth, tickColor, tickAlpha,
-            tickLength, tickGap, tickStart, tickEnd]
-            )
+        # New tweenables
+        self.Tweenable("tickWidth", tickWidth, tags=["size"])
+        self.Tweenable("tickColor", tickColor, tags=["color"])
+        self.Tweenable("tickAlpha", tickAlpha, tags=["scalar"])
+        self.Tweenable("tickLength", tickLength, tags=["scalar"])
+        self.Tweenable("tickGap", tickGap, tags=["scalar"])
+        self.Tweenable("tickStart", 0, tags=["scalar"])
+        self.Tweenable("tickEnd", 1, tags=["scalar"])
+        self.Tweenable("tickOffset", 0, tags=["scalar"])
+
+
 
     # Generates the underlying path object which when drawn
     # makes the ticks appear.
@@ -2404,6 +2402,7 @@ class Track(Path):
         gap = self.tickGap-self.tickWidth
         if gap > 0:
             backpath.dash = [self.tickWidth, gap]
+            backpath.dashOffset = self.tickOffset
 
         backpath.origin = self.origin
         backpath.rotation = self.rotation
@@ -3053,17 +3052,13 @@ class Axis(Track):
         # Also temporarily adjust some other attributes to handle
         # centering the tickmarks.
         origGap = self.tickGap
-        origOrigin = self.origin
-        origEnd = self.seq[1]
+        origTickOffset = self.tickOffset
         self.tickGap = self.tickGap*scale
-        shift = 0.5*self.tickWidth/scale*unit
-        self.origin = self.origin - shift
-        self.seq[1] = self.seq[1] + shift
+        self.tickOffset = self.tickOffset*scale + self.tickWidth/2
         Track.draw(self, camera, ctx)
         # Restore original values
         self.tickGap = origGap
-        self.origin = origOrigin
-        self.seq[1] = origEnd
+        self.tickOffset = origTickOffset
 
 
 # Mainly for internal use.
@@ -3078,7 +3073,9 @@ class SpaceAxis(SpaceTrack):
 
         # Scale tick spacing based on how much the axis has
         # shrunk due to foreshortening.
-        axis.tickGap *= abs(axis.seq[1]-axis.seq[0]) / np.linalg.norm(self.seq[1]-self.seq[0]).tolist()
+        scale = abs(axis.seq[1]-axis.seq[0]) / np.linalg.norm(self.seq[1]-self.seq[0]).tolist()
+        axis.tickGap *= scale
+        axis.tickOffset *= scale
 
         return [axis]
 
