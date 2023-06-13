@@ -2397,6 +2397,8 @@ class Ellipse(morpho.Figure):
         self.Tweenable("alphaEdge", alphaEdge, tags=["scalar"])
         self.Tweenable("alphaFill", alphaFill, tags=["scalar"])
         self.Tweenable("alpha", alpha, tags=["scalar"])
+        self.Tweenable("dash", [], tags=["scalar", "list"])
+        self.Tweenable("dashOffset", 0, tags=["scalar"])
         self.Tweenable("rotation", 0, tags=["scalar"])
         self.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
@@ -2503,7 +2505,9 @@ class Ellipse(morpho.Figure):
         else:
             ctx.set_source_rgba(*self.color, self.alphaEdge*self.alpha)
             ctx.set_line_width(self.strokeWeight)
+            ctx.set_dash(self.dash, self.dashOffset)
             ctx.stroke()
+            ctx.set_dash([])
 
 
 # Creates an arc of an ellipse.
@@ -2544,6 +2548,9 @@ class EllipticalArc(morpho.Figure):
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
 
         self.extendState([pos, xradius, yradius, theta0, theta1, strokeWeight, color, alpha])
+
+        self.Tweenable("dash", [], tags=["scalar", "list"])
+        self.Tweenable("dashOffset", 0, tags=["scalar"])
 
     # Setting `radius` property sets both `xradius` and `yradius` to
     # the same value.
@@ -2590,17 +2597,14 @@ class EllipticalArc(morpho.Figure):
         seq.append(z1)
 
         path = morpho.grid.Path(seq)
-        path.width = self.strokeWeight
-        path.color = self.color[:]
-        path.alpha = self.alpha
 
         # Stretch it into an ellipse and move it
         path = path.fimage(lambda z: mat(self.xradius,0,0,self.yradius)*z)
         # path = path.fimage(lambda z: z + self.pos)
-        path.origin = self.pos
 
-        # Update standard figure meta-settings
-        path._updateSettings(self)
+        path._updateFrom(self, common=True)
+        path.origin = self.pos
+        path.width = self.strokeWeight
 
         return path
 
@@ -2635,7 +2639,9 @@ class EllipticalArc(morpho.Figure):
         else:
             ctx.set_source_rgba(*self.color, self.alpha)
             ctx.set_line_width(self.strokeWeight)
+            ctx.set_dash(self.dash, self.dashOffset)
             ctx.stroke()
+            ctx.set_dash([])
 
 # Animates an e-arc actor appearing by "growing in" from theta0
 # toward theta1 unless reverse=True whereby it will grow from
@@ -2732,7 +2738,9 @@ class Pie(EllipticalArc):
         else:
             ctx.set_source_rgba(*self.color, self.alphaEdge*self.alpha)
             ctx.set_line_width(self.strokeWeight)
+            ctx.set_dash(self.dash, self.dashOffset)
             ctx.stroke()
+            ctx.set_dash([])
 
     # Converts the figure into an equivalent Path figure.
     # Optionally specify the angular steps (in rads).
@@ -2791,21 +2799,13 @@ class Pie(EllipticalArc):
         # Make the polygon
         poly = morpho.grid.Polygon(seq)
 
-        # Style parameters
-        poly.width = self.strokeWeight
-        poly.color = self.color[:]
-        poly.fill = self.fill[:]
-        poly.alphaEdge = self.alphaEdge
-        poly.alphaFill = self.alphaFill
-        poly.alpha = self.alpha
-
         # Stretch it into an ellipse and move it
         poly = poly.fimage(lambda z: mat(self.xradius,0,0,self.yradius)*z)
         # poly = poly.fimage(lambda z: z + self.pos)
-        poly.origin = self.pos
 
-        # Update standard figure meta-settings
-        poly._updateSettings(self)
+        poly._updateFrom(self, common=True)
+        poly.origin = self.pos
+        poly.width = self.strokeWeight
 
         return poly
 
