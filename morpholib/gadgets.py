@@ -229,8 +229,9 @@ enbox = enboxPath  # Synonym for emboxPath()
 # Useful for briefly highlighting something with a box.
 # An additional keyword-only input `pause` can be specified
 # to provide a delay between enboxing and deboxing.
-def enboxHighlight(*args, pause=0, **kwargs):
+def enboxFlourish(*args, pause=0, **kwargs):
     return enbox(*args, _debox=True, _pause=pause, **kwargs)
+enboxHighlight = enboxFlourish
 
 # Scales all the nodes of a path by the given factor about the given
 # centerpoint. If the center is unspecified, defaults to the center
