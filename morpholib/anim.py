@@ -573,13 +573,6 @@ def rollback(frame, duration=30, atFrame=None):
 # One of the main uses of this class is to
 # implement the MultiImage and MultiText classes which allow for a
 # primitive morphing between images and text via mutual opposite fading.
-#
-# NOTE: To properly implement a MultiFigure subclass, its __init__()
-# should be able to handle being passed a list of subfigures and
-# then assigning them to the `figures` attribute. Basically, a
-# MultiFigure's __init__() should be backwardly compatible with
-# Frame.__init__(). Failing to do this may cause features like
-# .select[] to stop working as intended.
 class MultiFigure(Frame):
 
     # If set to True, the standard fadeIn/Out() actor actions will
