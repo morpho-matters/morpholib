@@ -159,13 +159,9 @@ colors = ["red", "green", "blue", "yellow", "cyan", "magenta",
 # Transparently overlays the color A over the color B
 # using transparency alpha (default=0.5)
 def alphaOverlay(A, B, alpha=0.5):
-    if type(A) is list or type(A) is tuple:
-        result = [0,0,0]
-        for i in range(len(A)):
-            result[i] = alphaOverlay(A[i], B[i], alpha)
-        return tuple(result)
-    else:
-        return A*alpha + B*(1-alpha)
+    A = np.array(A)
+    B = np.array(B)
+    return (A*alpha + B*(1-alpha)).tolist()
 
 # Tweens two RGB colors represented by triples and returns
 # a new list with the tweened value.
