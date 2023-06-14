@@ -3309,6 +3309,7 @@ def mathaxes(*,
     xcolor=(1,1,1), ycolor=(1,1,1), color=None, alpha=1,
     xtickLength=0, ytickLength=0, tickLength=None,
     xtickWidth=None, ytickWidth=None, tickWidth=None,
+    xtickOffset=0, ytickOffset=0, tickOffset=None,
     dx=1, dy=1, spacing=None,
     tweenMethod=Axis.tweenLinear,
     transition=None):
@@ -3323,6 +3324,8 @@ def mathaxes(*,
         xtickLength = ytickLength = tickLength
     if tickWidth is not None:
         xtickWidth = ytickWidth = tickWidth
+    if tickOffset is not None:
+        xtickOffset = ytickOffset = tickOffset
     if width is not None:
         xwidth = ywidth = width
 
@@ -3342,7 +3345,7 @@ def mathaxes(*,
         xaxis = mo.grid.Axis([xmin, xmax]).set(
             width=xwidth, color=xcolor, alpha=alpha,
             tickLength=xtickLength, tickWidth=xtickWidth,
-            tickGap=dx, tickColor=xcolor[:],
+            tickGap=dx, tickColor=xcolor[:], tickOffset=xtickOffset,
             tweenMethod=tweenMethod,
             transition=transition
             )
@@ -3353,7 +3356,7 @@ def mathaxes(*,
         yaxis = mo.grid.Axis([ymin*1j, ymax*1j]).set(
             width=ywidth, color=ycolor, alpha=alpha,
             tickLength=ytickLength, tickWidth=ytickWidth,
-            tickGap=dy, tickColor=ycolor[:],
+            tickGap=dy, tickColor=ycolor[:], tickOffset=ytickOffset,
             tweenMethod=tweenMethod,
             transition=transition
             )
