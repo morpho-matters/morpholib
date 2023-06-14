@@ -229,7 +229,11 @@ class Frame(morpho.Figure):
         seldict = listselect(self.figures, index)
         selection = list(seldict.values())
 
-        frm = type(self)(selection)
+        # Do an empty initialization first followed by assigning
+        # to `figures` so that `select[]` does not assume anything
+        # about how type(self).__init__() works.
+        frm = type(self)()
+        frm.figures = selection
         frm._updateFrom(self, ignore={"figures", "_names"})
         if _asFrame:
             # If self has named subfigures, ensure the names transfer over
