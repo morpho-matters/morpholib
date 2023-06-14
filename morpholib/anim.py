@@ -1351,8 +1351,17 @@ class Camera(BoundingBoxFigure):
     # Converts position coordinates from one camera system to another.
     # Given complex position `pos`, this method returns the
     # corresponding complex position in the camera system of `other`.
+    # See also: convertCoordsFrom()
     def convertCoords(self, other, pos):
         return other.physicalCoords(self.normalizedCoords(pos))
+
+    # Converts position coordinates from one camera system to another.
+    # Given complex position `pos` in `other`'s coordinate system,
+    # this method returns the corresponding complex position in the
+    # self's camera system.
+    # Identical to convertCoords(), but self and `other` are swapped.
+    def convertCoordsFrom(self, other, pos):
+        return self.physicalCoords(other.normalizedCoords(pos))
 
     # Given a physical width, returns the corresponding width in the
     # normalized coordinate system.
