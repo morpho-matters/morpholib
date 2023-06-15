@@ -402,9 +402,13 @@ my_figure.tween(my_other_figure, 0.5)
 #
 # Optionally, a splitter function can be assigned to the tween method
 # which enables the tween method to be split into two submethods at
-# a given t-value. It's a function that takes a t-value as input
-# and returns a tuple of two tween methods. Splitters are used to
-# create a new keyfigure seamlessly between two existing keyfigures.
+# a given t-value. Splitters are used to create a new keyfigure
+# seamlessly between two existing keyfigures. It's a function that
+# takes as input a t-value and three figures `beg`, `mid`, and `fin`
+# representing the three keyfigures involved in a split. The function
+# should then reassign new tween methods to those keyfigures (usually
+# just `beg` and `mid`) as well as perform any other needed
+# modifications to those keyfigures to make a seamless split.
 # The splitter function can alternatively be assigned afterward with
 # the @newSplitter decorator:
 #   @myNewTweenMethod.newSplitter
@@ -457,8 +461,7 @@ TweenMethod = tweenMethod  # Initial letter can optionally be uppercase.
 # a splitter defined. It is equivalent to
 # hasattr(tweenMethod, "splitter") and tweenMethod.splitter is not None
 def tweenSplittable(tweenMethod):
-    return (hasattr(tweenMethod, "splitter") and \
-            tweenMethod.splitter is not None)
+    return (hasattr(tweenMethod, "splitter") and tweenMethod.splitter is not None)
 
 # Converts complex coordinates into screen pixel coordinates
 # according to the screen dimensions and the shape of the cairo

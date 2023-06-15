@@ -1472,7 +1472,7 @@ class Camera(BoundingBoxFigure):
     #   mycamera.tweenMethod = mycamera.tweenZoomWithMultiplier(multfunc)
     @classmethod
     def tweenZoomWithMultiplier(cls, multiplierFunc):
-        def splitter(tmid):
+        def splitter(tmid, beg, mid, fin):
             one_minus_tmid = 1 - tmid
             M_tmid = multiplierFunc(tmid)
             def mult1(t):
@@ -1481,10 +1481,8 @@ class Camera(BoundingBoxFigure):
             def mult2(t):
                 return multiplierFunc(tmid + one_minus_tmid*t)/M_tmid**(1-t)
 
-            multzoom1 = cls.tweenZoomWithMultiplier(mult1)
-            multzoom2 = cls.tweenZoomWithMultiplier(mult2)
-
-            return (multzoom1, multzoom2)
+            beg.tweenMethod = cls.tweenZoomWithMultiplier(mult1)
+            mid.tweenMethod = cls.tweenZoomWithMultiplier(mult2)
 
         @morpho.TweenMethod(splitter=splitter)
         def multzoom(self, other, t):
