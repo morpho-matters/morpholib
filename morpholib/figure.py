@@ -1878,20 +1878,23 @@ class Actor(object):
     # Optional keyword `stagger` can be given an integer
     # to offset each actor from the previous in the sequence by
     # a certain number of frames.
+    # Optional keyword `template` is an empty Frame or Frame subtype
+    # that will be used to construct the Actor.
+    # Default: morpho.Frame()
     @staticmethod
-    def zip(*actors, stagger=0, FrameType=None):
+    def zip(*actors, stagger=0, template=None):
         if len(actors) == 0:
             raise TypeError("No actors to zip.")
         if isinstance(actors[0], (list, tuple)):
             actors = actors[0]
-        if FrameType is None:
-            FrameType = morpho.Frame
+        if template is None:
+            template = morpho.Frame()
 
         # Turn each individual actor into a singleton Frame Actor
         # (aka "Film") before combining them all into a single Film.
         films = []
         for n, actor in enumerate(actors):
-            film = Actor(FrameType)
+            film = Actor(type(template))
             for time, keyfig in actor.timeline.items():
                 # Incorporate non-uniform transitions into tween methods
                 # since Frame tweening ignores subfigure transitions.
@@ -1901,7 +1904,7 @@ class Actor(object):
                 # Transitions are handled within the tween methods of
                 # subfigures, so the toplevel transition of the film
                 # should be uniform.
-                film.newkey(time+n*stagger, FrameType()).set(figures=[keyfig], transition=morpho.transitions.uniform)
+                film.newkey(time+n*stagger, template.copy()).set(figures=[keyfig], transition=morpho.transitions.uniform)
             films.append(film)
 
         # Combine all the individual singleton films into
