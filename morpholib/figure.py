@@ -1483,11 +1483,6 @@ class Actor(object):
             t_split = (f-a)/(b-a)
             Actor._splitTweenAndTransition(t_split, keyfig1, figure, keyfig2)
 
-            # if issubclass(self.figureType, morpho.Frame) and self.figureType._allowSubfigureSplitting:
-            #     # Split subfigure tween methods and transitions
-            #     for fig, twig in zip(keyfig1.figures, figure.figures):
-            #         Actor._splitTweenAndTransition(fig, twig, t_split)
-
         # Add the figure to the timeline
         self.timeline[f] = figure
         self.update()
@@ -1845,7 +1840,7 @@ class Actor(object):
     # paste = insert
 
     # For internal use only by Films (Frame Actors).
-    # Merges a given film into IN PLACE.
+    # Merges a given film into self IN PLACE.
     # Note that the secondary film may get modified by this function.
     def _mergeFilm(self, film):
         # film = film.copy()
@@ -1858,6 +1853,8 @@ class Actor(object):
         self.newkey(mintime, self.first().copy())
         film.newkey(mintime, film.first().copy())
 
+        # Sorting is useful to prevent unnecessary tween method
+        # splitting for later keyfigures.
         keytimes = sorted(set(self.keyIDs).union(film.keyIDs))
         # Seamlessly introduce new keyframes into secondary film
         # corresponding to the keyframes of the self. This
@@ -1893,10 +1890,18 @@ class Actor(object):
         # Turn each individual actor into a singleton Frame Actor
         # (aka "Film") before combining them all into a single Film.
         films = []
-        for n,actor in enumerate(actors):
+        for n, actor in enumerate(actors):
             film = Actor(FrameType)
             for time, keyfig in actor.timeline.items():
-                film.newkey(time+n*stagger, FrameType([keyfig]))
+                # Incorporate non-uniform transitions into tween methods
+                # since Frame tweening ignores subfigure transitions.
+                if keyfig.transition != morpho.transitions.uniform:
+                    keyfig.tweenMethod = morpho.transitions.incorporateTransition(keyfig.transition, keyfig.tweenMethod)
+                    keyfig.transition = morpho.transitions.uniform
+                # Transitions are handled within the tween methods of
+                # subfigures, so the toplevel transition of the film
+                # should be uniform.
+                film.newkey(time+n*stagger, FrameType()).set(figures=[keyfig], transition=morpho.transitions.uniform)
             films.append(film)
 
         # Combine all the individual singleton films into

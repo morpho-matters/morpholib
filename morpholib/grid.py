@@ -3083,24 +3083,8 @@ class SpaceAxis(SpaceTrack):
         return [axis]
 
 
-# Mainly for internal use by the MathGrid class
-# to enable MathGrids to split their subpaths'
-# tween methods.
-# Special tween method splitter that returns two special
-# dictionaries containing t_split values for the subpaths
-# of a MathGrid object. When these dicts are assigned to
-# MathGrid's special `tweenMethod` property, the t_split
-# values are extracted and passed to the subfigures'
-# tween method splitters.
-def _gridSplitter(t):
-    tween1 = dict(t_split=t)
-    tween2 = dict(t_split=1-t)
-    return (tween1, tween2)
-
 # Special Frame figure for mathgrids
 class MathGrid(morpho.Frame):
-    _allowSubfigureSplitting = False
-
     def __init__(self, *args, **kwargs):
         # Bypass Figure class special setattr() method to set the
         # hidden `_transition` attribute so that the `transition`
@@ -3111,103 +3095,10 @@ class MathGrid(morpho.Frame):
         # This assigns the Frame's transition to all component figures.
         self.transition = self._transition
 
-    # transition property makes it so that setting the transition
-    # of the MathGrid as a whole propagates it down to the component
-    # figures.
-    @property
-    def transition(self):
-        return self._transition
-
-    @transition.setter
-    def transition(self, value):
-        self._transition = value
-        # The try clause here is because the transition property
-        # may be set before the figures tweenable has been setup
-        # e.g. in __init__()
-        try:
-            for fig in self._state["figures"].value:
-                fig.transition = value
-        except KeyError:
-            pass
-
-    @property
-    def defaultTween(self):
-        return self._defaultTween
-
-    # Special setter for the defaultTween attribute
-    # enables MathGrids to split subfigure tween methods.
-    # It works as normal, but if a dict is assigned
-    # to the defaultTween/tweenMethod attribute instead of a
-    # function, it extracts the t-split value inside and passes
-    # it to the splitters of the subfigure tween methods.
-    # If the dict also contains a "tweenMethod" key, it will
-    # assign the value of that tweenMethod as the tween method
-    # of the MathGrid object.
-    @defaultTween.setter
-    def defaultTween(self, value):
-        # If value is callable, just treat it as an ordinary
-        # tween method and assign it normally.
-        if callable(value):
-            self._defaultTween = value
-        # If value is a dictionary, potentially do some subfigure
-        # tween method splitting.
-        elif isinstance(value, dict):
-            if "tweenMethod" in value:
-                self._defaultTween = value["tweenMethod"]
-            if "t_split" in value:
-                t_split = value["t_split"]
-                # Go thru the
-                # path list and split all the tween methods
-                # according to the given t_split value.
-                for fig in self.figures:
-                    if morpho.tweenSplittable(fig.tweenMethod):
-                        fig.tweenMethod = fig.tweenMethod.splitter(t_split)[0]
-        else:
-            raise TypeError(f"Invalid type `{type(value).__name__}` for tween method.")
-
     # Returns equivalent MultiPath figure of this MathGrid
     def toMultiPath(self):
         multipath = MultiPath(self.figures)
         return multipath
-
-    ### TWEEN METHODS ###
-
-    # This is a hack to enable MathGrids to split the
-    # tween methods of their component figures.
-    # The tween methods are assigned a special splitter that
-    # instead of returning two tween methods, returns
-    # two dicts containing t-split values. When MathGrid
-    # figures are assigned these dicts as tweenMethods,
-    # they will propagate the t-split values to the splitters
-    # of the subfigures while leaving the MathGrid tweenMethod
-    # attribute unchanged.
-    @morpho.TweenMethod(splitter=_gridSplitter)
-    def tweenLinear(self, *args, **kwargs):
-        return super().tweenLinear(*args, **kwargs)
-
-    @morpho.TweenMethod(splitter=_gridSplitter)
-    def tweenSpiral(self, *args, **kwargs):
-        return super().tweenSpiral(*args, **kwargs)
-
-    @classmethod
-    def tweenPivot(cls, *args, **kwargs):
-        pivot = super().tweenPivot(*args, **kwargs)
-
-        # This is another hack. The tween methods returned by
-        # the standard pivot splitter are packaged into a dict
-        # along with a special "t_split" key which the tweenMethod
-        # setter for the MathGrid class will pass on to the
-        # subfigures' tween method splitters.
-        basesplitter = pivot.splitter
-        def splitter(t):
-            tween1, tween2 = basesplitter(t)
-            tween1 = dict(tweenMethod=tween1, t_split=t)
-            tween2 = dict(tweenMethod=tween2, t_split=1-t)
-            return (tween1, tween2)
-
-        pivot = morpho.TweenMethod(pivot, splitter=splitter)
-        return pivot
-
 
 
 @MathGrid.action
@@ -3227,7 +3118,6 @@ def growIn(grid, duration=30, atFrame=None, *, reverse=False):
             path.start = 1
         else:
             path.end = 0
-# MathGrid_growIn = growIn
 
 @MathGrid.action
 def shrinkOut(grid, duration=30, atFrame=None, *, reverse=False):

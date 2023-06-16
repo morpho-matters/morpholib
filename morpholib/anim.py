@@ -74,6 +74,40 @@ class LayerMergeError(MergeError):
 class MaskConfigurationError(Exception):
     pass
 
+
+### CLASS DECORATORS ###
+
+# Decorator for Frame tween methods that implements subfigure
+# tweening and splitting automatically for tween methods that
+# ignore the `figures` tweenable.
+def handleSubfigureTweening(tweenmethod):
+    def splitter(t, beg, mid, fin):
+        # First use the original splitter to split the tween method
+        if morpho.tweenSplittable(tweenmethod):
+            tweenmethod.splitter(t, beg, mid, fin)
+
+        # Split subfigure tween methods
+        for subbeg, submid, subfin in zip(beg.figures, mid.figures, fin.figures):
+            # Split the tween methods of corresponding subfigure triplets
+            if morpho.tweenSplittable(subbeg.tweenMethod):
+                subbeg.tweenMethod.splitter(t, subbeg, submid, subfin)
+
+    @morpho.TweenMethod(splitter=splitter)
+    def wrapper(self, other, t, *args, **kwargs):
+        # Apply original tween method and assume it doesn't
+        # affect the `figures` tweenable.
+        twfig = tweenmethod(self, other, t, *args, **kwargs)
+
+        # Tween subfigures
+        twfig_figures = twfig.figures  # Saves on tweenable getattr time
+        for n, (fig1, fig2) in enumerate(zip(self.figures, other.figures)):
+            # Skip any static subfigures
+            if fig1.static: continue
+            twfig_figures[n] = fig1.tweenMethod(fig1, fig2, t)
+
+        return twfig
+    return wrapper
+
 ### CLASSES ###
 
 # Frame class. Groups figures together for simultaneous drawing.
@@ -113,14 +147,6 @@ class MaskConfigurationError(Exception):
 # The transition of the Frame figure itself really only applies to its
 # own `origin` tweenable.
 class Frame(morpho.Figure):
-    # This is a (hopefully temporary) hack to fix a bug with
-    # MathGrid tween method splitting arising from the fact that
-    # under normal circumstances, splitting a Frame Actor's tween
-    # method automatically splits the subfigure tween methods.
-    # Setting this attribute to False (as it is with the MathGrid
-    # class) disables this behavior.
-    _allowSubfigureSplitting = True
-
     def __init__(self, figures=None, /, **kwargs):
         # By default, do what the superclass does.
         # morpho.Figure.__init__(self)
@@ -474,8 +500,9 @@ class Frame(morpho.Figure):
 
         # Make copies of all the underlying figures.
         if deep:
-            for i in range(len(new.figures)):
-                new.figures[i] = new.figures[i].copy()
+            new_figures = new.figures  # Saves on tweenable getattr time loss
+            for i, fig in enumerate(new_figures):
+                new_figures[i] = fig.copy()
         return new
 
     # Perform an fimage on all non-static figures that possess
@@ -491,32 +518,21 @@ class Frame(morpho.Figure):
                 fS.figures[i] = fig.fimage(func)
         return fS
 
-    # Use the default tween method and transition to tween the frame.
-    # Also auto-tweens all of the figures in the figure list.
-    # Frame transition should only affect frame-specific tweenables.
-    # It should not transfer down to the figures it contains.
-    # Also note that tween() assumes the figure lists between
-    # self and other are compatible i.e. of the same lengths AND
-    # item-by-item having the same figure types. Trying to tween
-    # figures of different types may result in a crash or
-    # unpredictable behavior. So if you have two keyframes in an
-    # animation that are one after the other in the same layer,
-    # you should set the first keyframe to be static so that it
-    # doesn't tween.
-    def tween(self, other, t):
-        frm = self.defaultTween(self, other, self.transition(t))
+    ### TWEEN METHODS ###
 
-        # Now do stuff with the figures tweenable
-        # Tween each figure according to its default tween method.
-        for i in range(len(self.figures)):
-            fig = self.figures[i]
-            # Don't tween if the figure is static
-            if fig.static: continue
+    tweenLinear = handleSubfigureTweening(morpho.Figure.tweenLinear)
+    tweenSpiral = handleSubfigureTweening(morpho.Figure.tweenSpiral)
 
-            pig = other.figures[i]
-            twig = fig.tween(pig, t)
-            frm.figures[i] = twig
-        return frm
+    @classmethod
+    def tweenPivot(cls, angle=tau/2):
+        pivot = morpho.Figure.tweenPivot(angle)
+        # Enable splitting
+        pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
+        pivot = handleSubfigureTweening(pivot)
+
+        return pivot
+
+
 
 # Blank frame used by the Animation class.
 blankFrame = Frame()
@@ -908,11 +924,6 @@ class MultiFigure(Frame):
                 basemethod(fig, *args, **kwargs)
             return self
         return modifiedMethod
-
-
-    # This is needed because inherited tween() is Frame.tween()
-    # which is a modified version of default Figure.tween()
-    tween = morpho.Figure.tween
 
 Multifigure = MultiFigure
 

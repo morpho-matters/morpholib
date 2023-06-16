@@ -170,7 +170,8 @@ def _generateTransitionSplitter(transition, tweenmethod):
         trans1, trans2 = split(transition, t)
 
         if morpho.tweenSplittable(tweenmethod):
-            basetween1, basetween2 = tweenmethod.splitter(transition(t))
+            tweenmethod.splitter(transition(t), beg, mid, fin)
+            basetween1, basetween2 = beg.tweenMethod, mid.tweenMethod
         else:
             # Assume the tween method respects splitting
             basetween1 = basetween2 = tweenmethod
