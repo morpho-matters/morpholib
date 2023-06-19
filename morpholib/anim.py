@@ -136,6 +136,7 @@ class _SubactionSummoner(object):
 
         subactors = []
         for fig in initframe.figures:
+            fig_orig = fig
             fig = fig.copy()
             # Transition is set to uniform because transitions are ignored
             # in frames and we want Actor.zip() to respect that.
@@ -145,6 +146,12 @@ class _SubactionSummoner(object):
             # fig.static = False
             subactor = morpho.Actor(fig)
             action(subactor, duration=duration, **kwargs)
+            # Restore tween method and transition to original
+            # values for the final keyfigure in the subactor
+            subactor.last().set(
+                tweenMethod=fig_orig.tweenMethod,
+                transition=fig_orig.transition
+                )
             subactors.append(subactor)
 
         if atFrame == film.lastID():
