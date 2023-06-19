@@ -797,9 +797,9 @@ class MultiFigure(Frame):
     #              tweening all the "main" tweenables of the multifigure
     #              object itself (as opposed to subfigures), but it
     #              should NOT act on the `figures` tweenable!
-    #              Defaults to Frame.tweenLinear.
+    #              Defaults to Figure.tweenLinear.
     @staticmethod
-    def Multi(baseMethod, mainMethod=Frame.tweenLinear):
+    def Multi(baseMethod, mainMethod=morpho.Figure.tweenLinear):
 
         def wrapper(self, other, t, *args, **kwargs):
             # wrapper function for a MultiFigure tween method
