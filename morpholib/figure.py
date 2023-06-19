@@ -1919,6 +1919,10 @@ class Actor(object):
 
         return finalFilm
 
+    @property
+    def subaction(self):
+        return self.figureType.subaction(self)
+
     # NOT IMPLEMENTED!
     # Like insert(), except it overwrites the original actor
     # at the target frame going into the future.

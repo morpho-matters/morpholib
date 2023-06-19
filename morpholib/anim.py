@@ -110,6 +110,69 @@ def handleSubfigureTweening(tweenmethod):
 
 ### CLASSES ###
 
+# Enables Frame-like figures to apply an action to its subfigures
+# via the syntax
+#   myfilm.subaction.myaction(..., substagger=5)
+# Note that this assumes `myaction` only needs access to the final
+# keyfigure of the actor, and only modifies the actor by appending
+# new keyfigures to the end of its timeline. Actions such as
+# fadeIn/Out() and growIn/shrinkOut(), but not rollback() (since it
+# needs access to the first keyfigure).
+class _SubactionSummoner(object):
+    def __init__(self, actor):
+        self.actor = actor
+
+    # Apply actor actions to subfigures in a Frame-like figure,
+    # along with a substagger option.
+    @staticmethod
+    def subaction(actionName, film, duration=30, atFrame=None, *, substagger=0, **kwargs):
+        action = getattr(morpho.action, actionName)
+
+        if atFrame is None:
+            atFrame = film.lastID()
+
+        frame0 = film.last()
+        initframe = frame0.copy()
+
+        subactors = []
+        for fig in initframe.figures:
+            fig = fig.copy()
+            # Transition is set to uniform because transitions are ignored
+            # in frames and we want Actor.zip() to respect that.
+            fig.transition = morpho.transitions.uniform
+            if initframe.transition != morpho.transitions.uniform:
+                fig.tweenMethod = morpho.transitions.incorporateTransition(initframe.transition, fig.tweenMethod)
+            # fig.static = False
+            subactor = morpho.Actor(fig)
+            action(subactor, duration=duration, **kwargs)
+            subactors.append(subactor)
+
+        if atFrame == film.lastID():
+            film.delkey(atFrame)
+        template = initframe.copy().set(figures=[])
+        zipped = morpho.Actor.zip(subactors, stagger=substagger, template=template)
+        film.insert(zipped, atFrame=atFrame)
+
+    def __getattr__(self, name):
+        def subaction(*args, substagger=0, **kwargs):
+            return self.subaction(name, self.actor, *args, substagger=substagger, **kwargs)
+
+        return subaction
+
+# Enables MultiFigures to apply an action to its subfigures
+# via the syntax
+#   myfilm.subaction.myaction(..., substagger=5)
+class _SubactionSummonerForMultiFigures(_SubactionSummoner):
+    @staticmethod
+    def subaction(actionName, film, *args, substagger=0, **kwargs):
+        if substagger == 0:
+            _SubactionSummoner.subaction(actionName, film, *args, substagger=0, **kwargs)
+        else:
+            origTweenMethod = film.last().tweenMethod
+            film.last().tweenMethod = Frame.tweenLinear
+            _SubactionSummoner.subaction(actionName, film, *args, substagger=substagger, **kwargs)
+            film.last().tweenMethod = origTweenMethod
+
 # Frame class. Groups figures together for simultaneous drawing.
 # Syntax: myframe = Frame(list_of_figures, **kwargs)
 #
@@ -215,6 +278,12 @@ class Frame(morpho.Figure):
     # # can be done without affecting the other frame.
     # def matchesStyle(self, other):
     #     return self.defaultTween==other.defaultTween
+
+    # Allows actor actions to be applied to subfigures with a
+    # substagger parameter.
+    @staticmethod
+    def subaction(actor):
+        return _SubactionSummoner(actor)
 
     # Append the figure list of other to self in place.
     # Also adds in the named subfigures of other into self's registry,
@@ -532,46 +601,80 @@ class Frame(morpho.Figure):
 
         return pivot
 
-
-
 # Blank frame used by the Animation class.
 blankFrame = Frame()
 blankFrame.static = True
 
+# Special fadeIn() for Frame-like actors supports a `substagger`
+# parameter that applies a staggered fade in to the subfigures.
+#
+# Note: For substagger to work, the tween method of the latest
+# keyfigure must delegate subfigure tweening to the subfigures'
+# individual tween methods. This condition is always satisfied
+# if using one of the built-in tween methods, but if using a
+# custom one, make sure to decorate it with
+# @handleSubfigureTweening.
 @Frame.action
-def fadeIn(frame, duration=30, atFrame=None, jump=0, alpha=1):
+def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
+    lasttime = film.lastID()
     if atFrame is None:
-        atFrame = frame.lastID()
+        atFrame = lasttime
 
-    frame0 = frame.last()
-    frame0.visible = False
-    frame1 = frame.newkey(atFrame)
-    frame1.visible = True
-    frame2 = frame.newendkey(duration)
+    frame0 = film.last()
+    frame0.visible = True
+    finalframe = frame0.copy()
+    frame0.all.static = False
 
-    for n,fig in enumerate(frame1.figures):
-        fig.static = False
-        actor = morpho.Actor(fig)
-        actor.fadeIn(duration=duration, jump=jump, alpha=alpha)
-        frame1.figures[n] = actor.first()
-        frame2.figures[n] = actor.last()
+    if substagger == 0:
+        # Do traditional fade in action. The traditional way exists
+        # since using the subaction feature on MultiFigures incurs
+        # some drawbacks that I would like to not have to deal with
+        # if substagger is 0.
+        frame1 = film.newkey(atFrame)
+        frame1.visible = True
+        frame2 = film.newendkey(duration)
+
+        for n,fig in enumerate(frame1.figures):
+            # fig.static = False
+            actor = morpho.Actor(fig)
+            actor.fadeIn(duration=duration, jump=jump, alpha=alpha)
+            frame1.figures[n] = actor.first()
+            frame2.figures[n] = actor.last()
+    else:
+        film.subaction.fadeIn(duration, atFrame, jump=jump, alpha=alpha, substagger=substagger)
+
+    # Hide lingering initial keyfigure if it exists.
+    if atFrame > lasttime:
+        frame0.visible = False
+
+    # Ensure final frame really is the original final frame
+    film.fin = finalframe
 
 @Frame.action
-def fadeOut(frame, duration=30, atFrame=None, jump=0):
-    if atFrame is None:
-        atFrame = frame.lastID()
+def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0):
+    film.last().all.static = False
+    if substagger == 0:
+        # Do traditional fade out action. The traditional way exists
+        # since using the subaction feature on MultiFigures incurs
+        # some drawbacks that I would like to not have to deal with
+        # if substagger is 0.
+        if atFrame is None:
+            atFrame = film.lastID()
 
-    frame0 = frame.last()
-    frame1 = frame.newkey(atFrame)
-    frame2 = frame.newendkey(duration)
-    frame2.visible = False
+        frame0 = film.last()
+        frame1 = film.newkey(atFrame)
+        frame2 = film.newendkey(duration)
+        frame2.visible = False
 
-    for n,fig in enumerate(frame1.figures):
-        fig.static = False
-        actor = morpho.Actor(fig)
-        actor.fadeOut(duration=duration, jump=jump)
-        frame1.figures[n] = actor.first()
-        frame2.figures[n] = actor.last()
+        for n,fig in enumerate(frame1.figures):
+            # fig.static = False
+            actor = morpho.Actor(fig)
+            actor.fadeOut(duration=duration, jump=jump)
+            frame1.figures[n] = actor.first()
+            frame2.figures[n] = actor.last()
+    else:
+        film.subaction.fadeOut(duration, atFrame, jump=jump, substagger=substagger)
+    film.last().visible = False
 
 @Frame.action
 def rollback(frame, duration=30, atFrame=None):
@@ -640,6 +743,12 @@ class MultiFigure(Frame):
 
     def _appearsEqual(self, other, *args, compareSubNonTweenables=True, **kwargs):
         return morpho.Frame._appearsEqual(self, other, *args, compareSubNonTweenables=compareSubNonTweenables, **kwargs)
+
+    # Allows actor actions to be applied to subfigures with a
+    # substagger parameter.
+    @staticmethod
+    def subaction(actor):
+        return _SubactionSummonerForMultiFigures(actor)
 
     # # NOT IMPLEMENTED!!!
     # # Returns a StateStruct encapsulating all the tweenables
@@ -927,6 +1036,22 @@ class MultiFigure(Frame):
 
 Multifigure = MultiFigure
 
+@MultiFigure.action
+def fadeIn(actor, *args, substagger=0, **kwargs):
+    finalkey = actor.last().copy()
+    if substagger != 0:
+        actor.last().tweenMethod = Frame.tweenLinear
+    Frame.actions["fadeIn"](actor, *args, substagger=substagger, **kwargs)
+    actor.fin = finalkey
+
+@MultiFigure.action
+def fadeOut(actor, *args, substagger=0, **kwargs):
+    origTweenMethod = actor.last().tweenMethod
+    if substagger != 0:
+        actor.last().tweenMethod = Frame.tweenLinear
+    Frame.actions["fadeOut"](actor, *args, substagger=substagger, **kwargs)
+    actor.last().tweenMethod = origTweenMethod
+
 
 # Class encapsulates all the tweenables of a list of figures of common
 # type so that you can easily modify a single tweenable across all the
@@ -1038,6 +1163,9 @@ class SpaceFrame(Frame):
 
 # 3D version of the MultiFigure class. See "MultiFigure" for more info.
 class SpaceMultiFigure(SpaceFrame):
+    # Use MultiFigure's actions instead of SpaceFrame's
+    actions = MultiFigure.actions.copy()
+
     def __getattr__(self, name):
         return MultiFigure.__getattr__(self, name)
 

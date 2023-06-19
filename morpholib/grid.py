@@ -3085,62 +3085,41 @@ class SpaceAxis(SpaceTrack):
 
 # Special Frame figure for mathgrids
 class MathGrid(morpho.Frame):
-    def __init__(self, *args, **kwargs):
-        # Bypass Figure class special setattr() method to set the
-        # hidden `_transition` attribute so that the `transition`
-        # property works when super().__init__() is called.
-        object.__setattr__(self, "_transition", morpho.transition.default)
-        object.__setattr__(self, "_defaultTween", type(self).tweenLinear)
-        super().__init__(*args, **kwargs)
-        # This assigns the Frame's transition to all component figures.
-        self.transition = self._transition
 
     # Returns equivalent MultiPath figure of this MathGrid
     def toMultiPath(self):
         multipath = MultiPath(self.figures)
         return multipath
 
-
 @MathGrid.action
-def growIn(grid, duration=30, atFrame=None, *, reverse=False):
+def growIn(grid, duration=30, atFrame=None, *, reverse=False, substagger=0):
+    lasttime = grid.lastID()
     if atFrame is None:
-        atFrame = grid.lastID()
+        atFrame = lasttime
 
     grid0 = grid.last()
-    grid1 = grid.newkey(atFrame)
-    grid2 = grid.newendkey(duration)
+    gridfinal = grid0.copy().set(visible=True)
+    grid0.all.static = False
+    grid.subaction.growIn(duration, atFrame, reverse=reverse, substagger=substagger)
 
-    grid0.visible = False
+    # Hide lingering initial keyfigure if it exists.
+    if atFrame > lasttime:
+        grid0.visible = False
 
-    for path in grid1.figures:
-        path.static = False
-        if reverse:
-            path.start = 1
-        else:
-            path.end = 0
+    # Ensure final keyfigure is really the original final figure.
+    # Also restores all formerly static subfigures to being static
+    # again.
+    grid.fin = gridfinal
 
 @MathGrid.action
-def shrinkOut(grid, duration=30, atFrame=None, *, reverse=False):
-    if atFrame is None:
-        atFrame = grid.lastID()
-
-    grid0 = grid.newkey(atFrame)
-    for path in grid0.figures:
-        path.static = False
-
-    grid1 = grid.newendkey(duration)
-    for path in grid1.figures:
-        path.set(headSize=0, tailSize=0, visible=False)
-        if reverse:
-            path.start = 1
-        else:
-            path.end = 0
+def shrinkOut(grid, *args, **kwargs):
+    grid.last().all.static = False
+    grid.subaction.shrinkOut(*args, **kwargs)
+    grid.last().visible = False
 
 
 # Special SpaceFrame figure for 3D mathgrids
 class SpaceMathGrid(MathGrid, morpho.SpaceFrame):
-    # Copy over the actions defined for MathGrid
-    actions = MathGrid.actions.copy()
 
     ### TWEEN METHODS ###
 
