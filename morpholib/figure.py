@@ -1857,7 +1857,7 @@ class Actor(object):
         # splitting for later keyfigures.
         keytimes = sorted(set(self.keyIDs).union(film.keyIDs))
         # Seamlessly introduce new keyframes into secondary film
-        # corresponding to the keyframes of the self. This
+        # corresponding to the keyframes of self. This
         # way, the secondary film will still animate identically
         # after being merged into the (possibly crowded) timeline
         # of self.
@@ -1873,8 +1873,6 @@ class Actor(object):
         return self
 
     # Combines all the actors into a single Frame actor.
-    # Note this function may modify the underlying keyfigures of
-    # the supplied actors.
     # Optional keyword `stagger` can be given an integer
     # to offset each actor from the previous in the sequence by
     # a certain number of frames.
@@ -1894,6 +1892,7 @@ class Actor(object):
         # (aka "Film") before combining them all into a single Film.
         films = []
         for n, actor in enumerate(actors):
+            actor = actor.copy()
             film = Actor(type(template))
             for time, keyfig in actor.timeline.items():
                 # Incorporate non-uniform transitions into tween methods
@@ -1912,6 +1911,11 @@ class Actor(object):
         finalFilm = films[0]
         for film in films[1:]:
             finalFilm._mergeFilm(film)
+        # Ensure state of the subfigures of the final keyframe exactly
+        # matches the state of the final keys of the supplied actors.
+        # Also ensure other settings of the final keyframe matches the
+        # template.
+        finalFilm.fin = template.copy().set(figures=[actor.last().copy() for actor in actors])
 
         return finalFilm
 
