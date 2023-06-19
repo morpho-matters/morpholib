@@ -74,7 +74,104 @@ class LayerMergeError(MergeError):
 class MaskConfigurationError(Exception):
     pass
 
+
+### CLASS DECORATORS ###
+
+# Decorator for Frame tween methods that implements subfigure
+# tweening and splitting automatically for tween methods that
+# ignore the `figures` tweenable.
+def handleSubfigureTweening(tweenmethod):
+    def splitter(t, beg, mid, fin):
+        # First use the original splitter to split the tween method
+        if morpho.tweenSplittable(tweenmethod):
+            tweenmethod.splitter(t, beg, mid, fin)
+
+        # Split subfigure tween methods
+        for subbeg, submid, subfin in zip(beg.figures, mid.figures, fin.figures):
+            # Split the tween methods of corresponding subfigure triplets
+            if morpho.tweenSplittable(subbeg.tweenMethod):
+                subbeg.tweenMethod.splitter(t, subbeg, submid, subfin)
+
+    @morpho.TweenMethod(splitter=splitter)
+    def wrapper(self, other, t, *args, **kwargs):
+        # Apply original tween method and assume it doesn't
+        # affect the `figures` tweenable.
+        twfig = tweenmethod(self, other, t, *args, **kwargs)
+
+        # Tween subfigures
+        twfig_figures = twfig.figures  # Saves on tweenable getattr time
+        for n, (fig1, fig2) in enumerate(zip(self.figures, other.figures)):
+            # Skip any static subfigures
+            if fig1.static: continue
+            twfig_figures[n] = fig1.tweenMethod(fig1, fig2, t)
+
+        return twfig
+    return wrapper
+
 ### CLASSES ###
+
+# Enables Frame-like figures to apply an action to its subfigures
+# via the syntax
+#   myfilm.subaction.myaction(..., substagger=5)
+# Note that this assumes `myaction` only needs access to the final
+# keyfigure of the actor, and only modifies the actor by appending
+# new keyfigures to the end of its timeline. Actions such as
+# fadeIn/Out() and growIn/shrinkOut(), but not rollback() (since it
+# needs access to the first keyfigure).
+class _SubactionSummoner(object):
+    def __init__(self, actor):
+        self.actor = actor
+
+    # Apply actor actions to subfigures in a Frame-like figure,
+    # along with a substagger option.
+    @staticmethod
+    def subaction(actionName, film, duration=30, atFrame=None, *, substagger=0, **kwargs):
+        action = getattr(morpho.action, actionName)
+
+        if atFrame is None:
+            atFrame = film.lastID()
+
+        frame0 = film.last()
+        initframe = frame0.copy()
+
+        subactors = []
+        for fig in initframe.figures:
+            fig = fig.copy()
+            # Transition is set to uniform because transitions are ignored
+            # in frames and we want Actor.zip() to respect that.
+            fig.transition = morpho.transitions.uniform
+            if initframe.transition != morpho.transitions.uniform:
+                fig.tweenMethod = morpho.transitions.incorporateTransition(initframe.transition, fig.tweenMethod)
+            # fig.static = False
+            subactor = morpho.Actor(fig)
+            action(subactor, duration=duration, **kwargs)
+            subactors.append(subactor)
+
+        if atFrame == film.lastID():
+            film.delkey(atFrame)
+        template = initframe.copy().set(figures=[])
+        zipped = morpho.Actor.zip(subactors, stagger=substagger, template=template)
+        film.insert(zipped, atFrame=atFrame)
+
+    def __getattr__(self, name):
+        def subaction(*args, substagger=0, **kwargs):
+            return self.subaction(name, self.actor, *args, substagger=substagger, **kwargs)
+
+        return subaction
+
+# Enables MultiFigures to apply an action to its subfigures
+# via the syntax
+#   myfilm.subaction.myaction(..., substagger=5)
+class _SubactionSummonerForMultiFigures(_SubactionSummoner):
+    @staticmethod
+    def subaction(actionName, film, *args, substagger=0, **kwargs):
+        if substagger == 0:
+            _SubactionSummoner.subaction(actionName, film, *args, substagger=0, **kwargs)
+        else:
+            origTweenMethod = film.last().tweenMethod
+            film.last().tweenMethod = Frame.tweenLinear
+            _SubactionSummoner.subaction(actionName, film, *args, substagger=substagger, **kwargs)
+            film.last().tweenMethod = origTweenMethod
 
 # Frame class. Groups figures together for simultaneous drawing.
 # Syntax: myframe = Frame(list_of_figures, **kwargs)
@@ -113,14 +210,6 @@ class MaskConfigurationError(Exception):
 # The transition of the Frame figure itself really only applies to its
 # own `origin` tweenable.
 class Frame(morpho.Figure):
-    # This is a (hopefully temporary) hack to fix a bug with
-    # MathGrid tween method splitting arising from the fact that
-    # under normal circumstances, splitting a Frame Actor's tween
-    # method automatically splits the subfigure tween methods.
-    # Setting this attribute to False (as it is with the MathGrid
-    # class) disables this behavior.
-    _allowSubfigureSplitting = True
-
     def __init__(self, figures=None, /, **kwargs):
         # By default, do what the superclass does.
         # morpho.Figure.__init__(self)
@@ -189,6 +278,12 @@ class Frame(morpho.Figure):
     # # can be done without affecting the other frame.
     # def matchesStyle(self, other):
     #     return self.defaultTween==other.defaultTween
+
+    # Allows actor actions to be applied to subfigures with a
+    # substagger parameter.
+    @staticmethod
+    def subaction(actor):
+        return _SubactionSummoner(actor)
 
     # Append the figure list of other to self in place.
     # Also adds in the named subfigures of other into self's registry,
@@ -478,8 +573,9 @@ class Frame(morpho.Figure):
 
         # Make copies of all the underlying figures.
         if deep:
-            for i in range(len(new.figures)):
-                new.figures[i] = new.figures[i].copy()
+            new_figures = new.figures  # Saves on tweenable getattr time loss
+            for i, fig in enumerate(new_figures):
+                new_figures[i] = fig.copy()
         return new
 
     # Perform an fimage on all non-static figures that possess
@@ -495,71 +591,94 @@ class Frame(morpho.Figure):
                 fS.figures[i] = fig.fimage(func)
         return fS
 
-    # Use the default tween method and transition to tween the frame.
-    # Also auto-tweens all of the figures in the figure list.
-    # Frame transition should only affect frame-specific tweenables.
-    # It should not transfer down to the figures it contains.
-    # Also note that tween() assumes the figure lists between
-    # self and other are compatible i.e. of the same lengths AND
-    # item-by-item having the same figure types. Trying to tween
-    # figures of different types may result in a crash or
-    # unpredictable behavior. So if you have two keyframes in an
-    # animation that are one after the other in the same layer,
-    # you should set the first keyframe to be static so that it
-    # doesn't tween.
-    def tween(self, other, t):
-        frm = self.defaultTween(self, other, self.transition(t))
+    ### TWEEN METHODS ###
 
-        # Now do stuff with the figures tweenable
-        # Tween each figure according to its default tween method.
-        for i in range(len(self.figures)):
-            fig = self.figures[i]
-            # Don't tween if the figure is static
-            if fig.static: continue
+    tweenLinear = handleSubfigureTweening(morpho.Figure.tweenLinear)
+    tweenSpiral = handleSubfigureTweening(morpho.Figure.tweenSpiral)
 
-            pig = other.figures[i]
-            twig = fig.tween(pig, t)
-            frm.figures[i] = twig
-        return frm
+    @classmethod
+    def tweenPivot(cls, angle=tau/2):
+        pivot = morpho.Figure.tweenPivot(angle)
+        # Enable splitting
+        pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
+        pivot = handleSubfigureTweening(pivot)
+
+        return pivot
 
 # Blank frame used by the Animation class.
 blankFrame = Frame()
 blankFrame.static = True
 
+# Special fadeIn() for Frame-like actors supports a `substagger`
+# parameter that applies a staggered fade in to the subfigures.
+#
+# Note: For substagger to work, the tween method of the latest
+# keyfigure must delegate subfigure tweening to the subfigures'
+# individual tween methods. This condition is always satisfied
+# if using one of the built-in tween methods, but if using a
+# custom one, make sure to decorate it with
+# @handleSubfigureTweening.
 @Frame.action
-def fadeIn(frame, duration=30, atFrame=None, jump=0, alpha=1):
+def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
+    lasttime = film.lastID()
     if atFrame is None:
-        atFrame = frame.lastID()
+        atFrame = lasttime
 
-    frame0 = frame.last()
-    frame0.visible = False
-    frame1 = frame.newkey(atFrame)
-    frame1.visible = True
-    frame2 = frame.newendkey(duration)
+    frame0 = film.last()
+    frame0.visible = True
+    finalframe = frame0.copy()
+    frame0.all.static = False
 
-    for n,fig in enumerate(frame1.figures):
-        fig.static = False
-        actor = morpho.Actor(fig)
-        actor.fadeIn(duration=duration, jump=jump, alpha=alpha)
-        frame1.figures[n] = actor.first()
-        frame2.figures[n] = actor.last()
+    if substagger == 0:
+        # Do traditional fade in action. The traditional way exists
+        # since using the subaction feature on MultiFigures incurs
+        # some drawbacks that I would like to not have to deal with
+        # if substagger is 0.
+        frame1 = film.newkey(atFrame)
+        frame1.visible = True
+        frame2 = film.newendkey(duration)
+
+        for n,fig in enumerate(frame1.figures):
+            # fig.static = False
+            actor = morpho.Actor(fig)
+            actor.fadeIn(duration=duration, jump=jump, alpha=alpha)
+            frame1.figures[n] = actor.first()
+            frame2.figures[n] = actor.last()
+    else:
+        film.subaction.fadeIn(duration, atFrame, jump=jump, alpha=alpha, substagger=substagger)
+
+    # Hide lingering initial keyfigure if it exists.
+    if atFrame > lasttime:
+        frame0.visible = False
+
+    # Ensure final frame really is the original final frame
+    film.fin = finalframe
 
 @Frame.action
-def fadeOut(frame, duration=30, atFrame=None, jump=0):
-    if atFrame is None:
-        atFrame = frame.lastID()
+def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0):
+    film.last().all.static = False
+    if substagger == 0:
+        # Do traditional fade out action. The traditional way exists
+        # since using the subaction feature on MultiFigures incurs
+        # some drawbacks that I would like to not have to deal with
+        # if substagger is 0.
+        if atFrame is None:
+            atFrame = film.lastID()
 
-    frame0 = frame.last()
-    frame1 = frame.newkey(atFrame)
-    frame2 = frame.newendkey(duration)
-    frame2.visible = False
+        frame0 = film.last()
+        frame1 = film.newkey(atFrame)
+        frame2 = film.newendkey(duration)
+        frame2.visible = False
 
-    for n,fig in enumerate(frame1.figures):
-        fig.static = False
-        actor = morpho.Actor(fig)
-        actor.fadeOut(duration=duration, jump=jump)
-        frame1.figures[n] = actor.first()
-        frame2.figures[n] = actor.last()
+        for n,fig in enumerate(frame1.figures):
+            # fig.static = False
+            actor = morpho.Actor(fig)
+            actor.fadeOut(duration=duration, jump=jump)
+            frame1.figures[n] = actor.first()
+            frame2.figures[n] = actor.last()
+    else:
+        film.subaction.fadeOut(duration, atFrame, jump=jump, substagger=substagger)
+    film.last().visible = False
 
 @Frame.action
 def rollback(frame, duration=30, atFrame=None):
@@ -628,6 +747,12 @@ class MultiFigure(Frame):
 
     def _appearsEqual(self, other, *args, compareSubNonTweenables=True, **kwargs):
         return morpho.Frame._appearsEqual(self, other, *args, compareSubNonTweenables=compareSubNonTweenables, **kwargs)
+
+    # Allows actor actions to be applied to subfigures with a
+    # substagger parameter.
+    @staticmethod
+    def subaction(actor):
+        return _SubactionSummonerForMultiFigures(actor)
 
     # # NOT IMPLEMENTED!!!
     # # Returns a StateStruct encapsulating all the tweenables
@@ -785,9 +910,9 @@ class MultiFigure(Frame):
     #              tweening all the "main" tweenables of the multifigure
     #              object itself (as opposed to subfigures), but it
     #              should NOT act on the `figures` tweenable!
-    #              Defaults to Frame.tweenLinear.
+    #              Defaults to Figure.tweenLinear.
     @staticmethod
-    def Multi(baseMethod, mainMethod=Frame.tweenLinear):
+    def Multi(baseMethod, mainMethod=morpho.Figure.tweenLinear):
 
         def wrapper(self, other, t, *args, **kwargs):
             # wrapper function for a MultiFigure tween method
@@ -913,12 +1038,23 @@ class MultiFigure(Frame):
             return self
         return modifiedMethod
 
-
-    # This is needed because inherited tween() is Frame.tween()
-    # which is a modified version of default Figure.tween()
-    tween = morpho.Figure.tween
-
 Multifigure = MultiFigure
+
+@MultiFigure.action
+def fadeIn(actor, *args, substagger=0, **kwargs):
+    finalkey = actor.last().copy()
+    if substagger != 0:
+        actor.last().tweenMethod = Frame.tweenLinear
+    Frame.actions["fadeIn"](actor, *args, substagger=substagger, **kwargs)
+    actor.fin = finalkey
+
+@MultiFigure.action
+def fadeOut(actor, *args, substagger=0, **kwargs):
+    origTweenMethod = actor.last().tweenMethod
+    if substagger != 0:
+        actor.last().tweenMethod = Frame.tweenLinear
+    Frame.actions["fadeOut"](actor, *args, substagger=substagger, **kwargs)
+    actor.last().tweenMethod = origTweenMethod
 
 
 # Class encapsulates all the tweenables of a list of figures of common
@@ -1036,6 +1172,9 @@ class SpaceFrame(Frame):
 
 # 3D version of the MultiFigure class. See "MultiFigure" for more info.
 class SpaceMultiFigure(SpaceFrame):
+    # Use MultiFigure's actions instead of SpaceFrame's
+    actions = MultiFigure.actions.copy()
+
     def __getattr__(self, name):
         return MultiFigure.__getattr__(self, name)
 
@@ -1490,7 +1629,7 @@ class Camera(BoundingBoxFigure):
     #   mycamera.tweenMethod = mycamera.tweenZoomWithMultiplier(multfunc)
     @classmethod
     def tweenZoomWithMultiplier(cls, multiplierFunc):
-        def splitter(tmid):
+        def splitter(tmid, beg, mid, fin):
             one_minus_tmid = 1 - tmid
             M_tmid = multiplierFunc(tmid)
             def mult1(t):
@@ -1499,10 +1638,8 @@ class Camera(BoundingBoxFigure):
             def mult2(t):
                 return multiplierFunc(tmid + one_minus_tmid*t)/M_tmid**(1-t)
 
-            multzoom1 = cls.tweenZoomWithMultiplier(mult1)
-            multzoom2 = cls.tweenZoomWithMultiplier(mult2)
-
-            return (multzoom1, multzoom2)
+            beg.tweenMethod = cls.tweenZoomWithMultiplier(mult1)
+            mid.tweenMethod = cls.tweenZoomWithMultiplier(mult2)
 
         @morpho.TweenMethod(splitter=splitter)
         def multzoom(self, other, t):

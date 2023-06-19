@@ -1176,7 +1176,7 @@ def pivotTweenMethod(methodGenerator, angle, *args, **kwargs):
     def decorator(pivotTween):
         # This is the splitter function that will be attached
         # to the provided angle-specific pivot tween method.
-        def pivotSplitter(t):
+        def pivotSplitter(t, beg, mid, fin):
             # Split the angles
             angle1 = t*angle
             angle2 = (1-t)*angle
@@ -1184,10 +1184,8 @@ def pivotTweenMethod(methodGenerator, angle, *args, **kwargs):
             # Generate the corresponding angle-specific
             # pivot tween methods specific to the provided
             # bound pivot tween method generator.
-            tween1 = methodGenerator(angle1, *args, **kwargs)
-            tween2 = methodGenerator(angle2, *args, **kwargs)
-
-            return (tween1, tween2)
+            beg.tweenMethod = methodGenerator(angle1, *args, **kwargs)
+            mid.tweenMethod = methodGenerator(angle2, *args, **kwargs)
         pivotTween = morpho.TweenMethod(pivotTween, splitter=pivotSplitter)
         return pivotTween
     return decorator
@@ -1421,16 +1419,14 @@ class Actor(object):
     # Splits tween method and transition to make inserting a new
     # intermediate keyfigure seamless.
     @staticmethod
-    def _splitTweenAndTransition(keyfig, newkeyfig, t):
+    def _splitTweenAndTransition(t, beg, mid, fin):
         # Split the tween method
-        if hasattr(keyfig.tweenMethod, "splitter") and keyfig.tweenMethod.splitter is not None:
-            tween1, tween2 = keyfig.tweenMethod.splitter(keyfig.transition(t))
-            keyfig.tweenMethod = tween1
-            newkeyfig.tweenMethod = tween2
+        if morpho.tweenSplittable(beg.tweenMethod):
+            beg.tweenMethod.splitter(beg.transition(t), beg, mid, fin)
         # Split the transition function
-        func1, func2 = morpho.transitions.split(keyfig.transition, t)
-        keyfig.transition = func1
-        newkeyfig.transition = func2
+        func1, func2 = morpho.transitions.split(beg.transition, t)
+        beg.transition = func1
+        mid.transition = func2
 
     # Creates a new keyfigure at index f and returns it.
     # If f is ahead of the last keyframe, the new keyfigure
@@ -1482,14 +1478,10 @@ class Actor(object):
         if seamless and self.firstID() < f < self.lastID() and f not in self.timeline:
             # raise NotImplementedError
             keyfig1 = self.prevkey(f)
+            keyfig2 = self.nextkey(f)
             a,b = self.prevkeyID(f), self.nextkeyID(f)
             t_split = (f-a)/(b-a)
-            Actor._splitTweenAndTransition(keyfig1, figure, t_split)
-
-            if issubclass(self.figureType, morpho.Frame) and self.figureType._allowSubfigureSplitting:
-                # Split subfigure tween methods and transitions
-                for fig, twig in zip(keyfig1.figures, figure.figures):
-                    Actor._splitTweenAndTransition(fig, twig, t_split)
+            Actor._splitTweenAndTransition(t_split, keyfig1, figure, keyfig2)
 
         # Add the figure to the timeline
         self.timeline[f] = figure
@@ -1848,7 +1840,7 @@ class Actor(object):
     # paste = insert
 
     # For internal use only by Films (Frame Actors).
-    # Merges a given film into IN PLACE.
+    # Merges a given film into self IN PLACE.
     # Note that the secondary film may get modified by this function.
     def _mergeFilm(self, film):
         # film = film.copy()
@@ -1861,9 +1853,11 @@ class Actor(object):
         self.newkey(mintime, self.first().copy())
         film.newkey(mintime, film.first().copy())
 
+        # Sorting is useful to prevent unnecessary tween method
+        # splitting for later keyfigures.
         keytimes = sorted(set(self.keyIDs).union(film.keyIDs))
         # Seamlessly introduce new keyframes into secondary film
-        # corresponding to the keyframes of the self. This
+        # corresponding to the keyframes of self. This
         # way, the secondary film will still animate identically
         # after being merged into the (possibly crowded) timeline
         # of self.
@@ -1879,27 +1873,37 @@ class Actor(object):
         return self
 
     # Combines all the actors into a single Frame actor.
-    # Note this function may modify the underlying keyfigures of
-    # the supplied actors.
     # Optional keyword `stagger` can be given an integer
     # to offset each actor from the previous in the sequence by
     # a certain number of frames.
+    # Optional keyword `template` is an empty Frame or Frame subtype
+    # that will be used to construct the Actor.
+    # Default: morpho.Frame()
     @staticmethod
-    def zip(*actors, stagger=0, FrameType=None):
+    def zip(*actors, stagger=0, template=None):
         if len(actors) == 0:
             raise TypeError("No actors to zip.")
         if isinstance(actors[0], (list, tuple)):
             actors = actors[0]
-        if FrameType is None:
-            FrameType = morpho.Frame
+        if template is None:
+            template = morpho.Frame()
 
         # Turn each individual actor into a singleton Frame Actor
         # (aka "Film") before combining them all into a single Film.
         films = []
-        for n,actor in enumerate(actors):
-            film = Actor(FrameType)
+        for n, actor in enumerate(actors):
+            actor = actor.copy()
+            film = Actor(type(template))
             for time, keyfig in actor.timeline.items():
-                film.newkey(time+n*stagger, FrameType([keyfig]))
+                # Incorporate non-uniform transitions into tween methods
+                # since Frame tweening ignores subfigure transitions.
+                if keyfig.transition != morpho.transitions.uniform:
+                    keyfig.tweenMethod = morpho.transitions.incorporateTransition(keyfig.transition, keyfig.tweenMethod)
+                    keyfig.transition = morpho.transitions.uniform
+                # Transitions are handled within the tween methods of
+                # subfigures, so the toplevel transition of the film
+                # should be uniform.
+                film.newkey(time+n*stagger, template.copy()).set(figures=[keyfig], transition=morpho.transitions.uniform)
             films.append(film)
 
         # Combine all the individual singleton films into
@@ -1907,8 +1911,17 @@ class Actor(object):
         finalFilm = films[0]
         for film in films[1:]:
             finalFilm._mergeFilm(film)
+        # Ensure state of the subfigures of the final keyframe exactly
+        # matches the state of the final keys of the supplied actors.
+        # Also ensure other settings of the final keyframe matches the
+        # template.
+        finalFilm.fin = template.copy().set(figures=[actor.last().copy() for actor in actors])
 
         return finalFilm
+
+    @property
+    def subaction(self):
+        return self.figureType.subaction(self)
 
     # NOT IMPLEMENTED!
     # Like insert(), except it overwrites the original actor

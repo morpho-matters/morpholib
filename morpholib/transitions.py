@@ -166,11 +166,12 @@ def split(func, t):
 # Generates the splitter for the modified tween method
 # returned by incorporateTransition().
 def _generateTransitionSplitter(transition, tweenmethod):
-    def newSplitter(t):
+    def newSplitter(t, beg, mid, fin):
         trans1, trans2 = split(transition, t)
 
         if morpho.tweenSplittable(tweenmethod):
-            basetween1, basetween2 = tweenmethod.splitter(transition(t))
+            tweenmethod.splitter(transition(t), beg, mid, fin)
+            basetween1, basetween2 = beg.tweenMethod, mid.tweenMethod
         else:
             # Assume the tween method respects splitting
             basetween1 = basetween2 = tweenmethod
@@ -183,7 +184,8 @@ def _generateTransitionSplitter(transition, tweenmethod):
         def tween2(self, other, t, *args, **kwargs):
             return basetween2(self, other, trans2(t), *args, **kwargs)
 
-        return tween1, tween2
+        beg.tweenMethod = tween1
+        mid.tweenMethod = tween2
     return newSplitter
 
 # Incorporates the given transition function directly into the given
