@@ -2126,7 +2126,8 @@ def morphFrom(actor, source, *args, **kwargs):
 # Highlights the MultiPath actor
 @MultiPath.action
 def highlight(actor, duration=15, atFrame=None, *,
-    width=-3, fill=(1,1,0), color=(0,0,0), rescale=1, select=None):
+    width=-3, fill=(1,1,0), color=(0,0,0), rescale=1, select=None,
+    **kwargs):
 
     if atFrame is None:
         atFrame = actor.lastID()
@@ -2145,7 +2146,7 @@ def highlight(actor, duration=15, atFrame=None, *,
     # width/fill/color of the subpaths can change what
     # the choice function selects on the second call.
     subframe = path2.select[select]
-    subframe.set(width=width, fill=fill, color=color)
+    subframe.set(width=width, fill=fill, color=color, **kwargs)
     if rescale != 1:
         if select == sel[:]:
             path2.rescale(rescale)
