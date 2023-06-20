@@ -224,7 +224,7 @@ class Frame(morpho.Figure):
 
         if figures is None:
             figures = []
-        elif isinstance(figures, tuple):
+        elif not isinstance(figures, list):
             figures = list(figures)
         figures.extend(kwargs.values())
 
@@ -260,6 +260,16 @@ class Frame(morpho.Figure):
         # self.delay = 0  # number of frames to delay at keyframe
 
         # self.defaultTween = Frame.tweenLinear
+
+    @property
+    def figures(self):
+        return self._state["figures"].value
+
+    @figures.setter
+    def figures(self, value):
+        if not isinstance(value, list):
+            value = list(value)
+        self._state["figures"].value = value
 
     @property
     def numfigs(self):
