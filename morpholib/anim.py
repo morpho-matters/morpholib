@@ -14,7 +14,7 @@ from morpholib.tools.basics import *
 from morpholib.tools.ktimer import tic, toc
 import morpholib.tools.dev
 from morpholib.tools.dev import BoundingBoxFigure, makesubcopies, listselect, \
-    _SubAttributeManager, _InPlaceSubAttributeManager
+    _SubAttributeManager, _InPlaceSubAttributeManager, AmbiguousValueError
 
 # Backward compatibility because these functions used to live in anim.py
 from morpholib import screenCoords, physicalCoords, \
@@ -880,7 +880,15 @@ class MultiFigure(Frame):
                 # See if it already exists as an attribute
                 # of the first member figure.
                 # fig.__getattribute__(name)
-                getattr(fig, name)
+                try:
+                    getattr(fig, name)
+                except AmbiguousValueError:
+                    # Ignore AmbiguousValueError since it just
+                    # means the getattr() failed because of conflicting
+                    # values, but that's okay, because all we
+                    # are using getattr() for is to loosely check for
+                    # attribute existence!
+                    pass
 
                 # If you got here, we didn't get an attribute error,
                 # so it should be a real attribute! Go ahead and set it!

@@ -17,6 +17,11 @@ from collections.abc import Iterable
 
 ### SPECIAL EXCEPTIONS ###
 
+# Exception that should be thrown if a dynamically
+# computed value cannot be given a single definite
+# value. For example, trying to get the attribute
+# `tipSize` for a Path whose headSize and tailSize
+# differ.
 class AmbiguousValueError(ValueError):
     pass
 

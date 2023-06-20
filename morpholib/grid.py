@@ -6,7 +6,8 @@ from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    totalBox, shiftBox, translateArrayUnderTransforms, handleBoxTypecasting
+    totalBox, shiftBox, translateArrayUnderTransforms, handleBoxTypecasting, \
+    AmbiguousValueError
 
 from morpholib import object_hasattr
 
@@ -594,7 +595,7 @@ class Path(BoundingBoxFigure):
     @property
     def tipSize(self):
         if self.headSize != self.tailSize:
-            raise ValueError("headSize and tailSize are different!")
+            raise AmbiguousValueError("headSize and tailSize are different!")
         return self.headSize
 
     @tipSize.setter
@@ -605,7 +606,7 @@ class Path(BoundingBoxFigure):
     @property
     def tipExternal(self):
         if self.headExternal != self.tailExternal:
-            raise ValueError("headExternal and tailExternal have different truth values.")
+            raise AmbiguousValueError("headExternal and tailExternal have different truth values.")
         return self.headExternal
 
     @tipExternal.setter
