@@ -679,6 +679,8 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
 
 @Frame.action
 def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0):
+    # Record of who was static so we can restore this later
+    staticRecord = [fig.static for fig in film.last().figures]
     film.last().all.static = False
     if substagger == 0:
         # Do traditional fade out action. The traditional way exists
@@ -701,7 +703,14 @@ def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0):
             frame2.figures[n] = actor.last()
     else:
         film.subaction.fadeOut(duration, atFrame, jump=jump, substagger=substagger)
+
     film.last().visible = False
+
+    # Restore static attribute for subfigures that were originally
+    # static. This is helpful in case the user wants to use the
+    # Frame again after fade out is complete.
+    for fig, static in zip(film.last().figures, staticRecord):
+        fig.static = static
 
 @Frame.action
 def rollback(frame, duration=30, atFrame=None):

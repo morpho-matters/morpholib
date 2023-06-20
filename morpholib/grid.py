@@ -3112,9 +3112,16 @@ def growIn(grid, duration=30, atFrame=None, *, reverse=False, substagger=0):
 
 @MathGrid.action
 def shrinkOut(grid, *args, **kwargs):
+    # Remember who was static so we can restore later
+    staticRecord = [fig.static for fig in grid.last().figures]
     grid.last().all.static = False
     grid.subaction.shrinkOut(*args, **kwargs)
     grid.last().visible = False
+    # Restore static attribute for subfigures that were originally
+    # static. This is helpful in case the user wants to use the
+    # grid again after shrink out is complete.
+    for fig, static in zip(grid.last().figures, staticRecord):
+        fig.static = static
 
 
 # Special SpaceFrame figure for 3D mathgrids
