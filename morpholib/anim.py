@@ -125,9 +125,7 @@ class _SubactionSummoner(object):
     # Apply actor actions to subfigures in a Frame-like figure,
     # along with a substagger option.
     @staticmethod
-    def subaction(actionName, film, duration=30, atFrame=None, *, substagger=0, **kwargs):
-        action = getattr(morpho.action, actionName)
-
+    def subaction(action, film, duration=30, atFrame=None, *, substagger=0, **kwargs):
         if atFrame is None:
             atFrame = film.lastID()
 
@@ -161,23 +159,31 @@ class _SubactionSummoner(object):
         film.insert(zipped, atFrame=atFrame)
 
     def __getattr__(self, name):
+        action = getattr(morpho.action, name)
+
         def subaction(*args, substagger=0, **kwargs):
-            return self.subaction(name, self.actor, *args, substagger=substagger, **kwargs)
+            return self.subaction(action, self.actor, *args, substagger=substagger, **kwargs)
 
         return subaction
+
+    # The subaction property can be called by supplying
+    # an actor action and other args/kwargs. This allows
+    # one to use an unregistered action with `subaction`.
+    def __call__(self, action, *args, **kwargs):
+        return self.subaction(action, self.actor, *args, **kwargs)
 
 # Enables MultiFigures to apply an action to its subfigures
 # via the syntax
 #   myfilm.subaction.myaction(..., substagger=5)
 class _SubactionSummonerForMultiFigures(_SubactionSummoner):
     @staticmethod
-    def subaction(actionName, film, *args, substagger=0, **kwargs):
+    def subaction(action, film, *args, substagger=0, **kwargs):
         if substagger == 0:
-            _SubactionSummoner.subaction(actionName, film, *args, substagger=0, **kwargs)
+            _SubactionSummoner.subaction(action, film, *args, substagger=0, **kwargs)
         else:
             origTweenMethod = film.last().tweenMethod
             film.last().tweenMethod = Frame.tweenLinear
-            _SubactionSummoner.subaction(actionName, film, *args, substagger=substagger, **kwargs)
+            _SubactionSummoner.subaction(action, film, *args, substagger=substagger, **kwargs)
             film.last().tweenMethod = origTweenMethod
 
 # Frame class. Groups figures together for simultaneous drawing.
