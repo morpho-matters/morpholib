@@ -123,39 +123,55 @@ class _SubactionSummoner(object):
         self.actor = actor
 
     # Apply actor actions to subfigures in a Frame-like figure,
-    # along with a substagger option.
+    # along with a substagger option. A subset of subfigures can
+    # be selected by passing in indices/slices into the `select`
+    # keyword parameter.
     @staticmethod
-    def subaction(action, film, duration=30, atFrame=None, *, substagger=0, **kwargs):
+    def subaction(action, film, duration=30, atFrame=None, *,
+        substagger=0, select=None, **kwargs):
         if atFrame is None:
             atFrame = film.lastID()
+
+        if select is None:
+            select = sel[:]
+        elif isinstance(select, Iterable):
+            select = tuple(select)
 
         frame0 = film.last()
         initframe = frame0.copy()
 
+        # Get a dict containing the selected indices
+        selectedIndices = listselect(initframe.figures, select)
+
         subactors = []
-        for fig in initframe.figures:
+        count = 0  # Tracks the number of subfigures that have been acted on
+        for n,fig in enumerate(initframe.figures):
             fig_orig = fig
             fig = fig.copy()
-            # Transition is set to uniform because transitions are ignored
-            # in frames and we want Actor.zip() to respect that.
-            fig.transition = morpho.transitions.uniform
-            if initframe.transition != morpho.transitions.uniform:
-                fig.tweenMethod = morpho.transitions.incorporateTransition(initframe.transition, fig.tweenMethod)
-            # fig.static = False
+
             subactor = morpho.Actor(fig)
-            action(subactor, duration=duration, **kwargs)
-            # Restore tween method and transition to original
-            # values for the final keyfigure in the subactor
-            subactor.last().set(
-                tweenMethod=fig_orig.tweenMethod,
-                transition=fig_orig.transition
-                )
+            if n in selectedIndices:
+                # Transition is set to uniform because transitions are ignored
+                # in frames and we want Actor.zip() to respect that.
+                fig.transition = morpho.transitions.uniform
+                if initframe.transition != morpho.transitions.uniform:
+                    fig.tweenMethod = morpho.transitions.incorporateTransition(initframe.transition, fig.tweenMethod)
+                # fig.static = False
+                action(subactor, duration=duration, **kwargs)
+                # Restore tween method and transition to original
+                # values for the final keyfigure in the subactor
+                subactor.last().set(
+                    tweenMethod=fig_orig.tweenMethod,
+                    transition=fig_orig.transition
+                    )
+                subactor.shift(count*substagger)
+                count += 1
             subactors.append(subactor)
 
         if atFrame == film.lastID():
             film.delkey(atFrame)
         template = initframe.copy().set(figures=[])
-        zipped = morpho.Actor.zip(subactors, stagger=substagger, template=template)
+        zipped = morpho.Actor.zip(subactors, template=template)
         film.insert(zipped, atFrame=atFrame)
 
     def __getattr__(self, name):
