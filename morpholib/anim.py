@@ -3581,11 +3581,14 @@ class Animation(object):
 
     # Convenience function makes the animation delay for the
     # given number of frames at whichever index is currently
-    # its lastID. Defaults to infinity.
-    # Optionally specify a timeOffset. Positive means after lastID,
-    # negative means before lastID.
-    def wait(self, f=oo, timeOffset=0):
-        end = self.lastID() + timeOffset
+    # its lastID. This can be overridden to any index by passing
+    # in the frame index into the optional keyword `atFrame`.
+    # By default, the delay duration is infinite.
+    # Optionally specify a timeOffset as well.
+    def wait(self, f=oo, timeOffset=0, *, atFrame=None):
+        if atFrame is None:
+            atFrame = self.lastID()
+        end = atFrame + timeOffset
         if end == -oo:
             raise IndexError("End of animation is undefined.")
         self.delays[end] = f
