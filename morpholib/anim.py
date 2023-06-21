@@ -144,7 +144,6 @@ class _SubactionSummoner(object):
         selectedIndices = listselect(initframe.figures, select)
 
         subactors = []
-        count = 0  # Tracks the number of subfigures that have been acted on
         for n,fig in enumerate(initframe.figures):
             fig_orig = fig
             fig = fig.copy()
@@ -164,9 +163,10 @@ class _SubactionSummoner(object):
                     tweenMethod=fig_orig.tweenMethod,
                     transition=fig_orig.transition
                     )
-                subactor.shift(count*substagger)
-                count += 1
             subactors.append(subactor)
+
+        for count, n in enumerate(selectedIndices):
+            subactors[n].shift(count*substagger)
 
         if atFrame == film.lastID():
             film.delkey(atFrame)
