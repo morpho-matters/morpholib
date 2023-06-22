@@ -191,15 +191,20 @@ class _SubactionSummoner(object):
 # Enables MultiFigures to apply an action to its subfigures
 # via the syntax
 #   myfilm.subaction.myaction(..., substagger=5)
+# Note that if substagger or select is used, the MultiFigure
+# will have its toplevel tween method set to Frame.tweenLinear
+# for the duration of the action.
 class _SubactionSummonerForMultiFigures(_SubactionSummoner):
     @staticmethod
-    def subaction(action, film, *args, substagger=0, **kwargs):
-        if substagger == 0:
-            _SubactionSummoner.subaction(action, film, *args, substagger=0, **kwargs)
+    def subaction(action, film, *args, substagger=0, select=None, **kwargs):
+        if substagger == 0 and select is None:
+            _SubactionSummoner.subaction(action, film, *args,
+                substagger=0, select=select, **kwargs)
         else:
             origTweenMethod = film.last().tweenMethod
             film.last().tweenMethod = Frame.tweenLinear
-            _SubactionSummoner.subaction(action, film, *args, substagger=substagger, **kwargs)
+            _SubactionSummoner.subaction(action, film, *args,
+                substagger=substagger, select=select, **kwargs)
             film.last().tweenMethod = origTweenMethod
 
 # Frame class. Groups figures together for simultaneous drawing.
