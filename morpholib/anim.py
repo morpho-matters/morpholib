@@ -685,7 +685,7 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
         for n,fig in enumerate(frame1.figures):
             # fig.static = False
             actor = morpho.Actor(fig)
-            actor.fadeIn(duration=duration, jump=jump, alpha=alpha)
+            actor.fadeIn(duration=duration, jump=jump)
             frame1.figures[n] = actor.first()
             frame2.figures[n] = actor.last()
     else:
@@ -695,8 +695,10 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
     if atFrame > lasttime:
         frame0.visible = False
 
-    # Ensure final frame really is the original final frame
+    # Ensure final frame really is the original final frame,
+    # but with adjusted alpha
     film.fin = finalframe
+    film.fin.all.alpha = alpha
 
 @Frame.action
 def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0):
@@ -1102,12 +1104,13 @@ class MultiFigure(Frame):
 Multifigure = MultiFigure
 
 @MultiFigure.action
-def fadeIn(actor, *args, substagger=0, **kwargs):
+def fadeIn(actor, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0, **kwargs):
     finalkey = actor.last().copy()
     if substagger != 0:
         actor.last().tweenMethod = Frame.tweenLinear
-    Frame.actions["fadeIn"](actor, *args, substagger=substagger, **kwargs)
+    Frame.actions["fadeIn"](actor, duration, atFrame, jump, alpha, substagger=substagger, **kwargs)
     actor.fin = finalkey
+    actor.fin.all.alpha = alpha
 
 @MultiFigure.action
 def fadeOut(actor, *args, substagger=0, **kwargs):
