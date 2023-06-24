@@ -4481,6 +4481,7 @@ def handleColorTypeCasting(colorfunc):
 # INPUTS
 # view = Bounding box of the quadmesh ([xmin,xmax,ymin,ymax]). Default: [-5,5, -5,5]
 # dx,dy = Horizontal or vertical spacing between vertices (physical units).
+#         You can also specify `spacing` to set both to the same value.
 #         Default: 1
 # width = Thickness of mesh lines (in pixels). Default: 3
 # color = Color of mesh lines (RGB list). Default (0,0,0) (black)
@@ -4499,12 +4500,16 @@ def handleColorTypeCasting(colorfunc):
 # Quadmesh.
 def quadgrid(*,
     view=(-5,5, -5,5),
-    dx=1, dy=1,
+    dx=1, dy=1, spacing=None,
     width=3,
     color=(0,0,0), alphaEdge=1,
     fill=(1,0,0), alphaFill=1, alpha=1, fill2=None,
     tweenMethod=Quadmesh.tweenLinear,
     transition=None, **kwargs):
+
+    # Handle orientation-agnostic keyword inputs
+    if spacing is not None:
+        dx = dy = spacing
 
     xmin, xmax, ymin, ymax = view
     xmax += 1.0e-6  # +epsilon to deal with floating point error
