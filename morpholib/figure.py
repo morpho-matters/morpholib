@@ -558,7 +558,8 @@ class Figure(object):
                             tw = a
                         else:
                             # Homotopy tween!!
-                            tw = lambda x, t=t: (1-t)*a(x) + t*b(x)
+                            def tw(*args, _tween_funcA=a, _tween_funcB=b, _tween_t=t, **kwargs):
+                                return (1-_tween_t)*_tween_funcA(*args, **kwargs) + _tween_t*_tween_funcB(*args, **kwargs)
 
                     else:
                         # Assume basic numeric type
@@ -633,7 +634,8 @@ class Figure(object):
                     tw = A
                 else:
                     # Homotopy tween!!
-                    tw = lambda x, A=A, B=B, t=t: (1-t)*A(x) + t*B(x)
+                    def tw(*args, _tween_funcA=A, _tween_funcB=B, _tween_t=t, **kwargs):
+                        return (1-_tween_t)*_tween_funcA(*args, **kwargs) + _tween_t*_tween_funcB(*args, **kwargs)
 
             # All other types (assume it's a python numeric type)
             else:
