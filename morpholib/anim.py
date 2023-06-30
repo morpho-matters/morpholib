@@ -1511,6 +1511,11 @@ class Camera(BoundingBoxFigure):
     def height(self):
         return self.boxHeight()
 
+    # Returns the dimensions of the viewbox as a tuple
+    # (width, height)
+    def dimensions(self):
+        return (self.width(), self.height())
+
     # Given a complex number "pos" representing a position, this method returns
     # a new complex number corresponding to this position had the camera's
     # view been the unit square [0,1] x [0,1].
