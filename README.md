@@ -22,7 +22,7 @@
 
 A gallery of animations made with Morpho [is available here](https://morpho-matters.github.io/morpholib/gallery/). For more, you can also take a look at the YouTube channels [Morphocular](https://www.youtube.com/channel/UCu7Zwf4X_OQ-TEnou0zdyRA) and [Serpentine Integral](https://www.youtube.com/channel/UCo-H6EyTbD-7inMwW70QdtA), which use Morpho to create most of the animations.
 
-Documentation is currently limited, but there are [a few guides](https://morpho-matters.github.io/morpholib/guides/) you can look thru which will help you learn how to use Morpho and get you started making your own animations.
+Documentation is currently limited, but there are [a few guides](https://morpho-matters.github.io/morpholib/guides/) you can look thru which will help you learn how to use Morpho and get you started making your own animations. Questions are welcome on the [Discussions page](https://github.com/morpho-matters/morpholib/discussions).
 
 ## Installation
 
@@ -42,7 +42,7 @@ Please note that FFmpeg and Gifsicle will need to be added to your PATH environm
 
 For Morpho to be able to parse LaTeX code, you must have a LaTeX distribution installed along with [dvisvgm](https://dvisvgm.de/). But if you're okay with not using Morpho's LaTeX features, this requirement is optional.
 
-SciPy is an optional, but recommended, dependency that is necessary currently for only few features (`flowStreamer` and `FlowField`). SciPy can be installed via pip with the command `pip install scipy`
+SciPy is an optional, but recommended, dependency that is necessary currently for only a few features (`flowStreamer` and `FlowField`). SciPy can be installed via pip with the command `pip install scipy`
 
 ### Testing the installation
 
