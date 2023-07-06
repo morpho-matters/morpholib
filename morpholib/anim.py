@@ -1105,6 +1105,7 @@ Multifigure = MultiFigure
 
 @MultiFigure.action
 def fadeIn(actor, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0, **kwargs):
+    actor.last().visible = True
     finalkey = actor.last().copy()
     if substagger != 0:
         actor.last().tweenMethod = Frame.tweenLinear
