@@ -17,12 +17,6 @@ import math
 import numpy as np
 import cairo
 cr = cairo
-# from warnings import filterwarnings
-
-# Ignore warnings by default.
-# This is mainly for the sake of the Spline class, which
-# uses some non-standard arithmetic intentionally.
-# filterwarnings("ignore")
 
 
 version = "0.8.1.dev1"  # Current public morpho version
