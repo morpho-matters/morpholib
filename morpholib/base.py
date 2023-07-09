@@ -88,14 +88,10 @@ class Tweenable(object):
         # Convert tags to proper format.
         if tags is None:
             tags = set()
-        # elif type(tags) is set:
         elif isinstance(tags, set):
-            # tags = tags.copy()
             pass
-        # elif type(tags) is str:
         elif isinstance(tags, str):
             tags = {tags,}
-        # elif type(tags) in (list, tuple):
         elif isinstance(tags, list) or isinstance(tags, tuple):
             tags = set(tags)
         else:
