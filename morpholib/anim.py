@@ -868,7 +868,7 @@ class MultiFigure(Frame):
             # return super().__getattr__(name)
             return morpho.Frame.__getattr__(self, name)
 
-        # Try to find the attribute in the first member figure
+        # Try to find the attribute as a common subfigure attribute,
         # and if found, return it.
         # fig = self.figures[0]
         try:
@@ -878,7 +878,7 @@ class MultiFigure(Frame):
         # This attribute is nowhere to be found anywhere. So give up.
         except AttributeError:
             # raise AttributeError("First member figure of type '"+type(fig)+"'' does not have attribute '"+name+"'")
-            raise AttributeError("Could not find attribute '"+name+"' in either the main class or the first member figure!")
+            raise AttributeError(f"Could not find attribute '{name}' in either the main class or as a common attribute of all subfigures.")
 
     # Modified setattr() first checks if the requested attribute already
     # exists as a findable attribute in the main class. If it is, it just
