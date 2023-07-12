@@ -1654,6 +1654,10 @@ def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
     else:
         spline1.end = 0
 
+@Spline.action
+def drawIn(actor, *args, **kwargs):
+    return Path.actions["drawIn"](actor, *args, **kwargs)
+
 
 # MultiFigure version of Spline.
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.

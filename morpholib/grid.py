@@ -1892,6 +1892,43 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
     else:
         path1.end = 0
 
+# Draws in a Path actor Manim-style.
+#
+# OPTIONAL KEYWORD-ONLY INPUTS
+# tempWidth = Temporary stroke width to use in the animation
+#       if the stroke width is 0. Default: 3
+# transition = Transition to use in the animation.
+#       Note that this only applies to the portion of the actor's
+#       timeline affected by this action. After the action
+#       concludes, the original transition of this actor will
+#       be used for future keyfigures. Default: uniform.
+@Path.action
+def drawIn(actor, duration=30, atFrame=None, *,
+    tempWidth=2, transition=morpho.transitions.uniform):
+
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    path0 = actor.last()
+    # Save current final state of the actor which should be
+    # the same final state when this action is finished.
+    final = path0.copy()
+    path0.set(start=0, end=0, alphaFill=0, alphaEdge=1, static=False)
+    path0.transition = transition
+    # Give a temporary stroke width and color to the subpath
+    # if its width is 0
+    if path0.width == 0:
+        path0.width = tempWidth
+        if not isinstance(path0.fill, morpho.color.GradientFill):
+            path0.color = path0.fill[:]
+            final.color = path0.fill[:]
+
+    path1 = actor.newkey(atFrame)
+    path0.visible = False
+
+    actor.newkey(atFrame + duration/2).set(start=final.start, end=final.end)
+    actor.newkey(atFrame + duration, final)
+
 
 # MultiFigure version of Path.
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.
@@ -2171,7 +2208,18 @@ def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
         actor.newendkey(pause)
     actor.newendkey(duration, path1.copy())
 
-# Draws in a MultiPath actor Manim-style.
+# Draws in a MultiPath actor Manim-style. Useful for making
+# LaTeX appear on the screen.
+#
+# Note that if the stroke width of a subpath is 0, the
+# subpath's fill will be assigned to its stroke color.
+# This change will persist even after the action completes.
+#
+# INPUTS
+# subduration = How long should drawing in one subpath take?
+#       Default: 30 frames
+# atFrame = Frame number at which to begin the action.
+#       Default: None (Use frame of the last keyfigure)
 #
 # OPTIONAL KEYWORD-ONLY INPUTS
 # tempWidth = Temporary stroke width to use in the animation
@@ -2181,47 +2229,32 @@ def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
 #       timeline affected by this action. After the action
 #       concludes, the original transition of this actor will
 #       be used for future keyfigures. Default: uniform.
+# substagger = Time spacing between drawing adjacent subpaths (in frames).
+#       Default: None (use half the subduration value).
 @MultiPath.action
-def drawIn(actor, duration=30, atFrame=None, *,
-    tempWidth=3, transition=morpho.transitions.uniform,
-    overlap=0):
+def drawIn(actor, subduration=30, atFrame=None, *,
+    tempWidth=2, transition=morpho.transitions.uniform,
+    substagger=None):
 
-    # (`overlap` is a currently unimplemented possible future feature
-    # that would control how much the animation of drawing in one
-    # subpath overlaps with the drawing in of the previous subpath.
-    # It's kind of like a reverse `stagger` parameter.)
-
+    lasttime = actor.lastID()
     if atFrame is None:
-        atFrame = actor.lastID()
+        atFrame = lasttime
+
+    if substagger is None:
+        substagger = subduration/2
 
     mpath0 = actor.last()
-    # Save current final state of the actor which should be
-    # the same final state when this action is finished.
-    final = mpath0.copy()
-    mpath0.all.set(start=0, end=0, alphaFill=0, alphaEdge=1)
-    mpath0.transition = transition
-    for path in mpath0.figures:
-        # Give a temporary stroke width and color to the subpath
-        # if its width is 0
-        if path.width == 0:
-            path.width = tempWidth
-            if not isinstance(path.fill, morpho.color.GradientFill):
-                path.color = path.fill[:]
+    final = mpath0.copy().set(visible=True)
+    mpath0.static = False
+    actor.subaction.drawIn(subduration, atFrame,
+        tempWidth=tempWidth, transition=transition, substagger=substagger
+        )
 
-    mpath1 = actor.newkey(atFrame)
-    mpath0.visible = False
+    # Hide lingering initial keyfigure if it exists.
+    if atFrame > lasttime:
+        mpath0.visible = False
 
-    tstart = atFrame
-    tend = atFrame + duration
-    numfigs = mpath1.numfigs
-    dt = duration / (numfigs + 1)
-    for n in range(numfigs):
-        time = tstart + (n+1)*dt
-        mpath_n = actor.newkey(time)
-        if n > 0:
-            mpath_n.figures[n-1] = final.figures[n-1].copy()
-        mpath_n.figures[n].set(start=final.figures[n].start, end=final.figures[n].end)
-    actor.newkey(tend, final)
+    actor.fin = final
 
 
 
