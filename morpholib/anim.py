@@ -68,6 +68,9 @@ class FrameSaveError(Exception):
 class MergeError(Exception):
     pass
 
+class FrameMergeError(MergeError):
+    pass
+
 class LayerMergeError(MergeError):
     pass
 
@@ -333,24 +336,44 @@ class Frame(morpho.Figure):
     # Also adds in the named subfigures of other into self's registry,
     # but skips any duplicate names so that self's names are
     # not overwritten.
-    def merge(self, other):
-        # if not self._names.keys().isdisjoint(other._names.keys()):
-        #     raise MergeError("Frame to merge shares names with self.")
+    def merge(self, other, beforeFigure=oo):
+
+        # Handle case that beforeFigure is an actual Figure object
+        if isinstance(beforeFigure, morpho.Figure):
+            if beforeFigure not in self.figures:
+                raise FrameMergeError("Given 'beforeFigure' is not in this Frame!")
+            else:
+                beforeFigure = self.figures.index(beforeFigure)
+        elif abs(beforeFigure) != oo:
+            beforeFigure = round(beforeFigure)
+
+        # Handle abnormal indices
+        if beforeFigure > len(self.figures):
+            beforeFigure = len(self.figures)
+        elif beforeFigure < 0:
+            beforeFigure %= len(self.figures)
 
         if not isinstance(other, morpho.Frame) and isinstance(other, morpho.Figure):
             other = type(self)([other])
 
+        # Shift ahead all indices in the _names dict that are
+        # ahead or equal to beforeFigure index
+        shift = len(other.figures)
+        for name, selfindex in self._names.items():
+            if selfindex >= beforeFigure:
+                self._names[name] += shift
+
         # Append other's name registry to self's (skipping duplicate names),
         # but shift the index values by the number of names in self's
         # registry.
-        N = len(self.figures)
         for name, index in other._names.items():
             # Skip any duplicate names found in other's registry
             if name not in self._names:
-                self._names[name] = index + N
+                self._names[name] = index + beforeFigure
 
         # Extend the figure list
-        self.figures.extend(other.figures)
+        for otherfig in reversed(other.figures):
+            self.figures.insert(beforeFigure, otherfig)
         return self
 
     @property
