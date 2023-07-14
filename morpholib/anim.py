@@ -687,7 +687,7 @@ blankFrame.static = True
 # custom one, make sure to decorate it with
 # @handleSubfigureTweening.
 @Frame.action
-def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
+def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0, select=None):
     lasttime = film.lastID()
     if atFrame is None:
         atFrame = lasttime
@@ -697,7 +697,7 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
     finalframe = frame0.copy()
     frame0.all.static = False
 
-    if substagger == 0:
+    if substagger == 0 and select is None:
         # Do traditional fade in action. The traditional way exists
         # since using the subaction feature on MultiFigures incurs
         # some drawbacks that I would like to not have to deal with
@@ -713,7 +713,7 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
             frame1.figures[n] = actor.first()
             frame2.figures[n] = actor.last()
     else:
-        film.subaction.fadeIn(duration, atFrame, jump=jump, alpha=alpha, substagger=substagger)
+        film.subaction.fadeIn(duration, atFrame, jump=jump, alpha=alpha, substagger=substagger, select=select)
 
     # Hide lingering initial keyfigure if it exists.
     if atFrame > lasttime:
@@ -725,11 +725,11 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
     film.fin.all.alpha = alpha
 
 @Frame.action
-def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0):
+def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0, select=None):
     # Record of who was static so we can restore this later
     staticRecord = [fig.static for fig in film.last().figures]
     film.last().all.static = False
-    if substagger == 0:
+    if substagger == 0 and select is None:
         # Do traditional fade out action. The traditional way exists
         # since using the subaction feature on MultiFigures incurs
         # some drawbacks that I would like to not have to deal with
@@ -749,7 +749,7 @@ def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0):
             frame1.figures[n] = actor.first()
             frame2.figures[n] = actor.last()
     else:
-        film.subaction.fadeOut(duration, atFrame, jump=jump, substagger=substagger)
+        film.subaction.fadeOut(duration, atFrame, jump=jump, substagger=substagger, select=select)
 
     film.last().visible = False
 
@@ -1128,21 +1128,23 @@ class MultiFigure(Frame):
 Multifigure = MultiFigure
 
 @MultiFigure.action
-def fadeIn(actor, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0, **kwargs):
+def fadeIn(actor, duration=30, atFrame=None, jump=0, alpha=1, *,
+        substagger=0, select=None, **kwargs):
     actor.last().visible = True
     finalkey = actor.last().copy()
-    if substagger != 0:
+    if substagger != 0 or select is not None:
         actor.last().tweenMethod = Frame.tweenLinear
-    Frame.actions["fadeIn"](actor, duration, atFrame, jump, alpha, substagger=substagger, **kwargs)
+    Frame.actions["fadeIn"](actor, duration, atFrame, jump, alpha,
+        substagger=substagger, select=select, **kwargs)
     actor.fin = finalkey
     actor.fin.all.alpha = alpha
 
 @MultiFigure.action
-def fadeOut(actor, *args, substagger=0, **kwargs):
+def fadeOut(actor, *args, substagger=0, select=None, **kwargs):
     origTweenMethod = actor.last().tweenMethod
-    if substagger != 0:
+    if substagger != 0 or select is not None:
         actor.last().tweenMethod = Frame.tweenLinear
-    Frame.actions["fadeOut"](actor, *args, substagger=substagger, **kwargs)
+    Frame.actions["fadeOut"](actor, *args, substagger=substagger, select=select, **kwargs)
     actor.last().tweenMethod = origTweenMethod
 
 
