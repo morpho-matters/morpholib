@@ -552,6 +552,7 @@ class Frame(morpho.Figure):
                 raise TypeError(f"Value associated with name must be Figure or int, not `{type(index).__name__}`")
 
             self._names[name] = index
+        return self
 
     # Returns the subfigure of the given name.
     def getName(self, name):
