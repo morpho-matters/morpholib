@@ -2231,10 +2231,12 @@ def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
 #       be used for future keyfigures. Default: uniform.
 # substagger = Time spacing between drawing adjacent subpaths (in frames).
 #       Default: None (use half the subduration value).
+# select = Slice or tuple of slices representing the selection of
+#       subpaths to apply the action to.
 @MultiPath.action
 def drawIn(actor, subduration=30, atFrame=None, *,
     tempWidth=2, transition=morpho.transitions.uniform,
-    substagger=None):
+    substagger=None, select=None):
 
     lasttime = actor.lastID()
     if atFrame is None:
@@ -2247,7 +2249,8 @@ def drawIn(actor, subduration=30, atFrame=None, *,
     final = mpath0.copy().set(visible=True)
     mpath0.static = False
     actor.subaction.drawIn(subduration, atFrame,
-        tempWidth=tempWidth, transition=transition, substagger=substagger
+        tempWidth=tempWidth, transition=transition,
+        substagger=substagger, select=select
         )
 
     # Hide lingering initial keyfigure if it exists.
