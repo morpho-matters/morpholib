@@ -60,8 +60,8 @@ class FigureArray(Frame):
         elif height is None:
             height = nrows/ncols * width
 
-        xmin = pos.real - (anchor_x+1)/2*width
-        ymax = pos.imag - (anchor_y-1)/2*height
+        xmin = pos.real - (anchor_x+1)/2*width if ncols > 1 else pos.real
+        ymax = pos.imag - (anchor_y-1)/2*height if nrows > 1 else pos.imag
 
         dx = width/(ncols-1) if ncols > 1 else width
         dy = height/(nrows-1) if nrows > 1 else height
