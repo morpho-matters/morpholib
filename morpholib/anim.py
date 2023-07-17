@@ -2624,13 +2624,19 @@ class Layer(object):
         for actor in self.actors:
             if not actor.visible: continue
 
-            # Keys are copied in case modifier needs to be called.
-            # We don't want the modifier to actually modify the
-            # original keyfigures of the actor.
-            fig = actor.time(f, copykeys=True, _skipTrivialTweens=True)
+            fig = actor.time(f, _skipTrivialTweens=True)
             if fig is None: continue
 
             if fig.modifier is not None:
+                # figure is copied because we don't want the
+                # modifier to actually modify the original
+                # keyfigures of the actor.
+                # This can alternatively be solved by setting
+                # `copykeys=True` in the above time() call,
+                # but I think that is less efficient, since
+                # copying complex figures like LaTeX MultiSplines
+                # can be slow.
+                fig = fig.copy()
                 fig.modifier(fig)
             if fig.visible:
                 figlist.append(fig)
