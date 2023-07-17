@@ -561,7 +561,8 @@ class Frame(morpho.Figure):
     def __getattr__(self, name):
         # First try using the superclass's built-in getattr()
         try:
-            return morpho.Figure.__getattr__(self, name)
+            # return morpho.Figure.__getattr__(self, name)
+            return super().__getattr__(name)
         except AttributeError:
             pass
 
@@ -575,7 +576,9 @@ class Frame(morpho.Figure):
             # This line should DEFINITELY throw an error,
             # since to get to this point in the code,
             # AttributeError must have been thrown above.
-            morpho.Figure.__getattr__(self, name)
+            super().__getattr__(name)
+            # morpho.Figure.__getattr__(self, name)
+
 
     # Modified setattr() method for Frame checks if the given
     # name is in the list of subfigure names and if it is,
@@ -585,7 +588,8 @@ class Frame(morpho.Figure):
         if object_hasattr(self, "_names") and name in self._names:
             self.figures[self._names[name]] = value
         else:
-            morpho.Figure.__setattr__(self, name, value)
+            # morpho.Figure.__setattr__(self, name, value)
+            super().__setattr__(name, value)
 
     # Applies the origin translation of the Frame to the given
     # cairo context and returns a SavePoint object, thus enabling
@@ -871,11 +875,12 @@ class MultiFigure(Frame):
         # which should grab any valid attribute returns in the
         # main class.
         try:
-            # # Not sure it's best to use super() here. Consider
-            # # replacing it with morpho.Figure.__getattr__(self, name).
-            # # Same goes for the super() call a few lines down.
-            # return super().__getattr__(name)
-            return morpho.Frame.__getattr__(self, name)
+            # I now think a super() call is correct, instead of
+            # directly invoking Frame.__getattr__() since it's possible
+            # a multi-inheritance defines its own special __getattr__(),
+            # and we don't want that modification to get lost.
+            return super().__getattr__(name)
+            # return morpho.Frame.__getattr__(self, name)
         except AttributeError:
             pass
 
@@ -889,8 +894,8 @@ class MultiFigure(Frame):
             # This line is guaranteed to fail because it failed
             # in the protected clause above. However, this time
             # I WANT the error to be thrown!
-            # return super().__getattr__(name)
-            return morpho.Frame.__getattr__(self, name)
+            return super().__getattr__(name)
+            # return morpho.Frame.__getattr__(self, name)
 
         # Try to find the attribute as a common subfigure attribute,
         # and if found, return it.
@@ -907,7 +912,7 @@ class MultiFigure(Frame):
     # Modified setattr() first checks if the requested attribute already
     # exists as a findable attribute in the main class. If it is, it just
     # sets it as normal. Otherwise it checks if the attribute exists in
-    # the first member figure. If it does, it sets it instead of the
+    # the first member figure. If it does, it sets to subfigures instead of the
     # main class. But if it can't find this attribute in the first member
     # figure either, it will just assign the attribute as a new attribute
     # of the main class.
@@ -915,6 +920,11 @@ class MultiFigure(Frame):
         # Set the attribute as normal if the MultiFigure is not active yet,
         # or it's a concrete attribute of the main class,
         # or it's a tweenable in the main class.
+
+        if not self._active:
+            super().__setattr__(name, value)
+            return
+
         try:
             # Attempt to access attribute `name` according to
             # both of the Figure class's getattrs.
@@ -923,16 +933,15 @@ class MultiFigure(Frame):
             try:
                 morpho.Figure.__getattribute__(self, name)
             except AttributeError:
-                morpho.Figure.__getattr__(self, name)
+                super().__getattr__(name)
             selfHasName = True
         except AttributeError:
             selfHasName = False
-        if not self._active or selfHasName:
-            # super().__setattr__(name, value)
-            morpho.Figure.__setattr__(self, name, value)
+        if selfHasName:
+            super().__setattr__(name, value)
         # If this attribute is NOT an already existent attribute of
         # the main class, check if it's an attribute of the first
-        # member figure. If it is, set THAT.
+        # member figure. If it is, set the attribute to all subfigures.
         # elif len(self.figures) != 0:
         else:
             try:
@@ -961,8 +970,7 @@ class MultiFigure(Frame):
             # even in the first member figure. Therefore, just assign it
             # as a regular (but new) attribute of the main class.
             except (AttributeError, IndexError):
-                # super().__setattr__(name, value)
-                morpho.Figure.__setattr__(self, name, value)
+                super().__setattr__(name, value)
 
     # Sets all given keyword inputs as toplevel attributes if they
     # already exist as toplevel attributes. Any others are assigned

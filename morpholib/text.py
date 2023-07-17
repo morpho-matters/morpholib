@@ -1278,105 +1278,109 @@ class FancyMultiText(MultiText):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
-    # Special getattr() returns the common value of the attribute
-    # `name` across all component figures, if `name` is not found
-    # as a valid attribute of self.
-    def __getattr__(self, name):
-        # First try using the Figure's built-in getattr()
-        # which should grab any valid attribute returns in the
-        # main class.
-        try:
-            return morpho.Frame.__getattr__(self, name)
-        except AttributeError:
-            pass
+    # # Special getattr() returns the common value of the attribute
+    # # `name` across all component figures, if `name` is not found
+    # # as a valid attribute of self.
+    # def __getattr__(self, name):
+    #     # First try using the Frame's built-in getattr()
+    #     # which should grab any valid attribute returns in the
+    #     # main class.
+    #     try:
+    #         return morpho.Frame.__getattr__(self, name)
+    #     except AttributeError:
+    #         pass
 
-        # If you got to this point in the code, it means the
-        # Figure's getattr() failed.
+    #     # If you got to this point in the code, it means the
+    #     # Frame's getattr() failed.
 
-        # If figure list is empty, there's nothing more we can do, so
-        # attempt to call the superclass's getattr() again, and this
-        # time actually throw the error!
-        if len(self.figures) == 0:
-            # This line is guaranteed to fail because it failed
-            # in the protected clause above. However, this time
-            # I WANT the error to be thrown!
-            # return super().__getattr__(name)
-            return morpho.Frame.__getattr__(self, name)
+    #     # If figure list is empty, there's nothing more we can do, so
+    #     # attempt to call the superclass's getattr() again, and this
+    #     # time actually throw the error!
+    #     if len(self.figures) == 0:
+    #         # This line is guaranteed to fail because it failed
+    #         # in the protected clause above. However, this time
+    #         # I WANT the error to be thrown!
+    #         # return super().__getattr__(name)
+    #         return morpho.Frame.__getattr__(self, name)
 
-        # Go thru the (non-empty) figure list and get the common
-        # value of attribute `name` if it exists AND is the same
-        # across all component figures.
-        for n,fig in enumerate(self.figures):
-            try:
-                value = getattr(fig, name)
-            except AttributeError:
-                raise AttributeError(f"Attribute `{name}` not found in some component figures.")
-            if n > 0 and not isequal(value, oldValue):
-                raise AttributeError(f"Attribute `{name}` has different values across component figures.")
-            oldValue = value
+    #     # Go thru the (non-empty) figure list and get the common
+    #     # value of attribute `name` if it exists AND is the same
+    #     # across all component figures.
+    #     for n,fig in enumerate(self.figures):
+    #         try:
+    #             value = getattr(fig, name)
+    #         except AttributeError:
+    #             raise AttributeError(f"Attribute `{name}` not found in some component figures.")
+    #         if n > 0 and not isequal(value, oldValue):
+    #             raise AttributeError(f"Attribute `{name}` has different values across component figures.")
+    #         oldValue = value
 
-        return value
+    #     return value
 
-    # Modified setattr() first checks if the requested attribute already
-    # exists as a findable attribute in the main class. If it is, it just
-    # sets it as normal. Otherwise it attempts to set the attribute
-    # on all component figures in the figure list. If it fails for the
-    # first component figure, it treats the attribute as a new attribute
-    # to be assigned to self.
-    def __setattr__(self, name, value):
-        # Set the attribute as normal if the MultiFigure is not active yet,
-        # or it's a concrete attribute of the main class,
-        # or it's a tweenable in the main class.
-        try:
-            # Attempt to access attribute `name` according to
-            # both of the Figure class's getattrs.
-            # This should handle getting both regular attributes
-            # and tweenables / intangible attributes
-            try:
-                morpho.Figure.__getattribute__(self, name)
-            except AttributeError:
-                morpho.Figure.__getattr__(self, name)
-            selfHasName = True
-        except AttributeError:
-            selfHasName = False
-        if not self._active or selfHasName:
-            # super().__setattr__(name, value)
-            morpho.Figure.__setattr__(self, name, value)
-        # If the figure list is empty, just set the attribute to self
-        # normally.
-        elif len(self.figures) == 0:
-            morpho.Figure.__setattr__(self, name, value)
-        # Attempt to modify (existent) attributes of all the component
-        # figures to the specified value
-        else:
-            try:
-                # This flag becomes True if ANY component figure's
-                # attributes get modified in the following loop
-                modifiedOneFigure = False
-                for fig in self.figures:
-                    # See if it already exists as an attribute
-                    # of the component figure.
-                    getattr(fig, name)
+    # # Modified setattr() first checks if the requested attribute already
+    # # exists as a findable attribute in the main class. If it is, it just
+    # # sets it as normal. Otherwise it attempts to set the attribute
+    # # on all component figures in the figure list. If it fails for the
+    # # first component figure, it treats the attribute as a new attribute
+    # # to be assigned to self.
+    # def __setattr__(self, name, value):
+    #     # Set the attribute as normal if the MultiFigure is not active yet,
+    #     # or it's a concrete attribute of the main class,
+    #     # or it's a tweenable in the main class.
 
-                    # If you got here, we didn't get an attribute error,
-                    # so it should be a real attribute! Go ahead and set it!
-                    fig.__setattr__(name, value)
+    #     if not self._active:
+    #         morpho.Figure.__setattr__(self, name, value)
+    #         return
 
-                    modifiedOneFigure = True
+    #     try:
+    #         # Attempt to access attribute `name` according to
+    #         # both of the Figure class's getattrs.
+    #         # This should handle getting both regular attributes
+    #         # and tweenables / intangible attributes
+    #         try:
+    #             morpho.Figure.__getattribute__(self, name)
+    #         except AttributeError:
+    #             morpho.Figure.__getattr__(self, name)
+    #         selfHasName = True
+    #     except AttributeError:
+    #         selfHasName = False
+    #     if selfHasName:
+    #         morpho.Figure.__setattr__(self, name, value)
+    #     # If the figure list is empty, just set the attribute to self
+    #     # normally.
+    #     elif len(self.figures) == 0:
+    #         morpho.Figure.__setattr__(self, name, value)
+    #     # Attempt to modify (existent) attributes of all the component
+    #     # figures to the specified value
+    #     else:
+    #         try:
+    #             # This flag becomes True if ANY component figure's
+    #             # attributes get modified in the following loop
+    #             modifiedOneFigure = False
+    #             for fig in self.figures:
+    #                 # See if it already exists as an attribute
+    #                 # of the component figure.
+    #                 getattr(fig, name)
 
-            # Got an attribute error, so the given attribute isn't
-            # even in the first member figure. Therefore, just assign it
-            # as a regular (but new) attribute of the main class.
-            except AttributeError:
-                # Some components were modified, but others couldn't be.
-                # This situation can't be handled, so throw error.
-                if modifiedOneFigure:
-                    raise AttributeError(f"Some component figures have `{name}` attribute and others don't!")
-                # The very first component figure failed to have `name` as
-                # an attribute, so assume `name` is a new attribute name
-                # intended for the main class object, self.
-                else:
-                    morpho.Figure.__setattr__(self, name, value)
+    #                 # If you got here, we didn't get an attribute error,
+    #                 # so it should be a real attribute! Go ahead and set it!
+    #                 fig.__setattr__(name, value)
+
+    #                 modifiedOneFigure = True
+
+    #         # Got an attribute error, so the given attribute isn't
+    #         # even in the first member figure. Therefore, just assign it
+    #         # as a regular (but new) attribute of the main class.
+    #         except AttributeError:
+    #             # Some components were modified, but others couldn't be.
+    #             # This situation can't be handled, so throw error.
+    #             if modifiedOneFigure:
+    #                 raise AttributeError(f"Some component figures have `{name}` attribute and others don't!")
+    #             # The very first component figure failed to have `name` as
+    #             # an attribute, so assume `name` is a new attribute name
+    #             # intended for the main class object, self.
+    #             else:
+    #                 morpho.Figure.__setattr__(self, name, value)
 
     # General version of totalBox() that can be used to implement totalBox()
     # for both FancyMultiText and FancyMultiPText.
