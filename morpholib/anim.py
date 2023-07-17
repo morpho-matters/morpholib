@@ -23,7 +23,7 @@ from morpholib import screenCoords, physicalCoords, \
 
 import math, cmath
 import numpy as np
-import os, shutil, tempfile, ctypes
+import os, tempfile, ctypes
 import subprocess as sp
 import pyperclip
 from warnings import warn
