@@ -1269,6 +1269,7 @@ class SpaceFrame(Frame):
 
         return primlist
 
+# THIS CLASS MAY BE BROKEN! USE AT YOUR OWN RISK!
 # 3D version of the MultiFigure class. See "MultiFigure" for more info.
 class SpaceMultiFigure(SpaceFrame):
     # Use MultiFigure's actions instead of SpaceFrame's
