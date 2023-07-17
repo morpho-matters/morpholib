@@ -2621,14 +2621,18 @@ class Layer(object):
         # Compile list of figures to draw
         figlist = []
         for actor in self.actors:
-            if actor.visible:
-                fig = actor.time(f, _skipTrivialTweens=True)
-                # if fig is None or not fig.visible:
-                #     continue
-                # else:
-                #     figlist.append(fig)
-                if fig is not None and fig.visible:
-                    figlist.append(fig)
+            if not actor.visible: continue
+
+            # Keys are copied in case modifier needs to be called.
+            # We don't want the modifier to actually modify the
+            # original keyfigures of the actor.
+            fig = actor.time(f, copykeys=True, _skipTrivialTweens=True)
+            if fig is None: continue
+
+            if fig.modifier is not None:
+                fig.modifier(fig)
+            if fig.visible:
+                figlist.append(fig)
 
         # Sort based on zdepth
         figlist.sort(key=lambda fig: fig.zdepth) #, reverse=True)

@@ -120,6 +120,10 @@ class Figure(object):
         # the default tween method.
         self.transition = morpho.transitions.default
 
+        # A function that modifies (a copy of) the figure before
+        # its draw() method is called in an animation.
+        self.modifier = None
+
 
     # Alternate name for the "defaultTween" attribute.
     @property
@@ -129,6 +133,14 @@ class Figure(object):
     @tweenMethod.setter
     def tweenMethod(self, value):
         self.defaultTween = value
+
+    @property
+    def modifier(self):
+        return self._modifier
+
+    @modifier.setter
+    def modifier(self, value):
+        self._modifier = value
 
     # Returns True iff self and other are both invisible, OR are
     # exactly the same type AND their tweenables compare equal.
@@ -267,13 +279,7 @@ class Figure(object):
             except Exception:  # Upon failure, just reassign and hope for the best.
                 setattr(new, name, value)  # NOT redundant!
 
-        # The following 5 lines could be replaced with
-        # new._updateSettings(self, includeTweenMethod=True)
-        new.defaultTween = self.defaultTween
-        new.transition = self.transition
-        new.static = self.static
-        new.delay = self.delay
-        new.visible = self.visible
+        new._updateSettings(self, includeTweenMethod=True, includeModifier=True)
 
         # Note that the `owner` attribute should NOT be copied
         # since the copied figure may not be used within an
@@ -286,16 +292,17 @@ class Figure(object):
     # type to another (e.g. SpaceText.toText() method).
     #
     # By default, this method doesn't update self's tween method
-    # with the target's because tween methods are often strongly
+    # or modifier with the target's because those are often strongly
     # tied to the given figure's type, but to force transferral
-    # of the target's tween method, set the optional kwarg
-    # `includeTweenMethod` to True.
+    # of these attributes, set the optional kwargs
+    # `includeTweenMethod` and/or `includeModifier` to True.
     #
     # Optionally, a set of setting names to ignore can be passed in
     # like this:
     #   myfig._updateSettings(target, ignore={"visible", "static"})
     def _updateSettings(self, target, *,
-        includeTweenMethod=False, ignore=pyset()):
+        includeTweenMethod=False, includeModifier=False,
+        ignore=pyset()):
 
         # Typecast ignore into a singleton set if it is not
         # a standard python iterable.
@@ -304,6 +311,8 @@ class Figure(object):
 
         if includeTweenMethod:
             self.defaultTween = target.defaultTween
+        if includeModifier:
+            self.modifier = target.modifier
 
         for name in METASETTINGS:
             if name not in ignore:
@@ -328,7 +337,8 @@ class Figure(object):
     # like this:
     #   myfig._updateFrom(target, ignore={"pos", "color"})
     def _updateFrom(self, target, *, copy=True, common=False,
-        includeTweenMethod=False, ignore=pyset()):
+        includeTweenMethod=False, includeModifier=False,
+        ignore=pyset()):
 
         # Typecast ignore into a singleton set if it is not
         # a standard python iterable.
@@ -349,7 +359,9 @@ class Figure(object):
                 setattr(self, name, getattr(target, name))
 
         # Update meta-settings
-        self._updateSettings(target, includeTweenMethod=includeTweenMethod, ignore=ignore)
+        self._updateSettings(target,
+            includeTweenMethod=includeTweenMethod, includeModifier=includeModifier,
+            ignore=ignore)
 
         return self
 
@@ -1121,7 +1133,7 @@ def morphFrom(actor, source, duration=30, atFrame=None):
     # It should be equal to the given source figure
     # except for the metasettings (tween method, transition, etc.)
     fig1 = actor.newkey(atFrame, source.copy())
-    fig1._updateSettings(fig0, includeTweenMethod=True)
+    fig1._updateSettings(fig0, includeTweenMethod=True, includeModifier=True)
     fig1.set(visible=True)
 
     # Set destination figure to be the original last keyfigure.
