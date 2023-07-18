@@ -782,7 +782,10 @@ class Spline(BoundingBoxFigure):
     # Closes the spline IN PLACE if it is not already closed.
     # If optional kwarg `local` is set to True, the closure
     # is performed relative to the latest deadend.
-    def close(self, *, local=False):
+    # If optional kwarg `straight` is set to False, the
+    # closure will be made using the current initial
+    # and final tangents.
+    def close(self, *, local=False, straight=True):
         if self.length() < 2 or self.node(0) == self.node(-1):
             return self
 
@@ -790,8 +793,9 @@ class Spline(BoundingBoxFigure):
         self._data = np.insert(self._data, self.length(), self._data[startIndex].copy(), axis=0)
 
         # Flatten handles
-        self.outhandleRel(-2, 0)
-        self.inhandleRel(-1, 0)
+        if straight:
+            self.outhandleRel(-2, 0)
+            self.inhandleRel(-1, 0)
 
         return self
 
@@ -2153,7 +2157,10 @@ class SpaceSpline(Spline):
     # Closes the path IN PLACE if it is not already closed.
     # If optional kwarg `local` is set to True, the closure
     # is performed relative to the latest deadend.
-    def close(self, *, local=False):
+    # If optional kwarg `straight` is set to False, the
+    # closure will be made using the current initial
+    # and final tangents.
+    def close(self, *, local=False, straight=True):
         if self.length() < 2 or np.array_equal(self.node(0), self.node(-1)):
             return self
 
@@ -2161,8 +2168,9 @@ class SpaceSpline(Spline):
         self._data = np.insert(self._data, self.length(), self._data[startIndex,:,:].copy(), axis=0)
 
         # Flatten handles
-        self.outhandleRel(-2, 0)
-        self.inhandleRel(-1, 0)
+        if straight:
+            self.outhandleRel(-2, 0)
+            self.inhandleRel(-1, 0)
 
         return self
 
