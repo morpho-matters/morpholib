@@ -84,24 +84,40 @@ class FigureArray(Frame):
                 setattr(subfig, posname, complex(xmin + j*dx, ymax - i*dy))
         return self
 
-    def _select(self, index, *, _asFrame=False, _iall=False):
-        if not(isinstance(index, tuple) and len(index) == 2):
-            raise IndexError("Given index must be a pair (row, col).")
-
-        rowSlice, colSlice = index
-        figarray = self.figureArray
-        # Extract the selected individual row and column indices
-        rowIndices = list(listselect(figarray, rowSlice).keys())
-        colIndices = list(listselect(figarray.T, colSlice).keys())
-        # Convert into indices in the 1D figure list
-        nrows, ncols = self.shape
-        selection = tuple(i*ncols + j for i in rowIndices for j in colIndices)
+    def _select(self, index, *, _asFrame=False, **kwargs):
+        result = super()._select(index, _asFrame=_asFrame, **kwargs)
         if _asFrame:
-            frm = Frame._select(self, selection, _asFrame=True)
-            frm.shape = (len(rowIndices), len(colIndices))
-            return frm
-        else:
-            return Frame._select(self, selection, _iall=_iall)
+            # If extracting a subframe, compute its shape and assign it
+            if not(isinstance(index, tuple) and len(index) == 2):
+                raise IndexError("Subarray extraction requires index to be a single pair (row, col).")
+            figarray = self.figureArray
+            rowSlice, colSlice = index
+            nrows = len(listselect(figarray, rowSlice).keys())
+            ncols = len(listselect(figarray.T, colSlice).keys())
+            result.shape = (nrows, ncols)
+        return result
+
+    def _selectionMap(self, index):
+        if not(isinstance(index, tuple) and len(index) % 2 == 0):
+            raise IndexError("Given index must be a pair (row, col) or a sequence of such pairs.")
+
+        # Convert given index list from a 1D sequence into
+        # a list of pairs.
+        indices = np.array(index, dtype=object)
+        indices.shape = (-1, 2)
+        indices = indices.tolist()
+
+        selection = dict()
+        for index in indices:
+            rowSlice, colSlice = index
+            figarray = self.figureArray
+            # Extract the selected individual row and column indices
+            rowIndices = list(listselect(figarray, rowSlice).keys())
+            colIndices = list(listselect(figarray.T, colSlice).keys())
+            # Convert into indices in the 1D figure list
+            nrows, ncols = self.shape
+            selection.update({i*ncols + j : figarray[i,j] for i in rowIndices for j in colIndices})
+        return selection
 
 
 # Returns a FigureArray of the given figures.

@@ -388,7 +388,7 @@ class Frame(morpho.Figure):
         return _InPlaceSubAttributeManager(self.figures, self)
 
     def _select(self, index, *, _asFrame=False, _iall=False):
-        seldict = listselect(self.figures, index)
+        seldict = self._selectionMap(index)
         selection = list(seldict.values())
 
         # Do an empty initialization first followed by assigning
@@ -416,6 +416,13 @@ class Frame(morpho.Figure):
 
     def _iselect(self, *args, **kwargs):
         return self._select(*args, _iall=True, **kwargs)
+
+    # Returns a dict mapping indices in the figure list
+    # to their figures. Mainly for internal use by the
+    # _select() method.
+    def _selectionMap(self, index):
+        return listselect(self.figures, index)
+
 
     # Allows the modification of a subset of the subfigures
     # with the syntax:
