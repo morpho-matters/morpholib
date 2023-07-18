@@ -144,7 +144,7 @@ class _SubactionSummoner(object):
         initframe = frame0.copy()
 
         # Get a dict containing the selected indices
-        selectedIndices = listselect(initframe.figures, select)
+        selectedIndices = initframe._selectionMap(select)
 
         subactors = []
         for n,fig in enumerate(initframe.figures):
