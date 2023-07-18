@@ -98,7 +98,10 @@ class FigureArray(Frame):
         return result
 
     def _selectionMap(self, index):
-        if not(isinstance(index, tuple) and len(index) % 2 == 0):
+        # Handle case where index is simply the all-slice.
+        if index == sel[:]:
+            index = sel[:,:]
+        elif not(isinstance(index, tuple) and len(index) % 2 == 0):
             raise IndexError("Given index must be a pair (row, col) or a sequence of such pairs.")
 
         # Convert given index list from a 1D sequence into
