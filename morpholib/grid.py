@@ -45,6 +45,10 @@ I2 = np.identity(2)
 # alpha = Overall opacity. Default: 1 (opaque)
 # alphaEdge = Outer edge opacity. Default 1 (opaque)
 # alphaFill = Interior opacity. Default: 1 (opaque)
+# dash = Dash pattern. Works exactly like how it does in cairo. It's a list
+#        of ints which are traversed cyclically and will alternatingly indicate
+#        number of pixels of visibility and invisibility.
+# dashOffset = Where along the dash pattern it will start. Default: 0
 class Point(morpho.Figure):
     def __init__(self, pos=0, size=15, strokeWeight=1, color=None, fill=None,
         alpha=1):
@@ -90,6 +94,8 @@ class Point(morpho.Figure):
         self.style = "circle"
         # size = diameter in pixels
         self.Tweenable("size", size, tags=["size"])
+        self.Tweenable("dash", [], tags=["scalar", "list"])
+        self.Tweenable("dashOffset", 0, tags=["scalar"])
 
 
     # Draws the point on the given cairo context.
@@ -111,7 +117,9 @@ class Point(morpho.Figure):
         else:
             ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
             ctx.set_line_width(self.strokeWeight)
+            ctx.set_dash(self.dash, self.dashOffset)
             ctx.stroke()
+            ctx.set_dash([])
 
 @Point.action
 def growIn(point, duration=30, atFrame=None):
