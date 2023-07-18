@@ -132,6 +132,7 @@ def figureGrid(figures, *,
     if isinstance(figures, morpho.Figure):
         figure = figures
         figures = [figure.copy() for n in range(abs(shape[0]*shape[1]))]
+        figgrid = FigureArray(figures)
     elif isinstance(figures, dict):
         figgrid = FigureArray(**figures)
     else:
