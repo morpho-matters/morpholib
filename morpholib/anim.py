@@ -762,7 +762,8 @@ def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0, select=Non
     else:
         film.subaction.fadeOut(duration, atFrame, jump=jump, substagger=substagger, select=select)
 
-    film.last().visible = False
+    if select is None or select == sel[:]:
+        film.last().visible = False
 
     # Restore static attribute for subfigures that were originally
     # static. This is helpful in case the user wants to use the
