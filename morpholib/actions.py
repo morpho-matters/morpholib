@@ -223,6 +223,10 @@ def transform(fig, pig, time=30):
 # versions of registered actor actions.
 # See "morpho.actions.action" for more info.
 class MultiActionSummoner(object):
+    @staticmethod
+    def getAction(actor, actionName):
+        return getattr(actor, actionName)
+
     def __getattr__(self, actionName):
         def multiaction(actors, *args, atFrame=None, stagger=0, **kwargs):
             if isinstance(actors, morpho.Actor):
@@ -234,12 +238,23 @@ class MultiActionSummoner(object):
                 atFrame = max(actor.lastID() for actor in actors)
             for n,actor in enumerate(actors):
                 try:
-                    action = getattr(actor, actionName)
+                    action = self.getAction(actor, actionName)
                 except AttributeError:
                     raise AttributeError(f"'{actor.figureType.__name__}' does not implement action '{actionName}'")
                 action(atFrame=atFrame+n*stagger, *args, **kwargs)
 
         return multiaction
+
+# NOT IMPLEMENTED YET
+# Currently this is still broken because `stagger` (not `substagger`)
+# doesn't work correctly.
+class MultiSubactionSummoner(MultiActionSummoner):
+    def __init__(self):
+        raise NotImplementedError
+
+    @staticmethod
+    def getAction(actor, actionName):
+        return getattr(actor.subaction, actionName)
 
 # Used to automatically implement multi-actions
 # for custom actions similar to how fadeIn/Out() and rollback() work.
@@ -251,3 +266,8 @@ class MultiActionSummoner(object):
 # Please note that a user-specified `atFrame` value must be specified
 # by keyword in an auto-generated multi-action. Same with `stagger`.
 action = MultiActionSummoner()
+
+# FUTURE: subaction may exist to complement action, but
+# for now, it's not implemented because `stagger` doesn't work
+# correctly (try it with subaction.fadeIn()).
+# subaction = MultiSubactionSummoner()
