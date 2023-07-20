@@ -130,10 +130,10 @@ class _SubactionSummoner(object):
     # be selected by passing in indices/slices into the `select`
     # keyword parameter.
     @staticmethod
-    def subaction(action, film, duration=30, atFrame=None, *,
+    def subaction(action, film, duration=30, *,
         substagger=0, select=None, **kwargs):
-        if atFrame is None:
-            atFrame = film.lastID()
+
+        lasttime = film.lastID()
 
         if select is None:
             select = sel[:]
@@ -152,6 +152,10 @@ class _SubactionSummoner(object):
             fig = fig.copy()
 
             subactor = morpho.Actor(fig)
+            # Shift ahead so that subactor's timeline aligns with
+            # that of the film it came from. Important in case
+            # the action used depends on the precise time coordinates.
+            subactor.shift(lasttime)
             if n in selectedIndices:
                 # Transition is set to uniform because transitions are ignored
                 # in frames and we want Actor.zip() to respect that.
@@ -166,16 +170,19 @@ class _SubactionSummoner(object):
                     tweenMethod=fig_orig.tweenMethod,
                     transition=fig_orig.transition
                     )
+            # Undo shift so that later insertion occurs at the
+            # right place.
+            subactor.shift(-lasttime)
             subactors.append(subactor)
 
+        # Apply substagger to the affected subactors
         for count, n in enumerate(selectedIndices):
             subactors[n].shift(count*substagger)
 
-        if atFrame == film.lastID():
-            film.delkey(atFrame)
+        film.delkey(lasttime)
         template = initframe.copy().set(figures=[])
         zipped = morpho.Actor.zip(subactors, template=template)
-        film.insert(zipped, atFrame=atFrame)
+        film.insert(zipped, atFrame=lasttime)
 
     def __getattr__(self, name):
         action = getattr(morpho.action, name)
