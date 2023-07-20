@@ -19,6 +19,8 @@ import morpholib.actions
 import morpholib.transitions
 from morpholib.tools.basics import *
 
+from sortedcontainers import SortedDict
+
 import math, cmath
 import numpy as np
 
@@ -1240,8 +1242,8 @@ class Actor(object):
         # and only modify it using methods like newkey(). However, if you
         # need to modify the timeline indices directly, be sure to call
         # the update() method afterward so that self.keyIDs is updated.
-        self.timeline = {}
-        self.keyIDs = []  # A sorted list of the timeline's keyindices.
+        self.timeline = SortedDict()
+        # self.keyIDs = []  # A sorted list of the timeline's keyindices.
 
         # If supplied an actual figure, initialize the Actor by
         # assigning the given figure to index zero.
@@ -1259,12 +1261,22 @@ class Actor(object):
         self.visible = visible
         self.owner = None
 
+    @property
+    def timeline(self):
+        return self._timeline
+
+    @timeline.setter
+    def timeline(self, value):
+        if not isinstance(value, SortedDict):
+            value = SortedDict(value)
+        self._timeline = value
+
     # Updates the keyIDs list according to the timeline.
     # This method is mainly for internal use by other methods that may
     # modify the timeline in unpredictable ways.
     def update(self):
-        self.keyIDs = list(self.timeline.keys())
-        self.keyIDs.sort()
+        # self.keyIDs = list(self.timeline.keys())
+        # self.keyIDs.sort()
         self._updateOwnerships()
 
     # Assigns this actor to the `owner` attribute of all
@@ -1292,6 +1304,9 @@ class Actor(object):
             # Should throw error
             object.__getattribute__(self, name)
 
+    @property
+    def keyIDs(self):
+        return self.timeline.keys()
 
     # Returns the i-th keyfigure in the timeline.
     def _keyno(self, i):
@@ -1419,7 +1434,7 @@ class Actor(object):
         self.timeline[f].owner = None
 
         del self.timeline[f]
-        self.keyIDs.remove(f)
+        # self.keyIDs.remove(f)
 
     # Returns the given keyfigure's position in the timeline.
     # Equivalent: myactor.keyID[keyfig]
@@ -2107,7 +2122,7 @@ class Actor(object):
     # Return a list of all the indices of all keyfigs in the timeline
     # in order.
     def listkeyIDs(self):
-        return self.keyIDs[:]
+        return list(self.keyIDs)
 
     # Returns a list of the same length as the number of keyfigs
     # but its items are the given tweenable of all the keyfigs.
