@@ -1876,8 +1876,10 @@ class Actor(object):
         # after being merged into the (possibly crowded) timeline
         # of self.
         for keytime in keytimes:
-            self.newkey(keytime)
-            film.newkey(keytime)
+            # These conditional checks actually provide a
+            # significant time save if there are many keytimes!
+            if keytime not in self.timeline: self.newkey(keytime)
+            if keytime not in film.timeline: film.newkey(keytime)
         # Likewise, add new keyframes to self from those
         # uniquely in film and then merge keyframes across the
         # two films.
