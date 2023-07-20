@@ -1859,17 +1859,42 @@ class Actor(object):
     def _mergeFilm(self, film):
         # film = film.copy()
 
+        # Aliases to save on function calls and that remember
+        # the original state of the actors before modification
+        # in the code below.
+        self_firsttime = self.firstID()
+        self_lasttime = self.lastID()
+        film_firsttime = film.firstID()
+        film_lasttime = film.lastID()
+
         # Manually create a new initial keyframe. This is to
         # prevent the default behavior of newkey() to create a
         # default (i.e. blank) keyfigure if it occurs before
         # the earliest keyframe in the timeline.
-        mintime = min([self.firstID(), film.firstID()])
+        mintime = min([self_firsttime, film_firsttime])
         self.newkey(mintime, self.first().copy())
         film.newkey(mintime, film.first().copy())
 
         # Sorting is useful to prevent unnecessary tween method
         # splitting for later keyfigures.
         keytimes = sorted(set(self.keyIDs).union(film.keyIDs))
+
+        # Create the "trivial" new keyfigures that occur before
+        # and after the original first keyfigure and final keyfigure
+        # in both self and film. This is done in such a way as to
+        # only call Actor.update() once after it's over, thereby
+        # providing a time save.
+        # Note that this clause may obsolete the earlier clause
+        # where we manually created a new initial keyframe, but
+        # I'm keeping it just to be on the safe side.
+        for keytime in keytimes:
+            if not(self_firsttime <= keytime <= self_lasttime) and keytime not in self.timeline:
+                self.timeline[keytime] = self.timeline[constrain(keytime, self_firsttime, self_lasttime)].copy()
+            if not(film_firsttime <= keytime <= film_lasttime) and keytime not in film.timeline:
+                film.timeline[keytime] = film.timeline[constrain(keytime, film_firsttime, film_lasttime)].copy()
+        self.update()
+        film.update()
+
         # Seamlessly introduce new keyframes into secondary film
         # corresponding to the keyframes of self. This
         # way, the secondary film will still animate identically
