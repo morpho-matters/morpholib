@@ -228,20 +228,30 @@ class MultiActionSummoner(object):
         return getattr(actor, actionName)
 
     def __getattr__(self, actionName):
-        def multiaction(actors, *args, atFrame=None, stagger=0, **kwargs):
+        def multiaction(actors, *args, stagger=0, **kwargs):
             if isinstance(actors, morpho.Actor):
                 actors = [actors]
             elif isinstance(actors, morpho.Layer):
                 actors = actors.actors
 
-            if atFrame is None:
-                atFrame = max(actor.lastID() for actor in actors)
+            now = max(actor.lastID() for actor in actors)
             for n,actor in enumerate(actors):
                 try:
                     action = self.getAction(actor, actionName)
                 except AttributeError:
                     raise AttributeError(f"'{actor.figureType.__name__}' does not implement action '{actionName}'")
-                action(atFrame=atFrame+n*stagger, *args, **kwargs)
+
+                if now not in actor.timeline:
+                    actor.newkey(now)
+                action(*args, **kwargs)
+            if stagger > 0:
+                # Go thru the actors and shift them by the stagger
+                # amount starting at the present. Also preserve the
+                # keyfigure at the original present time.
+                for n,actor in enumerate(actors[1:], start=1):
+                    present = actor.time(now).copy()
+                    actor.shiftAfter(now-1, n*stagger)
+                    actor.newkey(now, present, seamless=False)
 
         return multiaction
 
