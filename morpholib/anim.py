@@ -130,7 +130,7 @@ class _SubactionSummoner(object):
     # be selected by passing in indices/slices into the `select`
     # keyword parameter.
     @staticmethod
-    def subaction(action, film, duration=30, *,
+    def subaction(action, film, *args,
         substagger=0, select=None, **kwargs):
 
         lasttime = film.lastID()
@@ -163,7 +163,7 @@ class _SubactionSummoner(object):
                 if initframe.transition != morpho.transitions.uniform:
                     fig.tweenMethod = morpho.transitions.incorporateTransition(initframe.transition, fig.tweenMethod)
                 # fig.static = False
-                action(subactor, duration=duration, **kwargs)
+                action(subactor, *args, **kwargs)
                 # Restore tween method and transition to original
                 # values for the final keyfigure in the subactor
                 subactor.last().set(
@@ -179,6 +179,8 @@ class _SubactionSummoner(object):
         for count, n in enumerate(selectedIndices):
             subactors[n].shift(count*substagger)
 
+        # Delete current final keyfigure so that insertion
+        # will overwrite it.
         film.delkey(lasttime)
         template = initframe.copy().set(figures=[])
         zipped = morpho.Actor.zip(subactors, template=template)
