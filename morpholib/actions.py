@@ -255,13 +255,7 @@ class MultiActionSummoner(object):
 
         return multiaction
 
-# NOT IMPLEMENTED YET
-# Currently this is still broken because `stagger` (not `substagger`)
-# doesn't work correctly.
 class MultiSubactionSummoner(MultiActionSummoner):
-    def __init__(self):
-        raise NotImplementedError
-
     @staticmethod
     def getAction(actor, actionName):
         return getattr(actor.subaction, actionName)
@@ -277,7 +271,10 @@ class MultiSubactionSummoner(MultiActionSummoner):
 # by keyword in an auto-generated multi-action. Same with `stagger`.
 action = MultiActionSummoner()
 
-# FUTURE: subaction may exist to complement action, but
-# for now, it's not implemented because `stagger` doesn't work
-# correctly (try it with subaction.fadeIn()).
-# subaction = MultiSubactionSummoner()
+# Used to automatically implement multi-subactions used to
+# apply a subaction to multiple Frame-like actors.
+# See also: `action`
+#
+# Usage example:
+# subaction.fadeIn(actorlist, 20, substagger=3, stagger=10)
+subaction = MultiSubactionSummoner()
