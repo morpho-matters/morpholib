@@ -115,12 +115,12 @@ def handleSubfigureTweening(tweenmethod):
 
 # Enables Frame-like figures to apply an action to its subfigures
 # via the syntax
-#   myfilm.subaction.myaction(..., substagger=5)
-# Note that this assumes `myaction` only needs access to the final
-# keyfigure of the actor, and only modifies the actor by appending
-# new keyfigures to the end of its timeline. Actions such as
-# fadeIn/Out() and growIn/shrinkOut(), but not rollback() (since it
-# needs access to the first keyfigure).
+#       myfilm.subaction.myaction(..., substagger=5)
+# `myaction` should be a *standard* actor action, meaning it
+# only modifies the latest keyfigure and possibly adds new
+# future keyframes, as well as preserving a keyframe at the
+# original latest keyframe. All standard actions like
+# fadeIn/Out(), etc. follow this standard.
 class _SubactionSummoner(object):
     def __init__(self, actor):
         self.actor = actor
@@ -133,7 +133,7 @@ class _SubactionSummoner(object):
     def subaction(action, film, *args,
         substagger=0, select=None, **kwargs):
 
-        lasttime = film.lastID()
+        now = film.lastID()
 
         if select is None:
             select = sel[:]
@@ -151,11 +151,11 @@ class _SubactionSummoner(object):
             fig_orig = fig
             fig = fig.copy()
 
-            subactor = morpho.Actor(fig)
-            # Shift ahead so that subactor's timeline aligns with
-            # that of the film it came from. Important in case
-            # the action used depends on the precise time coordinates.
-            subactor.shift(lasttime)
+            # Create a subactor that contains a copy of the full
+            # history of the nth subfigure in the film.
+            subactor = morpho.Actor(type(fig))
+            subactor.timeline = {f : keyfig.figures[n].copy() for f, keyfig in film.timeline.items()}
+            subactor.update()
             if n in selectedIndices:
                 # Transition is set to uniform because transitions are ignored
                 # in frames and we want Actor.zip() to respect that.
@@ -170,9 +170,9 @@ class _SubactionSummoner(object):
                     tweenMethod=fig_orig.tweenMethod,
                     transition=fig_orig.transition
                     )
-            # Undo shift so that later insertion occurs at the
-            # right place.
-            subactor.shift(-lasttime)
+            # Remove past keyframes as they should not be
+            # modified by a standard action.
+            subactor = subactor.segment(start=now, rezero=True, edgeInterp="none")
             subactors.append(subactor)
 
         # Apply substagger to the affected subactors
@@ -181,10 +181,10 @@ class _SubactionSummoner(object):
 
         # Delete current final keyfigure so that insertion
         # will overwrite it.
-        film.delkey(lasttime)
+        film.delkey(now)
         template = initframe.copy().set(figures=[])
         zipped = morpho.Actor.zip(subactors, template=template)
-        film.insert(zipped, atFrame=lasttime)
+        film.insert(zipped, atFrame=now)
 
     def __getattr__(self, name):
         action = getattr(morpho.action, name)
