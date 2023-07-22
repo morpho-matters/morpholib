@@ -2636,6 +2636,7 @@ class Layer(object):
 
         # Compute current view
         cam = self.viewtime(f, returnCamera=True, _skipTrivialTweens=True)  # Get camera figure
+        cam = applyFigureModifier(cam)
         if not cam.visible:
             return
 
@@ -2647,17 +2648,7 @@ class Layer(object):
             fig = actor.time(f, _skipTrivialTweens=True)
             if fig is None: continue
 
-            if fig.modifier is not None:
-                # figure is copied because we don't want the
-                # modifier to actually modify the original
-                # keyfigures of the actor.
-                # This can alternatively be solved by setting
-                # `copykeys=True` in the above time() call,
-                # but I think that is less efficient, since
-                # copying complex figures like LaTeX MultiSplines
-                # can be slow.
-                fig = fig.copy()
-                fig.modifier(fig)
+            fig = applyFigureModifier(fig)
             if fig.visible:
                 figlist.append(fig)
 
@@ -2796,27 +2787,20 @@ class SpaceLayer(Layer):
 
         # Compute current view
         cam = self.viewtime(f, returnCamera=True, _skipTrivialTweens=True)  # Get camera figure
+        cam = applyFigureModifier(cam)
         if not cam.visible:
             return
-
-        # view = self.viewtime(f)
-        # viewFrame = self.view.time(f)
-        # if viewFrame is None:
-        #     if len(self.view.timeline) == 0:
-        #         viewFrame = Frame()
-        #     elif f > self.view.keyIDs[-1]:
-        #         viewFrame = self.view.key(-1)
-        #     else:
-        #         viewFrame = self.view.key(0)
-        # view = viewFrame.view
 
         # Compile list of figures to draw
         figlist = []
         for actor in self.actors:
-            if actor.visible:
-                fig = actor.time(f, _skipTrivialTweens=True)
-                if fig is None or not fig.visible:
-                    continue
+            if not actor.visible: continue
+
+            fig = actor.time(f, _skipTrivialTweens=True)
+            if fig is None: continue
+
+            fig = applyFigureModifier(fig)
+            if fig.visible:
                 figlist.append(fig)
 
         # Sort based on zdepth
@@ -4408,6 +4392,21 @@ class IntDict(dict):
         super().__setitem__(key, value)
 
 ### HELPERS ###
+
+def applyFigureModifier(fig):
+    if fig.modifier is None:
+        return fig
+    # Figure is copied because we don't want the
+    # modifier to actually modify the original
+    # keyfigures of the actor.
+    # This can alternatively be solved by setting
+    # `copykeys=True` in the time() call in Layer.draw(),
+    # but I think that is less efficient, since
+    # copying complex figures like LaTeX MultiSplines
+    # can be slow.
+    fig = fig.copy()
+    fig.modifier(fig)
+    return fig
 
 # Draws an ellipse at the point (x,y) with width 2a
 # and height 2b.
