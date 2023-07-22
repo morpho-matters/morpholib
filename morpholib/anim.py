@@ -189,6 +189,9 @@ class _SubactionSummoner(object):
     def __getattr__(self, name):
         action = getattr(morpho.action, name)
 
+        return self.makeSubaction(action)
+
+    def makeSubaction(self, action):
         def subaction(*args, substagger=0, **kwargs):
             return self.subaction(action, self.actor, *args, substagger=substagger, **kwargs)
 
