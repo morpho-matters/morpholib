@@ -1998,7 +1998,13 @@ class Actor(object):
     # of a figure to decide whether tweening is necessary.
     # By default, it's False so tweening behaves exactly as
     # expected.
-    def time(self, f, keyID=None, *, copykeys=False, _skipTrivialTweens=False):
+    #
+    # If `keepOwner` is set to True, the returned figure will
+    # be guaranteed to possess the same owner as its principle
+    # keyfigure. This is mainly for internal use.
+    def time(self, f, keyID=None, *,
+            copykeys=False, _skipTrivialTweens=False,
+            keepOwner=False):
         # If f is a float, but it's really an int, make it an int.
         # This is so searching the timeline dict is done correctly
         # because all the keys in the dict are ints.
@@ -2011,7 +2017,7 @@ class Actor(object):
         # If the given index is a keyindex, just return the keyfig.
         if f in self.timeline:
             keyfig = self.timeline[f]
-            return keyfig if not copykeys else keyfig.copy()
+            return keyfig if not copykeys else keyfig.copy().set(owner=(keyfig.owner if keepOwner else None))
 
         # Compute the latest keyID on the fly if not provided.
         if keyID is None:
@@ -2027,17 +2033,17 @@ class Actor(object):
         # If we're within the latest keyfig's endlag, just
         # return that keyfig.
         if f <= keyID + keyfig.delay:
-            return keyfig if not copykeys else keyfig.copy()
+            return keyfig if not copykeys else keyfig.copy().set(owner=(keyfig.owner if keepOwner else None))
         # Special case if the latest keyfig is the last keyfig
         # in the timeline. Return None unless actors persist.
         elif keyID == self.keyIDs[-1]:
             if Actor.persist:
-                return keyfig if not copykeys else keyfig.copy()
+                return keyfig if not copykeys else keyfig.copy().set(owner=(keyfig.owner if keepOwner else None))
             else:
                 return None
         # If the latest keyframe is static, don't tween.
         elif (_skipTrivialTweens and keyfig._static_acute) or keyfig.static:
-            return keyfig if not copykeys else keyfig.copy()
+            return keyfig if not copykeys else keyfig.copy().set(owner=(keyfig.owner if keepOwner else None))
             # return keyfig.copy()
         else:
             # keyfig2 = self.timeline[keyID+1]
@@ -2047,7 +2053,7 @@ class Actor(object):
                 end=self.keyIDs[k+1]
                 )
             # assert 0 <= T <= 1  # Temporary for testing purposes
-            return keyfig.tween(keyfig2, T)
+            return keyfig.tween(keyfig2, T).set(owner=(keyfig.owner if keepOwner else None))
 
     # Alternate name for the time method.
     # frame = time

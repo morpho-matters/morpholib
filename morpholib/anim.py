@@ -2364,7 +2364,8 @@ class Layer(object):
     #
     # Set returnCamera = True to make the function return
     # the actual camera figure instead of just the view 4-vector.
-    def viewtime(self, f, useOffset=False, returnCamera=False, *, _skipTrivialTweens=False):
+    def viewtime(self, f, useOffset=False, returnCamera=False, *,
+            _skipTrivialTweens=False, **kwargs):
         if len(self.camera.timeline) == 0:
             raise IndexError("Camera timeline is empty.")
 
@@ -2373,7 +2374,7 @@ class Layer(object):
             f -= self.timeOffset
 
         # Compute current view
-        viewFrame = self.camera.time(f, _skipTrivialTweens=_skipTrivialTweens)
+        viewFrame = self.camera.time(f, _skipTrivialTweens=_skipTrivialTweens, **kwargs)
         if viewFrame is None:
             # if len(self.camera.timeline) == 0:
             #     viewFrame = Frame()
@@ -2635,7 +2636,7 @@ class Layer(object):
             f -= self.timeOffset
 
         # Compute current view
-        cam = self.viewtime(f, returnCamera=True, _skipTrivialTweens=True)  # Get camera figure
+        cam = self.viewtime(f, returnCamera=True, keepOwner=True, _skipTrivialTweens=True)  # Get camera figure
         cam = applyFigureModifier(cam)
         if not cam.visible:
             return
@@ -2645,7 +2646,7 @@ class Layer(object):
         for actor in self.actors:
             if not actor.visible: continue
 
-            fig = actor.time(f, _skipTrivialTweens=True)
+            fig = actor.time(f, keepOwner=True, _skipTrivialTweens=True)
             if fig is None: continue
 
             fig = applyFigureModifier(fig)
@@ -2786,7 +2787,7 @@ class SpaceLayer(Layer):
             f -= self.timeOffset
 
         # Compute current view
-        cam = self.viewtime(f, returnCamera=True, _skipTrivialTweens=True)  # Get camera figure
+        cam = self.viewtime(f, returnCamera=True, keepOwner=True, _skipTrivialTweens=True)  # Get camera figure
         cam = applyFigureModifier(cam)
         if not cam.visible:
             return
@@ -2796,7 +2797,7 @@ class SpaceLayer(Layer):
         for actor in self.actors:
             if not actor.visible: continue
 
-            fig = actor.time(f, _skipTrivialTweens=True)
+            fig = actor.time(f, keepOwner=True, _skipTrivialTweens=True)
             if fig is None: continue
 
             fig = applyFigureModifier(fig)
@@ -4404,7 +4405,14 @@ def applyFigureModifier(fig):
     # but I think that is less efficient, since
     # copying complex figures like LaTeX MultiSplines
     # can be slow.
+    fig_orig = fig
     fig = fig.copy()
+    # Assign copy's owner to be the original figure's owner.
+    # This is technically a lie, but it's important to make
+    # things like Text.box() work. I think it's okay to lie
+    # here since this copy's only job is to be drawn and then
+    # deleted. It won't persist.
+    fig.owner = fig_orig.owner
     fig.modifier(fig)
     return fig
 
