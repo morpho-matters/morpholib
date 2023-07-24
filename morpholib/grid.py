@@ -1900,6 +1900,39 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
     else:
         path1.end = 0
 
+# Highlights the Path actor
+@Path.action
+def highlight(actor, duration=15, atFrame=None, *,
+    width=-3, fill=(1,1,0), color=(0,0,0), rescale=1,
+    **kwargs):
+
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    path0 = actor.last()
+    path1 = actor.newkey(atFrame)
+    path2 = actor.newendkey(duration)
+    path2.set(width=width, fill=fill, color=color, **kwargs)
+    if rescale != 1:
+        path2.transform = morpho.matrix.scale2d(rescale) @ path2.transform
+
+# Highlights then immediately de-highlights the Path actor.
+# Optional keyword input `pause` can be used to specify a number
+# of frames to pause after highlighting and before de-highlighting.
+@Path.action
+def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
+
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    path0 = actor.last()
+    path1 = actor.newkey(atFrame)
+
+    actor.highlight(duration, atFrame, **kwargs)
+    if pause > 0:
+        actor.newendkey(pause)
+    actor.newendkey(duration, path1.copy())
+
 # Draws in a Path actor Manim-style.
 #
 # OPTIONAL KEYWORD-ONLY INPUTS
@@ -2171,50 +2204,16 @@ def morphFrom(actor, source, *args, **kwargs):
 
 # Highlights the MultiPath actor
 @MultiPath.action
-def highlight(actor, duration=15, atFrame=None, *,
-    width=-3, fill=(1,1,0), color=(0,0,0), rescale=1, select=None,
-    **kwargs):
+def highlight(actor, *args, **kwargs):
+    actor.subaction.highlight(*args, **kwargs)
 
-    if atFrame is None:
-        atFrame = actor.lastID()
-
-    if select is None:
-        select = sel[:]
-    elif isinstance(select, Iterable):
-        select = tuple(select)
-
-    path0 = actor.last()
-    path1 = actor.newkey(atFrame)
-    path2 = actor.newendkey(duration)
-
-    # Assignment to subframe needs to happen because
-    # if `select` is a choice function, modifying the
-    # width/fill/color of the subpaths can change what
-    # the choice function selects on the second call.
-    subframe = path2.select[select]
-    subframe.set(width=width, fill=fill, color=color, **kwargs)
-    if rescale != 1:
-        if select == sel[:]:
-            path2.rescale(rescale)
-        else:
-            subframe.rescale(rescale)
 
 # Highlights then immediately de-highlights the MultiPath actor.
 # Optional keyword input `pause` can be used to specify a number
 # of frames to pause after highlighting and before de-highlighting.
 @MultiPath.action
-def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
-
-    if atFrame is None:
-        atFrame = actor.lastID()
-
-    path0 = actor.last()
-    path1 = actor.newkey(atFrame)
-
-    actor.highlight(duration, atFrame, **kwargs)
-    if pause > 0:
-        actor.newendkey(pause)
-    actor.newendkey(duration, path1.copy())
+def flourish(actor, *args, **kwargs):
+    actor.subaction.flourish(*args, **kwargs)
 
 # Draws in a MultiPath actor Manim-style. Useful for making
 # LaTeX appear on the screen.
