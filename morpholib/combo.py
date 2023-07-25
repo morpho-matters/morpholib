@@ -140,10 +140,13 @@ class FigureArray(Frame):
 # width, height = Width and height of the grid. If one is unspecified,
 #   it will be inferred from the other and the grid shape. However,
 #   at least one of width or height must be specified.
+# cls = FigureArray subtype to use to construct the grid.
+#       Default: FigureArray.
 def figureGrid(figures, *,
         shape=(1,-1),
         pos=0, align=(0,0),
-        width=None, height=None):
+        width=None, height=None,
+        cls=FigureArray):
 
     if len(shape) != 2:
         raise TypeError("Given shape must be a pair (nrows, ncols).")
@@ -151,11 +154,11 @@ def figureGrid(figures, *,
     if isinstance(figures, morpho.Figure):
         figure = figures
         figures = [figure.copy() for n in range(abs(shape[0]*shape[1]))]
-        figgrid = FigureArray(figures)
+        figgrid = cls(figures)
     elif isinstance(figures, dict):
-        figgrid = FigureArray(**figures)
+        figgrid = cls(**figures)
     else:
-        figgrid = FigureArray(figures)
+        figgrid = cls(figures)
 
     figgrid.shape = shape
 
