@@ -188,6 +188,11 @@ class BoundingBoxFigure(morpho.Figure):
         box = self.box(*args, **kwargs)
         return box[-1] - box[-2]
 
+    # Returns both boxWidth and boxHeight as a tuple.
+    def boxDimensions(self, *args, **kwargs):
+        box = self.box(*args, **kwargs)
+        return (box[1] - box[0], box[-1] - box[-2])
+
     # Only works for BoundingBoxFigures that have
     # background box tweenables `background`,
     # `backAlpha`, and `backPad` defined and the general
