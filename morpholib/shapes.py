@@ -1659,6 +1659,14 @@ def shrinkOut(spline, duration=30, atFrame=None, *, reverse=False):
         spline1.end = 0
 
 @Spline.action
+def popIn(actor, *args, **kwargs):
+    return Path.actions["popIn"](actor, *args, **kwargs)
+
+@Spline.action
+def popOut(actor, *args, **kwargs):
+    return Path.actions["popOut"](actor, *args, **kwargs)
+
+@Spline.action
 def highlight(actor, *args, **kwargs):
     return Path.actions["highlight"](actor, *args, **kwargs)
 

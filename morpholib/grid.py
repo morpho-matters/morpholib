@@ -1900,6 +1900,32 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
     else:
         path1.end = 0
 
+# Animates a Path actor appearing by enlarging from a focus point.
+@Path.action
+def popIn(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
+    if atFrame is None:
+        atFrame = path.lastID()
+
+    path0 = path.last()
+    final = path0.copy()
+    path0.visible = False
+    if focus is None:
+        focus = path0.anchorPoint(align)
+    path1 = path.newkey(atFrame, path0.fimage(lambda z: focus))
+    path1.visible = True
+    path.newendkey(duration, final)
+
+# Animates a Path actor disappearing by shrinking to a focus point.
+@Path.action
+def popOut(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
+    if atFrame is None:
+        atFrame = path.lastID()
+
+    if focus is None:
+        focus = path.last().anchorPoint(align)
+    path.newkey(atFrame)
+    path.newendkey(duration, path.last().fimage(lambda z: focus))
+
 # Highlights the Path actor
 @Path.action
 def highlight(actor, duration=15, atFrame=None, *,
@@ -2202,11 +2228,18 @@ def morphFrom(actor, source, *args, **kwargs):
     else:
         return morpho.Figure.actions["morphFrom"](actor, source, *args, **kwargs)
 
+@MultiPath.action
+def popIn(actor, *args, **kwargs):
+    actor.subaction.popIn(*args, **kwargs)
+
+@MultiPath.action
+def popOut(actor, *args, **kwargs):
+    actor.subaction.popOut(*args, **kwargs)
+
 # Highlights the MultiPath actor
 @MultiPath.action
 def highlight(actor, *args, **kwargs):
     actor.subaction.highlight(*args, **kwargs)
-
 
 # Highlights then immediately de-highlights the MultiPath actor.
 # Optional keyword input `pause` can be used to specify a number
