@@ -2468,10 +2468,23 @@ class Ellipse(morpho.Figure):
     def minorRadius(self):
         return min(self.xradius, self.yradius)
 
+    # Converts the Ellipse into an approximate Path figure.
+    # Specify `dTheta` keyword to control angle difference
+    # between adjacent vertices. By default: 2pi/72 rad (5 deg).
+    def toPath(self, **kwargs):
+        return self.toPolygon(**kwargs).toPath()
 
-    # NOT IMPLEMENTED YET!!!
-    def toPolygon(self, dTheta=tau/72):
-        raise NotImplementedError
+    # Converts the Ellipse into an approximate Polygon figure.
+    # Specify `dTheta` keyword to control angle difference
+    # between adjacent vertices. By default: 2pi/72 rad (5 deg).
+    def toPolygon(self, **kwargs):
+        poly = morpho.grid.ellipse(self.pos, self.xradius, self.yradius, relative=True, **kwargs)
+        poly._updateFrom(self, common=True)
+        poly.set(
+            width=self.strokeWeight,
+            origin=self.pos
+            )
+        return poly
 
     def draw(self, camera, ctx):
         # Don't draw if radii values are zero.
