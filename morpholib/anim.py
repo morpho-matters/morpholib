@@ -3697,7 +3697,10 @@ class Animation(object):
 
     # Convert all infinite delays to the specified delay (units=frames).
     def finitizeDelays(self, delay):
-        for time in self.delays:
+        # Convert to list so that delay = 0 works
+        # (since delay = 0 will cause keys from the dict
+        # to be deleted, which would cause a RuntimeError)
+        for time in list(self.delays.keys()):
             if self.delays[time] == oo:
                 self.delays[time] = delay
 
