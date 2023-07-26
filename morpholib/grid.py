@@ -134,6 +134,11 @@ def growIn(point, duration=30, atFrame=None):
     point2 = point.newendkey(duration)
     point2.set(size=size)
 
+# Alias for growIn()
+@Point.action
+def popIn(point, *args, **kwargs):
+    return Point.actions["growIn"](point, *args, **kwargs)
+
 @Point.action
 def shrinkOut(point, duration=30, atFrame=None):
     if atFrame is None:
@@ -143,6 +148,10 @@ def shrinkOut(point, duration=30, atFrame=None):
     point1 = point.newendkey(duration)
     point1.set(size=0, visible=False)
 
+# Alias for shrinkOut()
+@Point.action
+def popOut(point, *args, **kwargs):
+    return Point.actions["shrinkOut"](point, *args, **kwargs)
 
 # DEPRECATED!
 # Polar Point class. Identical to the Point class except it adds
