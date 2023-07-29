@@ -1258,6 +1258,11 @@ class Actor(object):
 
         self.visible = visible
         self.owner = None
+        # Dict mapping time index to a figure. Mainly used
+        # by the now() method to be more efficient when
+        # multiple now() calls are made at a single point
+        # in the timeline.
+        self.timeCache = dict()
 
     # Updates the keyIDs list according to the timeline.
     # This method is mainly for internal use by other methods that may
@@ -2058,6 +2063,11 @@ class Actor(object):
     # Alternate name for the time method.
     # frame = time
 
+    # Global configuration setting telling whether to use
+    # time caching. Mainly for internal use by now() to be
+    # more efficient.
+    useTimeCache = True
+
     # Returns the current figure of the actor at the current time
     # index on the global timeline. Only possible if the actor's
     # owner is a Layer whose owner is an Animation object.
@@ -2074,7 +2084,14 @@ class Actor(object):
             raise TypeError("No global timeline to reference.")
 
         f = currentIndex - self.owner.timeOffset
-        fig = self.time(f, copykeys=True)  # Make a copy in case it's a keyfigure
+        if Actor.useTimeCache and f in self.timeCache:
+            fig = self.timeCache[f].copy()
+        else:
+            fig = self.time(f, copykeys=True)  # Make a copy in case it's a keyfigure
+            if Actor.useTimeCache:
+                # Replace stored time index.
+                self.timeCache.clear()
+                self.timeCache[f] = fig.copy()
 
         # Lie and say that self owns this figure so that methods like
         # Text.box() work correctly. I think it's okay for it to lie here since
