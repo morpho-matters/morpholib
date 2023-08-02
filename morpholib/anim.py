@@ -212,15 +212,17 @@ class _SubactionSummoner(object):
 class _SubactionSummonerForMultiFigures(_SubactionSummoner):
     @staticmethod
     def subaction(action, film, *args, substagger=0, select=None, **kwargs):
-        if substagger == 0 and select is None:
-            _SubactionSummoner.subaction(action, film, *args,
-                substagger=0, select=select, **kwargs)
-        else:
-            origTweenMethod = film.last().tweenMethod
-            film.last().tweenMethod = Frame.tweenLinear
-            _SubactionSummoner.subaction(action, film, *args,
-                substagger=substagger, select=select, **kwargs)
-            film.last().tweenMethod = origTweenMethod
+        # Need to temporarily use Frame's tweenLinear because
+        # _SubactionSummoner.subaction() expects the toplevel
+        # tween method to follow standard subfigure tweening rules,
+        # specifically in that subfigure tween methods are used.
+        # MultiFigure tween methods usually ignore subfigure
+        # tween methods, meaning subaction() won't work correctly.
+        origTweenMethod = film.last().tweenMethod
+        film.last().tweenMethod = Frame.tweenLinear
+        _SubactionSummoner.subaction(action, film, *args,
+            substagger=substagger, select=select, **kwargs)
+        film.last().tweenMethod = origTweenMethod
 
 # Frame class. Groups figures together for simultaneous drawing.
 # Syntax: myframe = Frame(list_of_figures, **kwargs)
