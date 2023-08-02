@@ -3,7 +3,7 @@ import morpholib as morpho
 import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    totalBox, shiftBox, translateArrayUnderTransforms
+    totalBox, shiftBox, translateArrayUnderTransforms, handleBoxTypecasting
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 
@@ -2912,7 +2912,92 @@ spaceLine = morpho.grid.spaceLine
 rect = morpho.grid.rect
 arc = morpho.grid.arc
 
+# Return a generic spline in the shape of a rectangle with rounded
+# corners. Note that the rounded corners will be approximate
+# circular arcs, but not perfect.
+#
+# INPUTS
+# box = Box region specified as [xmin, xmax, ymin, ymax]
+# radius = Radius of rounded corners.
+#       Default: Infinity (clamp to max possible radius)
+# KEYWORD-ONLY INPUTS
+# pad = Padding to apply to box. Default: 0
+# corner = Which corner should the animation start at?
+#       Values are given as diagonal compass directions:
+#       "NW", "SW", "SE", "NE". Default: "NW"
+# CCW = Boolean specifying draw direction being counter-clockwise or not.
+#       Default: True
+# relative = Boolean which if set to True, makes the rounded
+#       rectangle centered using its `origin` attribute.
+@handleBoxTypecasting
+def roundedRect(box, radius=oo, *, pad=0, corner="NW", CCW=True, relative=False):
+    a,b,c,d = box
+    a -= pad
+    b += pad
+    c -= pad
+    d += pad
+    SW = a + c*1j
+    NW = a + d*1j
+    NE = b + d*1j
+    SE = b + c*1j
+    width = b - a
+    height = d - c
+    semiwidth = width/2
+    semiheight = height/2
 
+    # Radius cannot be bigger than the smallest semi-dimension
+    radius = min(radius, semiwidth, semiheight)
+
+    # Lengths of the flat sections of the rounded rect
+    flatwidth = width - 2*radius
+    flatheight = height - 2*radius
+    # Handle floating point precision issues when radius
+    # exactly equals one of the semi-dimensions.
+    if abs(flatwidth) < 1e-8*width:
+        flatwidth = 0
+    if abs(flatheight) < 1e-8*height:
+        flatheight = 0
+
+    # Corners in the standard order
+    corners = [NW, SW, SE, NE]
+
+    spline = Spline()
+    if relative:
+        center = (a+b)/2 + 1j*(c+d)/2
+        corners = [corner-center for corner in corners]
+        spline.origin = center
+
+    # Calculate corner number
+    corner = corner.upper()
+    try:
+        cornerID = ["NW", "SW", "SE", "NE"].index(corner)
+    except ValueError:
+        raise ValueError('corner must be "NW", "SW", "SE", or "NE".')
+
+    unit = 1j**(cornerID-1)  # Current direction spline is flowing
+    # Alternating list of flat segment lengths. The order changes
+    # depending on the initial corner.
+    flatdists = [flatheight, flatwidth]*2 if cornerID % 2 == 0 else [flatwidth, flatheight]*2
+
+    if not CCW:
+        corners = corners[::-1]
+        cornerID = 3 - cornerID
+        unit *= 1j
+        flatdists = flatdists[::-1]
+    # Calculate corner ordering for construction of the
+    # rounded rectangle.
+    corners = corners[cornerID:] + corners[:cornerID]
+
+    for corner, flatdist in zip(corners, flatdists):
+        spline.newNode(corner+radius*unit, -radius*tau/12*unit, flatdist/3*unit)
+        if flatdist == 0:
+            spline.newNode(corner+radius*unit, 0, radius*tau/12*unit)
+        else:
+            spline.newNode(corner+(radius+flatdist)*unit, -flatdist/3*unit, radius*tau/12*unit)
+        unit *= 1j if CCW else -1j
+    spline.close(straight=False)
+
+    return spline
 
 
 ### SCRAPS ###
