@@ -1910,6 +1910,13 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
         path1.end = 0
 
 # Animates a Path actor appearing by enlarging from a focus point.
+# By default the focus point is taken to be the box center of the
+# path, but this can be changed by passing in a position value to
+# the `focus` optional kwarg. Note that the coordinates will be
+# taken within the path's LOCAL coordinates (i.e. relative to
+# the path's transformation attributes). Alternatively, an `align`
+# parameter can be passed in by keyword to specify the focus point
+# in terms of a location on the path's bounding box.
 @Path.action
 def popIn(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
     if atFrame is None:
@@ -1919,19 +1926,26 @@ def popIn(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
     final = path0.copy().set(visible=True)
     path0.visible = False
     if focus is None:
-        focus = path0.anchorPoint(align)
+        focus = path0.anchorPoint(align, raw=True)
     path1 = path.newkey(atFrame, path0.fimage(lambda z: focus))
     path1.visible = True
     path.newendkey(duration, final)
 
 # Animates a Path actor disappearing by shrinking to a focus point.
+# By default the focus point is taken to be the box center of the
+# path, but this can be changed by passing in a position value to
+# the `focus` optional kwarg. Note that the coordinates will be
+# taken within the path's LOCAL coordinates (i.e. relative to
+# the path's transformation attributes). Alternatively, an `align`
+# parameter can be passed in by keyword to specify the focus point
+# in terms of a location on the path's bounding box.
 @Path.action
 def popOut(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
     if atFrame is None:
         atFrame = path.lastID()
 
     if focus is None:
-        focus = path.last().anchorPoint(align)
+        focus = path.last().anchorPoint(align, raw=True)
     path.newkey(atFrame)
     path.newendkey(duration, path.last().fimage(lambda z: focus))
     path.last().visible = False
