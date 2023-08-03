@@ -19,7 +19,8 @@ from morpholib.tools.dev import BoundingBoxFigure, makesubcopies, listselect, \
 # Backward compatibility because these functions used to live in anim.py
 from morpholib import screenCoords, physicalCoords, \
     pixelWidth, physicalWidth, pixelHeight, physicalHeight, \
-    setupContext, clearContext, cairoJointStyle, object_hasattr
+    setupContext, clearContext, cairoJointStyle, object_hasattr, \
+    applyFigureModifier
 
 import math, cmath
 import numpy as np
@@ -4398,28 +4399,6 @@ class IntDict(dict):
         super().__setitem__(key, value)
 
 ### HELPERS ###
-
-def applyFigureModifier(fig):
-    if fig.modifier is None:
-        return fig
-    # Figure is copied because we don't want the
-    # modifier to actually modify the original
-    # keyfigures of the actor.
-    # This can alternatively be solved by setting
-    # `copykeys=True` in the time() call in Layer.draw(),
-    # but I think that is less efficient, since
-    # copying complex figures like LaTeX MultiSplines
-    # can be slow.
-    fig_orig = fig
-    fig = fig.copy()
-    # Assign copy's owner to be the original figure's owner.
-    # This is technically a lie, but it's important to make
-    # things like Text.box() work. I think it's okay to lie
-    # here since this copy's only job is to be drawn and then
-    # deleted. It won't persist.
-    fig.owner = fig_orig.owner
-    fig.modifier(fig)
-    return fig
 
 # Draws an ellipse at the point (x,y) with width 2a
 # and height 2b.
