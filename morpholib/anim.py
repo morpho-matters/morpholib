@@ -261,7 +261,7 @@ class _SubactionSummonerForMultiFigures(_SubactionSummoner):
 # the individual transition functions of each figure are used.
 # The transition of the Frame figure itself really only applies to its
 # own `origin` tweenable.
-class Frame(morpho.Figure):
+class Frame(BoundingBoxFigure):
     def __init__(self, figures=None, /, **kwargs):
         # By default, do what the superclass does.
         # morpho.Figure.__init__(self)
@@ -319,6 +319,14 @@ class Frame(morpho.Figure):
     @property
     def numfigs(self):
         return len(self.figures)
+
+    # Computes the bounding box of the entire Frame,
+    # assuming all of its subfigures have implemented `box()`.
+    # Returned as [xmin, xmax, ymin, ymax].
+    # Additional arguments are passed to the box() methods
+    # of subfigures.
+    def box(self, *args, **kwargs):
+        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), self.origin)
 
     # Modified because checking if the two figure lists are
     # equal via vanilla Python list equality will not work.
@@ -881,14 +889,6 @@ class MultiFigure(Frame):
     #         figures = self.figures
 
     #     return StateStruct(tweenableNames, figures)
-
-    # Computes the bounding box of the entire MultiFigure,
-    # assuming all of its subfigures have implemented `box()`.
-    # Returned as [xmin, xmax, ymin, ymax].
-    # Additional arguments are passed to the box() methods
-    # of subfigures.
-    def box(self, *args, **kwargs):
-        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), self.origin)
 
     # If attempted to access a non-existent attribute,
     # check if it's an attribute of the first figure in

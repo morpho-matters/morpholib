@@ -804,7 +804,7 @@ def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, *, reverseMeth
 #
 # Bottom line: It's just like Text except you can tween between different
 # underlying text strings.
-class MultiText(morpho.MultiFigure, BoundingBoxFigure):
+class MultiText(morpho.MultiFigure):
     _baseFigure = Text
 
     def __init__(self, text="", *args, **kwargs):

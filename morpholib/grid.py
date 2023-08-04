@@ -2031,7 +2031,7 @@ def drawIn(actor, duration=30, atFrame=None, *,
     ["insertNodesUniformly", "concat"],
     Path, MultiFigure._returnOrigCaller
     )
-class MultiPath(MultiFigure, BoundingBoxFigure):
+class MultiPath(MultiFigure):
 
     _basetype = Path
 
