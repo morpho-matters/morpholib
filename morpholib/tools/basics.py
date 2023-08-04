@@ -3,6 +3,7 @@ import morpholib as morpho
 import math, cmath
 import numpy as np
 from bisect import bisect_right, bisect_left
+from collections.abc import Iterable
 
 ### CONSTANTS ###
 pi = math.pi
@@ -255,6 +256,34 @@ def listceil(a, x):
         return a.index(x)
     else:
         return listfloor(a,x) + 1
+
+# Returns a dictionary mapping indices to items representing a
+# selection of items in a list. The `index` parameter can either
+# be an index, a slice, a choice function, or a combination of
+# these expressed as a tuple/iterable.
+#
+# One of the main features of this function is it won't return
+# duplicates when the indices in a multi-selection overlap.
+# And by using dicts, it is hopefully still a very speedy
+# function.
+def listselect(lst, index, /):
+    if callable(index):
+        condition = index
+        return dict((i,item) for i,item in enumerate(lst) if condition(item))
+    # Handle case of multiple index ranges provided
+    elif isinstance(index, Iterable):
+        pieces = index
+        selection = dict()
+        for piece in pieces:
+            selection.update(listselect(lst, piece))
+        return selection
+    else:
+        # Turn index into a slice if it's just a single int
+        if isinstance(index, int):
+            if index < 0:
+                index = index % len(lst)
+            index = sel[index:index+1]
+        return dict(zip(range(len(lst))[index], lst[index]))
 
 # # If x is a float that is really an integer, returns int(x).
 # # Otherwise, just returns back x unchanged.
