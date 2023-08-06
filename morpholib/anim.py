@@ -98,6 +98,9 @@ def handleSubfigureTweening(tweenmethod):
 
     @morpho.TweenMethod(splitter=splitter)
     def wrapper(self, other, t, *args, **kwargs):
+        if len(self.figures) != len(other.figures):
+            raise ValueError("Can't tween Frames with different subfigure counts.")
+
         # Apply original tween method and assume it doesn't
         # affect the `figures` tweenable.
         twfig = tweenmethod(self, other, t, *args, **kwargs)
