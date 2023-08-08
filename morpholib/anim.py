@@ -437,8 +437,10 @@ class Frame(BoundingBoxFigure):
                     if subID in seldict:
                         frm._names[name] = subIDpositions[subID]
             return frm
+        elif _iall:
+            return _InPlaceSubAttributeManager(frm.figures, self)
         else:
-            return _InPlaceSubAttributeManager(frm.figures, self) if _iall else _SubAttributeManager(frm.figures, self)
+            return _SubAttributeManager(frm.figures, self)
 
     def _iselect(self, *args, **kwargs):
         return self._select(*args, _iall=True, **kwargs)
