@@ -153,6 +153,22 @@ def shrinkOut(point, duration=30, atFrame=None):
 def popOut(point, *args, **kwargs):
     return Point.actions["shrinkOut"](point, *args, **kwargs)
 
+# Makes a point actor grow then shrink again.
+# Scale factor of the growth can be specified by passing in
+# a number into the `scale` keyword (Default: 2). Additional
+# keyword inputs are set as attributes of the point at its
+# point of maximum scale.
+@Point.action
+def pulse(point, duration=30, atFrame=None, *, scale=2, **kwargs):
+    if atFrame is None:
+        atFrame = point.lastID()
+
+    point0 = point.newkey(atFrame)
+    point1 = point.newkey(atFrame + duration/2)
+    point1.size *= scale
+    point1.set(**kwargs)
+    point2 = point.newkey(atFrame + duration, point0.copy())
+
 # DEPRECATED!
 # Polar Point class. Identical to the Point class except it adds
 # an attribute called "wind" which represents winding number about
