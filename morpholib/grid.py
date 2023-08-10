@@ -1985,6 +1985,10 @@ def highlight(actor, duration=15, atFrame=None, *,
 # Highlights then immediately de-highlights the Path actor.
 # Optional keyword input `pause` can be used to specify a number
 # of frames to pause after highlighting and before de-highlighting.
+# Note that the `duration` parameter here refers to the time to take
+# to get completely highlighted, not the duration for the entire
+# animation. That is, `duration` really refers to the "half-duration"
+# of the entire animation.
 @Path.action
 def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
 
@@ -2284,6 +2288,7 @@ def highlight(actor, *args, **kwargs):
 # Highlights then immediately de-highlights the MultiPath actor.
 # Optional keyword input `pause` can be used to specify a number
 # of frames to pause after highlighting and before de-highlighting.
+# See also: Path.flourish()
 @MultiPath.action
 def flourish(actor, *args, **kwargs):
     actor.subaction.flourish(*args, **kwargs)
