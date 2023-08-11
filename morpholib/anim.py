@@ -3636,6 +3636,73 @@ class Animation(object):
     def seconds(self):
         return self.length() / self.frameRate
 
+    # Returns the location on the timeline (in frames) corresponding
+    # to the given number of seconds after the animation's start
+    # taking into account animation delays.
+    # Note that `seconds` is relative to whatever the current
+    # animation's `start` value is. If None, uses firstID().
+    # Also note that if `seconds` corresponds to the middle of
+    # an animation delay, the returned timeline coordinate will
+    # be the frame at which the delay BEGUN.
+    def timelineCoord(self, seconds):
+        if seconds < 0:
+            raise ValueError("`seconds` cannot be negative.")
+        # True time coordinate (relative to animation beginning)
+        T = round(self.frameRate * seconds)
+        # Timeline coordinate of animation beginning
+        beg = self.firstID() if self.firstIndex is None else self.firstIndex
+
+        # Get a sorted list of all delay coordinates that occur
+        # at or after beg.
+        delayCoords = sorted(self.delays.keys())
+        delayCoords = delayCoords[listceil(delayCoords, beg):]
+
+        # If there are no remaining delays, true time coordinates and
+        # timeline coordinates will align, so simply return
+        # a shifted version of T.
+        if len(delayCoords) == 0:
+            return T + beg
+
+        # Find the most recent delay coordinate that occurs before T
+        # relative to the T-axis and store it as `d_rel`.
+
+        # Each new adjusted delay coordinate is offset by the total
+        # amount of delay incurred so far. The formula is
+        #   d_n' = d_n - beg + sum(D_k for 0 <= k <= n-1)
+        # where d_n' is the nth delay coordinate relative to the T-axis,
+        #   d_n is the nth delay coordinate simply (delayCoords[n])
+        #   D_k is the kth delay value at delay coordinate d_k
+        #       (D_k = self.delays[d_k])
+        cumulativeDelaySoFar = 0
+        for N,d in enumerate(delayCoords):
+            d_new = d - beg + cumulativeDelaySoFar
+            if d_new > T:
+                # Subtract 1 so that N records the index
+                # of the last delay coordinate that worked!
+                N -= 1
+                break
+            d_rel = d_new
+            cumulativeDelaySoFar += self.delays[d]
+        # N records the index d_rel corresponds to in the
+        # delayCoords list.
+
+        if N == -1:
+            # There are no delays that occur before T, so just
+            # return a shifted T.
+            return T + beg
+
+        if T - d_rel < self.delays[delayCoords[N]]:
+            # If within the window of the most recent delay,
+            # T is adjusted by subtracting off all prior delays
+            # and subtracting the overlap portion with the latest
+            # delay window
+            return T + beg - (T - d_rel) - sum(self.delays[delayCoords[n]] for n in range(N))
+        else:
+            # If outside the most recent delay window, then T is
+            # adjusted by subtracting off all prior delays including
+            # the entirety of the most recent delay window.
+            return T + beg - sum(self.delays[delayCoords[n]] for n in range(N+1))
+
     # Convenience function sets the firstIndex attr to
     # the final key index.
     def gotoEnd(self):
