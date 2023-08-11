@@ -1978,7 +1978,9 @@ def highlight(actor, duration=15, atFrame=None, *,
     path0 = actor.last()
     path1 = actor.newkey(atFrame)
     path2 = actor.newendkey(duration)
-    path2.set(width=width, fill=fill, color=color, **kwargs)
+    path2.set(width=width, color=color, **kwargs)
+    if fill is not None:
+        path2.set(fill=fill)
     if rescale != 1:
         path2.transform = morpho.matrix.scale2d(rescale) @ path2.transform
 
