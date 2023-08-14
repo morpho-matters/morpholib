@@ -3771,7 +3771,7 @@ class Animation(object):
 
     # Same as waitUntil(), but the delay duration is specified in
     # seconds instead of frames. See: waitUntil() for more info.
-    def waitUntilSec(self, seconds=oo, *args, **kwargs):
+    def waitUntilSec(self, seconds=oo, /, *args, **kwargs):
         f = self.frameRate*seconds
         return self.waitUntil(f, *args, **kwargs)
 
