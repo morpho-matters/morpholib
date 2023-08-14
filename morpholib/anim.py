@@ -3749,7 +3749,7 @@ class Animation(object):
             f = round(f)
 
         if f < 0:
-            raise ValueError(f"Until frame occurs {-f} frames before animation's end.")
+            raise ValueError(f"Wait point occurs {-f} frames ({round(-f/self.frameRate, 2)} sec) before animation's end.")
 
         # If the animation already has a delay at its final frame,
         # add that delay to the current frame difference, so it's
@@ -3769,6 +3769,11 @@ class Animation(object):
     def endDelayUntil(self):
         return self.waitUntil
 
+    # Same as waitUntil(), but the delay duration is specified in
+    # seconds instead of frames. See: waitUntil() for more info.
+    def waitUntilSec(self, seconds=oo, *args, **kwargs):
+        f = self.frameRate*seconds
+        return self.waitUntil(f, *args, **kwargs)
 
     # Convert all infinite delays to the specified delay (units=frames).
     def finitizeDelays(self, delay):
