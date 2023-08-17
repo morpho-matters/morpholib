@@ -4015,7 +4015,7 @@ class Animation(object):
                         demux.append("file '" + tempDir + os.sep + filename.replace("'", "_") + "_" +
                             int2fixedstr(n-firstIndex, digits=numdigits(finalIndex-firstIndex))
                         + ".png'")
-                        demux.append("duration " + str(gifDelays[n-firstIndex]))
+                        demux.append(f"duration {round(gifDelays[n-firstIndex], 8)}")
                     demux.append(demux[-2])  # Needed to handle end delay for some reason
                     demux = "\n".join(demux)
                     with open(tempDir + os.sep + "demux.txt", "w") as file:
