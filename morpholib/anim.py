@@ -19,11 +19,12 @@ from morpholib.tools.dev import BoundingBoxFigure, makesubcopies, listselect, \
 # Backward compatibility because these functions used to live in anim.py
 from morpholib import screenCoords, physicalCoords, \
     pixelWidth, physicalWidth, pixelHeight, physicalHeight, \
-    setupContext, clearContext, cairoJointStyle, object_hasattr
+    setupContext, clearContext, cairoJointStyle, object_hasattr, \
+    applyFigureModifier
 
 import math, cmath
 import numpy as np
-import os, shutil, tempfile, ctypes
+import os, tempfile, ctypes
 import subprocess as sp
 import pyperclip
 from warnings import warn
@@ -68,6 +69,9 @@ class FrameSaveError(Exception):
 class MergeError(Exception):
     pass
 
+class FrameMergeError(MergeError):
+    pass
+
 class LayerMergeError(MergeError):
     pass
 
@@ -94,6 +98,9 @@ def handleSubfigureTweening(tweenmethod):
 
     @morpho.TweenMethod(splitter=splitter)
     def wrapper(self, other, t, *args, **kwargs):
+        if len(self.figures) != len(other.figures):
+            raise ValueError("Can't tween Frames with different subfigure counts.")
+
         # Apply original tween method and assume it doesn't
         # affect the `figures` tweenable.
         twfig = tweenmethod(self, other, t, *args, **kwargs)
@@ -112,12 +119,12 @@ def handleSubfigureTweening(tweenmethod):
 
 # Enables Frame-like figures to apply an action to its subfigures
 # via the syntax
-#   myfilm.subaction.myaction(..., substagger=5)
-# Note that this assumes `myaction` only needs access to the final
-# keyfigure of the actor, and only modifies the actor by appending
-# new keyfigures to the end of its timeline. Actions such as
-# fadeIn/Out() and growIn/shrinkOut(), but not rollback() (since it
-# needs access to the first keyfigure).
+#       myfilm.subaction.myaction(..., substagger=5)
+# `myaction` should be a *standard* actor action, meaning it
+# only modifies the latest keyfigure and possibly adds new
+# future keyframes, as well as preserving a keyframe at the
+# original latest keyframe. All standard actions like
+# fadeIn/Out(), etc. follow this standard.
 class _SubactionSummoner(object):
     def __init__(self, actor):
         self.actor = actor
@@ -127,10 +134,10 @@ class _SubactionSummoner(object):
     # be selected by passing in indices/slices into the `select`
     # keyword parameter.
     @staticmethod
-    def subaction(action, film, duration=30, atFrame=None, *,
+    def subaction(action, film, *args,
         substagger=0, select=None, **kwargs):
-        if atFrame is None:
-            atFrame = film.lastID()
+
+        now = film.lastID()
 
         if select is None:
             select = sel[:]
@@ -141,14 +148,18 @@ class _SubactionSummoner(object):
         initframe = frame0.copy()
 
         # Get a dict containing the selected indices
-        selectedIndices = listselect(initframe.figures, select)
+        selectedIndices = initframe._selectionMap(select)
 
         subactors = []
         for n,fig in enumerate(initframe.figures):
             fig_orig = fig
             fig = fig.copy()
 
-            subactor = morpho.Actor(fig)
+            # Create a subactor that contains a copy of the full
+            # history of the nth subfigure in the film.
+            subactor = morpho.Actor(type(fig))
+            subactor.timeline = {f : keyfig.figures[n].copy() for f, keyfig in film.timeline.items()}
+            subactor.update()
             if n in selectedIndices:
                 # Transition is set to uniform because transitions are ignored
                 # in frames and we want Actor.zip() to respect that.
@@ -156,27 +167,35 @@ class _SubactionSummoner(object):
                 if initframe.transition != morpho.transitions.uniform:
                     fig.tweenMethod = morpho.transitions.incorporateTransition(initframe.transition, fig.tweenMethod)
                 # fig.static = False
-                action(subactor, duration=duration, **kwargs)
+                action(subactor, *args, **kwargs)
                 # Restore tween method and transition to original
                 # values for the final keyfigure in the subactor
                 subactor.last().set(
                     tweenMethod=fig_orig.tweenMethod,
                     transition=fig_orig.transition
                     )
+            # Remove past keyframes as they should not be
+            # modified by a standard action.
+            subactor = subactor.segment(start=now, rezero=True, edgeInterp="none")
             subactors.append(subactor)
 
+        # Apply substagger to the affected subactors
         for count, n in enumerate(selectedIndices):
             subactors[n].shift(count*substagger)
 
-        if atFrame == film.lastID():
-            film.delkey(atFrame)
+        # Delete current final keyfigure so that insertion
+        # will overwrite it.
+        film.delkey(now)
         template = initframe.copy().set(figures=[])
         zipped = morpho.Actor.zip(subactors, template=template)
-        film.insert(zipped, atFrame=atFrame)
+        film.insert(zipped, atFrame=now)
 
     def __getattr__(self, name):
         action = getattr(morpho.action, name)
 
+        return self.makeSubaction(action)
+
+    def makeSubaction(self, action):
         def subaction(*args, substagger=0, **kwargs):
             return self.subaction(action, self.actor, *args, substagger=substagger, **kwargs)
 
@@ -197,15 +216,17 @@ class _SubactionSummoner(object):
 class _SubactionSummonerForMultiFigures(_SubactionSummoner):
     @staticmethod
     def subaction(action, film, *args, substagger=0, select=None, **kwargs):
-        if substagger == 0 and select is None:
-            _SubactionSummoner.subaction(action, film, *args,
-                substagger=0, select=select, **kwargs)
-        else:
-            origTweenMethod = film.last().tweenMethod
-            film.last().tweenMethod = Frame.tweenLinear
-            _SubactionSummoner.subaction(action, film, *args,
-                substagger=substagger, select=select, **kwargs)
-            film.last().tweenMethod = origTweenMethod
+        # Need to temporarily use Frame's tweenLinear because
+        # _SubactionSummoner.subaction() expects the toplevel
+        # tween method to follow standard subfigure tweening rules,
+        # specifically in that subfigure tween methods are used.
+        # MultiFigure tween methods usually ignore subfigure
+        # tween methods, meaning subaction() won't work correctly.
+        origTweenMethod = film.last().tweenMethod
+        film.last().tweenMethod = Frame.tweenLinear
+        _SubactionSummoner.subaction(action, film, *args,
+            substagger=substagger, select=select, **kwargs)
+        film.last().tweenMethod = origTweenMethod
 
 # Frame class. Groups figures together for simultaneous drawing.
 # Syntax: myframe = Frame(list_of_figures, **kwargs)
@@ -243,7 +264,7 @@ class _SubactionSummonerForMultiFigures(_SubactionSummoner):
 # the individual transition functions of each figure are used.
 # The transition of the Frame figure itself really only applies to its
 # own `origin` tweenable.
-class Frame(morpho.Figure):
+class Frame(BoundingBoxFigure):
     def __init__(self, figures=None, /, **kwargs):
         # By default, do what the superclass does.
         # morpho.Figure.__init__(self)
@@ -302,6 +323,14 @@ class Frame(morpho.Figure):
     def numfigs(self):
         return len(self.figures)
 
+    # Computes the bounding box of the entire Frame,
+    # assuming all of its subfigures have implemented `box()`.
+    # Returned as [xmin, xmax, ymin, ymax].
+    # Additional arguments are passed to the box() methods
+    # of subfigures.
+    def box(self, *args, **kwargs):
+        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), self.origin)
+
     # Modified because checking if the two figure lists are
     # equal via vanilla Python list equality will not work.
     # Instead, it goes thru the figure lists of self and other
@@ -333,24 +362,44 @@ class Frame(morpho.Figure):
     # Also adds in the named subfigures of other into self's registry,
     # but skips any duplicate names so that self's names are
     # not overwritten.
-    def merge(self, other):
-        # if not self._names.keys().isdisjoint(other._names.keys()):
-        #     raise MergeError("Frame to merge shares names with self.")
+    def merge(self, other, beforeFigure=oo):
+
+        # Handle case that beforeFigure is an actual Figure object
+        if isinstance(beforeFigure, morpho.Figure):
+            if beforeFigure not in self.figures:
+                raise FrameMergeError("Given 'beforeFigure' is not in this Frame!")
+            else:
+                beforeFigure = self.figures.index(beforeFigure)
+        elif abs(beforeFigure) != oo:
+            beforeFigure = round(beforeFigure)
+
+        # Handle abnormal indices
+        if beforeFigure > len(self.figures):
+            beforeFigure = len(self.figures)
+        elif beforeFigure < 0:
+            beforeFigure %= len(self.figures)
 
         if not isinstance(other, morpho.Frame) and isinstance(other, morpho.Figure):
             other = type(self)([other])
 
+        # Shift ahead all indices in the _names dict that are
+        # ahead or equal to beforeFigure index
+        shift = len(other.figures)
+        for name, selfindex in self._names.items():
+            if selfindex >= beforeFigure:
+                self._names[name] += shift
+
         # Append other's name registry to self's (skipping duplicate names),
         # but shift the index values by the number of names in self's
         # registry.
-        N = len(self.figures)
         for name, index in other._names.items():
             # Skip any duplicate names found in other's registry
             if name not in self._names:
-                self._names[name] = index + N
+                self._names[name] = index + beforeFigure
 
         # Extend the figure list
-        self.figures.extend(other.figures)
+        for otherfig in reversed(other.figures):
+            self.figures.insert(beforeFigure, otherfig)
         return self
 
     @property
@@ -365,7 +414,7 @@ class Frame(morpho.Figure):
         return _InPlaceSubAttributeManager(self.figures, self)
 
     def _select(self, index, *, _asFrame=False, _iall=False):
-        seldict = listselect(self.figures, index)
+        seldict = self._selectionMap(index)
         selection = list(seldict.values())
 
         # Do an empty initialization first followed by assigning
@@ -388,11 +437,20 @@ class Frame(morpho.Figure):
                     if subID in seldict:
                         frm._names[name] = subIDpositions[subID]
             return frm
+        elif _iall:
+            return _InPlaceSubAttributeManager(frm.figures, self)
         else:
-            return _InPlaceSubAttributeManager(frm.figures, self) if _iall else _SubAttributeManager(frm.figures, self)
+            return _SubAttributeManager(frm.figures, self)
 
     def _iselect(self, *args, **kwargs):
         return self._select(*args, _iall=True, **kwargs)
+
+    # Returns a dict mapping indices in the figure list
+    # to their figures. Mainly for internal use by the
+    # _select() method.
+    def _selectionMap(self, index):
+        return listselect(self.figures, index)
+
 
     # Allows the modification of a subset of the subfigures
     # with the syntax:
@@ -529,6 +587,7 @@ class Frame(morpho.Figure):
                 raise TypeError(f"Value associated with name must be Figure or int, not `{type(index).__name__}`")
 
             self._names[name] = index
+        return self
 
     # Returns the subfigure of the given name.
     def getName(self, name):
@@ -537,7 +596,8 @@ class Frame(morpho.Figure):
     def __getattr__(self, name):
         # First try using the superclass's built-in getattr()
         try:
-            return morpho.Figure.__getattr__(self, name)
+            # return morpho.Figure.__getattr__(self, name)
+            return super().__getattr__(name)
         except AttributeError:
             pass
 
@@ -551,7 +611,9 @@ class Frame(morpho.Figure):
             # This line should DEFINITELY throw an error,
             # since to get to this point in the code,
             # AttributeError must have been thrown above.
-            morpho.Figure.__getattr__(self, name)
+            super().__getattr__(name)
+            # morpho.Figure.__getattr__(self, name)
+
 
     # Modified setattr() method for Frame checks if the given
     # name is in the list of subfigure names and if it is,
@@ -561,7 +623,8 @@ class Frame(morpho.Figure):
         if object_hasattr(self, "_names") and name in self._names:
             self.figures[self._names[name]] = value
         else:
-            morpho.Figure.__setattr__(self, name, value)
+            # morpho.Figure.__setattr__(self, name, value)
+            super().__setattr__(name, value)
 
     # Applies the origin translation of the Frame to the given
     # cairo context and returns a SavePoint object, thus enabling
@@ -663,7 +726,7 @@ blankFrame.static = True
 # custom one, make sure to decorate it with
 # @handleSubfigureTweening.
 @Frame.action
-def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
+def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0, select=None):
     lasttime = film.lastID()
     if atFrame is None:
         atFrame = lasttime
@@ -673,7 +736,7 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
     finalframe = frame0.copy()
     frame0.all.static = False
 
-    if substagger == 0:
+    if substagger == 0 and select is None:
         # Do traditional fade in action. The traditional way exists
         # since using the subaction feature on MultiFigures incurs
         # some drawbacks that I would like to not have to deal with
@@ -689,7 +752,7 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
             frame1.figures[n] = actor.first()
             frame2.figures[n] = actor.last()
     else:
-        film.subaction.fadeIn(duration, atFrame, jump=jump, alpha=alpha, substagger=substagger)
+        film.subaction.fadeIn(duration, atFrame, jump=jump, alpha=alpha, substagger=substagger, select=select)
 
     # Hide lingering initial keyfigure if it exists.
     if atFrame > lasttime:
@@ -701,11 +764,11 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0):
     film.fin.all.alpha = alpha
 
 @Frame.action
-def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0):
+def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0, select=None):
     # Record of who was static so we can restore this later
     staticRecord = [fig.static for fig in film.last().figures]
     film.last().all.static = False
-    if substagger == 0:
+    if substagger == 0 and select is None:
         # Do traditional fade out action. The traditional way exists
         # since using the subaction feature on MultiFigures incurs
         # some drawbacks that I would like to not have to deal with
@@ -725,9 +788,10 @@ def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0):
             frame1.figures[n] = actor.first()
             frame2.figures[n] = actor.last()
     else:
-        film.subaction.fadeOut(duration, atFrame, jump=jump, substagger=substagger)
+        film.subaction.fadeOut(duration, atFrame, jump=jump, substagger=substagger, select=select)
 
-    film.last().visible = False
+    if select is None or select == sel[:]:
+        film.last().visible = False
 
     # Restore static attribute for subfigures that were originally
     # static. This is helpful in case the user wants to use the
@@ -831,14 +895,6 @@ class MultiFigure(Frame):
 
     #     return StateStruct(tweenableNames, figures)
 
-    # Computes the bounding box of the entire MultiFigure,
-    # assuming all of its subfigures have implemented `box()`.
-    # Returned as [xmin, xmax, ymin, ymax].
-    # Additional arguments are passed to the box() methods
-    # of subfigures.
-    def box(self, *args, **kwargs):
-        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), self.origin)
-
     # If attempted to access a non-existent attribute,
     # check if it's an attribute of the first figure in
     # the figure list and return that instead.
@@ -847,11 +903,12 @@ class MultiFigure(Frame):
         # which should grab any valid attribute returns in the
         # main class.
         try:
-            # # Not sure it's best to use super() here. Consider
-            # # replacing it with morpho.Figure.__getattr__(self, name).
-            # # Same goes for the super() call a few lines down.
-            # return super().__getattr__(name)
-            return morpho.Frame.__getattr__(self, name)
+            # I now think a super() call is correct, instead of
+            # directly invoking Frame.__getattr__() since it's possible
+            # a multi-inheritance defines its own special __getattr__(),
+            # and we don't want that modification to get lost.
+            return super().__getattr__(name)
+            # return morpho.Frame.__getattr__(self, name)
         except AttributeError:
             pass
 
@@ -865,10 +922,10 @@ class MultiFigure(Frame):
             # This line is guaranteed to fail because it failed
             # in the protected clause above. However, this time
             # I WANT the error to be thrown!
-            # return super().__getattr__(name)
-            return morpho.Frame.__getattr__(self, name)
+            return super().__getattr__(name)
+            # return morpho.Frame.__getattr__(self, name)
 
-        # Try to find the attribute in the first member figure
+        # Try to find the attribute as a common subfigure attribute,
         # and if found, return it.
         # fig = self.figures[0]
         try:
@@ -878,12 +935,12 @@ class MultiFigure(Frame):
         # This attribute is nowhere to be found anywhere. So give up.
         except AttributeError:
             # raise AttributeError("First member figure of type '"+type(fig)+"'' does not have attribute '"+name+"'")
-            raise AttributeError("Could not find attribute '"+name+"' in either the main class or the first member figure!")
+            raise AttributeError(f"Could not find attribute '{name}' in either the main class or as a common attribute of all subfigures.")
 
     # Modified setattr() first checks if the requested attribute already
     # exists as a findable attribute in the main class. If it is, it just
     # sets it as normal. Otherwise it checks if the attribute exists in
-    # the first member figure. If it does, it sets it instead of the
+    # the first member figure. If it does, it sets to subfigures instead of the
     # main class. But if it can't find this attribute in the first member
     # figure either, it will just assign the attribute as a new attribute
     # of the main class.
@@ -891,6 +948,11 @@ class MultiFigure(Frame):
         # Set the attribute as normal if the MultiFigure is not active yet,
         # or it's a concrete attribute of the main class,
         # or it's a tweenable in the main class.
+
+        if not self._active:
+            super().__setattr__(name, value)
+            return
+
         try:
             # Attempt to access attribute `name` according to
             # both of the Figure class's getattrs.
@@ -899,16 +961,15 @@ class MultiFigure(Frame):
             try:
                 morpho.Figure.__getattribute__(self, name)
             except AttributeError:
-                morpho.Figure.__getattr__(self, name)
+                super().__getattr__(name)
             selfHasName = True
         except AttributeError:
             selfHasName = False
-        if not self._active or selfHasName:
-            # super().__setattr__(name, value)
-            morpho.Figure.__setattr__(self, name, value)
+        if selfHasName:
+            super().__setattr__(name, value)
         # If this attribute is NOT an already existent attribute of
         # the main class, check if it's an attribute of the first
-        # member figure. If it is, set THAT.
+        # member figure. If it is, set the attribute to all subfigures.
         # elif len(self.figures) != 0:
         else:
             try:
@@ -937,8 +998,7 @@ class MultiFigure(Frame):
             # even in the first member figure. Therefore, just assign it
             # as a regular (but new) attribute of the main class.
             except (AttributeError, IndexError):
-                # super().__setattr__(name, value)
-                morpho.Figure.__setattr__(self, name, value)
+                super().__setattr__(name, value)
 
     # Sets all given keyword inputs as toplevel attributes if they
     # already exist as toplevel attributes. Any others are assigned
@@ -1104,21 +1164,23 @@ class MultiFigure(Frame):
 Multifigure = MultiFigure
 
 @MultiFigure.action
-def fadeIn(actor, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0, **kwargs):
+def fadeIn(actor, duration=30, atFrame=None, jump=0, alpha=1, *,
+        substagger=0, select=None, **kwargs):
     actor.last().visible = True
     finalkey = actor.last().copy()
-    if substagger != 0:
+    if substagger != 0 or select is not None:
         actor.last().tweenMethod = Frame.tweenLinear
-    Frame.actions["fadeIn"](actor, duration, atFrame, jump, alpha, substagger=substagger, **kwargs)
+    Frame.actions["fadeIn"](actor, duration, atFrame, jump, alpha,
+        substagger=substagger, select=select, **kwargs)
     actor.fin = finalkey
     actor.fin.all.alpha = alpha
 
 @MultiFigure.action
-def fadeOut(actor, *args, substagger=0, **kwargs):
+def fadeOut(actor, *args, substagger=0, select=None, **kwargs):
     origTweenMethod = actor.last().tweenMethod
-    if substagger != 0:
+    if substagger != 0 or select is not None:
         actor.last().tweenMethod = Frame.tweenLinear
-    Frame.actions["fadeOut"](actor, *args, substagger=substagger, **kwargs)
+    Frame.actions["fadeOut"](actor, *args, substagger=substagger, select=select, **kwargs)
     actor.last().tweenMethod = origTweenMethod
 
 
@@ -1235,6 +1297,7 @@ class SpaceFrame(Frame):
 
         return primlist
 
+# THIS CLASS MAY BE BROKEN! USE AT YOUR OWN RISK!
 # 3D version of the MultiFigure class. See "MultiFigure" for more info.
 class SpaceMultiFigure(SpaceFrame):
     # Use MultiFigure's actions instead of SpaceFrame's
@@ -2309,7 +2372,8 @@ class Layer(object):
     #
     # Set returnCamera = True to make the function return
     # the actual camera figure instead of just the view 4-vector.
-    def viewtime(self, f, useOffset=False, returnCamera=False, *, _skipTrivialTweens=False):
+    def viewtime(self, f, useOffset=False, returnCamera=False, *,
+            _skipTrivialTweens=False, **kwargs):
         if len(self.camera.timeline) == 0:
             raise IndexError("Camera timeline is empty.")
 
@@ -2318,7 +2382,7 @@ class Layer(object):
             f -= self.timeOffset
 
         # Compute current view
-        viewFrame = self.camera.time(f, _skipTrivialTweens=_skipTrivialTweens)
+        viewFrame = self.camera.time(f, _skipTrivialTweens=_skipTrivialTweens, **kwargs)
         if viewFrame is None:
             # if len(self.camera.timeline) == 0:
             #     viewFrame = Frame()
@@ -2580,21 +2644,22 @@ class Layer(object):
             f -= self.timeOffset
 
         # Compute current view
-        cam = self.viewtime(f, returnCamera=True, _skipTrivialTweens=True)  # Get camera figure
+        cam = self.viewtime(f, returnCamera=True, keepOwner=True, _skipTrivialTweens=True)  # Get camera figure
+        cam = applyFigureModifier(cam)
         if not cam.visible:
             return
 
         # Compile list of figures to draw
         figlist = []
         for actor in self.actors:
-            if actor.visible:
-                fig = actor.time(f, _skipTrivialTweens=True)
-                # if fig is None or not fig.visible:
-                #     continue
-                # else:
-                #     figlist.append(fig)
-                if fig is not None and fig.visible:
-                    figlist.append(fig)
+            if not actor.visible: continue
+
+            fig = actor.time(f, keepOwner=True, _skipTrivialTweens=True)
+            if fig is None: continue
+
+            fig = applyFigureModifier(fig)
+            if fig.visible:
+                figlist.append(fig)
 
         # Sort based on zdepth
         figlist.sort(key=lambda fig: fig.zdepth) #, reverse=True)
@@ -2730,28 +2795,21 @@ class SpaceLayer(Layer):
             f -= self.timeOffset
 
         # Compute current view
-        cam = self.viewtime(f, returnCamera=True, _skipTrivialTweens=True)  # Get camera figure
+        cam = self.viewtime(f, returnCamera=True, keepOwner=True, _skipTrivialTweens=True)  # Get camera figure
+        cam = applyFigureModifier(cam)
         if not cam.visible:
             return
-
-        # view = self.viewtime(f)
-        # viewFrame = self.view.time(f)
-        # if viewFrame is None:
-        #     if len(self.view.timeline) == 0:
-        #         viewFrame = Frame()
-        #     elif f > self.view.keyIDs[-1]:
-        #         viewFrame = self.view.key(-1)
-        #     else:
-        #         viewFrame = self.view.key(0)
-        # view = viewFrame.view
 
         # Compile list of figures to draw
         figlist = []
         for actor in self.actors:
-            if actor.visible:
-                fig = actor.time(f, _skipTrivialTweens=True)
-                if fig is None or not fig.visible:
-                    continue
+            if not actor.visible: continue
+
+            fig = actor.time(f, keepOwner=True, _skipTrivialTweens=True)
+            if fig is None: continue
+
+            fig = applyFigureModifier(fig)
+            if fig.visible:
                 figlist.append(fig)
 
         # Sort based on zdepth
@@ -3578,6 +3636,73 @@ class Animation(object):
     def seconds(self):
         return self.length() / self.frameRate
 
+    # Returns the location on the timeline (in frames) corresponding
+    # to the given number of seconds after the animation's start
+    # taking into account animation delays.
+    # Note that `seconds` is relative to whatever the current
+    # animation's `start` value is. If None, uses firstID().
+    # Also note that if `seconds` corresponds to the middle of
+    # an animation delay, the returned timeline coordinate will
+    # be the frame at which the delay BEGUN.
+    def timelineCoord(self, seconds):
+        if seconds < 0:
+            raise ValueError("`seconds` cannot be negative.")
+        # True time coordinate (relative to animation beginning)
+        T = round(self.frameRate * seconds)
+        # Timeline coordinate of animation beginning
+        beg = self.firstID() if self.firstIndex is None else self.firstIndex
+
+        # Get a sorted list of all delay coordinates that occur
+        # at or after beg.
+        delayCoords = sorted(self.delays.keys())
+        delayCoords = delayCoords[listceil(delayCoords, beg):]
+
+        # If there are no remaining delays, true time coordinates and
+        # timeline coordinates will align, so simply return
+        # a shifted version of T.
+        if len(delayCoords) == 0:
+            return T + beg
+
+        # Find the most recent delay coordinate that occurs before T
+        # relative to the T-axis and store it as `d_rel`.
+
+        # Each new adjusted delay coordinate is offset by the total
+        # amount of delay incurred so far. The formula is
+        #   d_n' = d_n - beg + sum(D_k for 0 <= k <= n-1)
+        # where d_n' is the nth delay coordinate relative to the T-axis,
+        #   d_n is the nth delay coordinate simply (delayCoords[n])
+        #   D_k is the kth delay value at delay coordinate d_k
+        #       (D_k = self.delays[d_k])
+        cumulativeDelaySoFar = 0
+        for N,d in enumerate(delayCoords):
+            d_new = d - beg + cumulativeDelaySoFar
+            if d_new > T:
+                # Subtract 1 so that N records the index
+                # of the last delay coordinate that worked!
+                N -= 1
+                break
+            d_rel = d_new
+            cumulativeDelaySoFar += self.delays[d]
+        # N records the index d_rel corresponds to in the
+        # delayCoords list.
+
+        if N == -1:
+            # There are no delays that occur before T, so just
+            # return a shifted T.
+            return T + beg
+
+        if T - d_rel < self.delays[delayCoords[N]]:
+            # If within the window of the most recent delay,
+            # T is adjusted by subtracting off all prior delays
+            # and subtracting the overlap portion with the latest
+            # delay window
+            return T + beg - (T - d_rel) - sum(self.delays[delayCoords[n]] for n in range(N))
+        else:
+            # If outside the most recent delay window, then T is
+            # adjusted by subtracting off all prior delays including
+            # the entirety of the most recent delay window.
+            return T + beg - sum(self.delays[delayCoords[n]] for n in range(N+1))
+
     # Convenience function sets the firstIndex attr to
     # the final key index.
     def gotoEnd(self):
@@ -3624,7 +3749,7 @@ class Animation(object):
             f = round(f)
 
         if f < 0:
-            raise ValueError(f"Until frame occurs {-f} frames before animation's end.")
+            raise ValueError(f"Wait point occurs {-f} frames ({round(-f/self.frameRate, 2)} sec) before animation's end.")
 
         # If the animation already has a delay at its final frame,
         # add that delay to the current frame difference, so it's
@@ -3644,10 +3769,18 @@ class Animation(object):
     def endDelayUntil(self):
         return self.waitUntil
 
+    # Same as waitUntil(), but the delay duration is specified in
+    # seconds instead of frames. See: waitUntil() for more info.
+    def waitUntilSec(self, seconds=oo, /, *args, **kwargs):
+        f = self.frameRate*seconds
+        return self.waitUntil(f, *args, **kwargs)
 
     # Convert all infinite delays to the specified delay (units=frames).
     def finitizeDelays(self, delay):
-        for time in self.delays:
+        # Convert to list so that delay = 0 works
+        # (since delay = 0 will cause keys from the dict
+        # to be deleted, which would cause a RuntimeError)
+        for time in list(self.delays.keys()):
             if self.delays[time] == oo:
                 self.delays[time] = delay
 
@@ -3882,7 +4015,7 @@ class Animation(object):
                         demux.append("file '" + tempDir + os.sep + filename.replace("'", "_") + "_" +
                             int2fixedstr(n-firstIndex, digits=numdigits(finalIndex-firstIndex))
                         + ".png'")
-                        demux.append("duration " + str(gifDelays[n-firstIndex]))
+                        demux.append(f"duration {round(gifDelays[n-firstIndex], 8)}")
                     demux.append(demux[-2])  # Needed to handle end delay for some reason
                     demux = "\n".join(demux)
                     with open(tempDir + os.sep + "demux.txt", "w") as file:

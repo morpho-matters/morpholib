@@ -120,6 +120,10 @@ class Figure(object):
         # the default tween method.
         self.transition = morpho.transitions.default
 
+        # A function that modifies (a copy of) the figure before
+        # its draw() method is called in an animation.
+        self.modifier = None
+
 
     # Alternate name for the "defaultTween" attribute.
     @property
@@ -129,6 +133,14 @@ class Figure(object):
     @tweenMethod.setter
     def tweenMethod(self, value):
         self.defaultTween = value
+
+    @property
+    def modifier(self):
+        return self._modifier
+
+    @modifier.setter
+    def modifier(self, value):
+        self._modifier = value
 
     # Returns True iff self and other are both invisible, OR are
     # exactly the same type AND their tweenables compare equal.
@@ -267,13 +279,7 @@ class Figure(object):
             except Exception:  # Upon failure, just reassign and hope for the best.
                 setattr(new, name, value)  # NOT redundant!
 
-        # The following 5 lines could be replaced with
-        # new._updateSettings(self, includeTweenMethod=True)
-        new.defaultTween = self.defaultTween
-        new.transition = self.transition
-        new.static = self.static
-        new.delay = self.delay
-        new.visible = self.visible
+        new._updateSettings(self, includeTweenMethod=True, includeModifier=True)
 
         # Note that the `owner` attribute should NOT be copied
         # since the copied figure may not be used within an
@@ -286,16 +292,17 @@ class Figure(object):
     # type to another (e.g. SpaceText.toText() method).
     #
     # By default, this method doesn't update self's tween method
-    # with the target's because tween methods are often strongly
+    # or modifier with the target's because those are often strongly
     # tied to the given figure's type, but to force transferral
-    # of the target's tween method, set the optional kwarg
-    # `includeTweenMethod` to True.
+    # of these attributes, set the optional kwargs
+    # `includeTweenMethod` and/or `includeModifier` to True.
     #
     # Optionally, a set of setting names to ignore can be passed in
     # like this:
     #   myfig._updateSettings(target, ignore={"visible", "static"})
     def _updateSettings(self, target, *,
-        includeTweenMethod=False, ignore=pyset()):
+        includeTweenMethod=False, includeModifier=False,
+        ignore=pyset()):
 
         # Typecast ignore into a singleton set if it is not
         # a standard python iterable.
@@ -304,6 +311,8 @@ class Figure(object):
 
         if includeTweenMethod:
             self.defaultTween = target.defaultTween
+        if includeModifier:
+            self.modifier = target.modifier
 
         for name in METASETTINGS:
             if name not in ignore:
@@ -328,7 +337,8 @@ class Figure(object):
     # like this:
     #   myfig._updateFrom(target, ignore={"pos", "color"})
     def _updateFrom(self, target, *, copy=True, common=False,
-        includeTweenMethod=False, ignore=pyset()):
+        includeTweenMethod=False, includeModifier=False,
+        ignore=pyset()):
 
         # Typecast ignore into a singleton set if it is not
         # a standard python iterable.
@@ -349,7 +359,9 @@ class Figure(object):
                 setattr(self, name, getattr(target, name))
 
         # Update meta-settings
-        self._updateSettings(target, includeTweenMethod=includeTweenMethod, ignore=ignore)
+        self._updateSettings(target,
+            includeTweenMethod=includeTweenMethod, includeModifier=includeModifier,
+            ignore=ignore)
 
         return self
 
@@ -1121,7 +1133,7 @@ def morphFrom(actor, source, duration=30, atFrame=None):
     # It should be equal to the given source figure
     # except for the metasettings (tween method, transition, etc.)
     fig1 = actor.newkey(atFrame, source.copy())
-    fig1._updateSettings(fig0, includeTweenMethod=True)
+    fig1._updateSettings(fig0, includeTweenMethod=True, includeModifier=True)
     fig1.set(visible=True)
 
     # Set destination figure to be the original last keyfigure.
@@ -1246,6 +1258,11 @@ class Actor(object):
 
         self.visible = visible
         self.owner = None
+        # Dict mapping time index to a figure. Mainly used
+        # by the now() method to be more efficient when
+        # multiple now() calls are made at a single point
+        # in the timeline.
+        self.timeCache = dict()
 
     # Updates the keyIDs list according to the timeline.
     # This method is mainly for internal use by other methods that may
@@ -1847,25 +1864,52 @@ class Actor(object):
     def _mergeFilm(self, film):
         # film = film.copy()
 
+        # Aliases to save on function calls and that remember
+        # the original state of the actors before modification
+        # in the code below.
+        self_firsttime = self.firstID()
+        self_lasttime = self.lastID()
+        film_firsttime = film.firstID()
+        film_lasttime = film.lastID()
+
         # Manually create a new initial keyframe. This is to
         # prevent the default behavior of newkey() to create a
         # default (i.e. blank) keyfigure if it occurs before
         # the earliest keyframe in the timeline.
-        mintime = min([self.firstID(), film.firstID()])
+        mintime = min([self_firsttime, film_firsttime])
         self.newkey(mintime, self.first().copy())
         film.newkey(mintime, film.first().copy())
 
         # Sorting is useful to prevent unnecessary tween method
         # splitting for later keyfigures.
         keytimes = sorted(set(self.keyIDs).union(film.keyIDs))
+
+        # Create the "trivial" new keyfigures that occur before
+        # and after the original first keyfigure and final keyfigure
+        # in both self and film. This is done in such a way as to
+        # only call Actor.update() once after it's over, thereby
+        # providing a time save.
+        # Note that this clause may obsolete the earlier clause
+        # where we manually created a new initial keyframe, but
+        # I'm keeping it just to be on the safe side.
+        for keytime in keytimes:
+            if not(self_firsttime <= keytime <= self_lasttime) and keytime not in self.timeline:
+                self.timeline[keytime] = self.timeline[constrain(keytime, self_firsttime, self_lasttime)].copy()
+            if not(film_firsttime <= keytime <= film_lasttime) and keytime not in film.timeline:
+                film.timeline[keytime] = film.timeline[constrain(keytime, film_firsttime, film_lasttime)].copy()
+        self.update()
+        film.update()
+
         # Seamlessly introduce new keyframes into secondary film
         # corresponding to the keyframes of self. This
         # way, the secondary film will still animate identically
         # after being merged into the (possibly crowded) timeline
         # of self.
         for keytime in keytimes:
-            self.newkey(keytime)
-            film.newkey(keytime)
+            # These conditional checks actually provide a
+            # significant time save if there are many keytimes!
+            if keytime not in self.timeline: self.newkey(keytime)
+            if keytime not in film.timeline: film.newkey(keytime)
         # Likewise, add new keyframes to self from those
         # uniquely in film and then merge keyframes across the
         # two films.
@@ -1959,7 +2003,13 @@ class Actor(object):
     # of a figure to decide whether tweening is necessary.
     # By default, it's False so tweening behaves exactly as
     # expected.
-    def time(self, f, keyID=None, *, copykeys=False, _skipTrivialTweens=False):
+    #
+    # If `keepOwner` is set to True, the returned figure will
+    # be guaranteed to possess the same owner as its principle
+    # keyfigure. This is mainly for internal use.
+    def time(self, f, keyID=None, *,
+            copykeys=False, _skipTrivialTweens=False,
+            keepOwner=False):
         # If f is a float, but it's really an int, make it an int.
         # This is so searching the timeline dict is done correctly
         # because all the keys in the dict are ints.
@@ -1972,7 +2022,7 @@ class Actor(object):
         # If the given index is a keyindex, just return the keyfig.
         if f in self.timeline:
             keyfig = self.timeline[f]
-            return keyfig if not copykeys else keyfig.copy()
+            return keyfig if not copykeys else keyfig.copy().set(owner=(keyfig.owner if keepOwner else None))
 
         # Compute the latest keyID on the fly if not provided.
         if keyID is None:
@@ -1988,17 +2038,17 @@ class Actor(object):
         # If we're within the latest keyfig's endlag, just
         # return that keyfig.
         if f <= keyID + keyfig.delay:
-            return keyfig if not copykeys else keyfig.copy()
+            return keyfig if not copykeys else keyfig.copy().set(owner=(keyfig.owner if keepOwner else None))
         # Special case if the latest keyfig is the last keyfig
         # in the timeline. Return None unless actors persist.
         elif keyID == self.keyIDs[-1]:
             if Actor.persist:
-                return keyfig if not copykeys else keyfig.copy()
+                return keyfig if not copykeys else keyfig.copy().set(owner=(keyfig.owner if keepOwner else None))
             else:
                 return None
         # If the latest keyframe is static, don't tween.
         elif (_skipTrivialTweens and keyfig._static_acute) or keyfig.static:
-            return keyfig if not copykeys else keyfig.copy()
+            return keyfig if not copykeys else keyfig.copy().set(owner=(keyfig.owner if keepOwner else None))
             # return keyfig.copy()
         else:
             # keyfig2 = self.timeline[keyID+1]
@@ -2008,10 +2058,15 @@ class Actor(object):
                 end=self.keyIDs[k+1]
                 )
             # assert 0 <= T <= 1  # Temporary for testing purposes
-            return keyfig.tween(keyfig2, T)
+            return keyfig.tween(keyfig2, T).set(owner=(keyfig.owner if keepOwner else None))
 
     # Alternate name for the time method.
     # frame = time
+
+    # Global configuration setting telling whether to use
+    # time caching. Mainly for internal use by now() to be
+    # more efficient.
+    useTimeCache = True
 
     # Returns the current figure of the actor at the current time
     # index on the global timeline. Only possible if the actor's
@@ -2022,14 +2077,27 @@ class Actor(object):
     # Also note that if now() returns a keyfigure, it will be
     # copied before returned, so it is always safe to modify
     # the attributes of a figure returned by now().
-    def now(self):
+    #
+    # By default, modifiers will be applied to the returned
+    # figure, but this can be disabled by setting the
+    # optional keyword input `useModifier` to False.
+    def now(self, *, useModifier=True):
         try:
             currentIndex = self.owner.owner.currentIndex
         except AttributeError:
             raise TypeError("No global timeline to reference.")
 
         f = currentIndex - self.owner.timeOffset
-        fig = self.time(f, copykeys=True)  # Make a copy in case it's a keyfigure
+        if Actor.useTimeCache and f in self.timeCache:
+            fig = self.timeCache[f].copy()
+        else:
+            fig = self.time(f, copykeys=True)  # Make a copy in case it's a keyfigure
+            if useModifier:
+                fig = applyFigureModifier(fig)
+            if Actor.useTimeCache:
+                # Replace stored time index.
+                self.timeCache.clear()
+                self.timeCache[f] = fig.copy()
 
         # Lie and say that self owns this figure so that methods like
         # Text.box() work correctly. I think it's okay for it to lie here since
@@ -2202,6 +2270,28 @@ class _KeyIDContainer(object):
 
 
 ### HELPERS ###
+
+def applyFigureModifier(fig):
+    if fig.modifier is None:
+        return fig
+    # Figure is copied because we don't want the
+    # modifier to actually modify the original
+    # keyfigures of the actor.
+    # This can alternatively be solved by setting
+    # `copykeys=True` in the time() call in Layer.draw(),
+    # but I think that is less efficient, since
+    # copying complex figures like LaTeX MultiSplines
+    # can be slow.
+    fig_orig = fig
+    fig = fig.copy()
+    # Assign copy's owner to be the original figure's owner.
+    # This is technically a lie, but it's important to make
+    # things like Text.box() work. I think it's okay to lie
+    # here since this copy's only job is to be drawn and then
+    # deleted. It won't persist.
+    fig.owner = fig_orig.owner
+    fig.modifier(fig)
+    return fig
 
 # Flattens a list of lists into a single list.
 # Thanks to Alex Martelli on StackOverflow

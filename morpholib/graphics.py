@@ -818,7 +818,7 @@ selfmethods = ["rescaleAspectRatioWH", "scaleByWidth", "scaleByHeight",
 # Bottom line: It's just like Image except you can tween between different
 # underlying image files.
 @morpho.MultiFigure._modifyMethods(selfmethods, Image, morpho.MultiFigure._returnOrigCaller)
-class MultiImage(morpho.MultiFigure, BoundingBoxFigure):
+class MultiImage(morpho.MultiFigure):
 
     def __init__(self, source=None):
         if source is None:

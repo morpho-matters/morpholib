@@ -45,6 +45,10 @@ I2 = np.identity(2)
 # alpha = Overall opacity. Default: 1 (opaque)
 # alphaEdge = Outer edge opacity. Default 1 (opaque)
 # alphaFill = Interior opacity. Default: 1 (opaque)
+# dash = Dash pattern. Works exactly like how it does in cairo. It's a list
+#        of ints which are traversed cyclically and will alternatingly indicate
+#        number of pixels of visibility and invisibility.
+# dashOffset = Where along the dash pattern it will start. Default: 0
 class Point(morpho.Figure):
     def __init__(self, pos=0, size=15, strokeWeight=1, color=None, fill=None,
         alpha=1):
@@ -90,6 +94,8 @@ class Point(morpho.Figure):
         self.style = "circle"
         # size = diameter in pixels
         self.Tweenable("size", size, tags=["size"])
+        self.Tweenable("dash", [], tags=["scalar", "list"])
+        self.Tweenable("dashOffset", 0, tags=["scalar"])
 
 
     # Draws the point on the given cairo context.
@@ -111,7 +117,9 @@ class Point(morpho.Figure):
         else:
             ctx.set_source_rgba(*self.color, self.alpha*self.alphaEdge)
             ctx.set_line_width(self.strokeWeight)
+            ctx.set_dash(self.dash, self.dashOffset)
             ctx.stroke()
+            ctx.set_dash([])
 
 @Point.action
 def growIn(point, duration=30, atFrame=None):
@@ -126,6 +134,11 @@ def growIn(point, duration=30, atFrame=None):
     point2 = point.newendkey(duration)
     point2.set(size=size)
 
+# Alias for growIn()
+@Point.action
+def popIn(point, *args, **kwargs):
+    return Point.actions["growIn"](point, *args, **kwargs)
+
 @Point.action
 def shrinkOut(point, duration=30, atFrame=None):
     if atFrame is None:
@@ -135,6 +148,26 @@ def shrinkOut(point, duration=30, atFrame=None):
     point1 = point.newendkey(duration)
     point1.set(size=0, visible=False)
 
+# Alias for shrinkOut()
+@Point.action
+def popOut(point, *args, **kwargs):
+    return Point.actions["shrinkOut"](point, *args, **kwargs)
+
+# Makes a point actor grow then shrink again.
+# Scale factor of the growth can be specified by passing in
+# a number into the `scale` keyword (Default: 2). Additional
+# keyword inputs are set as attributes of the point at its
+# point of maximum scale.
+@Point.action
+def pulse(point, duration=30, atFrame=None, *, scale=2, **kwargs):
+    if atFrame is None:
+        atFrame = point.lastID()
+
+    point0 = point.newkey(atFrame)
+    point1 = point.newkey(atFrame + duration/2)
+    point1.size *= scale
+    point1.set(**kwargs)
+    point2 = point.newkey(atFrame + duration, point0.copy())
 
 # DEPRECATED!
 # Polar Point class. Identical to the Point class except it adds
@@ -1892,6 +1925,123 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
     else:
         path1.end = 0
 
+# Animates a Path actor appearing by enlarging from a focus point.
+# By default the focus point is taken to be the box center of the
+# path, but this can be changed by passing in a position value to
+# the `focus` optional kwarg. Note that the coordinates will be
+# taken within the path's LOCAL coordinates (i.e. relative to
+# the path's transformation attributes). Alternatively, an `align`
+# parameter can be passed in by keyword to specify the focus point
+# in terms of a location on the path's bounding box.
+@Path.action
+def popIn(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
+    if atFrame is None:
+        atFrame = path.lastID()
+
+    path0 = path.last()
+    final = path0.copy().set(visible=True)
+    path0.visible = False
+    if focus is None:
+        focus = path0.anchorPoint(align, raw=True)
+    path1 = path.newkey(atFrame, path0.fimage(lambda z: focus))
+    path1.visible = True
+    path.newendkey(duration, final)
+
+# Animates a Path actor disappearing by shrinking to a focus point.
+# By default the focus point is taken to be the box center of the
+# path, but this can be changed by passing in a position value to
+# the `focus` optional kwarg. Note that the coordinates will be
+# taken within the path's LOCAL coordinates (i.e. relative to
+# the path's transformation attributes). Alternatively, an `align`
+# parameter can be passed in by keyword to specify the focus point
+# in terms of a location on the path's bounding box.
+@Path.action
+def popOut(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
+    if atFrame is None:
+        atFrame = path.lastID()
+
+    if focus is None:
+        focus = path.last().anchorPoint(align, raw=True)
+    path.newkey(atFrame)
+    path.newendkey(duration, path.last().fimage(lambda z: focus))
+    path.last().visible = False
+
+# Highlights the Path actor
+@Path.action
+def highlight(actor, duration=15, atFrame=None, *,
+    width=-3, fill=(1,1,0), color=(0,0,0), rescale=1,
+    **kwargs):
+
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    path0 = actor.last()
+    path1 = actor.newkey(atFrame)
+    path2 = actor.newendkey(duration)
+    path2.set(width=width, color=color, **kwargs)
+    if fill is not None:
+        path2.set(fill=fill)
+    if rescale != 1:
+        path2.transform = morpho.matrix.scale2d(rescale) @ path2.transform
+
+# Highlights then immediately de-highlights the Path actor.
+# Optional keyword input `pause` can be used to specify a number
+# of frames to pause after highlighting and before de-highlighting.
+# Note that the `duration` parameter here refers to the time to take
+# to get completely highlighted, not the duration for the entire
+# animation. That is, `duration` really refers to the "half-duration"
+# of the entire animation.
+@Path.action
+def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
+
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    path0 = actor.last()
+    path1 = actor.newkey(atFrame)
+
+    actor.highlight(duration, atFrame, **kwargs)
+    if pause > 0:
+        actor.newendkey(pause)
+    actor.newendkey(duration, path1.copy())
+
+# Draws in a Path actor Manim-style.
+#
+# OPTIONAL KEYWORD-ONLY INPUTS
+# tempWidth = Temporary stroke width to use in the animation
+#       if the stroke width is 0. Default: 3
+# transition = Transition to use in the animation.
+#       Note that this only applies to the portion of the actor's
+#       timeline affected by this action. After the action
+#       concludes, the original transition of this actor will
+#       be used for future keyfigures. Default: uniform.
+@Path.action
+def drawIn(actor, duration=30, atFrame=None, *,
+    tempWidth=2, transition=morpho.transitions.uniform):
+
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    path0 = actor.last()
+    # Save current final state of the actor which should be
+    # the same final state when this action is finished.
+    final = path0.copy()
+    path0.set(start=0, end=0, alphaFill=0, alphaEdge=1, static=False)
+    path0.transition = transition
+    # Give a temporary stroke width and color to the subpath
+    # if its width is 0
+    if path0.width == 0:
+        path0.width = tempWidth
+        if not isinstance(path0.fill, morpho.color.GradientFill):
+            path0.color = path0.fill[:]
+            final.color = path0.fill[:]
+
+    path1 = actor.newkey(atFrame)
+    path0.visible = False
+
+    actor.newkey(atFrame + duration/2).set(start=final.start, end=final.end)
+    actor.newkey(atFrame + duration, final)
+
 
 # MultiFigure version of Path.
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.
@@ -1903,7 +2053,7 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
     ["insertNodesUniformly", "concat"],
     Path, MultiFigure._returnOrigCaller
     )
-class MultiPath(MultiFigure, BoundingBoxFigure):
+class MultiPath(MultiFigure):
 
     _basetype = Path
 
@@ -2124,54 +2274,39 @@ def morphFrom(actor, source, *args, **kwargs):
     else:
         return morpho.Figure.actions["morphFrom"](actor, source, *args, **kwargs)
 
+@MultiPath.action
+def popIn(actor, *args, **kwargs):
+    actor.subaction.popIn(*args, **kwargs)
+
+@MultiPath.action
+def popOut(actor, *args, **kwargs):
+    actor.subaction.popOut(*args, **kwargs)
+
 # Highlights the MultiPath actor
 @MultiPath.action
-def highlight(actor, duration=15, atFrame=None, *,
-    width=-3, fill=(1,1,0), color=(0,0,0), rescale=1, select=None,
-    **kwargs):
-
-    if atFrame is None:
-        atFrame = actor.lastID()
-
-    if select is None:
-        select = sel[:]
-    elif isinstance(select, Iterable):
-        select = tuple(select)
-
-    path0 = actor.last()
-    path1 = actor.newkey(atFrame)
-    path2 = actor.newendkey(duration)
-
-    # Assignment to subframe needs to happen because
-    # if `select` is a choice function, modifying the
-    # width/fill/color of the subpaths can change what
-    # the choice function selects on the second call.
-    subframe = path2.select[select]
-    subframe.set(width=width, fill=fill, color=color, **kwargs)
-    if rescale != 1:
-        if select == sel[:]:
-            path2.rescale(rescale)
-        else:
-            subframe.rescale(rescale)
+def highlight(actor, *args, **kwargs):
+    actor.subaction.highlight(*args, **kwargs)
 
 # Highlights then immediately de-highlights the MultiPath actor.
 # Optional keyword input `pause` can be used to specify a number
 # of frames to pause after highlighting and before de-highlighting.
+# See also: Path.flourish()
 @MultiPath.action
-def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
+def flourish(actor, *args, **kwargs):
+    actor.subaction.flourish(*args, **kwargs)
 
-    if atFrame is None:
-        atFrame = actor.lastID()
-
-    path0 = actor.last()
-    path1 = actor.newkey(atFrame)
-
-    actor.highlight(duration, atFrame, **kwargs)
-    if pause > 0:
-        actor.newendkey(pause)
-    actor.newendkey(duration, path1.copy())
-
-# Draws in a MultiPath actor Manim-style.
+# Draws in a MultiPath actor Manim-style. Useful for making
+# LaTeX appear on the screen.
+#
+# Note that if the stroke width of a subpath is 0, the
+# subpath's fill will be assigned to its stroke color.
+# This change will persist even after the action completes.
+#
+# INPUTS
+# subduration = How long should drawing in one subpath take?
+#       Default: 30 frames
+# atFrame = Frame number at which to begin the action.
+#       Default: None (Use frame of the last keyfigure)
 #
 # OPTIONAL KEYWORD-ONLY INPUTS
 # tempWidth = Temporary stroke width to use in the animation
@@ -2181,47 +2316,35 @@ def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
 #       timeline affected by this action. After the action
 #       concludes, the original transition of this actor will
 #       be used for future keyfigures. Default: uniform.
+# substagger = Time spacing between drawing adjacent subpaths (in frames).
+#       Default: None (use half the subduration value).
+# select = Slice or tuple of slices representing the selection of
+#       subpaths to apply the action to.
 @MultiPath.action
-def drawIn(actor, duration=30, atFrame=None, *,
-    tempWidth=3, transition=morpho.transitions.uniform,
-    overlap=0):
+def drawIn(actor, subduration=30, atFrame=None, *,
+    tempWidth=2, transition=morpho.transitions.uniform,
+    substagger=None, select=None):
 
-    # (`overlap` is a currently unimplemented possible future feature
-    # that would control how much the animation of drawing in one
-    # subpath overlaps with the drawing in of the previous subpath.
-    # It's kind of like a reverse `stagger` parameter.)
-
+    lasttime = actor.lastID()
     if atFrame is None:
-        atFrame = actor.lastID()
+        atFrame = lasttime
+
+    if substagger is None:
+        substagger = subduration/2
 
     mpath0 = actor.last()
-    # Save current final state of the actor which should be
-    # the same final state when this action is finished.
-    final = mpath0.copy()
-    mpath0.all.set(start=0, end=0, alphaFill=0, alphaEdge=1)
-    mpath0.transition = transition
-    for path in mpath0.figures:
-        # Give a temporary stroke width and color to the subpath
-        # if its width is 0
-        if path.width == 0:
-            path.width = tempWidth
-            if not isinstance(path.fill, morpho.color.GradientFill):
-                path.color = path.fill[:]
+    final = mpath0.copy().set(visible=True)
+    mpath0.static = False
+    actor.subaction.drawIn(subduration, atFrame,
+        tempWidth=tempWidth, transition=transition,
+        substagger=substagger, select=select
+        )
 
-    mpath1 = actor.newkey(atFrame)
-    mpath0.visible = False
+    # Hide lingering initial keyfigure if it exists.
+    if atFrame > lasttime:
+        mpath0.visible = False
 
-    tstart = atFrame
-    tend = atFrame + duration
-    numfigs = mpath1.numfigs
-    dt = duration / (numfigs + 1)
-    for n in range(numfigs):
-        time = tstart + (n+1)*dt
-        mpath_n = actor.newkey(time)
-        if n > 0:
-            mpath_n.figures[n-1] = final.figures[n-1].copy()
-        mpath_n.figures[n].set(start=final.figures[n].start, end=final.figures[n].end)
-    actor.newkey(tend, final)
+    actor.fin = final
 
 
 

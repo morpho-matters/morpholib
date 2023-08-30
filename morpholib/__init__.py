@@ -5,7 +5,7 @@ from morpholib.anim import Layer, Animation, Frame, SpaceFrame, \
     Camera, SpaceCamera
 import morpholib.color as color
 from morpholib.matrix import array
-from morpholib.actions import action
+from morpholib.actions import action, subaction
 
 from morpholib.tools.subimporter import import_submodules
 

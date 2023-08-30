@@ -223,23 +223,65 @@ def transform(fig, pig, time=30):
 # versions of registered actor actions.
 # See "morpho.actions.action" for more info.
 class MultiActionSummoner(object):
-    def __getattr__(self, actionName):
-        def multiaction(actors, *args, atFrame=None, stagger=0, **kwargs):
+    @staticmethod
+    def getActionFromName(actor, actionName):
+        return getattr(actor, actionName)
+
+    # Prepares a given action for use with a particular actor.
+    @staticmethod
+    def actionDecorator(action, actor):
+        def decoratedAction(*args, **kwargs):
+            return action(actor, *args, **kwargs)
+        return decoratedAction
+
+    def makeMultiAction(self, action):
+        def multiaction(actors, *args, stagger=0, **kwargs):
             if isinstance(actors, morpho.Actor):
                 actors = [actors]
             elif isinstance(actors, morpho.Layer):
                 actors = actors.actors
 
-            if atFrame is None:
-                atFrame = max(actor.lastID() for actor in actors)
+            now = max(actor.lastID() for actor in actors)
             for n,actor in enumerate(actors):
-                try:
-                    action = getattr(actor, actionName)
-                except AttributeError:
-                    raise AttributeError(f"'{actor.figureType.__name__}' does not implement action '{actionName}'")
-                action(atFrame=atFrame+n*stagger, *args, **kwargs)
+                if isinstance(action, str):
+                    try:
+                        action_n = self.getActionFromName(actor, action)
+                    except AttributeError:
+                        raise AttributeError(f"'{actor.figureType.__name__}' does not implement action '{action}'")
+                else:
+                    action_n = self.actionDecorator(action, actor)
+
+                if now not in actor.timeline:
+                    actor.newkey(now)
+                action_n(*args, **kwargs)
+            if stagger > 0:
+                # Go thru the actors and shift them by the stagger
+                # amount starting at the present. Also preserve the
+                # keyfigure at the original present time.
+                for n,actor in enumerate(actors[1:], start=1):
+                    # Post-action present-state of the actor
+                    present = actor.time(now).copy()
+                    actor.shiftAfter(now-1, n*stagger)
+                    actor.newkey(now, present, seamless=False)
 
         return multiaction
+
+    def __getattr__(self, actionName):
+        return self.makeMultiAction(actionName)
+
+    def __call__(self, action, *args, **kwargs):
+        multiaction = self.makeMultiAction(action)
+        return multiaction(*args, **kwargs)
+
+class MultiSubactionSummoner(MultiActionSummoner):
+    @staticmethod
+    def getActionFromName(actor, actionName):
+        return getattr(actor.subaction, actionName)
+
+    @staticmethod
+    def actionDecorator(action, actor):
+        return actor.subaction.makeSubaction(action)
+
 
 # Used to automatically implement multi-actions
 # for custom actions similar to how fadeIn/Out() and rollback() work.
@@ -251,3 +293,11 @@ class MultiActionSummoner(object):
 # Please note that a user-specified `atFrame` value must be specified
 # by keyword in an auto-generated multi-action. Same with `stagger`.
 action = MultiActionSummoner()
+
+# Used to automatically implement multi-subactions used to
+# apply a subaction to multiple Frame-like actors.
+# See also: `action`
+#
+# Usage example:
+# subaction.fadeIn(actorlist, 20, substagger=3, stagger=10)
+subaction = MultiSubactionSummoner()

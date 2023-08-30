@@ -13,7 +13,6 @@ from morpholib.tools.basics import *
 
 import numpy as np
 import math, cmath
-from collections.abc import Iterable
 
 ### SPECIAL EXCEPTIONS ###
 
@@ -187,6 +186,11 @@ class BoundingBoxFigure(morpho.Figure):
     def boxHeight(self, *args, **kwargs):
         box = self.box(*args, **kwargs)
         return box[-1] - box[-2]
+
+    # Returns both boxWidth and boxHeight as a tuple.
+    def boxDimensions(self, *args, **kwargs):
+        box = self.box(*args, **kwargs)
+        return (box[1] - box[0], box[-1] - box[-2])
 
     # Only works for BoundingBoxFigures that have
     # background box tweenables `background`,
@@ -438,32 +442,3 @@ def makesubcopies(lst, slots, number, itemfunc=lambda item: item):
         for n in range(copiesPerSlot+int(i < remainder)):
             lst.insert(index, itemfunc(item))
     return lst
-
-
-# Returns a dictionary mapping indices to items representing a
-# selection of items in a list. The `index` parameter can either
-# be an index, a slice, a choice function, or a combination of
-# these expressed as a tuple/iterable.
-#
-# One of the main features of this function is it won't return
-# duplicates when the indices in a multi-selection overlap.
-# And by using dicts, it is hopefully still a very speedy
-# function.
-def listselect(lst, index, /):
-    if callable(index):
-        condition = index
-        return dict((i,item) for i,item in enumerate(lst) if condition(item))
-    # Handle case of multiple index ranges provided
-    elif isinstance(index, Iterable):
-        pieces = index
-        selection = dict()
-        for piece in pieces:
-            selection.update(listselect(lst, piece))
-        return selection
-    else:
-        # Turn index into a slice if it's just a single int
-        if isinstance(index, int):
-            if index < 0:
-                index = index % len(lst)
-            index = sel[index:index+1]
-        return dict(zip(range(len(lst))[index], lst[index]))

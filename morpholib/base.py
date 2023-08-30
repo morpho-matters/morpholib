@@ -17,15 +17,9 @@ import math
 import numpy as np
 import cairo
 cr = cairo
-# from warnings import filterwarnings
-
-# Ignore warnings by default.
-# This is mainly for the sake of the Spline class, which
-# uses some non-standard arithmetic intentionally.
-# filterwarnings("ignore")
 
 
-version = "0.8.0"  # Current public morpho version
+version = "0.8.1"  # Current public morpho version
 internalVersion = "2.4.1ip"  # Current internal morpho version
 subversion = ""
 DEBUG_MODE = False
@@ -94,14 +88,10 @@ class Tweenable(object):
         # Convert tags to proper format.
         if tags is None:
             tags = set()
-        # elif type(tags) is set:
         elif isinstance(tags, set):
-            # tags = tags.copy()
             pass
-        # elif type(tags) is str:
         elif isinstance(tags, str):
             tags = {tags,}
-        # elif type(tags) in (list, tuple):
         elif isinstance(tags, list) or isinstance(tags, tuple):
             tags = set(tags)
         else:
