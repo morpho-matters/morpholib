@@ -303,6 +303,15 @@ def handleDeadendInterp(tweenmethod):
         multiself = self.splitAtDeadends()
         multiother = other.splitAtDeadends()
 
+        # Subpools are artificially set to 0 because PathlikeMulti()
+        # assumes the supplemented subfigures are prepended to the
+        # originals' figure lists, not evenly distributed which is
+        # what is done by default. Not doing this will result in
+        # certain morphs between different topological genuses failing
+        # e.g. morphing PText("OO").toSpline() to PText("O").toSpline()
+        multiself._subpool = {0}
+        multiother._subpool = {0}
+
         multitweened = multiTweenMethod(multiself, multiother, t, *args, **kwargs)
         return multitweened.joinUsingDeadends()
 
