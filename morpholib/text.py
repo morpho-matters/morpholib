@@ -686,7 +686,7 @@ Ptext = PText  # Alias is maybe easier to type
 # This was originally developed to solve the problem of decorating
 # tweenPivot() because it is not symmetric in swapping
 # self with other.
-def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, *, reverseMethod=None):
+def Multi(imageMethod, mainMethod=morpho.Figure.tweenLinear, *, reverseMethod=None):
     if reverseMethod is None:
         reverseMethod = imageMethod
 
@@ -854,8 +854,8 @@ class MultiText(morpho.MultiFigure):
 
     ### TWEEN METHODS ###
 
-    tweenLinear = Multi(Text.tweenLinear, morpho.MultiFigure.tweenLinear)
-    tweenSpiral = Multi(Text.tweenSpiral, morpho.MultiFigure.tweenSpiral)
+    tweenLinear = Multi(Text.tweenLinear, morpho.Figure.tweenLinear)
+    tweenSpiral = Multi(Text.tweenSpiral, morpho.Figure.tweenSpiral)
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):

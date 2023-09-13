@@ -726,7 +726,7 @@ Spaceimage = SpaceImage  # Synonym for SpaceImage for people who hate camel case
 # This was originally developed to solve the problem of decorating
 # tweenPivot() because it is not symmetric in swapping
 # self with other.
-def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, *, reverseMethod=None):
+def Multi(imageMethod, mainMethod=morpho.Figure.tweenLinear, *, reverseMethod=None):
     if reverseMethod is None:
         reverseMethod = imageMethod
 
@@ -851,8 +851,8 @@ class MultiImage(morpho.MultiFigure):
 
     ### TWEEN METHODS ###
 
-    tweenLinear = Multi(Image.tweenLinear, mainMethod=morpho.MultiFigure.tweenLinear)
-    tweenSpiral = Multi(Image.tweenSpiral, mainMethod=morpho.MultiFigure.tweenSpiral)
+    tweenLinear = Multi(Image.tweenLinear, mainMethod=morpho.Figure.tweenLinear)
+    tweenSpiral = Multi(Image.tweenSpiral, mainMethod=morpho.Figure.tweenSpiral)
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):

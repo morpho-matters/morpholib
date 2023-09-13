@@ -1829,14 +1829,14 @@ class MultiSpline(morpho.grid.MultiPath):
 
     ### TWEEN METHODS ###
 
-    tweenLinear = MultiFigure.Multi(Spline.tweenLinear, MultiFigure.tweenLinear)
-    tweenSpiral = MultiFigure.Multi(Spline.tweenSpiral, MultiFigure.tweenSpiral)
+    tweenLinear = MultiFigure.Multi(Spline.tweenLinear, morpho.Figure.tweenLinear)
+    tweenSpiral = MultiFigure.Multi(Spline.tweenSpiral, morpho.Figure.tweenSpiral)
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):
         pivot = MultiFigure.Multi(
             Spline.tweenPivot(angle, *args, **kwargs),
-            MultiFigure.tweenPivot(angle, *args, **kwargs)
+            morpho.Figure.tweenPivot(angle, *args, **kwargs)
             )
         # Enable splitting for this tween method
         pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)

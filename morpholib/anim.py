@@ -1029,7 +1029,7 @@ class MultiFigure(Frame):
     #              modified. This method will be applied to the
     #              subfigures during a tween.
     # mainMethod = The corresponding method in the MultiFigure subclass.
-    #              e.g. MultiFigure.tweenLinear. This method handles
+    #              e.g. Figure.tweenLinear. This method handles
     #              tweening all the "main" tweenables of the multifigure
     #              object itself (as opposed to subfigures), but it
     #              should NOT act on the `figures` tweenable!

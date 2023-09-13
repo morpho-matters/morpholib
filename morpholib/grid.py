@@ -289,7 +289,7 @@ def handleDeadendInterp(tweenmethod):
 
     # Convert given tweenmethod into a MultiFigure tween method
     # so it can be applied to multiself and multiother.
-    multiTweenMethod = PathlikeMulti(tweenmethod, MultiFigure.tweenLinear)
+    multiTweenMethod = PathlikeMulti(tweenmethod, morpho.Figure.tweenLinear)
 
     def wrapper(self, other, t, *args, **kwargs):
         # Do nothing fancy if both paths have identical deadends and node counts
@@ -2242,14 +2242,14 @@ class MultiPath(MultiFigure):
 
     ### TWEEN METHODS ###
 
-    tweenLinear = MultiFigure.Multi(Path.tweenLinear, MultiFigure.tweenLinear)
-    tweenSpiral = MultiFigure.Multi(Path.tweenSpiral, MultiFigure.tweenSpiral)
+    tweenLinear = MultiFigure.Multi(Path.tweenLinear, morpho.Figure.tweenLinear)
+    tweenSpiral = MultiFigure.Multi(Path.tweenSpiral, morpho.Figure.tweenSpiral)
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):
         pivot = MultiFigure.Multi(
             Path.tweenPivot(angle, *args, **kwargs),
-            MultiFigure.tweenPivot(angle, *args, **kwargs)
+            morpho.Figure.tweenPivot(angle, *args, **kwargs)
             )
         # Enable splitting for this tween method
         pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
