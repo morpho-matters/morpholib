@@ -5074,6 +5074,24 @@ def rect(box, pad=0, *, relative=False):
     poly.vertices = corners
     return poly
 
+# Returns a generic path figure in the shape of an X.
+# X is drawn in this corner order: NW, SE, NE, SW.
+# Box is specified as [xmin, xmax, ymin, ymax]
+#
+# If optional keyword input `relative` is set to True, the path
+# will be centered using the `origin` attribute.
+@handleBoxTypecasting
+def cross(box, pad=0, *, relative=False):
+    box = padbox(box, pad)
+    x_min, x_max, y_min, y_max = box
+
+    path = morpho.grid.Path([x_min+y_max*1j, x_max+y_min*1j, x_max+y_max*1j, x_min+y_min*1j])
+    path.deadends.add(1)
+    if relative:
+        path.alignOrigin([0,0])
+
+    return path
+
 # Given a list of complex numbers and a (possibly non-integer)
 # index t, linearly interpolates the sequence to give a point on the
 # line segment between seq[floor(t)] and seq[floor(t)+1].
