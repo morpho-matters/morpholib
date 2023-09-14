@@ -41,15 +41,20 @@ def crossout_old(box, time=30, width=3, color=(1,0,0), view=None):
 
 # Returns a path actor which when animated makes a colored X cross
 # out the box you specify.
+#
+# INPUTS
 # box = a 4-item list/tuple [xmin,xmax,ymin,ymax]
 # time/duration = duration for the animation
 # width = thickness of the lines
 # color = color of the lines
 # transition = Transition function assigned to path.
 #              Default: morpho.transition.default
+# KEYWORD-ONLY INPUTS
+# pad = Padding to apply to given box. Default: 0
 # alignOrigin = Alignment of path origin point.
 #       Default: (0,0) (centered)
 #       Can also be None to use absolute coordinates.
+# Additional keywords are set as attributes of the path.
 @handleBoxTypecasting
 def crossoutPath(box, time=30, width=3, color=(1,0,0),
     transition=None, *, duration=None, pad=0, alignOrigin=(0,0),
@@ -84,7 +89,7 @@ crossout = crossoutPath
 
 # Returns a path actor that circles a given box region.
 #
-# ARGUMENTS
+# INPUTS
 # box = 4-item list/tuple [xmin,xmax,ymin,ymax]
 # time/duration = Duration of animation (in frames). Default: 30
 # width = Border thickness (in pixels). Default: 3
@@ -95,9 +100,12 @@ crossout = crossoutPath
 # steps = Number of line segments in path. Default: 75
 # transition = Transition function assigned to path.
 #              Default: morpho.transition.default
+# KEYWORD-ONLY INPUTS
+# pad = Padding to apply to given box. Default: 0
 # alignOrigin = Alignment of path origin point.
 #       Default: (0,0) (centered)
 #       Can also be None to use absolute coordinates.
+# Additional keywords are set as attributes of the path.
 @handleBoxTypecasting
 def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
     CCW=True, steps=75, transition=None,
@@ -138,7 +146,7 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
 
 # Draws an enboxing animation. Good for highlighting important things on screen.
 #
-# ARGUMENTS
+# INPUTS
 # box = 4-item list/tuple [xmin,xmax,ymin,ymax]
 # time/duration = Duration of animation (in frames). Default: 30
 # width = Border thickness (in pixels). Default: 3
@@ -150,9 +158,12 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
 #       Default: True
 # transition = Transition function assigned to path.
 #              Default: morpho.transition.default
+# KEYWORD-ONLY INPUTS
+# pad = Padding to apply to given box. Default: 0
 # alignOrigin = Alignment of path origin point.
 #       Default: (0,0) (centered)
 #       Can also be None to use absolute coordinates.
+# Additional keywords are set as attributes of the path.
 @handleBoxTypecasting
 def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
     transition=None, *, duration=None, pad=0, alignOrigin=(0,0),
