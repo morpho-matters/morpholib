@@ -1351,11 +1351,16 @@ class Spline(BoundingBoxFigure):
             x,y = zprev.real, zprev.imag
             ctx.move_to(x,y)
 
+            # Extract these objects so that we can save
+            # on repeated Figure tweenable accesses (which
+            # may be slow).
+            self_data = self.data
+            self_deadends = self.deadends
             # Draw each curve
             # for n in range(self.data.shape[0]-1):
             for n in range(init, final):
                 # Get next node, inhandle, and outhandle
-                z, inhandle, outhandle = self.data[n+1,:].tolist()
+                z, inhandle, outhandle = self_data[n+1,:].tolist()
                 # Update handles based on possible inf values
                 inhandle, outhandle = replaceInfHandles(z, inhandle, outhandle)
 
@@ -1364,7 +1369,7 @@ class Spline(BoundingBoxFigure):
                 # If previous node is a deadend, or current or previous
                 # nodes are bad, move to next node.
                 # Else, draw a curve to the next node.
-                if n in self.deadends or isbadnum(z) or isbadnum(zprev):
+                if n in self_deadends or isbadnum(z) or isbadnum(zprev):
                     ctx.move_to(x,y)
                 else:
                     # Snap handles to nodes if they are within

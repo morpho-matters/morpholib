@@ -1586,19 +1586,25 @@ class Path(BoundingBoxFigure):
 
         ctx.move_to(x,y)
 
+        # Extract these objects so that we can save
+        # on repeated Figure tweenable accesses (which
+        # may be slow).
+        self_seq = self.seq
+        self_deadends = self.deadends
+        self_color = self.color
         if isinstance(self.color, morpho.color.Gradient):
             pat = cairo.MeshPattern()
             ortho_prev = 0
             for n in range(init, final):
                 # Get next node
-                z = self.seq[n+1]
+                z = self_seq[n+1]
                 # Get xy coords of both nodes
                 xn, yn = zn.real, zn.imag
                 x, y = z.real, z.imag
 
                 # If previous node is a deadend, move to next node,
                 # else draw a line to the next node.
-                if n in self.deadends or isbadnum(z) or isbadnum(zn):
+                if n in self_deadends or isbadnum(z) or isbadnum(zn):
                     ctx.move_to(x,y)
                     ortho_prev = 0
                 else:
@@ -1610,8 +1616,8 @@ class Path(BoundingBoxFigure):
                         ortho = p_semiwidth_i * delta/abs(delta)
 
                         # Get colors from gradient
-                        RGBA_zn = list(self.color.value(n/maxIndex))
-                        RGBA_z = list(self.color.value((n+1)/maxIndex))
+                        RGBA_zn = list(self_color.value(n/maxIndex))
+                        RGBA_z = list(self_color.value((n+1)/maxIndex))
                         if RGBAmode:
                             RGBA_zn[3] *= A
                             RGBA_z[3] *= A
@@ -1682,13 +1688,13 @@ class Path(BoundingBoxFigure):
                 #     ctx.move_to(x,y)
 
                 # Get next node
-                z = self.seq[n+1]
+                z = self_seq[n+1]
                 # X,Y = morpho.screenCoords(z, view, ctx)
                 x,y = z.real, z.imag
 
                 # If previous node is a deadend, move to next node,
                 # else draw a line to the next node.
-                if n in self.deadends or isbadnum(z) or isbadnum(zn):
+                if n in self_deadends or isbadnum(z) or isbadnum(zn):
                     ctx.move_to(x,y)
                 else:
                     ctx.line_to(x,y)
