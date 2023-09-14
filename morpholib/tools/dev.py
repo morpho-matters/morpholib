@@ -11,6 +11,7 @@ import morpholib.anim
 from morpholib.figure import object_hasattr
 from morpholib.tools.basics import *
 
+import cairo
 import numpy as np
 import math, cmath
 
@@ -24,6 +25,33 @@ import math, cmath
 class AmbiguousValueError(ValueError):
     pass
 
+
+# Extracts viewbox from the given input object `view`.
+#
+# If `view` is a Layer, Camera actor, or Camera figure, it
+# infers the viewbox. In the case of Layer or Camera actor,
+# this is inferred by taking the latest keyfigure's viewbox.
+def typecastView(view):
+    # Handle Layer/Camera/Animation type inputs to view.
+    if isinstance(view, morpho.Layer):
+        view = view.camera.last().view
+    elif isinstance(view, morpho.Actor):
+        view = view.last().view
+    elif isinstance(view, morpho.anim.Camera):
+        view = view.view
+    return view
+
+# Extracts window shape from the given input object `window`.
+#
+# If `window` is an Animation or cairo context, it extracts
+# the pixel dimensions as (width, height).
+def typecastWindowShape(window):
+    if isinstance(window, morpho.Animation):
+        window = window.windowShape
+    elif isinstance(window, cairo.Context):
+        target = window.get_target()
+        window = (target.get_width(), target.get_height())
+    return window
 
 # Decorator allows a method to extract the needed
 # `view` and `ctx` parameters from Layer/Camera/Animation
@@ -68,14 +96,9 @@ def typecastViewCtx(method):
 
         # Handle Layer/Camera/Animation type inputs to
         # view and ctx.
-        if isinstance(view, morpho.Layer):
-            view = view.camera.last().view
-        elif isinstance(view, morpho.Actor):
-            view = view.last().view
-        elif isinstance(view, morpho.anim.Camera):
-            view = view.view
-        if isinstance(ctx, morpho.Animation):
-            ctx = ctx.windowShape
+        view = typecastView(view)
+        if not isinstance(ctx, cairo.Context):
+            ctx = typecastWindowShape(ctx)
 
         return method(self, view, ctx, *args, **kwargs)
     return wrapper
