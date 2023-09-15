@@ -3,7 +3,8 @@ import morpholib as morpho
 import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    totalBox, shiftBox, translateArrayUnderTransforms, handleBoxTypecasting
+    totalBox, shiftBox, translateArrayUnderTransforms, handleBoxTypecasting, \
+    typecastView, typecastWindowShape, findOwnerByType
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 
@@ -330,7 +331,9 @@ class Spline(BoundingBoxFigure):
     # Applies the necessary transformations to a spline to make it
     # fit the specifications outlined in the arguments of fromsvg(),
     # such as making it meet the given boxHeight.
-    def _transformForSVG(self, svgbbox, boxWidth, boxHeight, svgOrigin, align, flip):
+    def _transformForSVG(self,
+        svgbbox, boxWidth, boxHeight, svgOrigin, align, flip,
+        view=None, windowShape=None):
         xmin, ymin, xmax, ymax = svgbbox
         if svgOrigin is None:
             # Infer origin from `align` parameter and bounding box
@@ -361,6 +364,26 @@ class Spline(BoundingBoxFigure):
         if flip:
             self._transform = morpho.matrix.scale2d(1, -1)
             self.commitTransforms()
+
+        # Attempt to adjust the spline stroke width into pixel
+        # values that correspond with the physical values given
+        # by the SVG data.
+        if view is not None:
+            if windowShape is None:
+                # Try to infer Animation object from view
+                mation = findOwnerByType(view, morpho.Animation)
+                if mation is not None:
+                    windowShape = mation.windowShape
+            if windowShape is not None:
+                view = typecastView(view)  # Extract actual viewbox
+                windowShape = typecastWindowShape(windowShape)
+                # Convert physical width into pixel width by averaging
+                WIDTH_X = morpho.pixelWidth(self.width, view, windowShape)
+                WIDTH_Y = morpho.pixelHeight(self.width, view, windowShape)
+                self.width = mean([WIDTH_X, WIDTH_Y])
+                # Multiply by the geometric mean of the scale factors used.
+                self.width *= math.sqrt(scale_x*scale_y)
+
 
     # Mainly for internal use.
     # Computes the svg bounding box of an svg path object, but
@@ -408,6 +431,18 @@ class Spline(BoundingBoxFigure):
     #          note that the element will be reified IN PLACE.
     #
     # OPTIONAL KEYWORD-ONLY INPUTS
+    # view = Viewbox the figure will be visible in. This only
+    #        needs to be specified if the imported SVG has
+    #        non-zero stroke widths as they need to be converted
+    #        into pixel widths in a Morpho Spline.
+    #        Can optionally be a layer, camera, or camera actor
+    #        in which case the viewbox will be inferred.
+    # windowShape = A pair specifying the pixel width and height
+    #       of the animation. Like `view`, it is only needed if
+    #       importing an SVG with non-zero stroke widths. Even
+    #       then it's optional to specify this, as specifying
+    #       a Layer object to `view` will allow `windowShape` to
+    #       infer the pixel dimensions.
     # svgOrigin = SVG coordinates that should be converted into
     #              (0,0) Morpho physical coordinates.
     #              Can be specified as tuple or complex number.
@@ -444,7 +479,7 @@ class Spline(BoundingBoxFigure):
     # Any additional keyword arguments are set as attributes of
     # the returned figure.
     @classmethod
-    def fromsvg(cls, source, *,
+    def fromsvg(cls, source, *, view=None, windowShape=None,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
         index=0, flip=True, arcError=0.1, tightbox=False, **kwargs):
 
@@ -514,7 +549,10 @@ class Spline(BoundingBoxFigure):
             svgbbox = Spline._tightbbox(svgpath)
         else:
             svgbbox = np.array(svgpath.bbox()).tolist()
-        spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
+        spline._transformForSVG(
+            svgbbox, boxWidth, boxHeight, svgOrigin, align, flip,
+            view, windowShape
+            )
 
         spline.set(**kwargs)  # Pass any additional kwargs to set()
         return spline
@@ -1741,7 +1779,7 @@ class MultiSpline(morpho.grid.MultiPath):
     # Any additional keyword arguments are set as attributes of
     # the returned figure or its subfigures.
     @classmethod
-    def fromsvg(cls, source, *,
+    def fromsvg(cls, source, *, view=None, windowShape=None,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
         index=(None,), flip=True, arcError=0.1, tightbox=False,
         **kwargs):
@@ -1780,7 +1818,10 @@ class MultiSpline(morpho.grid.MultiPath):
             raise TypeError("Given SVG has no well-defined bounding box.")
 
         for spline in splines:
-            spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
+            spline._transformForSVG(
+                svgbbox, boxWidth, boxHeight, svgOrigin, align, flip,
+                view, windowShape
+                )
 
         multispline = cls(splines)
         multispline.squeeze()  # Remove empty and singleton splines
