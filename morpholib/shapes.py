@@ -26,6 +26,7 @@ import io
 
 import math, cmath
 import numpy as np
+from collections.abc import Iterable
 
 I2 = np.identity(2)
 
@@ -1773,15 +1774,14 @@ class MultiSpline(morpho.grid.MultiPath):
     #
     # By default it constructs a Spline from every SVG Path element
     # found within the source, but this can be changed by passing
-    # in a tuple for the `index` input:
-    #      index=(start, stop, step)
-    # The tuple is interpreted identically to how range() works.
-    # Any additional keyword arguments are set as attributes of
-    # the returned figure or its subfigures.
+    # in an index, a tuple of indices, a slice, or a tuple of slices
+    # into the `index` keyword.
+    # Any additional keyword arguments not explicitly listed here
+    # are set as attributes of the returned figure or its subfigures.
     @classmethod
     def fromsvg(cls, source, *, view=None, windowShape=None,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
-        index=(None,), flip=True, arcError=0.1, tightbox=False,
+        index=sel[:], flip=True, arcError=0.1, tightbox=False,
         **kwargs):
 
         svg = parseSVG(source)
@@ -1791,12 +1791,9 @@ class MultiSpline(morpho.grid.MultiPath):
         if len(svgpaths) == 0:
             return cls()
 
-        if isinstance(index, int):
-            index = (index, index+1)
-
         # Generate raw Spline figures
         splines = []
-        for svgpath in svgpaths[slice(*index)]:
+        for svgpath in listselect(svgpaths, index).values():
             spline = Spline.fromsvg(svgpath,
                 svgOrigin=0, flip=False, arcError=arcError, tightbox=tightbox)
             splines.append(spline)
