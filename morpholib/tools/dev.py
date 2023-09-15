@@ -53,6 +53,68 @@ def typecastWindowShape(window):
         window = (target.get_width(), target.get_height())
     return window
 
+# NOT IMPLEMENTED YET because I'm not sure it's functionality
+# is all that important in light of typecastView/WindowShape().
+# The idea is this function would do the job of checking thru
+# the owner chain to infer a viewbox, whereas typecastView()
+# deals with extracting the actual viewbox from a
+# layer/camera/etc. Of note, this function would treat Camera
+# figures and actors like any other figure, so it shouldn't
+# be used as a replacement for typecastView().
+#
+# Tries to infer the viewbox the given figure is in.
+# Returns None if unsuccessful.
+def inferView(figure):
+    raise NotImplementedError
+    if isinstance(figure, morpho.Actor):
+        figure = figure.last()
+    # Try to find the layer this figure is a part of
+    try:
+        layer = figure.owner.owner
+    except AttributeError:
+        return None
+    if layer is None:
+        return None
+    return typecastView(layer)
+
+# NOT IMPLEMENTED YET because I'm not sure it's functionality
+# is all that important in light of typecastView/WindowShape().
+# The idea is this function would do the job of checking thru
+# the owner chain to infer a window shape, whereas
+# typecastWindowShape() deals with extracting the actual viewbox
+# from a layer/camera/etc. Of note, this function would treat
+# Camera figures and actors like any other figure, so it shouldn't
+# be used as a replacement for typecastView().
+#
+# Tries to infer the window shape of the animation the figure
+# belongs to. Returns None if unsuccessful.
+def inferWindowShape(figure):
+    raise NotImplementedError
+    if isinstance(figure, morpho.Actor):
+        figure = figure.last()
+    # Try to find the Animation object this figure is a part of
+    try:
+        mation = figure.owner.owner.owner
+    except AttributeError:
+        return None
+    if mation is None:
+        return None
+    return typecastWindowShape(mation)
+
+# Goes up the owner chain of a Morpho object (e.g. Figure, Actor,
+# Layer) searching for an owner of the given type. If it finds it,
+# it returns the owner found, otherwise it returns None.
+# Optionally, an iteration limit can be specified to ensure
+# a very wrongly configured Morpho object that has a cycle in its
+# owner chain doesn't result in an infinite loop. If the limit is
+# reached, a RecursionError is thrown. The default limit is 5.
+def findOwnerByType(obj, cls, *, iterLimit=5):
+    for n in range(iterLimit):
+        obj = getattr(obj, "owner", None)
+        if isinstance(obj, cls) or obj is None:
+            return obj
+    raise RecursionError(f"Iteration limit of {iterLimit} reached.")
+
 # Decorator allows a method to extract the needed
 # `view` and `ctx` parameters from Layer/Camera/Animation
 # inputs allowing for syntax like
