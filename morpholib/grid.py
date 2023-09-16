@@ -4,6 +4,7 @@ mo = morpho
 import morpholib.tools.color, morpholib.anim, morpholib.transitions
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
+from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
     totalBox, shiftBox, translateArrayUnderTransforms, handleBoxTypecasting, \
@@ -2070,7 +2071,7 @@ def drawIn(actor, duration=30, atFrame=None, *,
     ["insertNodesUniformly", "concat"],
     Path, MultiFigure._returnOrigCaller
     )
-class MultiPath(MultiFigure):
+class MultiPath(MultiFigure, TransformableFrame):
 
     _basetype = Path
 
@@ -2091,8 +2092,6 @@ class MultiPath(MultiFigure):
         self.Tweenable("background", (1,1,1), tags=["color"])
         self.Tweenable("backAlpha", 0, tags=["scalar"])
         self.Tweenable("backPad", 0, tags=["scalar"])
-        self.Tweenable("rotation", 0, tags=["scalar"])
-        self.Tweenable("_transform", np.eye(2), tags=["nparray"])
 
     # anchorPoint = Path.anchorPoint
     realign = Path.realign
@@ -2105,14 +2104,6 @@ class MultiPath(MultiFigure):
     @pos.setter
     def pos(self, value):
         self.origin = value
-
-    @property
-    def transform(self):
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
 
     @property
     def boxWidth(self):
@@ -2218,35 +2209,7 @@ class MultiPath(MultiFigure):
             _alpha=max(subpath.alpha for subpath in self.figures)
             )
 
-        # Temporarily apply additional transforms to subfigures if global
-        # rotation/transform are non-identity
-        if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
-            # Calculate as a single matrix the overall effect
-            # of both the global rotation and transform.
-            rotateAndTransform = self._transform @ morpho.matrix.rotation2d(self.rotation)
-            rotateAndTransform_mat = morpho.matrix.Mat(rotateAndTransform)
-
-            # Initialize lists to store original origin/transform values
-            # so they can be restored after being modified
-            orig_origins = []
-            orig_transforms = []
-            for fig in self.figures:
-                # Save original origin and transform values
-                orig_origins.append(fig.origin)
-                orig_transforms.append(fig._transform)
-
-                # Temporarily modify origin and transform
-                if fig.origin != 0:
-                    fig.origin = rotateAndTransform_mat * fig.origin
-                fig._transform = rotateAndTransform @ fig._transform
-            MultiFigure.draw(self, camera, ctx)
-
-            # Restore original transformation values
-            for fig, origin, transform in zip(self.figures, orig_origins, orig_transforms):
-                fig.origin = origin
-                fig._transform = transform
-        else:
-            MultiFigure.draw(self, camera, ctx)
+        TransformableFrame.draw(self, camera, ctx)
 
     ### TWEEN METHODS ###
 
