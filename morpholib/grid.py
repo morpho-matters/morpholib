@@ -1949,14 +1949,14 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
 # parameter can be passed in by keyword to specify the focus point
 # in terms of a location on the path's bounding box.
 @Path.action
-def popIn(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
+def popIn(path, duration=30, atFrame=None, *, align=None, focus=0):
     if atFrame is None:
         atFrame = path.lastID()
 
     path0 = path.last()
     final = path0.copy().set(visible=True)
     path0.visible = False
-    if focus is None:
+    if align is not None:
         focus = path0.anchorPoint(align, raw=True)
     path1 = path.newkey(atFrame, path0.fimage(lambda z: focus))
     path1.set(width=0, outlineWidth=0)
@@ -1972,11 +1972,11 @@ def popIn(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
 # parameter can be passed in by keyword to specify the focus point
 # in terms of a location on the path's bounding box.
 @Path.action
-def popOut(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
+def popOut(path, duration=30, atFrame=None, *, align=None, focus=0):
     if atFrame is None:
         atFrame = path.lastID()
 
-    if focus is None:
+    if align is not None:
         focus = path.last().anchorPoint(align, raw=True)
     path.newkey(atFrame)
     path.newendkey(duration, path.last().fimage(lambda z: focus))
