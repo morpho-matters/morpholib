@@ -14,6 +14,9 @@ nan = float("nan")
 ihat = np.array([1,0,0], dtype=float)
 jhat = np.array([0,1,0], dtype=float)
 khat = np.array([0,0,1], dtype=float)
+# Basic matrices
+I2 = np.eye(2)
+I3 = np.eye(3)
 
 ### DECORATORS ###
 
