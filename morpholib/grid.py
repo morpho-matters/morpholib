@@ -1959,6 +1959,7 @@ def popIn(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
     if focus is None:
         focus = path0.anchorPoint(align, raw=True)
     path1 = path.newkey(atFrame, path0.fimage(lambda z: focus))
+    path1.set(width=0, outlineWidth=0)
     path1.visible = True
     path.newendkey(duration, final)
 
@@ -1979,6 +1980,7 @@ def popOut(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
         focus = path.last().anchorPoint(align, raw=True)
     path.newkey(atFrame)
     path.newendkey(duration, path.last().fimage(lambda z: focus))
+    path.last().set(width=0, outlineWidth=0)
     path.last().visible = False
 
 # Highlights the Path actor

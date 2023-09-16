@@ -2606,6 +2606,7 @@ def popIn(ellipse, duration=30, atFrame=None):
     ellipse1.visible = True
     ellipse.newendkey(duration)
     ellipse1.radius = 0
+    ellipse1.set(strokeWeight=0)
 
 # Animates an Ellipse actor disappearing by shrinking
 # its radii to zero.
@@ -2616,7 +2617,7 @@ def popOut(ellipse, duration=30, atFrame=None):
 
     ellipse.newkey(atFrame)
     ellipse1 = ellipse.newendkey(duration)
-    ellipse1.set(radius=0, visible=False)
+    ellipse1.set(radius=0, strokeWeight=0, visible=False)
 
 
 # Creates an arc of an ellipse.
