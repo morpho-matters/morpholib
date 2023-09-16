@@ -41,6 +41,70 @@ class _FigureTransformMemory(object):
             fig.rotation = rotation
             fig._transform = transform
 
+# Mainly to be used as an inherited class.
+# A Frame that is meant to take subfigures that possess the standard
+# 2D transformation attributes origin, rotation, transform, but also
+# takes toplevel transformation attributes and implements methods that
+# allow toplevel and sublevel transformations to interact compatibly
+# with each other.
+class TransformableFrame(Frame):
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        self.Tweenable("rotation", 0, tags=["scalar"])
+        self.Tweenable("_transform", np.eye(2), tags=["nparray"])
+
+    @property
+    def transform(self):
+        return self._transform
+
+    @transform.setter
+    def transform(self, value):
+        self._transform = morpho.matrix.array(value)
+
+    # Meant to be called in a `with` statement like follows:
+    #   with myframe.TemporarySubfigureTransforms():
+    #       ...
+    # Within the `with` block, subfigure transformation attributes
+    # can be safely overwritten (though not modified in place)
+    # and when the block exits, the original subfigure transformation
+    # values will be restored.
+    def TemporarySubfigureTransforms(self):
+        return _FigureTransformMemory(self.figures)
+
+    # Applies toplevel transforms to subfigures by modifying
+    # the origin and transform attributes of subfigures.
+    # Note that this method is applied IN PLACE and will
+    # permanently modify subfigure transformations unless
+    # called within a temporary transform context. So to
+    # safely use this method, use the following template:
+    #   with self.TemporarySubfigureTransforms():
+    #       self.applyTransformsToSubfigures()
+    #       ...
+    def applyTransformsToSubfigures(self):
+        # Calculate as a single matrix the overall effect
+        # of both the global rotation and transform.
+        rotateAndTransform = self._transform @ morpho.matrix.rotation2d(self.rotation)
+        rotateAndTransform_mat = morpho.matrix.Mat(rotateAndTransform)
+
+        for fig in self.figures:
+            # Temporarily modify origin and transform
+            if fig.origin != 0:
+                fig.origin = rotateAndTransform_mat * fig.origin
+            fig._transform = rotateAndTransform @ fig._transform
+
+    def draw(self, camera, ctx):
+        if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+            # Temporarily apply additional transforms to subfigures if global
+            # rotation/transform are non-identity
+            with self.TemporarySubfigureTransforms():
+                self.applyTransformsToSubfigures()
+                Frame.draw(self, camera, ctx)
+        else:
+            Frame.draw(self, camera, ctx)
+
+
 # A Frame of figures that can be accessed with array index syntax.
 # Normally this class is instantiated by calling figureGrid()
 class FigureArray(Frame):
