@@ -14,6 +14,33 @@ import math, cmath
 import numpy as np
 
 
+# Used to save the state of a figure list's transformation
+# attributes (origin, rotation, transform) so they can be
+# temporarily modified (usually in a draw() method) and then
+# restored. Note that this will fail if any figure transformations
+# are modified IN PLACE (e.g. modifying the transform matrix in
+# place). Transformations must be fully OVERWRITTEN.
+class _FigureTransformMemory(object):
+    def __init__(self, figures):
+        # Initialize lists to store original origin/transform values
+        # so they can be restored after being modified.
+        self.figures = figures
+        self.orig_origins = [fig.origin for fig in figures]
+        self.orig_rotations = [fig.rotation for fig in figures]
+        self.orig_transforms = [fig._transform for fig in figures]
+
+    # Called upon entering a `with` block
+    def __enter__(self):
+        return self
+
+    # Called upon exiting a `with` block
+    def __exit__(self, type, value, traceback):
+        # Restore original transformation values
+        for fig, origin, rotation, transform in zip(self.figures, self.orig_origins, self.orig_rotations, self.orig_transforms):
+            fig.origin = origin
+            fig.rotation = rotation
+            fig._transform = transform
+
 # A Frame of figures that can be accessed with array index syntax.
 # Normally this class is instantiated by calling figureGrid()
 class FigureArray(Frame):
