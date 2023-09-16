@@ -144,6 +144,13 @@ class Text(BoundingBoxFigure):
         # self.bold = bold
         # self.italic = italic
 
+    @property
+    def origin(self):
+        return self.pos
+
+    @origin.setter
+    def origin(self, value):
+        self.pos = value
 
     @property
     def transform(self):

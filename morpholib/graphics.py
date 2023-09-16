@@ -105,6 +105,14 @@ class Image(BoundingBoxFigure):
         self.NonTweenable("aspectRatioWH", self.width/self.height)
         self.NonTweenable("physical", True)  # Are width and height in physical units, or pixel?
 
+    @property
+    def origin(self):
+        return self.pos
+
+    @origin.setter
+    def origin(self, value):
+        self.pos = value
+
     # The "width" and "height" attrs are set up as properties,
     # because we may need to dynamically modify one in response
     # to a change in the other based on the "linked" attr.
