@@ -1941,9 +1941,9 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
         path1.end = 0
 
 # Animates a Path actor appearing by enlarging from a focus point.
-# By default the focus point is taken to be the box center of the
-# path, but this can be changed by passing in a position value to
-# the `focus` optional kwarg. Note that the coordinates will be
+# By default the focus point is taken to be the origin position of
+# the path, but this can be changed by passing in a position value
+# to the `focus` optional kwarg. Note that the coordinates will be
 # taken within the path's LOCAL coordinates (i.e. relative to
 # the path's transformation attributes). Alternatively, an `align`
 # parameter can be passed in by keyword to specify the focus point
@@ -1964,9 +1964,9 @@ def popIn(path, duration=30, atFrame=None, *, align=None, focus=0):
     path.newendkey(duration, final)
 
 # Animates a Path actor disappearing by shrinking to a focus point.
-# By default the focus point is taken to be the box center of the
-# path, but this can be changed by passing in a position value to
-# the `focus` optional kwarg. Note that the coordinates will be
+# By default the focus point is taken to be the origin position of
+# the path, but this can be changed by passing in a position value
+# to the `focus` optional kwarg. Note that the coordinates will be
 # taken within the path's LOCAL coordinates (i.e. relative to
 # the path's transformation attributes). Alternatively, an `align`
 # parameter can be passed in by keyword to specify the focus point
