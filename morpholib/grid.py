@@ -1994,6 +1994,15 @@ def highlight(actor, duration=15, atFrame=None, *,
         atFrame = actor.lastID()
 
     path0 = actor.last()
+
+    # Leave values unchanged if specified as None
+    if width is None:
+        width = path0.width
+    if fill is None:
+        fill = path0.fill[:]
+    if color is None:
+        color = path0.color[:]
+
     path1 = actor.newkey(atFrame)
     path2 = actor.newendkey(duration)
     path2.set(width=width, color=color, **kwargs)
