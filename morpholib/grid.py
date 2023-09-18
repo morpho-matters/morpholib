@@ -51,7 +51,7 @@ I2 = np.identity(2)
 #        number of pixels of visibility and invisibility.
 # dashOffset = Where along the dash pattern it will start. Default: 0
 class Point(morpho.Figure):
-    def __init__(self, pos=0, size=15, strokeWeight=1, color=None, fill=None,
+    def __init__(self, pos=0, size=15, strokeWeight=1, color=(0,0,0), fill=(1,0,0),
         alpha=1):
 
         # Construct a default figure.
@@ -65,11 +65,6 @@ class Point(morpho.Figure):
             pos = pos[0] + 1j*pos[1]
         else:
             pos = complex(pos)
-
-        if color is None:
-            color = [0,0,0]
-        if fill is None:
-            fill = [1,0,0]
 
         # pos = morpho.Tweenable("pos", pos, tags=["complex", "position"])
         # strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
@@ -189,7 +184,7 @@ class PointPolar(Point):
 
 # 3D version of the Point figure. See "Point" for more info.
 class SpacePoint(Point):
-    def __init__(self, pos=0, size=15, strokeWeight=1, color=None, fill=None,
+    def __init__(self, pos=0, size=15, strokeWeight=1, color=(0,0,0), fill=(1,0,0),
         alpha=1):
         # Use superclass constructor
         super().__init__(0, size, strokeWeight, color, fill, alpha)
