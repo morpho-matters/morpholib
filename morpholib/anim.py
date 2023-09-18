@@ -851,8 +851,10 @@ class MultiFigure(Frame):
         self._state["origin"].tags.add("nojump")
 
         # List of indices for subfigures that can be used for
-        # making subfigure copies as part of a tween.
-        self.NonTweenable("_subpool", set())
+        # making subfigure copies as part of a tween. This can
+        # be a specific index value, or a slice object, or a
+        # filter function, or a list of all these types.
+        self.NonTweenable("_subpool", [])
 
     @property
     def subpool(self):
@@ -860,9 +862,15 @@ class MultiFigure(Frame):
 
     @subpool.setter
     def subpool(self, value):
-        if isinstance(value, slice):
-            value = range(self.numfigs)[value]
-        self._subpool = value if type(value) is set else set(value)
+        if not isinstance(value, (list, tuple, set)):
+            # Convert into singleton list if the value is not
+            # a common sequence type.
+            value = [value]
+        self._subpool = value if type(value) is list else list(value)
+
+    # Returns a dict_keys list of the indices in the subpool
+    def _getSubpoolIndices(self):
+        return listselect(self.figures, self._subpool).keys()
 
     def _appearsEqual(self, other, *args, compareSubNonTweenables=True, **kwargs):
         return morpho.Frame._appearsEqual(self, other, *args, compareSubNonTweenables=compareSubNonTweenables, **kwargs)
@@ -1053,7 +1061,7 @@ class MultiFigure(Frame):
 
                 # Generate the sorted pool of indices from which
                 # subfigure copies are allowed to be drawn.
-                subpool = {index % len_target_figures for index in target.subpool if index < len_target_figures}
+                subpool = sorted(target._getSubpoolIndices())
                 if len(subpool) == 0:
                     subpool = range(len_target_figures)
                 else:
