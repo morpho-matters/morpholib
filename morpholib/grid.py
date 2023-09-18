@@ -4761,7 +4761,7 @@ class Arrow(Path):
 # are unsupported.
 # Also note that the "angle" property is not implemented for this class.
 class SpaceArrow(SpacePath, Arrow):
-    def __init__(self, tail=0, head=1, color=None, alpha=1, width=3,
+    def __init__(self, tail=0, head=1, color=(1,1,1), alpha=1, width=3,
         headSize=25, tailSize=0):
 
         # Use superclass constructor
