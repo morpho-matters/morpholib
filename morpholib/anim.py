@@ -537,6 +537,9 @@ class Frame(BoundingBoxFigure):
         # Divide any negative indices mod len(self.figures)
         # so they will be in the correct order relative to
         # positive indices.
+        # Convert to list if needed
+        if not isinstance(indices, list):
+            indices = list(indices)
         for n, index in enumerate(indices):
             if index < 0:
                 indices[n] = index % len(self.figures)
