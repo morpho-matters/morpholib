@@ -517,6 +517,16 @@ class Frame(BoundingBoxFigure):
     # frm.sub[:3], frm.sub[3:6], frm.sub[6:10], frm.sub[10:]
     # in that order.
     #
+    # Negative indices will be interpreted cyclically.
+    # Index values can also be filter functions, in which
+    # case they will be converted into the indices of the first
+    # subfigures they match in the partition so far. This is done
+    # relative to subfigures that haven't been partitioned yet,
+    # so, for example, passing in two identical filter functions
+    # will result in partition points at the first match and the
+    # second match. An error is thrown if no matches are found
+    # at any point in the process.
+    #
     # Note that partition() will leave the original Frame figure
     # that called it unchanged, and will return a new Frame
     # of copies of the underlying subfigures per chunk.
@@ -534,15 +544,34 @@ class Frame(BoundingBoxFigure):
         if len(indices) == 1 and isinstance(indices[0], Iterable):
             indices = indices[0]
 
-        # Divide any negative indices mod len(self.figures)
-        # so they will be in the correct order relative to
-        # positive indices.
         # Convert to list if needed
         if not isinstance(indices, list):
             indices = list(indices)
+
+        # Preprocess any non-standard index values.
+
+        # Initialize index head. It's used to keep track of the remaining
+        # indices that haven't been accounted for in the partition yet.
+        head = 0
         for n, index in enumerate(indices):
-            if index < 0:
-                indices[n] = index % len(self.figures)
+            if callable(index):
+                # Convert any filter functions into indices
+                func = index  # Rename to make reading code easier
+                selection = listselect(self.figures[head:], func)
+                if len(selection) == 0:
+                    raise ValueError(f"Filter function {func.__name__} could not find a match in the remaining subfigures.")
+                # Grab earliest matching index (offset by n to correct for
+                # slicing self.figures above)
+                index = next(iter(selection.keys())) + head
+                indices[n] = index
+            elif index < 0:
+                # Divide any negative indices mod len(self.figures)
+                # so they will be in the correct order relative to
+                # positive indices.
+                index = index % len(self.figures)
+                indices[n] = index
+            # Head index is taken to be 1 after the current partition point.
+            head = index + 1
 
         chunks = []
         chunks.append(self.sub[:indices[0]])
