@@ -520,8 +520,6 @@ class Frame(BoundingBoxFigure):
     # Note that partition() will leave the original Frame figure
     # that called it unchanged, and will return a new Frame
     # of copies of the underlying subfigures per chunk.
-    #
-    # Subfigure names currently do not transfer.
     def partition(self, *indices):
         if len(indices) == 0:
             return Frame([self.sub[:]])
