@@ -1326,8 +1326,10 @@ class SpaceFrame(Frame):
             super().__init__(figures, **kwargs)
 
     # Space version of Frame.partition().
-    def partition(self, *args, **kwargs):
-        return SpaceFrame(Frame.partition(self, *args, **kwargs))
+    def partition(self, *args, cls=None, **kwargs):
+        if cls is None:
+            cls = SpaceFrame
+        return Frame.partition(self, *args, cls=cls, **kwargs)
 
     # Only for frames consisting only of space figures
     # (i.e. figures possessing a primitives() method and a 5 input
