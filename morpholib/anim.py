@@ -520,7 +520,15 @@ class Frame(BoundingBoxFigure):
     # Note that partition() will leave the original Frame figure
     # that called it unchanged, and will return a new Frame
     # of copies of the underlying subfigures per chunk.
-    def partition(self, *indices):
+    #
+    # An optional keyword `cls` can be supplied to change
+    # the Frame subtype used in the return value. By default,
+    # it's a vanilla Frame.
+    def partition(self, *indices, cls=None):
+        # Default Frame type to use is vanilla Frame
+        if cls is None:
+            cls = Frame
+
         if len(indices) == 0:
             return Frame([self.sub[:]])
         if len(indices) == 1 and isinstance(indices[0], Iterable):
@@ -539,7 +547,7 @@ class Frame(BoundingBoxFigure):
             chunks.append(self.sub[indices[n-1] : indices[n]])
         chunks.append(self.sub[indices[n]:])
 
-        return Frame(chunks)
+        return cls(chunks)
 
     # Given a Frame of subframes generated from calling partition(),
     # combine() recombines them back into a single Frame figure.
