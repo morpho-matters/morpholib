@@ -2382,6 +2382,8 @@ class MultiPath3D(MultiPath):
     def orient(self, value):
         self._orient = morpho.matrix.array(value)
 
+    partition = morpho.SpaceFrame.partition
+
     def primitives(self, camera):
         pos3d = camera.orient @ (self.pos - camera.focus) + camera.focus
         pos3d = pos3d.tolist()
