@@ -531,10 +531,14 @@ class Frame(BoundingBoxFigure):
     # that called it unchanged, and will return a new Frame
     # of copies of the underlying subfigures per chunk.
     #
+    # If optional keyword `relative` is set to True, the
+    # indices will be interpreted as offsets from the previous
+    # partition point in the index sequence.
+    #
     # An optional keyword `cls` can be supplied to change
     # the Frame subtype used in the return value. By default,
     # it's a vanilla Frame.
-    def partition(self, *indices, cls=None):
+    def partition(self, *indices, relative=False, cls=None):
         # Default Frame type to use is vanilla Frame
         if cls is None:
             cls = Frame
@@ -563,13 +567,14 @@ class Frame(BoundingBoxFigure):
                 # Grab earliest matching index (offset by n to correct for
                 # slicing self.figures above)
                 index = next(iter(selection.keys())) + head
-                indices[n] = index
+            elif relative and n > 0:
+                index = indices[n-1] + index
             elif index < 0:
                 # Divide any negative indices mod len(self.figures)
                 # so they will be in the correct order relative to
                 # positive indices.
                 index = index % len(self.figures)
-                indices[n] = index
+            indices[n] = index
             # Head index is taken to be 1 after the current partition point.
             head = index + 1
 
