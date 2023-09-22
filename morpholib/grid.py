@@ -2178,7 +2178,10 @@ class MultiPath(MultiFigure, TransformableFrame):
 
         return path
 
-
+    # Applies toplevel transformation attributes to the subpaths'
+    # transformation attributes but does not further commit the
+    # transforms at the subpath level. To do that, call
+    #   multipath.all.commitTransforms()
     def commitTransforms(self):
         # Calculate as a single matrix the overall effect
         # of both the global rotation and transform.
@@ -2187,7 +2190,7 @@ class MultiPath(MultiFigure, TransformableFrame):
         for path in self.figures:
             path.origin = (rotateAndTransform_mat * path.origin) + self.origin
             path._transform = rotateAndTransform @ path._transform
-            path.commitTransforms()
+            # path.commitTransforms()
         self.origin = 0
         self.rotation = 0
         self._transform = np.eye(2)
