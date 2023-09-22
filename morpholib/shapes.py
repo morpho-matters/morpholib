@@ -2473,6 +2473,13 @@ class Ellipse(morpho.Figure):
         self.Tweenable("rotation", 0, tags=["scalar"])
         self.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
+    @property
+    def origin(self):
+        return self.pos
+
+    @origin.setter
+    def origin(self, value):
+        self.pos = value
 
     @property
     def transform(self):
@@ -2661,6 +2668,14 @@ class EllipticalArc(morpho.Figure):
 
         self.Tweenable("dash", [], tags=["scalar", "list"])
         self.Tweenable("dashOffset", 0, tags=["scalar"])
+
+    @property
+    def origin(self):
+        return self.pos
+
+    @origin.setter
+    def origin(self, value):
+        self.pos = value
 
     # Setting `radius` property sets both `xradius` and `yradius` to
     # the same value.
