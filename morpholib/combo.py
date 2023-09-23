@@ -134,6 +134,17 @@ class TransformableFrame(Frame):
                 subframe.commitTransforms()
         return super(TransformableFrame, copy).combine()
 
+    # Merges another TransformableFrame into this one.
+    # See Frame.merge() for more info.
+    # Note that this version of the method automatically
+    # attempts to commit the toplevel transforms of `other`
+    # before merging so that the visual appearance will be
+    # preserved.
+    def merge(self, other, *args, **kwargs):
+        if isinstance(other, TransformableFrame):
+            other.commitTransforms()
+        return super().merge(other, *args, **kwargs)
+
     def draw(self, camera, ctx):
         if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
             # Temporarily apply additional transforms to subfigures if global
