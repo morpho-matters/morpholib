@@ -73,16 +73,21 @@ class TransformableFrame(Frame):
     def TemporarySubfigureTransforms(self):
         return _FigureTransformMemory(self.figures)
 
-    # Applies toplevel transforms to subfigures by modifying
+    # Mainly for internal use.
+    # Applies toplevel transforms `rotation` and `transform`
+    # (but not `origin`) to subfigures by modifying
     # the origin and transform attributes of subfigures.
     # Note that this method is applied IN PLACE and will
     # permanently modify subfigure transformations unless
     # called within a temporary transform context. So to
     # safely use this method, use the following template:
     #   with self.TemporarySubfigureTransforms():
-    #       self.applyTransformsToSubfigures()
+    #       self._applyTransformsToSubfigures()
     #       ...
-    def applyTransformsToSubfigures(self):
+    #
+    # Also note that unlike commitTransforms(), this method
+    # does NOT reset the toplevel transformation attributes.
+    def _applyTransformsToSubfigures(self):
         # Calculate as a single matrix the overall effect
         # of both the global rotation and transform.
         rotateAndTransform = self._transform @ morpho.matrix.rotation2d(self.rotation)
@@ -93,13 +98,48 @@ class TransformableFrame(Frame):
             if fig.origin != 0:
                 fig.origin = rotateAndTransform_mat * fig.origin
             fig._transform = rotateAndTransform @ fig._transform
+        return self
+
+    # Applies the toplevel transformation attributes to the
+    # transformation attributes of the subfigures and resets
+    # the toplevel transforms.
+    def commitTransforms(self):
+        # Apply rotation and transform to subfigures
+        self._applyTransformsToSubfigures()
+
+        # Apply translation to all subfigures
+        self.iall.origin += self.origin
+
+        # Reset toplevel transformation tweenables
+        self.origin = 0
+        self.rotation = 0
+        self._transform = np.eye(2)
+
+        return self
+
+    # Transformable version of Frame.partition().
+    def partition(self, *args, cls=None, **kwargs):
+        if cls is None:
+            cls = TransformableFrame
+        return super().partition(*args, cls=cls, **kwargs)
+
+    # Given a Frame of subframes generated from calling partition(),
+    # combine() recombines them back into a single TransformableFrame
+    # figure.
+    def combine(self):
+        copy = self.copy()
+        copy.commitTransforms()
+        for subframe in copy.figures:
+            if hasattr(subframe, "commitTransforms"):
+                subframe.commitTransforms()
+        return super(TransformableFrame, copy).combine()
 
     def draw(self, camera, ctx):
         if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
             # Temporarily apply additional transforms to subfigures if global
             # rotation/transform are non-identity
             with self.TemporarySubfigureTransforms():
-                self.applyTransformsToSubfigures()
+                self._applyTransformsToSubfigures()
                 Frame.draw(self, camera, ctx)
         else:
             Frame.draw(self, camera, ctx)
