@@ -2075,7 +2075,7 @@ def drawIn(actor, duration=30, atFrame=None, *,
     ["insertNodesUniformly", "concat"],
     Path, MultiFigure._returnOrigCaller
     )
-class MultiPath(MultiFigure, TransformableFrame):
+class MultiPathBase(MultiFigure):
 
     _basetype = Path
 
@@ -2234,15 +2234,10 @@ class MultiPath(MultiFigure, TransformableFrame):
 
         return pivot
 
-Multipath = MultiPath  # Alias
-
-# Assign MultiPath as the Path class's dedicated multifigure version.
-Path._multitype = MultiPath
-
 # Like regular morphFrom(), except the source can optionally
 # be a list of actors/figures, in which case, the morph will
 # be performed from all of those figures.
-@MultiPath.action
+@MultiPathBase.action
 def morphFrom(actor, source, *args, **kwargs):
     if isinstance(source, (list, tuple)):
         if len(source) == 0:
@@ -2261,16 +2256,16 @@ def morphFrom(actor, source, *args, **kwargs):
     else:
         return morpho.Figure.actions["morphFrom"](actor, source, *args, **kwargs)
 
-@MultiPath.action
+@MultiPathBase.action
 def popIn(actor, *args, **kwargs):
     actor.subaction.popIn(*args, **kwargs)
 
-@MultiPath.action
+@MultiPathBase.action
 def popOut(actor, *args, **kwargs):
     actor.subaction.popOut(*args, **kwargs)
 
 # Highlights the MultiPath actor
-@MultiPath.action
+@MultiPathBase.action
 def highlight(actor, *args, **kwargs):
     actor.subaction.highlight(*args, **kwargs)
 
@@ -2278,7 +2273,7 @@ def highlight(actor, *args, **kwargs):
 # Optional keyword input `pause` can be used to specify a number
 # of frames to pause after highlighting and before de-highlighting.
 # See also: Path.flourish()
-@MultiPath.action
+@MultiPathBase.action
 def flourish(actor, *args, **kwargs):
     actor.subaction.flourish(*args, **kwargs)
 
@@ -2307,7 +2302,7 @@ def flourish(actor, *args, **kwargs):
 #       Default: None (use half the subduration value).
 # select = Slice or tuple of slices representing the selection of
 #       subpaths to apply the action to.
-@MultiPath.action
+@MultiPathBase.action
 def drawIn(actor, subduration=30, atFrame=None, *,
     tempWidth=2, transition=morpho.transitions.uniform,
     substagger=None, select=None):
@@ -2333,7 +2328,15 @@ def drawIn(actor, subduration=30, atFrame=None, *,
 
     actor.fin = final
 
+# True MultiPath class for end-users inherits from
+# TransformableFrame too.
+class MultiPath(MultiPathBase, TransformableFrame):
+    pass
 
+Multipath = MultiPath  # Alias
+
+# Assign MultiPath as the Path class's dedicated multifigure version.
+Path._multitype = MultiPath
 
 # 3D version of MultiPath meant to enable 2D MultiPaths to be
 # positionable and orientable in 3D space. This is NOT a full
@@ -2354,7 +2357,7 @@ def drawIn(actor, subduration=30, atFrame=None, *,
 # for 2D MultiPaths. Here they are distinct: `pos` controls 3D
 # position, whereas `origin` controls 2D position within the
 # MultiPath's local plane.
-class MultiPath3D(MultiPath, morpho.SpaceFrame):
+class MultiPath3D(MultiPathBase, morpho.SpaceFrame):
     def __init__(self, seq=None, *args, **kwargs):
         if isinstance(seq, MultiPath):
             # Convert 2D MultiPath into 3D MultiPath
