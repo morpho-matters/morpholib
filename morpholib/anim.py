@@ -1334,7 +1334,7 @@ class SpaceFrame(Frame):
     def partition(self, *args, cls=None, **kwargs):
         if cls is None:
             cls = SpaceFrame
-        return Frame.partition(self, *args, cls=cls, **kwargs)
+        return super().partition(*args, cls=cls, **kwargs)
 
     # Only for frames consisting only of space figures
     # (i.e. figures possessing a primitives() method and a 5 input
