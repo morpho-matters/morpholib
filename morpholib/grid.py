@@ -2354,7 +2354,7 @@ def drawIn(actor, subduration=30, atFrame=None, *,
 # for 2D MultiPaths. Here they are distinct: `pos` controls 3D
 # position, whereas `origin` controls 2D position within the
 # MultiPath's local plane.
-class MultiPath3D(MultiPath):
+class MultiPath3D(MultiPath, morpho.SpaceFrame):
     def __init__(self, seq=None, *args, **kwargs):
         if isinstance(seq, MultiPath):
             # Convert 2D MultiPath into 3D MultiPath
