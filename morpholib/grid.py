@@ -2065,8 +2065,6 @@ def drawIn(actor, duration=30, atFrame=None, *,
     actor.newkey(atFrame + duration, final)
 
 
-# MultiFigure version of Path.
-# See "morpho.graphics.MultiImage" for more info on the basic idea here.
 @MultiFigure._modifyMethods(
     ["close"],
     Path, MultiFigure._applyToSubfigures
@@ -2328,8 +2326,12 @@ def drawIn(actor, subduration=30, atFrame=None, *,
 
     actor.fin = final
 
+
 # True MultiPath class for end-users inherits from
 # TransformableFrame too.
+
+# MultiFigure version of Path.
+# See "morpho.graphics.MultiImage" for more info on the basic idea here.
 class MultiPath(MultiPathBase, TransformableFrame):
     pass
 
