@@ -7,6 +7,7 @@ from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
     typecastView, typecastWindowShape, findOwnerByType
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
+from morpholib.combo import TransformableFrame
 
 from morpholib import object_hasattr
 
@@ -1739,7 +1740,7 @@ def drawIn(actor, *args, **kwargs):
     "splitAt", "splitAtIndex", "insertNodes"],
     Spline, MultiFigure._returnOrigCaller
     )
-class MultiSpline(morpho.grid.MultiPath):
+class MultiSplineBase(morpho.grid.MultiPathBase):
 
     _basetype = Spline
 
@@ -1886,6 +1887,9 @@ class MultiSpline(morpho.grid.MultiPath):
 
         return pivot
 
+class MultiSpline(MultiSplineBase, TransformableFrame):
+    pass
+
 Multispline = MultiSpline  # Alias
 
 # Assign MultiSpline as the dedicated multifigure version of Spline.
@@ -1914,11 +1918,11 @@ Spline._multitype = MultiSpline
 # for 2D MultiSplines. Here they are distinct: `pos` controls 3D
 # position, whereas `origin` controls 2D position within the
 # MultiSpline's local plane.
-class MultiSpline3D(morpho.grid.MultiPath3D, MultiSpline):
+class MultiSpline3D(morpho.grid.MultiPath3D, MultiSplineBase):
 
     ### TWEEN METHODS ###
 
-    tweenLinear = MultiSpline.tweenLinear
+    tweenLinear = MultiSplineBase.tweenLinear
 
 
 # Space version of Spline figure. See "Spline" for more info.
