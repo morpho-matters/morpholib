@@ -2361,7 +2361,7 @@ Path._multitype = MultiPath
 # MultiPath's local plane.
 class MultiPath3D(MultiPathBase, morpho.SpaceFrame):
     def __init__(self, seq=None, *args, **kwargs):
-        if isinstance(seq, MultiPath):
+        if isinstance(seq, MultiPathBase):
             # Convert 2D MultiPath into 3D MultiPath
             mpath = seq
             super().__init__(None, *args, **kwargs)
