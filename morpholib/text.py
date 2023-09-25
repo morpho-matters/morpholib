@@ -2,6 +2,7 @@ import io
 
 import morpholib as morpho
 import morpholib.anim, morpholib.grid, morpholib.shapes
+from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import typecastViewCtx, BoundingBoxFigure
 
@@ -73,7 +74,7 @@ class Text(BoundingBoxFigure):
         # Handle Text figure derivative inputs for text.
         if isinstance(text, PText):
             raise TypeError(f"Cannot convert PText to {type(self).__name__}")
-        elif isinstance(text, MultiText):
+        elif isinstance(text, MultiTextBase):
             raise TypeError(f"Cannot convert MultiText to {type(self).__name__}")
         elif isinstance(text, Text):
             # text = text.text
@@ -804,14 +805,7 @@ def Multi(imageMethod, mainMethod=morpho.Figure.tweenLinear, *, reverseMethod=No
     return wrapper
 
 
-# Text class that can support drawing multiple Text figures at once.
-# Useful for having one text morph into another text.
-#
-# See "morpho.graphics.MultiImage" for more info on the basic idea here.
-#
-# Bottom line: It's just like Text except you can tween between different
-# underlying text strings.
-class MultiText(morpho.MultiFigure):
+class MultiTextBase(morpho.MultiFigure):
     _baseFigure = Text
 
     def __init__(self, text="", *args, **kwargs):
@@ -876,9 +870,24 @@ class MultiText(morpho.MultiFigure):
 
         return pivot
 
-# Physical version of the MultiText class.
-# See MultiText and PText for more info.
-class MultiPText(MultiText):
+# Text class that can support drawing multiple Text figures at once.
+# Useful for having one text morph into another text.
+#
+# See "morpho.graphics.MultiImage" for more info on the basic idea here.
+#
+# Bottom line: It's just like Text except you can tween between different
+# underlying text strings.
+class MultiText(MultiTextBase, TransformableFrame):
+    @property
+    def pos(self):
+        return self.origin
+
+    @pos.setter
+    def pos(self, value):
+        self.origin = value
+
+
+class MultiPTextBase(MultiTextBase):
     _baseFigure = PText
 
     def relbox(self, pad=0, *, raw=False):
@@ -897,6 +906,17 @@ class MultiPText(MultiText):
             spline.commitTransforms()
         finalspline.origin = self.figures[0].pos
         return finalspline
+
+# Physical version of the MultiText class.
+# See MultiText and PText for more info.
+class MultiPText(MultiPTextBase, TransformableFrame):
+    @property
+    def pos(self):
+        return self.origin
+
+    @pos.setter
+    def pos(self, value):
+        self.origin = value
 
 MultiPtext = MultiPText
 
@@ -1091,7 +1111,7 @@ SpacePtext = SpacePText
 
 # Multi version of the SpaceText class.
 # See "SpaceText" and "MultiText" for more info.
-class SpaceMultiText(MultiText):
+class SpaceMultiText(MultiTextBase, morpho.SpaceFrame):
     _baseFigure = SpaceText
 
     def __init__(self, text="", *args, **kwargs):
@@ -1099,7 +1119,7 @@ class SpaceMultiText(MultiText):
             textlist = [self._baseFigure(text, *args, **kwargs)]
         elif isinstance(text, list) or isinstance(text, tuple):
             textlist = [(self._baseFigure(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
-        elif isinstance(text, MultiText):
+        elif isinstance(text, MultiTextBase):
             textlist = [self._baseFigure(item, *args, **kwargs) for item in text.figures]
         else:
             textlist = [self._baseFigure(text, *args, **kwargs)]
@@ -1230,16 +1250,7 @@ def formatNumber(*args, **kwargs):
 
 ### GROUPS AND PARAGRAPHS ###
 
-# Fancier MultiText figure that has some global attributes
-# that affect the entire group. These attributes include
-# pos, anchor_x/y, alpha, rotation, transform, background,
-# backAlpha, backPad.
-#
-# This class is mainly for internal use by the paragraph()
-# function, and you probably don't want to use it directly.
-# If you just want something like a morphable single Text
-# figure, use vanilla MultiText instead.
-class FancyMultiText(MultiText):
+class FancyMultiTextBase(MultiTextBase):
     _manuallyJump = True
 
     def __init__(self, text="", *args, **kwargs):
@@ -1251,7 +1262,7 @@ class FancyMultiText(MultiText):
         #     self._nontweenables = textcopy._nontweenables
         #     self._updateSettings(textcopy)
         #     return
-        if isinstance(text, MultiText):
+        if isinstance(text, MultiTextBase):
             # text = text.figures
             super().__init__()
             self._updateFrom(text)
@@ -1284,110 +1295,6 @@ class FancyMultiText(MultiText):
     @transform.setter
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
-
-    # # Special getattr() returns the common value of the attribute
-    # # `name` across all component figures, if `name` is not found
-    # # as a valid attribute of self.
-    # def __getattr__(self, name):
-    #     # First try using the Frame's built-in getattr()
-    #     # which should grab any valid attribute returns in the
-    #     # main class.
-    #     try:
-    #         return morpho.Frame.__getattr__(self, name)
-    #     except AttributeError:
-    #         pass
-
-    #     # If you got to this point in the code, it means the
-    #     # Frame's getattr() failed.
-
-    #     # If figure list is empty, there's nothing more we can do, so
-    #     # attempt to call the superclass's getattr() again, and this
-    #     # time actually throw the error!
-    #     if len(self.figures) == 0:
-    #         # This line is guaranteed to fail because it failed
-    #         # in the protected clause above. However, this time
-    #         # I WANT the error to be thrown!
-    #         # return super().__getattr__(name)
-    #         return morpho.Frame.__getattr__(self, name)
-
-    #     # Go thru the (non-empty) figure list and get the common
-    #     # value of attribute `name` if it exists AND is the same
-    #     # across all component figures.
-    #     for n,fig in enumerate(self.figures):
-    #         try:
-    #             value = getattr(fig, name)
-    #         except AttributeError:
-    #             raise AttributeError(f"Attribute `{name}` not found in some component figures.")
-    #         if n > 0 and not isequal(value, oldValue):
-    #             raise AttributeError(f"Attribute `{name}` has different values across component figures.")
-    #         oldValue = value
-
-    #     return value
-
-    # # Modified setattr() first checks if the requested attribute already
-    # # exists as a findable attribute in the main class. If it is, it just
-    # # sets it as normal. Otherwise it attempts to set the attribute
-    # # on all component figures in the figure list. If it fails for the
-    # # first component figure, it treats the attribute as a new attribute
-    # # to be assigned to self.
-    # def __setattr__(self, name, value):
-    #     # Set the attribute as normal if the MultiFigure is not active yet,
-    #     # or it's a concrete attribute of the main class,
-    #     # or it's a tweenable in the main class.
-
-    #     if not self._active:
-    #         morpho.Figure.__setattr__(self, name, value)
-    #         return
-
-    #     try:
-    #         # Attempt to access attribute `name` according to
-    #         # both of the Figure class's getattrs.
-    #         # This should handle getting both regular attributes
-    #         # and tweenables / intangible attributes
-    #         try:
-    #             morpho.Figure.__getattribute__(self, name)
-    #         except AttributeError:
-    #             morpho.Figure.__getattr__(self, name)
-    #         selfHasName = True
-    #     except AttributeError:
-    #         selfHasName = False
-    #     if selfHasName:
-    #         morpho.Figure.__setattr__(self, name, value)
-    #     # If the figure list is empty, just set the attribute to self
-    #     # normally.
-    #     elif len(self.figures) == 0:
-    #         morpho.Figure.__setattr__(self, name, value)
-    #     # Attempt to modify (existent) attributes of all the component
-    #     # figures to the specified value
-    #     else:
-    #         try:
-    #             # This flag becomes True if ANY component figure's
-    #             # attributes get modified in the following loop
-    #             modifiedOneFigure = False
-    #             for fig in self.figures:
-    #                 # See if it already exists as an attribute
-    #                 # of the component figure.
-    #                 getattr(fig, name)
-
-    #                 # If you got here, we didn't get an attribute error,
-    #                 # so it should be a real attribute! Go ahead and set it!
-    #                 fig.__setattr__(name, value)
-
-    #                 modifiedOneFigure = True
-
-    #         # Got an attribute error, so the given attribute isn't
-    #         # even in the first member figure. Therefore, just assign it
-    #         # as a regular (but new) attribute of the main class.
-    #         except AttributeError:
-    #             # Some components were modified, but others couldn't be.
-    #             # This situation can't be handled, so throw error.
-    #             if modifiedOneFigure:
-    #                 raise AttributeError(f"Some component figures have `{name}` attribute and others don't!")
-    #             # The very first component figure failed to have `name` as
-    #             # an attribute, so assume `name` is a new attribute name
-    #             # intended for the main class object, self.
-    #             else:
-    #                 morpho.Figure.__setattr__(self, name, value)
 
     # General version of totalBox() that can be used to implement totalBox()
     # for both FancyMultiText and FancyMultiPText.
@@ -1521,12 +1428,12 @@ class FancyMultiText(MultiText):
 
     @morpho.TweenMethod
     def tweenLinear(self, other, t):
-        tw = MultiText.tweenLinear(self, other, t)
+        tw = MultiTextBase.tweenLinear(self, other, t)
         return tw
 
     @morpho.TweenMethod
     def tweenSpiral(self, other, t):
-        tw = MultiText.tweenSpiral(self, other, t)
+        tw = MultiTextBase.tweenSpiral(self, other, t)
         return tw
 
     @classmethod
@@ -1544,18 +1451,35 @@ class FancyMultiText(MultiText):
 
         return pivot
 
-@FancyMultiText.action
+@FancyMultiTextBase.action
 def fadeIn(*args, **kwargs):
     return morpho.Figure.actions["fadeIn"](*args, **kwargs)
 
-@FancyMultiText.action
+@FancyMultiTextBase.action
 def fadeOut(*args, **kwargs):
     return morpho.Figure.actions["fadeOut"](*args, **kwargs)
 
-@FancyMultiText.action
+@FancyMultiTextBase.action
 def rollback(*args, **kwargs):
     return morpho.Figure.actions["rollback"](*args, **kwargs)
 
+# Fancier MultiText figure that has some global attributes
+# that affect the entire group. These attributes include
+# pos, anchor_x/y, alpha, rotation, transform, background,
+# backAlpha, backPad.
+#
+# This class is mainly for internal use by the paragraph()
+# function, and you probably don't want to use it directly.
+# If you just want something like a morphable single Text
+# figure, use vanilla MultiText instead.
+class FancyMultiText(FancyMultiTextBase):
+    pass
+    # NOTE: This originally also inherited from TransformableFrame,
+    # but commitTransforms() didn't work correctly (I think because
+    # of how toplevel `align` interacts with it). Correct this is the
+    # future. Currently thinking we'll just re-implement MultiText
+    # to support toplevel `align`, etc. in the same way MultiPath
+    # does, thereby making FancyMultiText obsolete for paragraphs.
 
 # Fancy version of MultiPText.
 # See FancyMultiText and MultiPText for more info.
@@ -1607,12 +1531,12 @@ FancyMultiPtext = FancyMultiPText
 
 # Special class used to render 3D paragraphs.
 # Mainly for internal use by the paragraph3d() function.
-class SpaceParagraph(FancyMultiText):
+class SpaceParagraph(FancyMultiTextBase, morpho.SpaceFrame):
     _baseMultiFigure = FancyMultiText
 
     def __init__(self, text="", *args, **kwargs):
 
-        if isinstance(text, FancyMultiText):
+        if isinstance(text, FancyMultiTextBase):
             super().__init__()
             self._updateFrom(text)
         else:
