@@ -328,8 +328,9 @@ class Frame(BoundingBoxFigure):
     # Returned as [xmin, xmax, ymin, ymax].
     # Additional arguments are passed to the box() methods
     # of subfigures.
-    def box(self, *args, **kwargs):
-        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), self.origin)
+    def box(self, *args, raw=False, **kwargs):
+        shift = 0 if raw else self.origin
+        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), shift)
 
     # Modified because checking if the two figure lists are
     # equal via vanilla Python list equality will not work.
