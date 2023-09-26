@@ -63,6 +63,19 @@ class TransformableFrame(Frame):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
+    # Computes the bounding box of the entire figure.
+    # Returned as [xmin, xmax, ymin, ymax]
+    #
+    # If optional kwarg `raw` is set to True, the
+    # bounding box is computed without applying
+    # the transformation attributes origin, rotation, transform.
+    def box(self, *args, raw=False, **kwargs):
+        if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+            temp = self.copy()
+            temp.commitTransforms()
+            return temp.box(*args, raw=True, **kwargs)
+        return shiftBox(totalBox(path.box() for path in self.figures), self.origin if not raw else 0)
+
     # Meant to be called in a `with` statement like follows:
     #   with myframe.TemporarySubfigureTransforms():
     #       ...

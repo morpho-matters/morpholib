@@ -2144,19 +2144,6 @@ class MultiPathBase(MultiFigure):
 
     align = Path.align
 
-    # Computes the bounding box of the entire figure.
-    # Returned as [xmin, xmax, ymin, ymax]
-    #
-    # If optional kwarg `raw` is set to True, the
-    # bounding box is computed without applying
-    # the transformation attributes origin, rotation, transform.
-    def box(self, *, raw=False):
-        if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
-            temp = self.copy()
-            temp.commitTransforms()
-            return temp.box(raw=True)
-        return shiftBox(totalBox(path.box() for path in self.figures), self.origin if not raw else 0)
-
     # Joins all of the subpaths into a single Path
     # with the jumps between different subpaths being implemented
     # using Path deadends. In effect, this reverses the effects of
