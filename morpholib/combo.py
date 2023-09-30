@@ -74,7 +74,7 @@ class TransformableFrame(Frame):
             temp = self.copy()
             temp.commitTransforms()
             return temp.box(*args, raw=True, **kwargs)
-        return shiftBox(totalBox(path.box() for path in self.figures), self.origin if not raw else 0)
+        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), self.origin if not raw else 0)
 
     # Meant to be called in a `with` statement like follows:
     #   with myframe.TemporarySubfigureTransforms():
