@@ -3930,6 +3930,15 @@ class Polygon(BoundingBoxFigure):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
+    @property
+    def seq(self):
+        return self.vertices
+
+    @seq.setter
+    def seq(self, value):
+        self.vertices = value
+
+
     # Applies all of the transformation attributes
     # origin, rotation, transform
     # to the actual vertices list itself and then
