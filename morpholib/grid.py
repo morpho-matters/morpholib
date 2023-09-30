@@ -3949,9 +3949,8 @@ class Polygon(BoundingBoxFigure):
     # Returns physical bounding box of polygon as
     # [xmin, xmax, ymin, ymax]
     # ignoring rotation and transform.
-    def box(self):
-        array = np.array(self.vertices)
-        return Path._calculateBox(array, self.origin)
+    def box(self, *args, **kwargs):
+        return Path.box(self, *args, **kwargs)
 
     # Returns the center of mass of all vertices
     # ignoring transformation attributes.
