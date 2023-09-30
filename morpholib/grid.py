@@ -750,20 +750,7 @@ class Path(BackgroundBoxFigure):
     def align(self, value):
         self.realign(value)
 
-    # Mainly for internal use.
-    # Calculates the bounding box of a numpy array of
-    # complex number positional data.
-    @staticmethod
-    def _calculateBox(array, origin=0):
-        reals = array.real
-        imags = array.imag
 
-        left = np.min(reals).tolist() + origin.real
-        right = np.max(reals).tolist() + origin.real
-        bottom = np.min(imags).tolist() + origin.imag
-        top = np.max(imags).tolist() + origin.imag
-
-        return [left, right, bottom, top]
 
     # Returns physical bounding box of path as
     # [xmin, xmax, ymin, ymax]
@@ -772,12 +759,16 @@ class Path(BackgroundBoxFigure):
     # bounding box is computed without applying
     # the transformation attributes origin, rotation, transform.
     def box(self, *, raw=False):
+        # The check for self.origin != 0 is done elsewhere because
+        # it's by far the most common transformation attribute to
+        # modify, and it's not worth making a copy and committing
+        # transforms if the only transform is a translation.
         if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
             temp = self.copy()
             temp.commitTransforms()
             return temp.box()
         array = np.array(self.seq)
-        return self._calculateBox(array, self.origin if not raw else 0)
+        return _calculateBoxFromArray(array, self.origin if not raw else 0)
 
     # Rescales the path by the given scale factors.
     # If a single scale factor is omitted it will copy its partner.
@@ -4805,6 +4796,20 @@ class SpaceArrow(SpacePath, Arrow):
 ### HELPERS ###
 
 DEG2RAD = math.pi/180
+
+# Mainly for internal use.
+# Calculates the bounding box of a numpy array of
+# complex number positional data.
+def _calculateBoxFromArray(array, offset=0):
+    reals = array.real
+    imags = array.imag
+
+    left = np.min(reals).tolist() + offset.real
+    right = np.max(reals).tolist() + offset.real
+    bottom = np.min(imags).tolist() + offset.imag
+    top = np.max(imags).tolist() + offset.imag
+
+    return [left, right, bottom, top]
 
 # Draws an ellipse at the point (x,y) with width 2a
 # and height 2b.

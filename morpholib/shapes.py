@@ -235,6 +235,10 @@ class Spline(BackgroundBoxFigure):
     # bounding box is computed without applying
     # the transformation attributes origin, rotation, transform.
     def box(self, *, raw=False):
+        # The check for self.origin != 0 is done elsewhere because
+        # it's by far the most common transformation attribute to
+        # modify, and it's not worth making a copy and committing
+        # transforms if the only transform is a translation.
         if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
             temp = self.copy()
             temp.commitTransforms()
