@@ -277,28 +277,6 @@ class BoundingBoxFigure(morpho.Figure):
         box = self.box(*args, **kwargs)
         return (box[1] - box[0], box[-1] - box[-2])
 
-    # Only works for BoundingBoxFigures that have
-    # background box tweenables `background`,
-    # `backAlpha`, and `backPad` defined and the general
-    # `alpha` tweenable, along with a box() method that
-    # accepts the `raw` kwarg.
-    #
-    # Optionally, a kwarg `_alpha` can be passed in which
-    # will bypass accessing the top-level `alpha` attribute
-    # of self.
-    def _drawBackgroundBox(self, camera, ctx, origin=0, rotation=0, transform=np.eye(2), *,
-        _alpha=None):
-        if self.backAlpha > 0:
-            alpha = self.alpha if _alpha is None else _alpha
-            # Draw background box
-            brect = morpho.grid.rect(padbox(self.box(raw=True), self.backPad))
-            brect.set(
-                origin=origin, rotation=rotation,
-                _transform=transform,
-                width=0, fill=self.background, alpha=self.backAlpha*alpha
-                )
-            brect.draw(camera, ctx)
-
     # Returns the bounding box of a box that is being subjected
     # to a shift, rotation, and transformation.
     @staticmethod
@@ -315,6 +293,69 @@ class BoundingBoxFigure(morpho.Figure):
         D = max(z.imag for z in newcorners)
 
         return [A-pad, B+pad, C-pad, D+pad]
+
+
+# Implements methods that allow the figure to have a background
+# box drawn behind it, as well as implements an implicit
+# `align` parameter defined via its bounding box. Mainly meant
+# as a base class to be inherited from. To be used correctly,
+# the `box()` method must implement the `raw` keyword argument
+# that returns the bounding box without transformation attributes
+# applied, and the figure must also possess an `origin` attribute
+# (at least implicitly).
+class BackgroundBoxFigure(BoundingBoxFigure):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.Tweenable("background", (1,1,1), tags=["color"])
+        self.Tweenable("backAlpha", 0, tags=["scalar"])
+        self.Tweenable("backPad", 0, tags=["scalar"])
+
+    # Only works for BoundingBoxFigures that have
+    # background box tweenables `background`,
+    # `backAlpha`, and `backPad` defined and the general
+    # `alpha` tweenable, along with a box() method that
+    # accepts the `raw` kwarg.
+    #
+    # Optionally, a kwarg `_alpha` can be passed in which
+    # will bypass accessing the top-level `alpha` attribute
+    # of self.
+    def _drawBackgroundBox(self, camera, ctx, origin=None, rotation=None, transform=None, *,
+            _alpha=None):
+
+        if self.backAlpha <= 0:
+            # No need to attempt to draw invisible background box
+            return
+
+        # Infer transformation attributes if not specified.
+        if origin is None:
+            origin = self.origin
+        if rotation is None:
+            rotation = getattr(self, "rotation", 0)
+        if transform is None:
+            transform = getattr(self, "transform", I2)
+        if _alpha is None:
+            _alpha = getattr(self, "alpha", 1)
+            # alpha = self.alpha if _alpha is None else _alpha
+
+        # Draw background box
+        brect = morpho.grid.rect(padbox(self.box(raw=True), self.backPad))
+        brect.set(
+            origin=origin, rotation=rotation,
+            _transform=transform,
+            width=0, fill=self.background, alpha=self.backAlpha*_alpha
+            )
+        brect.draw(camera, ctx)
+
+    # def draw(self, camera, ctx):
+    #     origin = self.origin
+    #     rotation = getattr(self, "rotation", 0)
+    #     transform = getattr(self, "transform", I2)
+    #     alpha = getattr(self, "alpha", 1)
+
+    #     self._drawBackgroundBox(camera, ctx, origin, rotation, transform, _alpha=alpha)
+
+    #     super().draw(camera, ctx)
 
 
 # Mainly for internal use by the Frame class (and its derivatives)

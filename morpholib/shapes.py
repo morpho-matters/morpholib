@@ -3,8 +3,8 @@ import morpholib as morpho
 import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    totalBox, shiftBox, translateArrayUnderTransforms, handleBoxTypecasting, \
-    typecastView, typecastWindowShape, findOwnerByType
+    BackgroundBoxFigure, totalBox, shiftBox, translateArrayUnderTransforms, \
+    handleBoxTypecasting, typecastView, typecastWindowShape, findOwnerByType
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.combo import TransformableFrame
@@ -136,7 +136,7 @@ def handleSplineNodeInterp(tweenmethod):
 #                debugging use while creating an animation.
 #                Final animations should usually have showTangents = False.
 #                By default, showTangents = False
-class Spline(BoundingBoxFigure):
+class Spline(BackgroundBoxFigure):
 
     # Dummy headSize and tailSize so that functions that expect
     # them to exist don't crash
@@ -179,9 +179,6 @@ class Spline(BoundingBoxFigure):
             width, dash, dashOffset, origin, rotation, _transform]
             )
 
-        self.Tweenable("background", (1,1,1), tags=["color"])
-        self.Tweenable("backAlpha", 0, tags=["scalar"])
-        self.Tweenable("backPad", 0, tags=["scalar"])
         # Set of indices that represent where a path should terminate.
         self.Tweenable("deadends", set(), tags=["notween"])
 

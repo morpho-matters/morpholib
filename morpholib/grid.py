@@ -7,8 +7,8 @@ from morpholib.anim import MultiFigure
 from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    totalBox, shiftBox, translateArrayUnderTransforms, handleBoxTypecasting, \
-    AmbiguousValueError
+    BackgroundBoxFigure, totalBox, shiftBox, translateArrayUnderTransforms, \
+    handleBoxTypecasting, AmbiguousValueError
 
 from morpholib import object_hasattr
 
@@ -536,7 +536,7 @@ def handleDash(tweenmethod):
 #       line caps, which produces decent results even for large tailSize.
 #       The default outline method for all paths can be set by setting
 #       the class attribute `Path.defaultOutlineMethod`.
-class Path(BoundingBoxFigure):
+class Path(BackgroundBoxFigure):
     defaultOutlineMethod = "classic"
     outlineMethods = ("classic", "cap")  # List of all supported outline styles
 
@@ -575,9 +575,6 @@ class Path(BoundingBoxFigure):
             outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform]
             )
 
-        self.Tweenable("background", (1,1,1), tags=["color"])
-        self.Tweenable("backAlpha", 0, tags=["scalar"])
-        self.Tweenable("backPad", 0, tags=["scalar"])
         # Set of indices that represent where a path should terminate.
         self.Tweenable("deadends", set(), tags=["notween"])
 
@@ -2073,7 +2070,7 @@ def drawIn(actor, duration=30, atFrame=None, *,
     ["insertNodesUniformly", "concat"],
     Path, MultiFigure._returnOrigCaller
     )
-class MultiPathBase(MultiFigure):
+class MultiPathBase(MultiFigure, BackgroundBoxFigure):
 
     _basetype = Path
 
@@ -2090,10 +2087,6 @@ class MultiPathBase(MultiFigure):
             # subpath.
             path = self._basetype(seq, *args, **kwargs)
             super().__init__([path])
-
-        self.Tweenable("background", (1,1,1), tags=["color"])
-        self.Tweenable("backAlpha", 0, tags=["scalar"])
-        self.Tweenable("backPad", 0, tags=["scalar"])
 
     # anchorPoint = Path.anchorPoint
     realign = Path.realign
