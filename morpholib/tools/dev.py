@@ -294,6 +294,20 @@ class BoundingBoxFigure(morpho.Figure):
 
         return [A-pad, B+pad, C-pad, D+pad]
 
+    # Mainly for use by subclasses that implement box()
+    # using relbox(). Computes bounding box using relbox()
+    # and the `origin` transformation attribute. Also
+    # assumes relbox() possess a `raw` keyword.
+    # Currently this is used to implement box() for both
+    # the Text class and the Image class.
+    def _boxFromRelbox(self, *args, raw=False, **kwargs):
+        relbox = self.relbox(*args, raw=raw, **kwargs)
+        if raw:
+            return relbox
+        else:
+            a,b,c,d = relbox
+            x,y = self.origin.real, self.origin.imag
+            return [a+x, b+x, c+y, d+y]
 
 # Implements methods that allow the figure to have a background
 # box drawn behind it, as well as implements an implicit

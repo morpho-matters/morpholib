@@ -220,9 +220,7 @@ class Text(BoundingBoxFigure):
     # Returns bounding box of the text in physical units.
     # Mainly of use internally to draw the background box.
     def box(self, *args, **kwargs):
-        a,b,c,d = self.relbox(*args, **kwargs)
-        x,y = self.pos.real, self.pos.imag
-        return [a+x, b+x, c+y, d+y]
+        return self._boxFromRelbox(*args, **kwargs)
 
     # Same as box(), but the coordinates are relative to
     # the text's position.
@@ -845,11 +843,8 @@ class MultiTextBase(morpho.MultiFigure):
         #         self.figures[n] = newfig
 
     @typecastViewCtx
-    def relbox(self, view, ctx, pad=0):
-        return padbox(totalBox(subfig.box(view, ctx) for subfig in self.figures), pad)
-
-    def box(self, *args, **kwargs):
-        return shiftBox(self.relbox(*args, **kwargs), self.origin)
+    def relbox(self, *args, raw=False, **kwargs):
+        return shiftBox(self.box(*args, raw=raw, **kwargs), -self.origin if not raw else 0)
 
     relcorners = Text.relcorners
 
@@ -1417,12 +1412,7 @@ class FancyMultiTextBase(MultiTextBase):
         return self._makeFrameFromBoxes(boxes)
 
     def draw(self, camera, ctx):
-        # NOTE: I *think* `raw=True` can be removed here
-        # which would allow for correct rendering of background
-        # boxes for paragraphs that contain transformed subfigures.
-        # However, I'm not 100% sure yet it's safe to remove
-        # `raw=True`, so that's why it's still here.
-        self.makeFrame(camera, ctx, raw=True).draw(camera, ctx)
+        self.makeFrame(camera, ctx).draw(camera, ctx)
 
     ### TWEEN METHODS ###
 
@@ -1524,7 +1514,7 @@ class FancyMultiPText(FancyMultiText):
         # boxes for paragraphs that contain transformed subfigures.
         # However, I'm not 100% sure yet it's safe to remove
         # `raw=True`, so that's why it's still here.
-        self.makeFrame(raw=True).draw(camera, ctx)
+        self.makeFrame().draw(camera, ctx)
 
 FancyMultiPtext = FancyMultiPText
 
@@ -1925,7 +1915,7 @@ def paragraph(textarray, view, windowShape=None,
     yPositions = [0]
     rowBoxes = []
     for i, row in enumerate(textarray[:-1]):
-        boxes = [fig.box(*camctx, raw=True) for fig in row]
+        boxes = [shiftBox(fig.box(*camctx, raw=True), fig.pos) for fig in row]
         rowBoxes.append(boxes)
         rowHeight = max(box[-1]-box[-2] for box in boxes)
         yPositions.append(yPositions[-1]-ygaps[i]-rowHeight)
@@ -1933,7 +1923,7 @@ def paragraph(textarray, view, windowShape=None,
     yPositions = [y+adjust for y in yPositions]
 
     # Append final row of boxes
-    rowBoxes.append([fig.box(*camctx, raw=True) for fig in textarray[-1]])
+    rowBoxes.append([shiftBox(fig.box(*camctx, raw=True), fig.pos) for fig in textarray[-1]])
 
     # Create rows
     rows = []

@@ -285,13 +285,11 @@ class Image(BoundingBoxFigure):
         self.align = [2*X/self.imageWidth-1, 2*Y/self.imageHeight-1]
 
     # Returns the bounding box (with possible padding) of the image.
-    # If keyword `raw` is set to True, it will ignore `rotation`,
-    # `transform`, and `scale` attributes.
+    # If keyword `raw` is set to True, it will ignore `origin`,
+    # `rotation`, `transform`, and `scale` attributes.
     # Also assumes the image has `physical` set to True.
     def box(self, *args, **kwargs):
-        a,b,c,d = self.relbox(*args, **kwargs)
-        x,y = self.pos.real, self.pos.imag
-        return [a+x, b+x, c+y, d+y]
+        return self._boxFromRelbox(*args, **kwargs)
 
     # Same as box(), but the coordinates are relative to the image's
     # physical position.
