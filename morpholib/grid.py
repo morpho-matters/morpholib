@@ -7,8 +7,8 @@ from morpholib.anim import MultiFigure
 from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    BackgroundBoxFigure, totalBox, shiftBox, translateArrayUnderTransforms, \
-    handleBoxTypecasting, AmbiguousValueError
+    BackgroundBoxFigure, AlignableFigure, totalBox, shiftBox, \
+    translateArrayUnderTransforms, handleBoxTypecasting, AmbiguousValueError
 
 from morpholib import object_hasattr
 
@@ -536,7 +536,7 @@ def handleDash(tweenmethod):
 #       line caps, which produces decent results even for large tailSize.
 #       The default outline method for all paths can be set by setting
 #       the class attribute `Path.defaultOutlineMethod`.
-class Path(BackgroundBoxFigure):
+class Path(BackgroundBoxFigure, AlignableFigure):
     defaultOutlineMethod = "classic"
     outlineMethods = ("classic", "cap")  # List of all supported outline styles
 
@@ -692,65 +692,6 @@ class Path(BackgroundBoxFigure):
         self.rotation = 0
         self.transform = np.identity(2)
         return self
-
-    # Returns the alignment of the Path's origin relative
-    # to its bounding box.
-    #
-    # If the bounding box is degenerate (i.e. width or height is 0),
-    # the alignment value for the offending dimension will be set to nan.
-    # This can be changed by passing a value into the `invalidValue`
-    # optional keyword argument.
-    #
-    # Optionally, the bounding box may be provided to the function
-    # so that it doesn't have to be computed on the fly.
-    def boxAlign(self, *, box=None, invalidValue=nan):
-        if box is None:
-            box = shiftBox(self.box(raw=True), self.origin)
-        xmin, xmax, ymin, ymax = box
-        anchor_x = invalidValue if xmin == xmax else morpho.lerp(-1, 1, self.origin.real, start=xmin, end=xmax)
-        anchor_y = invalidValue if ymin == ymax else morpho.lerp(-1, 1, self.origin.imag, start=ymin, end=ymax)
-        return (anchor_x, anchor_y)
-
-    # Transforms the path so that the `origin` attribute
-    # is in the physical position indicated by the alignment
-    # parameter. The path should be visually unchanged after
-    # this transformation.
-    def alignOrigin(self, align):
-        anchor = self.anchorPoint(align, raw=True)
-        # Apply transforms
-        rotator = cmath.exp(self.rotation*1j)
-        transformer = morpho.matrix.Mat(self._transform)
-        anchor = transformer*(rotator*anchor) + self.origin
-
-        # Move origin to anchor point while transforming
-        # the internal path data in the opposite way so
-        # that the appearance of the path will not change.
-        array = np.array(self.seq, dtype=complex)
-        translateArrayUnderTransforms(array, self.origin-anchor, rotator, transformer)
-        self.seq = array.tolist()
-        self.origin = anchor
-
-        return self
-
-    # Translates the path so that the current origin point
-    # agrees with the given alignment parameter.
-    # Can also be invoked by setting the `align` property:
-    #   mypath.align = [-1,1]
-    def realign(self, align):
-        origOrigin = self.origin
-        self.alignOrigin(align)
-        self.origin = origOrigin
-        return self
-
-    @property
-    def align(self):
-        return self.boxAlign()
-
-    @align.setter
-    def align(self, value):
-        self.realign(value)
-
-
 
     # Returns physical bounding box of path as
     # [xmin, xmax, ymin, ymax]
@@ -2053,6 +1994,11 @@ def drawIn(actor, duration=30, atFrame=None, *,
     actor.newkey(atFrame + duration, final)
 
 
+# Base class for MultiPath that exists to be inherited by MultiPath-like
+# subclasses. It exists because if a proper SpaceMultiPath is ever
+# implemented, it will need to have some features/methods/etc. removed
+# from the 2D MultiPath, meaning a direct inheritance from MultiPath is
+# undesirable.
 @MultiFigure._modifyMethods(
     ["close"],
     Path, MultiFigure._applyToSubfigures
@@ -2061,7 +2007,7 @@ def drawIn(actor, duration=30, atFrame=None, *,
     ["insertNodesUniformly", "concat"],
     Path, MultiFigure._returnOrigCaller
     )
-class MultiPathBase(MultiFigure, BackgroundBoxFigure):
+class MultiPathBase(MultiFigure, BackgroundBoxFigure, AlignableFigure):
 
     _basetype = Path
 
@@ -2078,10 +2024,6 @@ class MultiPathBase(MultiFigure, BackgroundBoxFigure):
             # subpath.
             path = self._basetype(seq, *args, **kwargs)
             super().__init__([path])
-
-    # anchorPoint = Path.anchorPoint
-    realign = Path.realign
-    boxAlign = Path.boxAlign
 
     @property
     def pos(self):
@@ -2102,32 +2044,6 @@ class MultiPathBase(MultiFigure, BackgroundBoxFigure):
     rescale = Path.rescale
     resize = Path.resize
 
-    # Transforms the path so that the `origin` attribute
-    # is in the physical position indicated by the alignment
-    # parameter. The path should be visually unchanged after
-    # this transformation.
-    def alignOrigin(self, align):
-        anchor = self.anchorPoint(align, raw=True)
-        # Apply transforms
-        rotator = cmath.exp(self.rotation*1j)
-        transformer = morpho.matrix.Mat(self._transform)
-        anchor = transformer*(rotator*anchor) + self.origin
-
-        # Shift subpath arrays so that the global translation leaves
-        # the multipath visually unchanged.
-        shift = self.origin - anchor
-        globalFullTransformer = self._transform @ morpho.matrix.rotation2d(self.rotation)
-        for fig in self.figures:
-            array = np.array(fig.seq, dtype=complex)
-            mat = morpho.matrix.Mat(globalFullTransformer @ fig._transform @ morpho.matrix.rotation2d(fig.rotation))
-            translateArrayUnderTransforms(array, shift, 1, mat)
-            fig.seq = array.tolist()
-
-        self.origin = anchor
-        return self
-
-    align = Path.align
-
     # Joins all of the subpaths into a single Path
     # with the jumps between different subpaths being implemented
     # using Path deadends. In effect, this reverses the effects of
@@ -2146,24 +2062,6 @@ class MultiPathBase(MultiFigure, BackgroundBoxFigure):
             path.concat(subpath)
 
         return path
-
-    # Applies toplevel transformation attributes to the subpaths'
-    # transformation attributes but does not further commit the
-    # transforms at the subpath level. To do that, call
-    #   multipath.all.commitTransforms()
-    def commitTransforms(self):
-        # Calculate as a single matrix the overall effect
-        # of both the global rotation and transform.
-        rotateAndTransform = self._transform @ morpho.matrix.rotation2d(self.rotation)
-        rotateAndTransform_mat = morpho.matrix.Mat(rotateAndTransform)
-        for path in self.figures:
-            path.origin = (rotateAndTransform_mat * path.origin) + self.origin
-            path._transform = rotateAndTransform @ path._transform
-            # path.commitTransforms()
-        self.origin = 0
-        self.rotation = 0
-        self._transform = np.eye(2)
-        return self
 
     # Removes subpaths IN PLACE whose node counts are less than 2
     # (and are therefore non-drawable).

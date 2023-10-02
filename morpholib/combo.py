@@ -48,6 +48,14 @@ class _FigureTransformMemory(object):
 # allow toplevel and sublevel transformations to interact compatibly
 # with each other.
 class TransformableFrame(Frame):
+    # It's tempting to make TransformableFrame inherit from
+    # AlignableFigure and/or BackgroundBoxFigure, but I've
+    # decided not to since a class like MultiImage may inherit
+    # from this class, and AlignableFigure would be incompatible
+    # with it (since it uses explicit align). As for
+    # BackgroundBoxFigure, it doesn't automatically implement
+    # DRAWING the background box; it has to be done manually, and
+    # users may not want to implement that themselves.
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)

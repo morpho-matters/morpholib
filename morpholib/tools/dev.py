@@ -309,6 +309,114 @@ class BoundingBoxFigure(morpho.Figure):
             x,y = self.origin.real, self.origin.imag
             return [a+x, b+x, c+y, d+y]
 
+
+# Mainly to be used as a base class to inherit from.
+# When inherited, it implements an implicit `align` property
+# as well as the method `alignOrigin()` based on the figure's
+# bounding box, and origin value.
+#
+# To use, the inheriting class must implement an `origin`
+# attribute, a box() method capable of accepting the keyword
+# parameter `raw=True`, and a commitTransforms() method.
+# Implementing `rotation` and `transform` should be optional.
+class AlignableFigure(BoundingBoxFigure):
+
+    # Note that many of the methods here accept *args, **kwargs
+    # which are (eventually) passed down to the underlying
+    # box() method. A big reason for this is to allow non-physical
+    # figure types (like Text/MultiText) to use these classes,
+    # since their box() methods need additional arguments to
+    # function correctly and can't be called empty.
+
+    # Transforms the figure so that the `origin` attribute
+    # is in the physical position indicated by the alignment
+    # parameter. The figure should be visually unchanged after
+    # this transformation.
+    def alignOrigin(self, align, *args, **kwargs):
+        anchor = self.anchorPoint(align, *args, raw=True, **kwargs)
+
+        # Creating a new one each time just in case
+        # commitTransforms() modifies matrices in place.
+        I2 = np.eye(2)
+
+        # Store original transformation values.
+        # The usage of default values here is in case the
+        # class that inherits this method doesn't have
+        # `rotation` and/or `transform` implemented.
+        origin_orig = self.origin
+        rotation_orig = getattr(self, "rotation", 0)
+        transform_orig = getattr(self, "transform", I2)
+
+        # Reset transformations temporarily so we can apply
+        # a translation via commitTransforms()
+        self.origin = 0
+        if rotation_orig != 0: self.rotation = 0
+        if transform_orig is not I2: self.transform = I2
+
+        # Use try block to ensure that even if an error is thrown,
+        # we reset the transformation values!
+        try:
+            self.origin = -anchor
+            self.commitTransforms()
+        finally:
+            # Restore original transformation values
+            self.origin = origin_orig
+            if rotation_orig != 0: self.rotation = rotation_orig
+            if transform_orig is not I2: self.transform = transform_orig
+
+        # Now translate the final origin value, which must be
+        # subjected to the transformations first.
+        rotator = cmath.exp(rotation_orig*1j)
+        transformer = morpho.matrix.Mat(transform_orig)
+        # Use manual += here in case origin is a np.array.
+        self.origin = self.origin + transformer*(rotator*anchor)
+
+        return self
+
+    # Returns the alignment of the figure's origin relative
+    # to its bounding box.
+    #
+    # If the bounding box is degenerate (i.e. width or height is 0),
+    # the alignment value for the offending dimension will be set to nan.
+    # This can be changed by passing a value into the `invalidValue`
+    # optional keyword argument.
+    #
+    # Optionally, the bounding box may be provided to the function
+    # so that it doesn't have to be computed on the fly.
+    # If given, this bounding box must be raw except for translation.
+    # That is, the box ignores `rotation` and `transform` but not
+    # `origin`.
+    def boxAlign(self, *args, box=None, invalidValue=nan, **kwargs):
+        if box is None:
+            box = shiftBox(self.box(*args, raw=True, **kwargs), self.origin)
+        xmin, xmax, ymin, ymax = box
+        anchor_x = invalidValue if xmin == xmax else morpho.lerp(-1, 1, self.origin.real, start=xmin, end=xmax)
+        anchor_y = invalidValue if ymin == ymax else morpho.lerp(-1, 1, self.origin.imag, start=ymin, end=ymax)
+        return (anchor_x, anchor_y)
+
+    # Translates the path so that the current positional point
+    # agrees with the given alignment parameter.
+    # Can also be invoked by setting the `align` property:
+    #   mypath.align = [-1,1]
+    def realign(self, align, *args, **kwargs):
+        origOrigin = self.origin
+        self.alignOrigin(align, *args, **kwargs)
+        self.origin = origOrigin
+        return self
+
+    @property
+    def align(self):
+        return self.boxAlign()
+
+    @align.setter
+    def align(self, value):
+        self.realign(value)
+
+    def commitTransforms(self):
+        # Should be implemented by a subclass.
+        pass
+
+
 # Implements methods that allow the figure to have a background
 # box drawn behind it, as well as implements an implicit
 # `align` parameter defined via its bounding box. Mainly meant

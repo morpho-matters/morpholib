@@ -3,8 +3,9 @@ import morpholib as morpho
 import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    BackgroundBoxFigure, totalBox, shiftBox, translateArrayUnderTransforms, \
-    handleBoxTypecasting, typecastView, typecastWindowShape, findOwnerByType
+    BackgroundBoxFigure, AlignableFigure, totalBox, shiftBox, \
+    translateArrayUnderTransforms, handleBoxTypecasting, typecastView, \
+    typecastWindowShape, findOwnerByType
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.combo import TransformableFrame
@@ -136,7 +137,7 @@ def handleSplineNodeInterp(tweenmethod):
 #                debugging use while creating an animation.
 #                Final animations should usually have showTangents = False.
 #                By default, showTangents = False
-class Spline(BackgroundBoxFigure):
+class Spline(BackgroundBoxFigure, AlignableFigure):
 
     # Dummy headSize and tailSize so that functions that expect
     # them to exist don't crash
@@ -288,33 +289,8 @@ class Spline(BackgroundBoxFigure):
 
         # return shiftBox(totalBox(subboxes), self.origin if not raw else 0)
 
-    boxAlign = morpho.grid.Path.boxAlign
     rescale = morpho.grid.Path.rescale
     resize = morpho.grid.Path.resize
-
-    # Transforms the spline so that the `origin` attribute
-    # is in the physical position indicated by the alignment
-    # parameter. The spline should be visually unchanged after
-    # this transformation.
-    def alignOrigin(self, align):
-        anchor = self.anchorPoint(align, raw=True)
-        # Apply transforms
-        rotator = cmath.exp(self.rotation*1j)
-        transformer = morpho.matrix.Mat(self._transform)
-        anchor = transformer*(rotator*anchor) + self.origin
-
-        # Move origin to anchor point while transforming
-        # the internal spline data in the opposite way so
-        # that the appearance of the spline will not change.
-        self._data = self._data.copy()
-        translateArrayUnderTransforms(self._data, self.origin-anchor, rotator, transformer)
-        nan2inf(self._data)
-        self.origin = anchor
-
-        return self
-
-    realign = morpho.grid.Path.realign
-    align = morpho.grid.Path.align
 
     # Mainly for internal use by fromsvg().
     # Computes the needed translation vector for the raw spline
@@ -1747,29 +1723,6 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
 
     def __init__(self, data=None, *args, **kwargs):
         super().__init__(data, *args, **kwargs)
-
-    # Transforms the spline so that the `origin` attribute
-    # is in the physical position indicated by the alignment
-    # parameter. The spline should be visually unchanged after
-    # this transformation.
-    def alignOrigin(self, align):
-        anchor = self.anchorPoint(align, raw=True)
-        # Apply transforms
-        rotator = cmath.exp(self.rotation*1j)
-        transformer = morpho.matrix.Mat(self._transform)
-        anchor = transformer*(rotator*anchor) + self.origin
-
-        # Shift subpath arrays so that the global translation leaves
-        # the multipath visually unchanged.
-        shift = self.origin - anchor
-        globalFullTransformer = self._transform @ morpho.matrix.rotation2d(self.rotation)
-        for fig in self.figures:
-            fig._data = fig._data.copy()
-            mat = morpho.matrix.Mat(globalFullTransformer @ fig._transform @ morpho.matrix.rotation2d(fig.rotation))
-            translateArrayUnderTransforms(fig._data, shift, 1, mat)
-            nan2inf(fig._data)
-        self.origin = anchor
-        return self
 
     # Parses an SVG file/stream to construct a MultiSpline
     # representation of it. See Spline.fromsvg() for more info.
