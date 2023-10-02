@@ -442,8 +442,9 @@ class BackgroundBoxFigure(BoundingBoxFigure):
     # Optionally, a kwarg `_alpha` can be passed in which
     # will bypass accessing the top-level `alpha` attribute
     # of self.
-    def _drawBackgroundBox(self, camera, ctx, origin=None, rotation=None, transform=None, *,
-            _alpha=None):
+    def _drawBackgroundBox(self, camera, ctx,
+            origin=None, rotation=None, transform=None, *args,
+            _alpha=None, **kwargs):
 
         if self.backAlpha <= 0:
             # No need to attempt to draw invisible background box
@@ -461,7 +462,7 @@ class BackgroundBoxFigure(BoundingBoxFigure):
             # alpha = self.alpha if _alpha is None else _alpha
 
         # Draw background box
-        brect = morpho.grid.rect(padbox(self.box(raw=True), self.backPad))
+        brect = morpho.grid.rect(padbox(self.box(*args, raw=True, **kwargs), self.backPad))
         brect.set(
             origin=origin, rotation=rotation,
             _transform=transform,
