@@ -121,7 +121,12 @@ class TransformableFrame(Frame):
         self._applyTransformsToSubfigures()
 
         # Apply translation to all subfigures
-        self.iall.origin += self.origin
+        for subfig in self.figures:
+            # Doing it manually instead of using `iall` just in case
+            # this method is used for space figures where `origin`
+            # might be an np.array and so in-place addition is not
+            # advisable.
+            subfig.origin = subfig.origin + self.origin
 
         # Reset toplevel transformation tweenables
         self.origin = 0
