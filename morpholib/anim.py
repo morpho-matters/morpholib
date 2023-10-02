@@ -1317,6 +1317,12 @@ class StateStruct(object):
 # method, you should just use an ordinary Frame instead.
 # However, most space figures support primitives(), so you probably
 # don't need to worry about this.
+#
+# Also note that if a SpaceFrame is used in a layer which is not
+# pooling primitives, the `origin` attribute will be ignored.
+# This is the default scenario, so it's not recommended to mess
+# with SpaceFrame's `origin` attribute unless you really know
+# what you're doing.
 class SpaceFrame(Frame):
     def __init__(self, figures=None, /, **kwargs):
         if isinstance(figures, Frame):
