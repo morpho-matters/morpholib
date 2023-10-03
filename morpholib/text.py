@@ -304,6 +304,38 @@ class Text(BackgroundBoxFigure):
         self.text = textOrig
         return x_height
 
+    # Special version of _drawBackgroundBox() to deal with
+    # drawing Text background boxes in non-square views.
+    def _drawBackgroundBox(self, camera, ctx,
+            origin=None, rotation=None, transform=None,
+            *args, **kwargs):
+
+        if self.backAlpha <= 0:
+            # No need to attempt to draw invisible background box
+            return
+
+        # Infer transformation attributes if not specified.
+        if origin is None:
+            origin = self.origin
+        if rotation is None:
+            rotation = getattr(self, "rotation", 0)
+        if transform is None:
+            transform = getattr(self, "transform", I2)
+
+        view = camera.view
+        # Do something special if the viewbox and window shape
+        # are not proportional to each other.
+        par = morpho.pixelAspectRatioWH(view, ctx)
+        if abs(par-1) > 1e-9:
+            rotation = 0
+            transform = self._specialBoxTransform(par)
+        else:
+            transform = self.transform
+        BackgroundBoxFigure._drawBackgroundBox(self,
+            camera, ctx, origin, rotation, transform,
+            *args, **kwargs
+            )
+
     def draw(self, camera, ctx):
         # Do nothing if size less than 1.
         if self.size < 1:
@@ -341,21 +373,10 @@ class Text(BackgroundBoxFigure):
         if morpho.matrix.thinHeight2x2(mat) < 1:
             return
 
-        if self.backAlpha > 0:
-            pos = self.pos
-            # Do something special if the viewbox and window shape
-            # are not proportional to each other.
-            par = morpho.pixelAspectRatioWH(view, ctx)
-            if abs(par-1) > 1e-9:
-                rotation = 0
-                transform = self._specialBoxTransform(par)
-            else:
-                rotation = self.rotation
-                transform = self.transform
-            self._drawBackgroundBox(
-                camera, ctx, pos, rotation, transform,
-                camera, ctx
-                )
+        self._drawBackgroundBox(
+            camera, ctx, self.pos, self.rotation, self.transform,
+            camera, ctx
+            )
 
         ctx.save()
 
@@ -666,6 +687,10 @@ class PText(Text):
             txt._transform = np.array([[par, 0], [0, 1]], dtype=float) @ txt._transform
 
         return txt
+
+    # PText is physical and so doesn't need the special
+    # _drawBackgroundBox() method.
+    _drawBackgroundBox = BackgroundBoxFigure._drawBackgroundBox
 
     def draw(self, camera, ctx):
         self.makeText(camera.view, ctx).draw(camera, ctx)
