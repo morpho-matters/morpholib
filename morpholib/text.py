@@ -4,7 +4,8 @@ import morpholib as morpho
 import morpholib.anim, morpholib.grid, morpholib.shapes
 from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
-from morpholib.tools.dev import typecastViewCtx, BoundingBoxFigure
+from morpholib.tools.dev import typecastViewCtx, BoundingBoxFigure, \
+    BackgroundBoxFigure, AlignableFigure
 
 import cairo
 cr = cairo
@@ -62,7 +63,7 @@ I2 = np.identity(2)
 # font = Font to use. Default: "Times New Roman"
 # bold = Boolean indicating whether to bold. Default: False
 # italic = Boolean indicating whether to use italics. Default: False
-class Text(BoundingBoxFigure):
+class Text(BackgroundBoxFigure):
     def __init__(self, text="", pos=0,
         size=64, font=None,
         bold=False, italic=False,
@@ -110,30 +111,23 @@ class Text(BoundingBoxFigure):
             anchor_x, anchor_y = align
 
         # Create tweenables
-        pos = morpho.Tweenable("pos", pos, tags=["complex"])
-        size = morpho.Tweenable("size", size, tags=["size"])
-        anchor_x = morpho.Tweenable("anchor_x", anchor_x, tags=["scalar"])
-        anchor_y = morpho.Tweenable("anchor_y", anchor_y, tags=["scalar"])
-        _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
-        color = morpho.Tweenable("color", color, tags=["color"])
-        alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
-        background = morpho.Tweenable("background", background, tags=["color"])
-        backAlpha = morpho.Tweenable("backAlpha", backAlpha, tags=["scalar"])
-        backPad = morpho.Tweenable("backPad", backPad, tags=["scalar"])
+        self.Tweenable("pos", pos, tags=["complex"])
+        self.Tweenable("size", size, tags=["size"])
+        self.Tweenable("anchor_x", anchor_x, tags=["scalar"])
+        self.Tweenable("anchor_y", anchor_y, tags=["scalar"])
+        self.Tweenable("_transform", np.identity(2), tags=["nparray"])
+        self.Tweenable("color", color, tags=["color"])
+        self.Tweenable("alpha", alpha, tags=["scalar"])
         # CCW rotation in radians
-        rotation = morpho.Tweenable("rotation", 0, tags=["scalar"])
+        self.Tweenable("rotation", 0, tags=["scalar"])
 
         # These are the pre-transformation scale factors. These get
         # applied to the text BEFORE rotation and transform do.
         # This is mainly for use in the Multi decorator, so that
         # tweening between two texts with differing rotation parameters
         # works correctly.
-        prescale_x = morpho.Tweenable("prescale_x", 1, tags=["scalar"])
-        prescale_y = morpho.Tweenable("prescale_y", 1, tags=["scalar"])
-
-        self.update([pos, size, anchor_x, anchor_y, _transform,
-            color, alpha, background, backAlpha, backPad, rotation,
-            prescale_x, prescale_y])
+        self.Tweenable("prescale_x", 1, tags=["scalar"])
+        self.Tweenable("prescale_y", 1, tags=["scalar"])
 
         # Other attributes
         self.NonTweenable("text", text)
@@ -348,23 +342,20 @@ class Text(BoundingBoxFigure):
             return
 
         if self.backAlpha > 0:
-            # Construct background rectangle and draw it
-            box = self.relbox(view, ctx, pad=self.backPad, raw=True)
-            rect = morpho.grid.rect(box)
-            rect.origin = self.pos
-            rect.width = 0
-            rect.fill = self.background
-            rect.alpha = self.backAlpha*self.alpha
-
+            pos = self.pos
             # Do something special if the viewbox and window shape
             # are not proportional to each other.
             par = morpho.pixelAspectRatioWH(view, ctx)
             if abs(par-1) > 1e-9:
-                rect._transform = self._specialBoxTransform(par)
+                rotation = 0
+                transform = self._specialBoxTransform(par)
             else:
-                rect.rotation = self.rotation
-                rect.transform = self.transform
-            rect.draw(camera, ctx)
+                rotation = self.rotation
+                transform = self.transform
+            self._drawBackgroundBox(
+                camera, ctx, pos, rotation, transform,
+                camera, ctx
+                )
 
         ctx.save()
 
