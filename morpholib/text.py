@@ -1184,6 +1184,10 @@ class SpaceMultiText(MultiTextBase, morpho.SpaceFrame):
         if isinstance(text, morpho.Figure):
             self._updateSettings(text)
 
+    # box() method for SpaceMultiText is currently unimplemented.
+    def box(self, *args, **kwargs):
+        raise NotImplementedError("box() method is currently unimplemented for SpaceMultiText.")
+
     def primitives(self, camera):
         primlist = []
         for fig in self.figures:
