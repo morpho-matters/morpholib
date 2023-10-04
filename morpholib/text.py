@@ -4,8 +4,9 @@ import morpholib as morpho
 import morpholib.anim, morpholib.grid, morpholib.shapes
 from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
-from morpholib.tools.dev import typecastViewCtx, BoundingBoxFigure, \
-    BackgroundBoxFigure, AlignableFigure
+from morpholib.tools.dev import typecastViewCtx, typecastView, \
+    typecastWindowShape, BoundingBoxFigure, BackgroundBoxFigure, \
+    AlignableFigure
 
 import cairo
 cr = cairo
@@ -163,6 +164,44 @@ class Text(BackgroundBoxFigure):
     def align(self, value):
         self.anchor_x, self.anchor_y = value
 
+    # NOT IMPLEMENTED!
+    # Only for internal use by the Text class for now.
+    # Currently not meant to work for PText or other classes.
+    # Aligns origin taking into account possible non-square
+    # views.
+    def _alignOrigin(self, align, view, windowShape, *args, **kwargs):
+        # NOTE: I believe this method is fully working, but I no longer
+        # need it for its original purpose. Nevertheless, I'm keeping
+        # the code here in case we ever want to implement it (or a
+        # variant of it) in the future.
+        raise NotImplementedError
+
+        view = typecastView(view)
+        windowShape = typecastWindowShape(windowShape)
+
+        # Compute anchor point
+        anchor = self.anchorPoint(align, view, windowShape, *args, raw=True, **kwargs)
+
+        # Update align
+        self.align = align
+
+        # Move position to physical position of anchor point
+        par = morpho.pixelAspectRatioWH(view, windowShape)
+        if abs(par-1) > 1e-9:
+            # Do something special if the viewbox and window shape
+            # are not proportional to each other.
+            rotation = 0
+            transform = self._specialBoxTransform(par)
+        else:
+            rotation = self.rotation
+            transform = self.transform
+
+        rotator = cmath.exp(rotation*1j)
+        transformer = morpho.matrix.Mat(transform)
+
+        self.pos = self.pos + transformer*(rotator*anchor)
+
+        return self
 
     # def copy(self):
     #     # Do a standard figure copy first
