@@ -1914,7 +1914,12 @@ class Actor(object):
         # uniquely in film and then merge keyframes across the
         # two films.
         for keytime in keytimes:
-            self.time(keytime).merge(film.time(keytime))
+            # Manual merge is done here instead of calling `merge()`
+            # because all we really want to do here is extend the
+            # figure list and not do any special merge effects like
+            # taking top-level transformations into account and
+            # adjusting subfigures (e.g. in TransformableFrame).
+            self.time(keytime).figures.extend(film.time(keytime).figures)
 
         return self
 
