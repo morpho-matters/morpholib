@@ -55,7 +55,7 @@ def isbadarray(x):
 
 # isequal(a,b) does a == b, but works even if a and/or b is
 # a numpy array.
-def isequal(a, b):
+def isequal(a, b, /):
     if isinstance(a, np.ndarray) and isinstance(b, np.ndarray):
         return np.array_equal(a,b)
     elif isinstance(a, np.ndarray) != isinstance(b, np.ndarray):
