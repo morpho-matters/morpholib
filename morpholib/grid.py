@@ -4980,6 +4980,23 @@ def cross(box, pad=0, *, relative=False):
 
     return path
 
+# Returns a generic path figure in the shape of a line that slashes
+# across a diagonal of a box. The initial corner of the slash can
+# be controlled by specifying "NW", "NE", "SW", or "SE" to the
+# `corner` keyword input.
+#
+# If optional keyword input `relative` is set to True, the path
+# will be centered using the `origin` attribute.
+@handleBoxTypecasting
+def slash(box, pad=0, *, corner="NW", relative=False):
+    box = padbox(box, pad)
+    corners = boxCorners(box, initCorner=corner)
+    path = Path(corners[::2])
+    if relative:
+        path.alignOrigin([0,0])
+    return path
+
+
 # Given a list of complex numbers and a (possibly non-integer)
 # index t, linearly interpolates the sequence to give a point on the
 # line segment between seq[floor(t)] and seq[floor(t)+1].
