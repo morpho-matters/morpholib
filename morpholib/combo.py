@@ -181,6 +181,59 @@ class TransformableFrame(Frame):
         else:
             Frame.draw(self, camera, ctx)
 
+    ### OTHER STUFF ###
+
+    # Decorator to be used on classes that inherit from
+    # TransformableFrame. It modifies the `fadeIn()` and `fadeOut()`
+    # actions so that the `jump` parameter acts independently of
+    # the Frame's toplevel transformations. Without it, performing
+    # a fade jump with the TFrame rotated, say, 45 degrees will result
+    # in the jump direction be rotated by the same amount.
+    @staticmethod
+    def modifyFadeActions(cls):
+        fadeIn_orig = cls.actions["fadeIn"]
+        fadeOut_orig = cls.actions["fadeOut"]
+
+        def fadeIn(actor, *args, **kwargs):
+            return _modifiedFadeAction(actor, *args, _baseaction=fadeIn_orig, **kwargs)
+        def fadeOut(actor, *args, **kwargs):
+            return _modifiedFadeAction(actor, *args, _baseaction=fadeOut_orig, **kwargs)
+
+        # Make a copy so that upstream actions dicts are not
+        # affected by this modification.
+        cls.actions = cls.actions.copy()
+
+        cls.actions["fadeIn"] = fadeIn
+        cls.actions["fadeOut"] = fadeOut
+
+        return cls
+
+# Performs a fadeIn or fadeOut action but first adjusts the
+# `jump` parameter based on the toplevel rotation and transform
+# so that those transformations don't affect jump direction/length.
+# A `_baseaction` keyword must be provided which is the original
+# fade action that will be called after `jump` is modified.
+def _modifiedFadeAction(actor, *args, _baseaction, jump=0, **kwargs):
+    # Adjust jump based on toplevel transformations
+    fig0 = actor.last()
+    rotation = fig0.rotation
+    transform = fig0.transform
+
+    # Only adjust `jump` if it's non-zero AND transform is invertible.
+    if jump != 0 and np.linalg.det(transform) != 0:
+        # We can assume jump is meant to be complex since
+        # TransformableFrame should not be used for SpaceFigures
+        jump = cmath.exp(-rotation*1j) * (morpho.matrix.Mat(transform).inv*jump)
+    return _baseaction(actor, *args, jump=jump, **kwargs)
+
+@TransformableFrame.action
+def fadeIn(*args, **kwargs):
+    return _modifiedFadeAction(*args, _baseaction=Frame.actions["fadeIn"], **kwargs)
+
+@TransformableFrame.action
+def fadeOut(*args, **kwargs):
+    return _modifiedFadeAction(*args, _baseaction=Frame.actions["fadeOut"], **kwargs)
+
 
 # A Frame of figures that can be accessed with array index syntax.
 # Normally this class is instantiated by calling figureGrid()

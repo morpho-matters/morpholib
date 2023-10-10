@@ -1841,6 +1841,7 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
 
         return pivot
 
+@TransformableFrame.modifyFadeActions
 class MultiSpline(MultiSplineBase, TransformableFrame):
     pass
 

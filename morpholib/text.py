@@ -927,6 +927,7 @@ class MultiTextBase(morpho.MultiFigure):
 #
 # Bottom line: It's just like Text except you can tween between different
 # underlying text strings.
+@TransformableFrame.modifyFadeActions
 class MultiText(MultiTextBase, TransformableFrame):
     @property
     def pos(self):
@@ -959,6 +960,7 @@ class MultiPTextBase(MultiTextBase):
 
 # Physical version of the MultiText class.
 # See MultiText and PText for more info.
+@TransformableFrame.modifyFadeActions
 class MultiPText(MultiPTextBase, TransformableFrame):
     @property
     def pos(self):

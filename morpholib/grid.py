@@ -2201,6 +2201,7 @@ def drawIn(actor, subduration=30, atFrame=None, *,
 
 # MultiFigure version of Path.
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.
+@TransformableFrame.modifyFadeActions
 class MultiPath(MultiPathBase, TransformableFrame):
     pass
 
@@ -2286,6 +2287,10 @@ class MultiPath3D(MultiPath, morpho.SpaceFrame):
         raise NotImplementedError
 
 MultiPath3d = MultiPath3D
+
+# Fade actions are re-implemented partly because substaggering
+# is not supported because subfigure jumps would be restricted
+# to the plane of orientation.
 
 @MultiPath3D.action
 def fadeIn(mpath, duration=30, atFrame=None, jump=0, alpha=1):
