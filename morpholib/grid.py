@@ -2115,7 +2115,13 @@ class MultiPathBase(MultiFigure):
     def boxHeight(self):
         return lambda *args, **kwargs: BoundingBoxFigure.boxHeight(self, *args, **kwargs)
 
-    rescale = Path.rescale
+    # Rescales the MultiPath by the given factors.
+    # See Path.rescale() for more info.
+    def rescale(self, *args, **kwargs):
+        Path.rescale(self, *args, **kwargs)
+        self.all.commitTransforms()
+        return self
+
     resize = Path.resize
 
     # Transforms the path so that the `origin` attribute
@@ -2244,6 +2250,7 @@ def morphFrom(actor, source, *args, **kwargs):
         mpaths = [mpath.last().copy() if isinstance(mpath, morpho.Actor) else mpath.copy() for mpath in source]
         for mpath in mpaths:
             mpath.commitTransforms()
+            mpath.all.commitTransforms()
 
         # Combine into a single MultiPath figure
         combined = mpaths[0]
