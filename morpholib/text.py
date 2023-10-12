@@ -1307,7 +1307,6 @@ def formatNumber(*args, **kwargs):
 ### GROUPS AND PARAGRAPHS ###
 
 class FancyMultiTextBase(MultiTextBase):
-    _manuallyJump = True
 
     def __init__(self, text="", *args, **kwargs):
 
@@ -1325,8 +1324,6 @@ class FancyMultiTextBase(MultiTextBase):
         else:
             super().__init__(text, *args, **kwargs)
 
-        self.Tweenable("pos", 0, tags=["complex", "position"])
-        # del self._state["origin"]  # Remove origin tweenable
         self.Tweenable("anchor_x", 0, tags=["scalar"])
         self.Tweenable("anchor_y", 0, tags=["scalar"])
         self.Tweenable("alpha", 1, tags=["scalar"])
@@ -1335,6 +1332,14 @@ class FancyMultiTextBase(MultiTextBase):
         self.Tweenable("background", (1,1,1), tags=["color"])
         self.Tweenable("backAlpha", 0, tags=["scalar"])
         self.Tweenable("backPad", 0, tags=["scalar"])
+
+    @property
+    def pos(self):
+        return self.origin
+
+    @pos.setter
+    def pos(self, value):
+        self.origin = value
 
     @property
     def align(self):
@@ -1399,7 +1404,7 @@ class FancyMultiTextBase(MultiTextBase):
         alignShift = complex(-self.anchor_x*width/2, -self.anchor_y*height/2)
         alignShift = morpho.matrix.Mat(self._transform) * (cmath.exp(self.rotation*1j)*alignShift)
 
-        return shiftBox(bigbox, alignShift+self.pos+self.origin)
+        return shiftBox(bigbox, alignShift+self.origin)
 
     corners = Text.corners
 
@@ -1446,7 +1451,7 @@ class FancyMultiTextBase(MultiTextBase):
             fig = fig.copy()
             fig.pos += dz
             fig.pos = mat*(rot*(fig.pos))
-            fig.pos += self.pos
+            fig.pos += self.origin
             fig.alpha *= self.alpha
             fig.rotation += self.rotation
             fig._transform = self._transform @ fig._transform
@@ -1456,7 +1461,7 @@ class FancyMultiTextBase(MultiTextBase):
             rect = morpho.grid.rect(
                 [left-self.backPad+dx, right+self.backPad+dx, bottom-self.backPad+dy, top+self.backPad+dy]
                 )
-            rect.origin = self.pos
+            rect.origin = self.origin
             rect.width = 0
             rect.fill = self.background
             rect.alpha = self.backAlpha*self.alpha*maxSubalpha
@@ -1464,7 +1469,6 @@ class FancyMultiTextBase(MultiTextBase):
             rect._transform = self._transform
 
             frm = morpho.Frame([rect, MultiText(figs)])
-            frm.origin = self.origin
             return frm
 
         return MultiText(figs)
@@ -1516,9 +1520,6 @@ def fadeOut(*args, substagger=0, **kwargs):
         raise TypeError("FancyMultiText figures do not support substaggering.")
     return MultiTextBase.actions["fadeOut"](*args, **kwargs)
 
-@FancyMultiTextBase.action
-def rollback(*args, **kwargs):
-    return morpho.Figure.actions["rollback"](*args, **kwargs)
 
 # Fancier MultiText figure that has some global attributes
 # that affect the entire group. These attributes include
@@ -1529,14 +1530,13 @@ def rollback(*args, **kwargs):
 # function, and you probably don't want to use it directly.
 # If you just want something like a morphable single Text
 # figure, use vanilla MultiText instead.
+@TransformableFrame.modifyFadeActions
 class FancyMultiText(FancyMultiTextBase):
     pass
     # NOTE: This originally also inherited from TransformableFrame,
     # but commitTransforms() didn't work correctly (I think because
-    # of how toplevel `align` interacts with it). Correct this is the
-    # future. Currently thinking we'll just re-implement MultiText
-    # to support toplevel `align`, etc. in the same way MultiPath
-    # does, thereby making FancyMultiText obsolete for paragraphs.
+    # of how toplevel `align` interacts with it). Correct this in the
+    # future.
 
 # Fancy version of MultiPText.
 # See FancyMultiText and MultiPText for more info.
@@ -1570,9 +1570,9 @@ class FancyMultiPText(FancyMultiText):
     def toSpline(self):
         multispline = MultiPText(self.makeFrame(raw=True, ignoreBackground=True).figures).toSpline()
         for spline in multispline.figures:
-            spline.origin += multispline.origin - self.pos
+            spline.origin += multispline.origin - self.origin
             spline.commitTransforms()
-        multispline.origin = self.pos
+        multispline.origin = self.origin
         return multispline
 
     def draw(self, camera, ctx):
@@ -1600,9 +1600,13 @@ class SpaceParagraph(FancyMultiTextBase, morpho.SpaceFrame):
             super().__init__(text, *args, **kwargs)
 
         # Redefine pos tweenable to be 3D.
-        self.Tweenable("_pos", morpho.matrix.array(self.pos), tags=["nparray", "fimage", "3d"])
-        self._state.pop("pos")
+        self.Tweenable("_pos", morpho.matrix.array(self.origin), tags=["nparray", "fimage", "3d"])
         self.Tweenable("_orient", np.identity(3), tags=["nparray", "orient"])
+
+        # Reset origin attribute because it has already been accounted for
+        # in setting the `_pos` tweenable and in SpaceParagraphs, `pos` and
+        # `origin` play different roles.
+        self.origin = 0
 
     @property
     def pos(self):
@@ -1646,7 +1650,7 @@ class SpaceParagraph(FancyMultiTextBase, morpho.SpaceFrame):
         # del txt._state["_pos"]
         # del txt._state["_orient"]
         # txt.text = self.text
-        txt.pos = (pos3d[0] + 1j*pos3d[1]).tolist()
+        txt.origin += (pos3d[0] + 1j*pos3d[1]).tolist()
         txt.zdepth = pos3d[2]
         # txt.size = self.size
         txt._transform = (orient @ self.orient)[:2,:2] @ self._transform
@@ -1672,6 +1676,17 @@ class SpaceParagraph(FancyMultiTextBase, morpho.SpaceFrame):
         # Use default SpaceFigure draw()
         morpho.SpaceFigure.draw(self, camera, ctx)
 
+@SpaceParagraph.action
+def fadeIn(*args, **kwargs):
+    return morpho.Figure.actions["fadeIn"](*args, **kwargs)
+
+@SpaceParagraph.action
+def fadeOut(*args, **kwargs):
+    return morpho.Figure.actions["fadeOut"](*args, **kwargs)
+
+# @SpaceParagraph.action
+# def rollback(*args, **kwargs):
+#     return morpho.Figure.actions["rollback"](*args, **kwargs)
 
 # Physical version of SpaceParagraph.
 # Mainly for internal use by paragraph3dPhys().
