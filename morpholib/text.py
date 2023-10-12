@@ -1440,7 +1440,9 @@ class FancyMultiTextBase(MultiTextBase):
         figs = []
         rot = cmath.exp(1j*self.rotation) if self.rotation != 0 else 1
         mat = 1 if np.array_equal(self._transform, I2) else morpho.matrix.Mat(self._transform)
+        maxSubalpha = 0  # Will eventually hold the max subfigure alpha value for use later
         for fig in self.figures:
+            maxSubalpha = max(maxSubalpha, fig.alpha)
             fig = fig.copy()
             fig.pos += dz
             fig.pos = mat*(rot*(fig.pos))
@@ -1457,7 +1459,7 @@ class FancyMultiTextBase(MultiTextBase):
             rect.origin = self.pos
             rect.width = 0
             rect.fill = self.background
-            rect.alpha = self.backAlpha*self.alpha
+            rect.alpha = self.backAlpha*self.alpha*maxSubalpha
             rect.rotation = self.rotation
             rect._transform = self._transform
 
