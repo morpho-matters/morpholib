@@ -861,11 +861,6 @@ def rollback(frame, duration=30, atFrame=None):
 # primitive morphing between images and text via mutual opposite fading.
 class MultiFigure(Frame):
 
-    # If set to True, the standard fadeIn/Out() actor actions will
-    # not treat the Multifigure specially when applying the jump option.
-    # Mainly for use in derived classes like morpho.text.FancyMultiText
-    _manuallyJump = False
-
     def __init__(self, *args, **kwargs):
         # Set the "_active" attribute to False using
         # object's setattr() method explicitly because
