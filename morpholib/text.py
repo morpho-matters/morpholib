@@ -1505,12 +1505,16 @@ class FancyMultiTextBase(MultiTextBase):
         return pivot
 
 @FancyMultiTextBase.action
-def fadeIn(*args, **kwargs):
-    return morpho.Figure.actions["fadeIn"](*args, **kwargs)
+def fadeIn(*args, substagger=0, **kwargs):
+    if substagger != 0:
+        raise TypeError("FancyMultiText figures do not support substaggering.")
+    return MultiTextBase.actions["fadeIn"](*args, **kwargs)
 
 @FancyMultiTextBase.action
-def fadeOut(*args, **kwargs):
-    return morpho.Figure.actions["fadeOut"](*args, **kwargs)
+def fadeOut(*args, substagger=0, **kwargs):
+    if substagger != 0:
+        raise TypeError("FancyMultiText figures do not support substaggering.")
+    return MultiTextBase.actions["fadeOut"](*args, **kwargs)
 
 @FancyMultiTextBase.action
 def rollback(*args, **kwargs):
