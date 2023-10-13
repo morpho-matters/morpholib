@@ -1340,6 +1340,9 @@ class FancyMultiTextBase(MultiTextBase):
         self.Tweenable("background", (1,1,1), tags=["color"])
         self.Tweenable("backAlpha", 0, tags=["scalar"])
         self.Tweenable("backPad", 0, tags=["scalar"])
+        # Dummy value for _refbox is assigned because view and windowShape
+        # are needed to compute it.
+        self.Tweenable("_refbox", [-1,1,-1,1], tags=["scalar", "list"])
 
     @property
     def pos(self):
@@ -1370,6 +1373,10 @@ class FancyMultiTextBase(MultiTextBase):
 
     def combine(self, *args, **kwargs):
         raise NotImplementedError("combine() is not supported for FancyMultiText figures.")
+
+    def updateReferenceBox(self, *args, **kwargs):
+        self._refbox = self.box(*args, raw=True, **kwargs)
+        return self
 
     # General version of totalBox() that can be used to implement totalBox()
     # for both FancyMultiText and FancyMultiPText.
@@ -1441,11 +1448,9 @@ class FancyMultiTextBase(MultiTextBase):
         for fig in self.figures:
             fig.pos -= center
 
-    def _makeFrameFromBoxes(self, boxes, *, ignoreBackground=False):
-        left = min(box[0] for box in boxes)
-        right = max(box[1] for box in boxes)
-        bottom = min(box[2] for box in boxes)
-        top = max(box[3] for box in boxes)
+    def makeFrame(self, *args, ignoreBackground=False, **kwargs):
+        # Reference box for use in calculating alignment parameters
+        left, right, bottom, top = self._refbox
 
         width = right - left
         height = top - bottom
@@ -1474,9 +1479,7 @@ class FancyMultiTextBase(MultiTextBase):
             figs.append(fig)
 
         if self.backAlpha > 0 and not ignoreBackground:
-            rect = morpho.grid.rect(
-                [left-self.backPad+dx, right+self.backPad+dx, bottom-self.backPad+dy, top+self.backPad+dy]
-                )
+            rect = morpho.grid.rect(shiftBox(self.box(*args, raw=True, **kwargs), complex(dx,dy)))
             rect.origin = self.origin
             rect.width = 0
             rect.fill = self.background
@@ -1488,11 +1491,6 @@ class FancyMultiTextBase(MultiTextBase):
             return frm
 
         return MultiText(figs)
-
-    def makeFrame(self, *args, **kwargs):
-        boxes = [fig.box(*args, **kwargs) for fig in self.figures]
-
-        return self._makeFrameFromBoxes(boxes)
 
     def draw(self, camera, ctx):
         self.makeFrame(camera, ctx).draw(camera, ctx)
@@ -1573,11 +1571,6 @@ class FancyMultiPText(FancyMultiText):
         return d - c
 
     corners = PText.corners
-
-    def makeFrame(self, *args, ignoreBackground=False, **kwargs):
-        boxes = [fig.box(*args, **kwargs) for fig in self.figures]
-
-        return self._makeFrameFromBoxes(boxes, ignoreBackground=ignoreBackground)
 
     # EXPERIMENTAL! May be changed in a future version!
     # Converts the text figure into an equivalent MultiSpline figure.
@@ -2037,6 +2030,7 @@ def paragraph(textarray, view, windowShape=None,
         parag = FancyMultiPText(figs)
     else:
         parag = FancyMultiText(figs)
+    parag.updateReferenceBox(*camctx)
     parag.pos = pos
     parag.anchor_x = anchor_x
     parag.anchor_y = anchor_y
