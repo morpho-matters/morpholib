@@ -1892,14 +1892,19 @@ def conformText(textarray):
 #       Default: None (ignore and just use given xgap value)
 # rotation = Rotation angle of entire paragraph about anchor point
 #            Default: 0 radians
+# transform = Transformation matrix of entire paragraph about
+#             anchor point. Default: identity
 # **kwargs = Any other keyword arguments will be applied to the
 #            every component Text figure:
 #            txt.set(**kwargs) for each txt in the textarray
 def paragraph(textarray, view, windowShape=None,
     pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0,
     *, flush=0, align=None, gap=None, xbuf=None, ybuf=None,
-    rotation=0, background=(1,1,1), backAlpha=0, backPad=0,
+    rotation=0, transform=None,
+    background=(1,1,1), backAlpha=0, backPad=0,
     **kwargs):
+
+    if transform is None: transform = np.eye(2)
 
     # If windowShape unspecified, try to infer it
     # from the given `view` value.
@@ -2023,6 +2028,7 @@ def paragraph(textarray, view, windowShape=None,
     parag.anchor_y = anchor_y
     parag.alpha = alpha
     parag.rotation = rotation
+    parag._transform = transform
     parag.background = background
     parag.backAlpha = backAlpha
     parag.backPad = backPad
