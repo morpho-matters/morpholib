@@ -1592,11 +1592,6 @@ class FancyMultiPText(FancyMultiText):
         return multispline
 
     def draw(self, camera, ctx):
-        # NOTE: I *think* `raw=True` can be removed here
-        # which would allow for correct rendering of background
-        # boxes for paragraphs that contain transformed subfigures.
-        # However, I'm not 100% sure yet it's safe to remove
-        # `raw=True`, so that's why it's still here.
         self.makeFrame().draw(camera, ctx)
 
 FancyMultiPtext = FancyMultiPText
