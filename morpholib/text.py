@@ -929,6 +929,10 @@ class MultiTextBase(morpho.MultiFigure):
 # underlying text strings.
 @TransformableFrame.modifyFadeActions
 class MultiText(MultiTextBase, TransformableFrame):
+    def __init__(self, text="", pos=0, *args, **kwargs):
+        super().__init__(text, *args, **kwargs)
+        self.origin = pos
+
     @property
     def pos(self):
         return self.origin
@@ -962,6 +966,10 @@ class MultiPTextBase(MultiTextBase):
 # See MultiText and PText for more info.
 @TransformableFrame.modifyFadeActions
 class MultiPText(MultiPTextBase, TransformableFrame):
+    def __init__(self, text="", pos=0, *args, **kwargs):
+        super().__init__(text, *args, **kwargs)
+        self.origin = pos
+
     @property
     def pos(self):
         return self.origin
