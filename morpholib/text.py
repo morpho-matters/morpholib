@@ -1365,6 +1365,12 @@ class FancyMultiTextBase(MultiTextBase):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
+    def partition(self, *args, **kwargs):
+        raise NotImplementedError("partition() is not supported for FancyMultiText figures.")
+
+    def combine(self, *args, **kwargs):
+        raise NotImplementedError("combine() is not supported for FancyMultiText figures.")
+
     # General version of totalBox() that can be used to implement totalBox()
     # for both FancyMultiText and FancyMultiPText.
     def _totalBoxGeneral(self, viewctx=(), pad=0, *, raw=False, _verbose=False):
