@@ -1400,9 +1400,11 @@ class FancyMultiTextBase(MultiTextBase):
 
     # Returns the physical bounding box of the whole text group as
     # [xmin, xmax, ymin, ymax].
-    def box(self, *args, **kwargs):
+    def box(self, *args, raw=False, **kwargs):
         boxdata = self.totalBox(*args, _verbose=True, **kwargs)
         rawbox = boxdata["rawbox"]
+        if raw:
+            return rawbox
         bigbox = boxdata["bigbox"]
 
         left, right, bottom, top = rawbox
