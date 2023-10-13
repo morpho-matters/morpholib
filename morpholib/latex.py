@@ -158,10 +158,10 @@ def parse3d(*args, orient=None, **kwargs):
 # can be inputted, in which case it will try to match on ANY of the
 # contained expressions.
 #   mytex.select[morpho.latex.matches([r"\pi", r"x"])].set(...)
-def matches(tex):
-    # Convert to list if just a string
-    if isinstance(tex, str):
-        tex = [tex]
+def matches(*tex):
+    # If given a single list as input, extract it.
+    if len(tex) == 1 and isinstance(tex[0], (list, tuple)):
+        tex = tex[0]
 
     targets = []
     for expr in tex:
