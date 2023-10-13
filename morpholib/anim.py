@@ -849,8 +849,8 @@ def rollback(frame, duration=30, atFrame=None):
         atFrame = frame.lastID()
 
     frame1 = frame.newkey(atFrame)
-    for path in frame1.figures:
-        path.static = False
+    for fig in frame1.figures:
+        fig.static = False
     frame.newendkey(duration, frame.first().copy()).visible = False
 
 # Base class for so-called "multifigures" which allow for groupings
