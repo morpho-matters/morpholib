@@ -1522,19 +1522,6 @@ class FancyMultiTextBase(MultiTextBase):
 
         return pivot
 
-@FancyMultiTextBase.action
-def fadeIn(*args, substagger=0, **kwargs):
-    if substagger != 0:
-        raise TypeError("FancyMultiText figures do not support substaggering.")
-    return MultiTextBase.actions["fadeIn"](*args, **kwargs)
-
-@FancyMultiTextBase.action
-def fadeOut(*args, substagger=0, **kwargs):
-    if substagger != 0:
-        raise TypeError("FancyMultiText figures do not support substaggering.")
-    return MultiTextBase.actions["fadeOut"](*args, **kwargs)
-
-
 # Fancier MultiText figure that has some global attributes
 # that affect the entire group. These attributes include
 # pos, anchor_x/y, alpha, rotation, transform, background,
