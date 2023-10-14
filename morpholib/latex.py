@@ -130,7 +130,9 @@ def parse(tex, *args,
 # where an initial orientation can be set. Note that if a value is
 # supplied to the `orient` parameter in this function, the returned
 # MultiSpline3D figure will have `orientable=True`.
-def parse3d(*args, orient=None, **kwargs):
+# You can also pass in the keyword `orientable=True` to create
+# an orientable figure in the default orientation.
+def parse3d(*args, orient=None, orientable=False, **kwargs):
     mspline = parse(*args, **kwargs)
     # Extract and reset `origin` attribute because for 3D LaTeX,
     # `pos` should map to the `pos` attribute, not `origin`.
@@ -142,6 +144,8 @@ def parse3d(*args, orient=None, **kwargs):
     if orient is not None:
         mspline3d.orientable = True
         mspline3d.orient = orient
+    elif orientable:
+        mspline3d.orientable = True
 
     return mspline3d
 
