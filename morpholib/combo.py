@@ -151,7 +151,8 @@ class TransformableFrame(Frame):
 
     # Given a Frame of subframes generated from calling partition(),
     # combine() recombines them back into a single TransformableFrame
-    # figure.
+    # figure. Note that this method leaves the original Frame figure
+    # that called it unchanged.
     def combine(self):
         copy = self.copy()
         copy.commitTransforms()
