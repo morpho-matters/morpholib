@@ -1692,6 +1692,14 @@ class SpaceParagraphPhys(SpaceParagraph):
 def space(**kwargs):
     return Text("..", alpha=0).set(**kwargs)
 
+# Adds the special underline character "\u0332" after every
+# character in a string. Can be used as part of defining a
+# Text object to add underlining to it:
+#   Text(underline("Hello world!"))
+# Note that underlines may break partially across spaces.
+def underline(string):
+    return string.replace("", "\u0332")[1:]
+
 # Takes a collection of Text figures and returns a FancyMultiText
 # figure that concatenates all the individual Text figures.
 #
