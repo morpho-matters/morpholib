@@ -1696,7 +1696,10 @@ def space(**kwargs):
 # character in a string. Can be used as part of defining a
 # Text object to add underlining to it:
 #   Text(underline("Hello world!"))
-# Note that underlines may break partially across spaces.
+# Note that underlines may break partially across spaces
+# and may otherwise incorrectly render as this is a somewhat
+# hack of an implementation. Use at your own risk and don't
+# rely on it!
 def underline(string):
     return string.replace("", "\u0332")[1:]
 
