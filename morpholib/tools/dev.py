@@ -649,16 +649,24 @@ def drawOutOfBoundsStartEnd(fig, camera, ctx):
         fig.start = start_orig
         fig.end = end_orig
 
+# Mainly for use by the select[] feature of Frames/MultiFigures.
+# Packages the methods for getting, setting, and deleting
+# slices of indices into an object whereby the python bracket
+# syntax works.
 class Slicer(object):
-    def __init__(self, getter=None, setter=None):
+    def __init__(self, getter=None, setter=None, deller=None):
         self.getter = getter
         self.setter = setter
+        self.deller = deller
 
     def __getitem__(self, index):
         return self.getter(index)
 
     def __setitem__(self, index, value):
         self.setter(index, value)
+
+    def __delitem__(self, index):
+        self.deller(index)
 
 
 def translateArrayUnderTransforms(array, shift, rotator, transformer):
