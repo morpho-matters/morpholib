@@ -1792,7 +1792,21 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
     # from morpho.latex.parse(). Intended to provide an easier
     # way to morph one LaTeX spline into another one, like this:
     #   myTexSpline.newendkey(30).replaceTex(r"E = mc^2")
-    def replaceTex(self, tex, *, pos=None, align=None, boxWidth=None, boxHeight=None, **kwargs):
+    # If a string is passed in to the optional keyword `gauge`,
+    # the glyph corresponding to the string will be used as a
+    # reference to rescale the final MultiSpline so that the
+    # gauge glyph's size remains unchanged. If the MultiSpline
+    # contains multiple glyphs that match the given gauge, the
+    # first instance is always used in both the old and new
+    # MultiSplines.
+    def replaceTex(self, tex, *, pos=None, align=None,
+            boxWidth=None, boxHeight=None,
+            gauge=None, **kwargs):
+
+        if gauge is not None:
+            # Extract box height of symbol
+            oldHeight = self.sub[morpho.latex.matches(gauge)].figures[0].boxHeight()
+
         box = shiftBox(self.box(raw=True), self.origin)
         if align is None:
             align = self.boxAlign(box=box, invalidValue=0)
@@ -1807,6 +1821,11 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
             # Using self.pos is intentional here! Don't replace with self.origin!
             # This is because self.pos means something different for MultiSpline3D!
             self.pos = pos
+
+        if gauge is not None:
+            newHeight = self.sub[morpho.latex.matches(gauge)].figures[0].boxHeight()
+            self.rescale(oldHeight/newHeight)
+
         return self
 
     # Checks if every corresponding subfigure between self and other
