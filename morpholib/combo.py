@@ -163,13 +163,24 @@ class TransformableFrame(Frame):
 
     # Merges another TransformableFrame into this one.
     # See Frame.merge() for more info.
-    # Note that this version of the method automatically
-    # attempts to commit the toplevel transforms of `other`
-    # before merging so that the visual appearance will be
-    # preserved.
+    # Note that this version of the method attempts to
+    # modify the transformations of the other Frame's
+    # subfigures based on self's transformations so that
+    # after the merge, the other's subfigures appear visually
+    # unchanged.
     def merge(self, other, *args, **kwargs):
-        if isinstance(other, TransformableFrame):
-            other.commitTransforms()
+        if isinstance(other, TransformableFrame) and np.linalg.det(self.transform) != 0:
+            # Attempt to apply the inverse of the toplevel
+            # transformations to other's subfigures so that after the
+            # merge, other's subfigures appear visually unchanged.
+            untransform = np.linalg.inv(self.transform @ morpho.matrix.rotation2d(self.rotation))
+            unmat = morpho.matrix.Mat(untransform)
+
+            # Apply these "untransformations" to the toplevel
+            # transformations of other.
+            other.transform = untransform @ other.transform
+            other.origin = unmat*(other.origin - self.origin)
+
         return super().merge(other, *args, **kwargs)
 
     def draw(self, camera, ctx):

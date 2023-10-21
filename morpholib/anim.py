@@ -380,6 +380,18 @@ class Frame(BoundingBoxFigure):
         elif beforeFigure < 0:
             beforeFigure %= len(self.figures)
 
+        # Commit the transforms of `other` if it's transformable
+        # so that the toplevel transformations are not lost
+        # after the merge.
+        if isinstance(other, morpho.combo.TransformableFrame):
+            # Don't put the following line in:
+            #   other.origin = other.origin - self.origin
+            # It's tempting to include this line for when merging
+            # a Frame with a TFrame, but it will cause problems when
+            # merging a TFrame with another TFrame because TFrame.merge()
+            # calls Frame.merge()
+            other.commitTransforms()
+
         if not isinstance(other, morpho.Frame) and isinstance(other, morpho.Figure):
             other = type(self)([other])
 
