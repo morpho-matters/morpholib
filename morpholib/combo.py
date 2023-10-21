@@ -157,7 +157,7 @@ class TransformableFrame(Frame):
         copy = self.copy()
         copy.commitTransforms()
         for subframe in copy.figures:
-            if hasattr(subframe, "commitTransforms"):
+            if isinstance(subframe, TransformableFrame):
                 subframe.commitTransforms()
         return super(TransformableFrame, copy).combine()
 
