@@ -598,8 +598,11 @@ class Frame(BoundingBoxFigure):
     # subfigures of those subframes.
     def combine(self):
         root = self.figures[0].copy()
+        root.origin = root.origin + self.origin
         for chunk in self.figures[1:]:
-            root.merge(chunk.copy())
+            chunk = chunk.copy()
+            chunk.origin = chunk.origin + self.origin
+            root.merge(chunk)
         return root
 
     # Allows you to give a name to a figure in the Frame that can
