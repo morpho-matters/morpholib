@@ -380,17 +380,17 @@ class Frame(BoundingBoxFigure):
         elif beforeFigure < 0:
             beforeFigure %= len(self.figures)
 
-        # Commit the transforms of `other` if it's transformable
-        # so that the toplevel transformations are not lost
-        # after the merge.
-        if isinstance(other, morpho.combo.TransformableFrame):
-            # Don't put the following line in:
-            #   other.origin = other.origin - self.origin
-            # It's tempting to include this line for when merging
-            # a Frame with a TFrame, but it will cause problems when
-            # merging a TFrame with another TFrame because TFrame.merge()
-            # calls Frame.merge()
-            other.commitTransforms()
+        # # Commit the transforms of `other` if it's transformable
+        # # so that the toplevel transformations are not lost
+        # # after the merge.
+        # if isinstance(other, morpho.combo.TransformableFrame):
+        #     # Don't put the following line in:
+        #     #   other.origin = other.origin - self.origin
+        #     # It's tempting to include this line for when merging
+        #     # a Frame with a TFrame, but it will cause problems when
+        #     # merging a TFrame with another TFrame because TFrame.merge()
+        #     # calls Frame.merge()
+        #     other.commitTransforms()
 
         if not isinstance(other, morpho.Frame) and isinstance(other, morpho.Figure):
             other = type(self)([other])
@@ -606,14 +606,13 @@ class Frame(BoundingBoxFigure):
     #
     # This method may not combine them perfectly if transformation
     # tweenables of the underlying subframes were modified
-    # (e.g. `origin`) since these will not be transferred to the
+    # (e.g. `origin`) since these may not be transferred to the
     # subfigures of those subframes.
     def combine(self):
         root = self.figures[0].copy()
-        root.origin = root.origin + self.origin
+        root.origin = self.origin
         for chunk in self.figures[1:]:
             chunk = chunk.copy()
-            chunk.origin = chunk.origin + self.origin
             root.merge(chunk)
         return root
 
