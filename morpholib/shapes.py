@@ -1788,6 +1788,20 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
         multipath._updateFrom(self, common=True, ignore="figures")
         return multipath
 
+    # For internal use by replaceTex().
+    # Given a gauge string and a match function, returns the
+    # first subfigure that matches the gauge. Raises KeyError
+    # if no matches found.
+    def _findGaugeMatch(self, gauge, matches):
+        found = False
+        for glyph in self.figures:
+            if matches(glyph):
+                found = True
+                break
+        if not found:
+            raise KeyError(f"Could not find gauge {repr(gauge)} among subfigures.")
+        return glyph
+
     # Replaces the MultiSpline with a MultiSpline generated
     # from morpho.latex.parse(). Intended to provide an easier
     # way to morph one LaTeX spline into another one, like this:
@@ -1805,7 +1819,8 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
 
         if gauge is not None:
             # Extract box height of symbol
-            oldHeight = self.sub[morpho.latex.matches(gauge)].figures[0].boxHeight()
+            matchfunc = morpho.latex.matches(gauge)
+            oldHeight = self._findGaugeMatch(gauge, matchfunc).boxHeight()
 
         box = shiftBox(self.box(raw=True), self.origin)
         if align is None:
@@ -1823,7 +1838,9 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
             self.pos = pos
 
         if gauge is not None:
-            newHeight = self.sub[morpho.latex.matches(gauge)].figures[0].boxHeight()
+            # Extract new height of symbol and rescale the whole
+            # MultiSpline so it stays the same as the old height.
+            newHeight = self._findGaugeMatch(gauge, matchfunc).boxHeight()
             self.rescale(oldHeight/newHeight)
 
         return self
