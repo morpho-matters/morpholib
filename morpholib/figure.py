@@ -1467,7 +1467,13 @@ class Actor(object):
     # `seamless=False`
     # Also note that this will only work for strictly increasing
     # transition functions.
-    def newkey(self, f, figure=None, *, seamless=True):
+    #
+    # If optional keyword `instant=True` is specified, then the
+    # keyfigure immediately preceding the newly created keyfigure
+    # will have its static attribute set to True, meaning when played,
+    # the actor will jump instantly to the newly created keyfigure
+    # and won't do any tweening.
+    def newkey(self, f, figure=None, *, seamless=True, instant=False):
         f = round(f)
 
         if figure is None:
@@ -1506,6 +1512,12 @@ class Actor(object):
         self.timeline[f] = figure
         self.update()
 
+        if instant:
+            # Set previous key to be static (assuming it exists)
+            prevkey = self.prevkey(f)
+            if prevkey is not None:
+                prevkey.static = True
+
         return figure
 
     # Create a new key df-many frames after the current final key.
@@ -1516,7 +1528,7 @@ class Actor(object):
     # the new key is created relative to the final frame of the
     # global timeline. This is implicitly done when calling
     # newendkey() argumentless.
-    def newendkey(self, df=None, figure=None, *, seamless=True, glob=False):
+    def newendkey(self, df=None, figure=None, *, glob=False, **kwargs):
         # If no df is given, treat it as a global call with df = 0
         if df is None:
             if self.owner is None:
@@ -1539,7 +1551,7 @@ class Actor(object):
         f = lastID + df
         if f == -oo:
             raise IndexError("Actor has no keyframes! End key is undefined.")
-        return self.newkey(f, figure, seamless=seamless)
+        return self.newkey(f, figure, **kwargs)
 
     # # Adds the given figure to the timeline at the specified index.
     # # Throws error if the given index is already a keyID.
