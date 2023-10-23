@@ -222,6 +222,8 @@ class TransformableFrame(Frame):
 
         return cls
 
+TFrame = TransformableFrame  # Alias
+
 # Performs a fadeIn or fadeOut action but first adjusts the
 # `jump` parameter based on the toplevel rotation and transform
 # so that those transformations don't affect jump direction/length.
