@@ -1818,6 +1818,8 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
             gauge=None, **kwargs):
 
         if gauge is not None:
+            if not(boxWidth is None and boxHeight is None):
+                raise ValueError("A gauge cannot be used when a boxWidth/boxHeight is also specified.")
             # Extract box height of symbol
             matchfunc = morpho.latex.matches(gauge)
             oldHeight = self._findGaugeMatch(gauge, matchfunc).boxHeight()
