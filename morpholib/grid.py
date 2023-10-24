@@ -2089,7 +2089,7 @@ class MultiPathBase(MultiFigure, BackgroundBoxFigure, AlignableFigure):
             _alpha=max(subpath.alpha for subpath in self.figures)
             )
 
-        TransformableFrame.draw(self, camera, ctx)
+        super().draw(camera, ctx)
 
     ### TWEEN METHODS ###
 
