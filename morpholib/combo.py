@@ -229,24 +229,21 @@ TFrame = TransformableFrame  # Alias
 # and AlignableFigure classes and implements some new methods
 # using both.
 class AlignableTFrame(TransformableFrame, AlignableFigure):
-    # NOT IMPLEMENTED YET!
     # Align the origins of a subset of subfigures.
     # Behaves the same as alignOrigin(), but takes an additional
     # keyword-only input `select` in which you can specify
     # which subfigures to act on using the same syntax as sub[] and
     # select[] use. By default it's all subfigures.
     def subalignOrigin(self, align, *args, select=sel[:], **kwargs):
-        # The following code is close to but not quite right.
-        # In particular, it doesn't seem to work correctly
-        # if the toplevel transformations are non-trivial.
-        # TODO for later: Fix this!
-        raise NotImplementedError
         # Find anchor point
         subframe = self.sub[select]
-        anchor = subframe.anchorPoint(align)
+        # TODO for future: Re-implement so we don't need to use sub[]
+        # because sub[] creates a copy which is expensive and unnecessary.
+        anchor = subframe.anchorPoint(align, raw=True)
         for fig in listselect(self.figures, select).values():
-            untransform = morpho.matrix.Mat(np.linalg.inv(fig.transform @ morpho.matrix.rotation2d(fig.rotation)))
-            fig.alignOrigin(fig.boxCoords(untransform*(anchor-self.origin-fig.origin), *args, raw=True, **kwargs), *args, **kwargs)
+            unrot = cmath.exp(-fig.rotation*1j) if fig.rotation != 0 else 1
+            untransform = morpho.matrix.Mat(np.linalg.inv(fig.transform)) if not np.array_equal(fig.transform, I2) else 1
+            fig.alignOrigin(fig.boxCoords(unrot*(untransform*(anchor-fig.origin)), *args, raw=True, **kwargs), *args, **kwargs)
         return self
 
 # Performs a fadeIn or fadeOut action but first adjusts the
