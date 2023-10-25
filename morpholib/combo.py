@@ -236,9 +236,9 @@ class AlignableTFrame(TransformableFrame, AlignableFigure):
     # select[] use. By default it's all subfigures.
     def subalignOrigin(self, align, *args, select=sel[:], **kwargs):
         # Find anchor point
-        subframe = self.sub[select]
-        # TODO for future: Re-implement so we don't need to use sub[]
-        # because sub[] creates a copy which is expensive and unnecessary.
+        subframe = self._select(select, _asFrame=True)
+        # The above line is equivalent to sub[select] but it doesn't make
+        # an unnecessary copy!
         anchor = subframe.anchorPoint(align, raw=True)
         for fig in listselect(self.figures, select).values():
             unrot = cmath.exp(-fig.rotation*1j) if fig.rotation != 0 else 1
