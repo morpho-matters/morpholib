@@ -7,7 +7,7 @@ import morpholib.anim
 from morpholib.anim import Frame, SpaceFrame, MultiFigure, SpaceMultiFigure, \
     SpaceMultifigure, Spacemultifigure
 from morpholib import object_hasattr
-from morpholib.tools.dev import listselect
+from morpholib.tools.dev import AlignableFigure
 from morpholib.tools.basics import *
 
 import math, cmath
@@ -223,6 +223,31 @@ class TransformableFrame(Frame):
         return cls
 
 TFrame = TransformableFrame  # Alias
+
+
+# Base class that combines the functionality of the TransformableFrame
+# and AlignableFigure classes and implements some new methods
+# using both.
+class AlignableTFrame(TransformableFrame, AlignableFigure):
+    # NOT IMPLEMENTED YET!
+    # Align the origins of a subset of subfigures.
+    # Behaves the same as alignOrigin(), but takes an additional
+    # keyword-only input `select` in which you can specify
+    # which subfigures to act on using the same syntax as sub[] and
+    # select[] use. By default it's all subfigures.
+    def subalignOrigin(self, align, *args, select=sel[:], **kwargs):
+        # The following code is close to but not quite right.
+        # In particular, it doesn't seem to work correctly
+        # if the toplevel transformations are non-trivial.
+        # TODO for later: Fix this!
+        raise NotImplementedError
+        # Find anchor point
+        subframe = self.sub[select]
+        anchor = subframe.anchorPoint(align)
+        for fig in listselect(self.figures, select).values():
+            untransform = morpho.matrix.Mat(np.linalg.inv(fig.transform @ morpho.matrix.rotation2d(fig.rotation)))
+            fig.alignOrigin(fig.boxCoords(untransform*(anchor-self.origin-fig.origin), *args, raw=True, **kwargs), *args, **kwargs)
+        return self
 
 # Performs a fadeIn or fadeOut action but first adjusts the
 # `jump` parameter based on the toplevel rotation and transform

@@ -4,7 +4,7 @@ mo = morpho
 import morpholib.tools.color, morpholib.anim, morpholib.transitions
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
-from morpholib.combo import TransformableFrame
+from morpholib.combo import TransformableFrame, AlignableTFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
     BackgroundBoxFigure, AlignableFigure, totalBox, shiftBox, \
@@ -2209,7 +2209,7 @@ def drawIn(actor, subduration=30, atFrame=None, *,
 # MultiFigure version of Path.
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.
 @TransformableFrame.modifyFadeActions
-class MultiPath(MultiPathBase, TransformableFrame):
+class MultiPath(MultiPathBase, AlignableTFrame):
     pass
 
 Multipath = MultiPath  # Alias
