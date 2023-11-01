@@ -399,12 +399,18 @@ class FigureArray(Frame):
 # width, height = Width and height of the grid. If one is unspecified,
 #   it will be inferred from the other and the grid shape. However,
 #   at least one of width or height must be specified.
+# filler = Figure whose copies will be used as "filler" to pad out the
+#   figure list if the given shape is incompatible with the length of
+#   the figure list. Note that this feature will not work if `figures`
+#   is a dict; it must be a sequence type.
+#   Default: None (no filler; error will be thrown for incompatible shape)
 # cls = FigureArray subtype to use to construct the grid.
 #       Default: FigureArray.
 def figureGrid(figures, *,
         shape=(1,-1),
         pos=0, align=(0,0),
         width=None, height=None,
+        filler=None,
         cls=FigureArray):
 
     if len(shape) != 2:
@@ -413,8 +419,25 @@ def figureGrid(figures, *,
     if isinstance(figures, morpho.Figure):
         figure = figures
         figures = [figure.copy() for n in range(abs(shape[0]*shape[1]))]
-        figgrid = cls(figures)
-    elif isinstance(figures, dict):
+
+    # Add copies of the filler figure to the figure list if
+    # the shape is incompatible with the number of figures in the list.
+    if filler is not None:
+        if isinstance(figures, dict):
+            raise TypeError("Cannot use filler with dict input for figures.")
+        # Check that shape is compatible
+        if -1 in shape:
+            dim = max(shape)
+            rem = len(figures) % dim
+            if rem != 0:
+                # Pad out the figure list with filler copies until
+                # len(figures) is divisible by the main dimension
+                # in `shape`.
+                figures = list(figures) + [filler.copy() for n in range(dim-rem)]
+        else:
+            figures = list(figures) + [filler.copy() for n in range(shape[0]*shape[1] - len(figures))]
+
+    if isinstance(figures, dict):
         figgrid = cls(**figures)
     else:
         figgrid = cls(figures)
