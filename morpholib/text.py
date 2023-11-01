@@ -897,10 +897,6 @@ class MultiTextBase(morpho.MultiFigure):
         #         newfig = fig.images[0].copy()
         #         self.figures[n] = newfig
 
-    @typecastViewCtx
-    def relbox(self, *args, raw=False, **kwargs):
-        return shiftBox(self.box(*args, raw=raw, **kwargs), -self.origin if not raw else 0)
-
     relcorners = Text.relcorners
 
     ### TWEEN METHODS ###
@@ -940,6 +936,14 @@ class MultiText(MultiTextBase, TransformableFrame):
     @pos.setter
     def pos(self, value):
         self.origin = value
+
+    @typecastViewCtx
+    def relbox(self, *args, raw=False, **kwargs):
+        return shiftBox(self.box(*args, raw=raw, **kwargs), -self.origin if not raw else 0)
+
+    @typecastViewCtx
+    def box(self, view, ctx, *args, **kwargs):
+        return super().box(view, ctx, *args, **kwargs)
 
 
 class MultiPTextBase(MultiTextBase):
