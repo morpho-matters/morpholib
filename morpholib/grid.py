@@ -4907,6 +4907,11 @@ def ellipse(z0, a, b=None, dTheta=tau/72, phase=0, *, relative=False):
         poly = poly.fimage(lambda z: z + z0)
     return poly
 
+# Like ellipse(), but returns a Path figure representing the
+# ellipse's edge. See ellipse() for more info.
+def ellipsePath(*args, **kwargs):
+    return ellipse(*args, **kwargs).edge()
+
 # Older version of the ellipse() function which returns a path figure instead
 # of a polygon. I changed it because an ellipse is more naturally a polygon
 # and you can get the path version by calling the Polygon edge() method.
@@ -4961,6 +4966,11 @@ def rect(box, pad=0, *, relative=False):
 
     poly.vertices = corners
     return poly
+
+# Like rect(), but returns a Path figure representing the
+# rectangle's edge. See rect() for more info.
+def rectPath(*args, **kwargs):
+    return rect(*args, **kwargs).edge()
 
 # Returns a generic path figure in the shape of an X.
 # X is drawn in this corner order: NW, SE, NE, SW.
