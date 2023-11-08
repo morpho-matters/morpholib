@@ -1483,7 +1483,7 @@ class FancyMultiTextBase(MultiTextBase):
             figs.append(fig)
 
         if self.backAlpha > 0 and not ignoreBackground:
-            rect = morpho.grid.rect(shiftBox(self.box(*args, raw=True, **kwargs), complex(dx,dy)))
+            rect = morpho.grid.rect(padbox(shiftBox(self.box(*args, raw=True, **kwargs), complex(dx,dy)), self.backPad))
             rect.origin = self.origin
             rect.width = 0
             rect.fill = self.background
