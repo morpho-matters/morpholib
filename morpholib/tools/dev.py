@@ -418,13 +418,11 @@ class AlignableFigure(BoundingBoxFigure):
 
 
 # Implements methods that allow the figure to have a background
-# box drawn behind it, as well as implements an implicit
-# `align` parameter defined via its bounding box. Mainly meant
-# as a base class to be inherited from. To be used correctly,
-# the `box()` method must implement the `raw` keyword argument
-# that returns the bounding box without transformation attributes
-# applied, and the figure must also possess an `origin` attribute
-# (at least implicitly).
+# box drawn behind it. Mainly meant as a base class to be inherited
+# from. To be used correctly, the `box()` method must implement the
+# `raw` keyword argument that returns the bounding box without
+# transformation attributes applied, and the figure must also possess
+# an `origin` attribute (at least implicitly).
 class BackgroundBoxFigure(BoundingBoxFigure):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
