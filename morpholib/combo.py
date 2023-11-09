@@ -27,7 +27,7 @@ class _FigureTransformMemory(object):
         self.figures = figures
         self.orig_origins = [fig.origin for fig in figures]
         self.orig_rotations = [fig.rotation for fig in figures]
-        self.orig_transforms = [fig._transform for fig in figures]
+        self.orig_transforms = [fig.transform for fig in figures]
 
     # Called upon entering a `with` block
     def __enter__(self):
@@ -39,7 +39,7 @@ class _FigureTransformMemory(object):
         for fig, origin, rotation, transform in zip(self.figures, self.orig_origins, self.orig_rotations, self.orig_transforms):
             fig.origin = origin
             fig.rotation = rotation
-            fig._transform = transform
+            fig.transform = transform
 
 # Mainly to be used as an inherited class.
 # A Frame that is meant to take subfigures that possess the standard
@@ -78,7 +78,7 @@ class TransformableFrame(Frame):
     # bounding box is computed without applying
     # the transformation attributes origin, rotation, transform.
     def box(self, *args, raw=False, **kwargs):
-        if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+        if not raw and not(self.rotation == 0 and np.array_equal(self.transform, I2)):
             temp = self.copy()
             temp.commitTransforms()
             return temp.box(*args, raw=True, **kwargs)
@@ -111,14 +111,14 @@ class TransformableFrame(Frame):
     def _applyTransformsToSubfigures(self):
         # Calculate as a single matrix the overall effect
         # of both the global rotation and transform.
-        rotateAndTransform = self._transform @ morpho.matrix.rotation2d(self.rotation)
+        rotateAndTransform = self.transform @ morpho.matrix.rotation2d(self.rotation)
         rotateAndTransform_mat = morpho.matrix.Mat(rotateAndTransform)
 
         for fig in self.figures:
             # Temporarily modify origin and transform
             if fig.origin != 0:
                 fig.origin = rotateAndTransform_mat * fig.origin
-            fig._transform = rotateAndTransform @ fig._transform
+            fig.transform = rotateAndTransform @ fig.transform
         return self
 
     # Applies the toplevel transformation attributes to the
@@ -139,7 +139,7 @@ class TransformableFrame(Frame):
         # Reset toplevel transformation tweenables
         self.origin = 0
         self.rotation = 0
-        self._transform = np.eye(2)
+        self.transform = np.eye(2)
 
         return self
 
@@ -186,7 +186,7 @@ class TransformableFrame(Frame):
         return super().merge(other, *args, **kwargs)
 
     def draw(self, camera, ctx):
-        if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+        if not(self.rotation == 0 and np.array_equal(self.transform, I2)):
             # Temporarily apply additional transforms to subfigures if global
             # rotation/transform are non-identity
             with self.TemporarySubfigureTransforms():
