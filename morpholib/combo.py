@@ -7,7 +7,7 @@ import morpholib.anim
 from morpholib.anim import Frame, SpaceFrame, MultiFigure, SpaceMultiFigure, \
     SpaceMultifigure, Spacemultifigure
 from morpholib import object_hasattr
-from morpholib.tools.dev import AlignableFigure
+from morpholib.tools.dev import AlignableFigure, BackgroundBoxFigure
 from morpholib.tools.basics import *
 
 import math, cmath
@@ -234,6 +234,9 @@ class AlignableTFrame(TransformableFrame, AlignableFigure):
     # keyword-only input `select` in which you can specify
     # which subfigures to act on using the same syntax as sub[] and
     # select[] use. By default it's all subfigures.
+    #
+    # Note that for this method to work, each subfigure must implement
+    # an alignOrigin() method.
     def subalignOrigin(self, align, *args, select=sel[:], **kwargs):
         # Find anchor point
         subframe = self._select(select, _asFrame=True)
@@ -245,6 +248,32 @@ class AlignableTFrame(TransformableFrame, AlignableFigure):
             untransform = morpho.matrix.Mat(np.linalg.inv(fig.transform)) if not np.array_equal(fig.transform, I2) else 1
             fig.alignOrigin(fig.boxCoords(unrot*(untransform*(anchor-fig.origin)), *args, raw=True, **kwargs), *args, **kwargs)
         return self
+
+
+# Frame with a large collection of extra features.
+# Supports toplevel transformations, alignment, and background boxes.
+# It implements all of the features of AlignableTFrame plus
+# background boxes.
+#
+# Only compatible with subfigures that are compatible with
+# AlignableTFrame. In particular, subfigures must support
+# the standard transformation tweenables `origin`, `rotation`,
+# and `transform`, and preferably also `alpha`. It is also
+# preferred for the subfigures to possess an alignOrigin()
+# method, but this is only really required if using the
+# subalignOrigin() method.
+class FancyFrame(AlignableTFrame, BackgroundBoxFigure):
+    def draw(self, camera, ctx, *args, **kwargs):
+        # Try to infer a global alpha value from subfigures.
+        try:
+            alpha = max(fig.alpha for fig in self.figures)
+        except Exception:
+            # Fall back to default alpha = 1
+            alpha = 1
+
+        self._drawBackgroundBox(camera, ctx, _alpha=alpha)
+        super().draw(camera, ctx, *args, **kwargs)
+
 
 # Performs a fadeIn or fadeOut action but first adjusts the
 # `jump` parameter based on the toplevel rotation and transform
