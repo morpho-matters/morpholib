@@ -256,10 +256,10 @@ class AlignableTFrame(TransformableFrame, AlignableFigure):
 # background boxes.
 #
 # Only compatible with subfigures that are compatible with
-# AlignableTFrame. In particular, subfigures must support
-# the standard transformation tweenables `origin`, `rotation`,
-# and `transform`, and preferably also `alpha`. It is also
-# preferred for the subfigures to possess an alignOrigin()
+# AlignableTFrame. In particular, subfigures must support a box()
+# method as well as the standard transformation tweenables
+# `origin`, `rotation`, and `transform`, and preferably also `alpha`.
+# It is also preferred for the subfigures to possess an alignOrigin()
 # method, but this is only really required if using the
 # subalignOrigin() method.
 class FancyFrame(AlignableTFrame, BackgroundBoxFigure):
