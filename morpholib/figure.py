@@ -287,6 +287,20 @@ class Figure(object):
 
         return new
 
+    # Like copy, but the returned figure has default metasettings,
+    # i.e. settings like `visible`, `static`, `tweenMethod`,
+    # `transition`, `modifier`, `delay` will all be set to their
+    # default values.
+    def dup(self, *args, **kwargs):
+        copy = self.copy(*args, **kwargs)
+        copy.set(
+            visible=True, static=False,
+            tweenMethod=type(copy).tweenLinear,
+            transition=morpho.transitions.default,
+            modifier=None, delay=0
+            )
+        return copy
+
     # Updates the standard "meta-settings" of the figure with those
     # of the target figure. Mainly for use when converting one figure
     # type to another (e.g. SpaceText.toText() method).
