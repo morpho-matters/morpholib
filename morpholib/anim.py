@@ -158,7 +158,12 @@ class _SubactionSummoner(object):
             # Create a subactor that contains a copy of the full
             # history of the nth subfigure in the film.
             subactor = morpho.Actor(type(fig))
-            subactor.timeline = {f : keyfig.figures[n].copy() for f, keyfig in film.timeline.items()}
+            # The `min()` expression here is to deal with the case
+            # where the latest keyfigure has more subfigures than a
+            # past keyfigure. In this case, the last subfigure of
+            # the past keyfigure is used to match up with the extra
+            # subfigures of the latest keyfigure.
+            subactor.timeline = {f : keyfig.figures[min(n, len(keyfig.figures)-1)].copy() for f, keyfig in film.timeline.items()}
             subactor.update()
             if n in selectedIndices:
                 # Transition is set to uniform because transitions are ignored
