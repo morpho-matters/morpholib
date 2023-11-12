@@ -927,6 +927,16 @@ class MultiFigure(Frame):
     def _getSubpoolIndices(self):
         return listselect(self.figures, self._subpool).keys()
 
+    # Parses the data in the `subpool` attribute and turns
+    # it into the final sorted sequence of raw indices that it
+    # represents.
+    def _parseSubpool(self):
+        subpool = sorted(self._getSubpoolIndices())
+        if len(subpool) == 0:
+            return range(len(self.figures))
+        else:
+            return sorted(subpool)
+
     def _appearsEqual(self, other, *args, compareSubNonTweenables=True, **kwargs):
         return morpho.Frame._appearsEqual(self, other, *args, compareSubNonTweenables=compareSubNonTweenables, **kwargs)
 
@@ -1109,18 +1119,14 @@ class MultiFigure(Frame):
             len_other_figures = len(other.figures)
             diff = len_self_figures - len_other_figures
 
-            target, len_target_figures = (other, len_other_figures) if diff > 0 else (self, len_self_figures)
+            target = other if diff > 0 else self
             if diff != 0:
                 # Temporarily extend the figure list of target with copies of
                 # target's subfigures
 
                 # Generate the sorted pool of indices from which
                 # subfigure copies are allowed to be drawn.
-                subpool = sorted(target._getSubpoolIndices())
-                if len(subpool) == 0:
-                    subpool = range(len_target_figures)
-                else:
-                    subpool = sorted(subpool)
+                subpool = target._parseSubpool()
 
                 # Make the copies and insert them uniformly
                 # amongst the original subfigures they came from.
