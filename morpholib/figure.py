@@ -1582,7 +1582,7 @@ class Actor(object):
     #     self.timeline[f] = figure
     #     self.keyIDs.insert(1+listfloor(self.keyIDs, f), f)
 
-    # Replace a keyfig with a different figure.
+    # Replace a keyfigure with a different figure.
     # Throws error if specified keyID is not in the timeline.
     # (That's the only difference between it and newkey() )
     def replacekey(self, f, figure, *args, **kwargs):
