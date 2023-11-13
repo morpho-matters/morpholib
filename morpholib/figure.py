@@ -1486,9 +1486,13 @@ class Actor(object):
     # keyfigure immediately preceding the newly created keyfigure
     # will have its static attribute set to True, meaning when played,
     # the actor will jump instantly to the newly created keyfigure
-    # and won't do any tweening.
+    # and won't do any tweening. However, `instant=True` will be
+    # ignored if a keyfigure already exists at the given frame.
     def newkey(self, f, figure=None, *, seamless=True, instant=False):
         f = round(f)
+
+        if f in self.timeline:
+            instant = False
 
         if figure is None:
             # Default new keyfigure is given by tweening.
