@@ -92,7 +92,7 @@ def ARGB32(RGBA):
     array[:,:3] *= array[:,3:]
 
     # Convert into ints
-    array = np.array(np.round(255*array), dtype="uint32")
+    array = np.array(255*array+0.5, dtype="uint32")
 
     # Convert into an array of ARGB values
     A = array[:,3] << 24
