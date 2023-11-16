@@ -135,6 +135,9 @@ class Text(BackgroundBoxFigure):
         self.NonTweenable("font", font if font is not None else defaultFont)
         self.NonTweenable("bold", bold)
         self.NonTweenable("italic", italic)
+        # Indicates whether the text figure is meant to be invisible
+        # whitespace. Mainly used to make space() function work.
+        self.NonTweenable("_isWhitespace", False)
         # self.text = text
         # self.font = font if font is not None else defaultFont
         # self.bold = bold
@@ -376,8 +379,8 @@ class Text(BackgroundBoxFigure):
             )
 
     def draw(self, camera, ctx):
-        # Do nothing if size less than 1.
-        if self.size < 1:
+        # Do nothing if whitespace or if size is less than 1.
+        if self._isWhitespace or self.size < 1:
             return
 
         view = camera.view
@@ -1694,7 +1697,7 @@ class SpaceParagraphPhys(SpaceParagraph):
 # A rough way to provide a one-off space between two clauses
 # in a paragraph figure.
 def space(**kwargs):
-    return Text("..", alpha=0).set(**kwargs)
+    return Text("..", alpha=0).set(**kwargs, _isWhitespace=True)
 
 # Adds the special underline character "\u0332" after every
 # character in a string. Can be used as part of defining a
