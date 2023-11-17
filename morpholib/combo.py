@@ -231,13 +231,18 @@ TFrame = TransformableFrame  # Alias
 class AlignableTFrame(TransformableFrame, AlignableFigure):
     # Align the origins of a subset of subfigures.
     # Behaves the same as alignOrigin(), but takes an additional
-    # keyword-only input `select` in which you can specify
-    # which subfigures to act on using the same syntax as sub[] and
-    # select[] use. By default it's all subfigures.
+    # input `select` in which you can specify which subfigures to act
+    # on using the same syntax as sub[] and select[] use. By default
+    # it's all subfigures.
     #
-    # Note that for this method to work, each subfigure must implement
-    # an alignOrigin() method.
-    def subalignOrigin(self, align, *args, select=sel[:], **kwargs):
+    # To work reliably, each subfigure should be an instance of
+    # AlignableFigure (such as Paths and Splines, though ironically
+    # not Images or Text) and possess the transformation attributes
+    # `origin`, `rotation`, `transform`.
+    #
+    # Any additional inputs supplied to this method are passed to
+    # the subfigures' boxCoords() method.
+    def subalignOrigin(self, align, select=sel[:], *args, **kwargs):
         # Find anchor point
         subframe = self._select(select, _asFrame=True)
         # The above line is equivalent to sub[select] but it doesn't make
