@@ -471,10 +471,14 @@ def figureGrid(figures, *,
         else:
             figures = list(figures) + [filler.copy() for n in range(shape[0]*shape[1] - len(figures))]
 
+    # Separate construction from subfigure assignment in case
+    # the Frame sub-type uses a weird constructor.
+    figgrid = cls()
     if isinstance(figures, dict):
-        figgrid = cls(**figures)
+        figgrid.figures = list(figures.values())
+        figgrid.setName(**figures)
     else:
-        figgrid = cls(figures)
+        figgrid.figures = figures
 
     figgrid.shape = shape
 

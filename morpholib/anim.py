@@ -602,7 +602,12 @@ class Frame(BoundingBoxFigure):
             chunks.append(self.sub[indices[n-1] : indices[n]])
         chunks.append(self.sub[indices[n]:])
 
-        return cls(chunks)
+        # Separate construction from subfigure assignment in case
+        # the Frame sub-type uses a weird constructor.
+        parts = cls()
+        parts.figures = chunks
+
+        return parts
 
     # Given a Frame of subframes generated from calling partition(),
     # combine() recombines them back into a single Frame figure
