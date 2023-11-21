@@ -8,16 +8,16 @@ class Timer(object):
     # Constructor. Initializes startTime to
     # the time of construction.
     def __init__(self):
-        self.startTime = time.time()
+        self.startTime = time.perf_counter()
 
     # Resets the timer.
     def tic(self):
-        self.startTime = time.time()
+        self.startTime = time.perf_counter()
 
     # Returns time elapsed (in seconds) since the last
     # .tic() was called.
     def toc(self):
-        return time.time() - self.startTime
+        return time.perf_counter() - self.startTime
 
 # Function waits for the condition specified by cond to be True.
 # cond is an expression given using lambda.

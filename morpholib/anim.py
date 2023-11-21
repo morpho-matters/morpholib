@@ -158,7 +158,12 @@ class _SubactionSummoner(object):
             # Create a subactor that contains a copy of the full
             # history of the nth subfigure in the film.
             subactor = morpho.Actor(type(fig))
-            subactor.timeline = {f : keyfig.figures[n].copy() for f, keyfig in film.timeline.items()}
+            # The `min()` expression here is to deal with the case
+            # where the latest keyfigure has more subfigures than a
+            # past keyfigure. In this case, the last subfigure of
+            # the past keyfigure is used to match up with the extra
+            # subfigures of the latest keyfigure.
+            subactor.timeline = {f : keyfig.figures[min(n, len(keyfig.figures)-1)].copy() for f, keyfig in film.timeline.items()}
             subactor.update()
             if n in selectedIndices:
                 # Transition is set to uniform because transitions are ignored
@@ -328,8 +333,9 @@ class Frame(BoundingBoxFigure):
     # Returned as [xmin, xmax, ymin, ymax].
     # Additional arguments are passed to the box() methods
     # of subfigures.
-    def box(self, *args, **kwargs):
-        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), self.origin)
+    def box(self, *args, raw=False, **kwargs):
+        shift = 0 if raw else self.origin
+        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), shift)
 
     # Modified because checking if the two figure lists are
     # equal via vanilla Python list equality will not work.
@@ -378,6 +384,18 @@ class Frame(BoundingBoxFigure):
             beforeFigure = len(self.figures)
         elif beforeFigure < 0:
             beforeFigure %= len(self.figures)
+
+        # # Commit the transforms of `other` if it's transformable
+        # # so that the toplevel transformations are not lost
+        # # after the merge.
+        # if isinstance(other, morpho.combo.TransformableFrame):
+        #     # Don't put the following line in:
+        #     #   other.origin = other.origin - self.origin
+        #     # It's tempting to include this line for when merging
+        #     # a Frame with a TFrame, but it will cause problems when
+        #     # merging a TFrame with another TFrame because TFrame.merge()
+        #     # calls Frame.merge()
+        #     other.commitTransforms()
 
         if not isinstance(other, morpho.Frame) and isinstance(other, morpho.Figure):
             other = type(self)([other])
@@ -517,23 +535,66 @@ class Frame(BoundingBoxFigure):
     # frm.sub[:3], frm.sub[3:6], frm.sub[6:10], frm.sub[10:]
     # in that order.
     #
+    # Negative indices will be interpreted cyclically.
+    # Index values can also be filter functions, in which
+    # case they will be converted into the indices of the first
+    # subfigures they match in the partition so far. This is done
+    # relative to subfigures that haven't been partitioned yet,
+    # so, for example, passing in two identical filter functions
+    # will result in partition points at the first match and the
+    # second match. An error is thrown if no matches are found
+    # at any point in the process.
+    #
     # Note that partition() will leave the original Frame figure
     # that called it unchanged, and will return a new Frame
     # of copies of the underlying subfigures per chunk.
     #
-    # Subfigure names currently do not transfer.
-    def partition(self, *indices):
+    # If optional keyword `relative` is set to True, the
+    # indices will be interpreted as offsets from the previous
+    # partition point in the index sequence.
+    #
+    # An optional keyword `cls` can be supplied to change
+    # the Frame subtype used in the return value. By default,
+    # it's a vanilla Frame.
+    def partition(self, *indices, relative=False, cls=None):
+        # Default Frame type to use is vanilla Frame
+        if cls is None:
+            cls = Frame
+
         if len(indices) == 0:
             return Frame([self.sub[:]])
         if len(indices) == 1 and isinstance(indices[0], Iterable):
             indices = indices[0]
 
-        # Divide any negative indices mod len(self.figures)
-        # so they will be in the correct order relative to
-        # positive indices.
+        # Convert to list if needed
+        if not isinstance(indices, list):
+            indices = list(indices)
+
+        # Preprocess any non-standard index values.
+
+        # Initialize index head. It's used to keep track of the remaining
+        # indices that haven't been accounted for in the partition yet.
+        head = 0
         for n, index in enumerate(indices):
-            if index < 0:
-                indices[n] = index % len(self.figures)
+            if callable(index):
+                # Convert any filter functions into indices
+                func = index  # Rename to make reading code easier
+                selection = listselect(self.figures[head:], func)
+                if len(selection) == 0:
+                    raise ValueError(f"Filter function {func.__name__} could not find a match in the remaining subfigures.")
+                # Grab earliest matching index (offset by n to correct for
+                # slicing self.figures above)
+                index = next(iter(selection.keys())) + head
+            elif relative and n > 0:
+                index = indices[n-1] + index
+            elif index < 0:
+                # Divide any negative indices mod len(self.figures)
+                # so they will be in the correct order relative to
+                # positive indices.
+                index = index % len(self.figures)
+            indices[n] = index
+            # Head index is taken to be 1 after the current partition point.
+            head = index + 1
 
         chunks = []
         chunks.append(self.sub[:indices[0]])
@@ -541,19 +602,28 @@ class Frame(BoundingBoxFigure):
             chunks.append(self.sub[indices[n-1] : indices[n]])
         chunks.append(self.sub[indices[n]:])
 
-        return Frame(chunks)
+        # Separate construction from subfigure assignment in case
+        # the Frame sub-type uses a weird constructor.
+        parts = cls()
+        parts.figures = chunks
+
+        return parts
 
     # Given a Frame of subframes generated from calling partition(),
-    # combine() recombines them back into a single Frame figure.
+    # combine() recombines them back into a single Frame figure
+    # and returns the result. Note that this method leaves the
+    # original Frame figure that called it unchanged.
     #
     # This method may not combine them perfectly if transformation
     # tweenables of the underlying subframes were modified
-    # (e.g. `origin`) since these will not be transferred to the
+    # (e.g. `origin`) since these may not be transferred to the
     # subfigures of those subframes.
     def combine(self):
         root = self.figures[0].copy()
         for chunk in self.figures[1:]:
-            root.merge(chunk.copy())
+            chunk = chunk.copy()
+            root.merge(chunk)
+        root.origin = self.origin
         return root
 
     # Allows you to give a name to a figure in the Frame that can
@@ -761,7 +831,7 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0, se
     # Ensure final frame really is the original final frame,
     # but with adjusted alpha
     film.fin = finalframe
-    film.fin.all.alpha = alpha
+    film.fin.select[select if select is not None else sel[:]].alpha = alpha
 
 @Frame.action
 def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0, select=None):
@@ -805,8 +875,8 @@ def rollback(frame, duration=30, atFrame=None):
         atFrame = frame.lastID()
 
     frame1 = frame.newkey(atFrame)
-    for path in frame1.figures:
-        path.static = False
+    for fig in frame1.figures:
+        fig.static = False
     frame.newendkey(duration, frame.first().copy()).visible = False
 
 # Base class for so-called "multifigures" which allow for groupings
@@ -816,11 +886,6 @@ def rollback(frame, duration=30, atFrame=None):
 # implement the MultiImage and MultiText classes which allow for a
 # primitive morphing between images and text via mutual opposite fading.
 class MultiFigure(Frame):
-
-    # If set to True, the standard fadeIn/Out() actor actions will
-    # not treat the Multifigure specially when applying the jump option.
-    # Mainly for use in derived classes like morpho.text.FancyMultiText
-    _manuallyJump = False
 
     def __init__(self, *args, **kwargs):
         # Set the "_active" attribute to False using
@@ -851,8 +916,10 @@ class MultiFigure(Frame):
         self._state["origin"].tags.add("nojump")
 
         # List of indices for subfigures that can be used for
-        # making subfigure copies as part of a tween.
-        self.NonTweenable("_subpool", set())
+        # making subfigure copies as part of a tween. This can
+        # be a specific index value, or a slice object, or a
+        # filter function, or a list of all these types.
+        self.NonTweenable("_subpool", [])
 
     @property
     def subpool(self):
@@ -860,9 +927,25 @@ class MultiFigure(Frame):
 
     @subpool.setter
     def subpool(self, value):
-        if isinstance(value, slice):
-            value = range(self.numfigs)[value]
-        self._subpool = value if type(value) is set else set(value)
+        if not isinstance(value, (list, tuple, set)):
+            # Convert into singleton list if the value is not
+            # a common sequence type.
+            value = [value]
+        self._subpool = value if type(value) is list else list(value)
+
+    # Returns a dict_keys list of the indices in the subpool
+    def _getSubpoolIndices(self):
+        return listselect(self.figures, self._subpool).keys()
+
+    # Parses the data in the `subpool` attribute and turns
+    # it into the final sorted sequence of raw indices that it
+    # represents.
+    def _parseSubpool(self):
+        subpool = sorted(self._getSubpoolIndices())
+        if len(subpool) == 0:
+            return range(len(self.figures))
+        else:
+            return sorted(subpool)
 
     def _appearsEqual(self, other, *args, compareSubNonTweenables=True, **kwargs):
         return morpho.Frame._appearsEqual(self, other, *args, compareSubNonTweenables=compareSubNonTweenables, **kwargs)
@@ -1029,7 +1112,7 @@ class MultiFigure(Frame):
     #              modified. This method will be applied to the
     #              subfigures during a tween.
     # mainMethod = The corresponding method in the MultiFigure subclass.
-    #              e.g. MultiFigure.tweenLinear. This method handles
+    #              e.g. Figure.tweenLinear. This method handles
     #              tweening all the "main" tweenables of the multifigure
     #              object itself (as opposed to subfigures), but it
     #              should NOT act on the `figures` tweenable!
@@ -1046,18 +1129,14 @@ class MultiFigure(Frame):
             len_other_figures = len(other.figures)
             diff = len_self_figures - len_other_figures
 
-            target, len_target_figures = (other, len_other_figures) if diff > 0 else (self, len_self_figures)
+            target = other if diff > 0 else self
             if diff != 0:
                 # Temporarily extend the figure list of target with copies of
                 # target's subfigures
 
                 # Generate the sorted pool of indices from which
                 # subfigure copies are allowed to be drawn.
-                subpool = {index % len_target_figures for index in target.subpool if index < len_target_figures}
-                if len(subpool) == 0:
-                    subpool = range(len_target_figures)
-                else:
-                    subpool = sorted(subpool)
+                subpool = target._parseSubpool()
 
                 # Make the copies and insert them uniformly
                 # amongst the original subfigures they came from.
@@ -1173,7 +1252,7 @@ def fadeIn(actor, duration=30, atFrame=None, jump=0, alpha=1, *,
     Frame.actions["fadeIn"](actor, duration, atFrame, jump, alpha,
         substagger=substagger, select=select, **kwargs)
     actor.fin = finalkey
-    actor.fin.all.alpha = alpha
+    actor.fin.select[select if select is not None else sel[:]].alpha = alpha
 
 @MultiFigure.action
 def fadeOut(actor, *args, substagger=0, select=None, **kwargs):
@@ -1265,6 +1344,12 @@ class StateStruct(object):
 # method, you should just use an ordinary Frame instead.
 # However, most space figures support primitives(), so you probably
 # don't need to worry about this.
+#
+# Also note that if a SpaceFrame is used in a layer which is not
+# pooling primitives, the `origin` attribute will be ignored.
+# This is the default scenario, so it's not recommended to mess
+# with SpaceFrame's `origin` attribute unless you really know
+# what you're doing.
 class SpaceFrame(Frame):
     def __init__(self, figures=None, /, **kwargs):
         if isinstance(figures, Frame):
@@ -1280,8 +1365,10 @@ class SpaceFrame(Frame):
             super().__init__(figures, **kwargs)
 
     # Space version of Frame.partition().
-    def partition(self, *args, **kwargs):
-        return SpaceFrame(Frame.partition(self, *args, **kwargs))
+    def partition(self, *args, cls=None, **kwargs):
+        if cls is None:
+            cls = SpaceFrame
+        return super().partition(*args, cls=cls, **kwargs)
 
     # Only for frames consisting only of space figures
     # (i.e. figures possessing a primitives() method and a 5 input

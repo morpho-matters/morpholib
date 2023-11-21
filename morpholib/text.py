@@ -2,8 +2,11 @@ import io
 
 import morpholib as morpho
 import morpholib.anim, morpholib.grid, morpholib.shapes
+from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
-from morpholib.tools.dev import typecastViewCtx, BoundingBoxFigure
+from morpholib.tools.dev import typecastViewCtx, typecastView, \
+    typecastWindowShape, BoundingBoxFigure, BackgroundBoxFigure, \
+    AlignableFigure
 
 import cairo
 cr = cairo
@@ -61,7 +64,7 @@ I2 = np.identity(2)
 # font = Font to use. Default: "Times New Roman"
 # bold = Boolean indicating whether to bold. Default: False
 # italic = Boolean indicating whether to use italics. Default: False
-class Text(BoundingBoxFigure):
+class Text(BackgroundBoxFigure):
     def __init__(self, text="", pos=0,
         size=64, font=None,
         bold=False, italic=False,
@@ -73,7 +76,7 @@ class Text(BoundingBoxFigure):
         # Handle Text figure derivative inputs for text.
         if isinstance(text, PText):
             raise TypeError(f"Cannot convert PText to {type(self).__name__}")
-        elif isinstance(text, MultiText):
+        elif isinstance(text, MultiTextBase):
             raise TypeError(f"Cannot convert MultiText to {type(self).__name__}")
         elif isinstance(text, Text):
             # text = text.text
@@ -109,41 +112,44 @@ class Text(BoundingBoxFigure):
             anchor_x, anchor_y = align
 
         # Create tweenables
-        pos = morpho.Tweenable("pos", pos, tags=["complex"])
-        size = morpho.Tweenable("size", size, tags=["size"])
-        anchor_x = morpho.Tweenable("anchor_x", anchor_x, tags=["scalar"])
-        anchor_y = morpho.Tweenable("anchor_y", anchor_y, tags=["scalar"])
-        _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
-        color = morpho.Tweenable("color", color, tags=["color"])
-        alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
-        background = morpho.Tweenable("background", background, tags=["color"])
-        backAlpha = morpho.Tweenable("backAlpha", backAlpha, tags=["scalar"])
-        backPad = morpho.Tweenable("backPad", backPad, tags=["scalar"])
+        self.Tweenable("pos", pos, tags=["complex"])
+        self.Tweenable("size", size, tags=["size"])
+        self.Tweenable("anchor_x", anchor_x, tags=["scalar"])
+        self.Tweenable("anchor_y", anchor_y, tags=["scalar"])
+        self.Tweenable("_transform", np.identity(2), tags=["nparray"])
+        self.Tweenable("color", color, tags=["color"])
+        self.Tweenable("alpha", alpha, tags=["scalar"])
         # CCW rotation in radians
-        rotation = morpho.Tweenable("rotation", 0, tags=["scalar"])
+        self.Tweenable("rotation", 0, tags=["scalar"])
 
         # These are the pre-transformation scale factors. These get
         # applied to the text BEFORE rotation and transform do.
         # This is mainly for use in the Multi decorator, so that
         # tweening between two texts with differing rotation parameters
         # works correctly.
-        prescale_x = morpho.Tweenable("prescale_x", 1, tags=["scalar"])
-        prescale_y = morpho.Tweenable("prescale_y", 1, tags=["scalar"])
-
-        self.update([pos, size, anchor_x, anchor_y, _transform,
-            color, alpha, background, backAlpha, backPad, rotation,
-            prescale_x, prescale_y])
+        self.Tweenable("prescale_x", 1, tags=["scalar"])
+        self.Tweenable("prescale_y", 1, tags=["scalar"])
 
         # Other attributes
         self.NonTweenable("text", text)
         self.NonTweenable("font", font if font is not None else defaultFont)
         self.NonTweenable("bold", bold)
         self.NonTweenable("italic", italic)
+        # Indicates whether the text figure is meant to be invisible
+        # whitespace. Mainly used to make space() function work.
+        self.NonTweenable("_isWhitespace", False)
         # self.text = text
         # self.font = font if font is not None else defaultFont
         # self.bold = bold
         # self.italic = italic
 
+    @property
+    def origin(self):
+        return self.pos
+
+    @origin.setter
+    def origin(self, value):
+        self.pos = value
 
     @property
     def transform(self):
@@ -161,6 +167,44 @@ class Text(BoundingBoxFigure):
     def align(self, value):
         self.anchor_x, self.anchor_y = value
 
+    # NOT IMPLEMENTED!
+    # Only for internal use by the Text class for now.
+    # Currently not meant to work for PText or other classes.
+    # Aligns origin taking into account possible non-square
+    # views.
+    def _alignOrigin(self, align, view, windowShape, *args, **kwargs):
+        # NOTE: I believe this method is fully working, but I no longer
+        # need it for its original purpose. Nevertheless, I'm keeping
+        # the code here in case we ever want to implement it (or a
+        # variant of it) in the future.
+        raise NotImplementedError
+
+        view = typecastView(view)
+        windowShape = typecastWindowShape(windowShape)
+
+        # Compute anchor point
+        anchor = self.anchorPoint(align, view, windowShape, *args, raw=True, **kwargs)
+
+        # Update align
+        self.align = align
+
+        # Move position to physical position of anchor point
+        par = morpho.pixelAspectRatioWH(view, windowShape)
+        if abs(par-1) > 1e-9:
+            # Do something special if the viewbox and window shape
+            # are not proportional to each other.
+            rotation = 0
+            transform = self._specialBoxTransform(par)
+        else:
+            rotation = self.rotation
+            transform = self.transform
+
+        rotator = cmath.exp(rotation*1j)
+        transformer = morpho.matrix.Mat(transform)
+
+        self.pos = self.pos + transformer*(rotator*anchor)
+
+        return self
 
     # def copy(self):
     #     # Do a standard figure copy first
@@ -212,9 +256,7 @@ class Text(BoundingBoxFigure):
     # Returns bounding box of the text in physical units.
     # Mainly of use internally to draw the background box.
     def box(self, *args, **kwargs):
-        a,b,c,d = self.relbox(*args, **kwargs)
-        x,y = self.pos.real, self.pos.imag
-        return [a+x, b+x, c+y, d+y]
+        return self._boxFromRelbox(*args, **kwargs)
 
     # Same as box(), but the coordinates are relative to
     # the text's position.
@@ -304,9 +346,41 @@ class Text(BoundingBoxFigure):
         self.text = textOrig
         return x_height
 
+    # Special version of _drawBackgroundBox() to deal with
+    # drawing Text background boxes in non-square views.
+    def _drawBackgroundBox(self, camera, ctx,
+            origin=None, rotation=None, transform=None,
+            *args, **kwargs):
+
+        if self.backAlpha <= 0:
+            # No need to attempt to draw invisible background box
+            return
+
+        # Infer transformation attributes if not specified.
+        if origin is None:
+            origin = self.origin
+        if rotation is None:
+            rotation = getattr(self, "rotation", 0)
+        if transform is None:
+            transform = getattr(self, "transform", I2)
+
+        view = camera.view
+        # Do something special if the viewbox and window shape
+        # are not proportional to each other.
+        par = morpho.pixelAspectRatioWH(view, ctx)
+        if abs(par-1) > 1e-9:
+            rotation = 0
+            transform = self._specialBoxTransform(par)
+        else:
+            transform = self.transform
+        BackgroundBoxFigure._drawBackgroundBox(self,
+            camera, ctx, origin, rotation, transform,
+            *args, **kwargs
+            )
+
     def draw(self, camera, ctx):
-        # Do nothing if size less than 1.
-        if self.size < 1:
+        # Do nothing if whitespace or if size is less than 1.
+        if self._isWhitespace or self.size < 1:
             return
 
         view = camera.view
@@ -341,24 +415,10 @@ class Text(BoundingBoxFigure):
         if morpho.matrix.thinHeight2x2(mat) < 1:
             return
 
-        if self.backAlpha > 0:
-            # Construct background rectangle and draw it
-            box = self.relbox(view, ctx, pad=self.backPad, raw=True)
-            rect = morpho.grid.rect(box)
-            rect.origin = self.pos
-            rect.width = 0
-            rect.fill = self.background
-            rect.alpha = self.backAlpha*self.alpha
-
-            # Do something special if the viewbox and window shape
-            # are not proportional to each other.
-            par = morpho.pixelAspectRatioWH(view, ctx)
-            if abs(par-1) > 1e-9:
-                rect._transform = self._specialBoxTransform(par)
-            else:
-                rect.rotation = self.rotation
-                rect.transform = self.transform
-            rect.draw(camera, ctx)
+        self._drawBackgroundBox(
+            camera, ctx, self.pos, self.rotation, self.transform,
+            camera, ctx
+            )
 
         ctx.save()
 
@@ -670,6 +730,10 @@ class PText(Text):
 
         return txt
 
+    # PText is physical and so doesn't need the special
+    # _drawBackgroundBox() method.
+    _drawBackgroundBox = BackgroundBoxFigure._drawBackgroundBox
+
     def draw(self, camera, ctx):
         self.makeText(camera.view, ctx).draw(camera, ctx)
 
@@ -686,7 +750,7 @@ Ptext = PText  # Alias is maybe easier to type
 # This was originally developed to solve the problem of decorating
 # tweenPivot() because it is not symmetric in swapping
 # self with other.
-def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, *, reverseMethod=None):
+def Multi(imageMethod, mainMethod=morpho.Figure.tweenLinear, *, reverseMethod=None):
     if reverseMethod is None:
         reverseMethod = imageMethod
 
@@ -797,14 +861,7 @@ def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, *, reverseMeth
     return wrapper
 
 
-# Text class that can support drawing multiple Text figures at once.
-# Useful for having one text morph into another text.
-#
-# See "morpho.graphics.MultiImage" for more info on the basic idea here.
-#
-# Bottom line: It's just like Text except you can tween between different
-# underlying text strings.
-class MultiText(morpho.MultiFigure):
+class MultiTextBase(morpho.MultiFigure):
     _baseFigure = Text
 
     def __init__(self, text="", *args, **kwargs):
@@ -843,19 +900,12 @@ class MultiText(morpho.MultiFigure):
         #         newfig = fig.images[0].copy()
         #         self.figures[n] = newfig
 
-    @typecastViewCtx
-    def relbox(self, view, ctx, pad=0):
-        return padbox(totalBox(subfig.box(view, ctx) for subfig in self.figures), pad)
-
-    def box(self, *args, **kwargs):
-        return shiftBox(self.relbox(*args, **kwargs), self.origin)
-
     relcorners = Text.relcorners
 
     ### TWEEN METHODS ###
 
-    tweenLinear = Multi(Text.tweenLinear, morpho.MultiFigure.tweenLinear)
-    tweenSpiral = Multi(Text.tweenSpiral, morpho.MultiFigure.tweenSpiral)
+    tweenLinear = Multi(Text.tweenLinear, morpho.Figure.tweenLinear)
+    tweenSpiral = Multi(Text.tweenSpiral, morpho.Figure.tweenSpiral)
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):
@@ -869,9 +919,37 @@ class MultiText(morpho.MultiFigure):
 
         return pivot
 
-# Physical version of the MultiText class.
-# See MultiText and PText for more info.
-class MultiPText(MultiText):
+# Text class that can support drawing multiple Text figures at once.
+# Useful for having one text morph into another text.
+#
+# See "morpho.graphics.MultiImage" for more info on the basic idea here.
+#
+# Bottom line: It's just like Text except you can tween between different
+# underlying text strings.
+@TransformableFrame.modifyFadeActions
+class MultiText(MultiTextBase, TransformableFrame):
+    def __init__(self, text="", pos=0, *args, **kwargs):
+        super().__init__(text, *args, **kwargs)
+        self.origin = pos
+
+    @property
+    def pos(self):
+        return self.origin
+
+    @pos.setter
+    def pos(self, value):
+        self.origin = value
+
+    @typecastViewCtx
+    def relbox(self, *args, raw=False, **kwargs):
+        return shiftBox(self.box(*args, raw=raw, **kwargs), -self.origin if not raw else 0)
+
+    @typecastViewCtx
+    def box(self, view, ctx, *args, **kwargs):
+        return super().box(view, ctx, *args, **kwargs)
+
+
+class MultiPTextBase(MultiTextBase):
     _baseFigure = PText
 
     def relbox(self, pad=0, *, raw=False):
@@ -890,6 +968,22 @@ class MultiPText(MultiText):
             spline.commitTransforms()
         finalspline.origin = self.figures[0].pos
         return finalspline
+
+# Physical version of the MultiText class.
+# See MultiText and PText for more info.
+@TransformableFrame.modifyFadeActions
+class MultiPText(MultiPTextBase, TransformableFrame):
+    def __init__(self, text="", pos=0, *args, **kwargs):
+        super().__init__(text, *args, **kwargs)
+        self.origin = pos
+
+    @property
+    def pos(self):
+        return self.origin
+
+    @pos.setter
+    def pos(self, value):
+        self.origin = value
 
 MultiPtext = MultiPText
 
@@ -1084,7 +1178,7 @@ SpacePtext = SpacePText
 
 # Multi version of the SpaceText class.
 # See "SpaceText" and "MultiText" for more info.
-class SpaceMultiText(MultiText):
+class SpaceMultiText(MultiTextBase, morpho.SpaceFrame):
     _baseFigure = SpaceText
 
     def __init__(self, text="", *args, **kwargs):
@@ -1092,7 +1186,7 @@ class SpaceMultiText(MultiText):
             textlist = [self._baseFigure(text, *args, **kwargs)]
         elif isinstance(text, list) or isinstance(text, tuple):
             textlist = [(self._baseFigure(item, *args, **kwargs) if isinstance(item, str) else item) for item in text]
-        elif isinstance(text, MultiText):
+        elif isinstance(text, MultiTextBase):
             textlist = [self._baseFigure(item, *args, **kwargs) for item in text.figures]
         else:
             textlist = [self._baseFigure(text, *args, **kwargs)]
@@ -1106,6 +1200,10 @@ class SpaceMultiText(MultiText):
         # If supplied a figure input, copy its meta-settings
         if isinstance(text, morpho.Figure):
             self._updateSettings(text)
+
+    # box() method for SpaceMultiText is currently unimplemented.
+    def box(self, *args, **kwargs):
+        raise NotImplementedError("box() method is currently unimplemented for SpaceMultiText.")
 
     def primitives(self, camera):
         primlist = []
@@ -1223,17 +1321,7 @@ def formatNumber(*args, **kwargs):
 
 ### GROUPS AND PARAGRAPHS ###
 
-# Fancier MultiText figure that has some global attributes
-# that affect the entire group. These attributes include
-# pos, anchor_x/y, alpha, rotation, transform, background,
-# backAlpha, backPad.
-#
-# This class is mainly for internal use by the paragraph()
-# function, and you probably don't want to use it directly.
-# If you just want something like a morphable single Text
-# figure, use vanilla MultiText instead.
-class FancyMultiText(MultiText):
-    _manuallyJump = True
+class FancyMultiTextBase(MultiTextBase):
 
     def __init__(self, text="", *args, **kwargs):
 
@@ -1244,15 +1332,13 @@ class FancyMultiText(MultiText):
         #     self._nontweenables = textcopy._nontweenables
         #     self._updateSettings(textcopy)
         #     return
-        if isinstance(text, MultiText):
+        if isinstance(text, MultiTextBase):
             # text = text.figures
             super().__init__()
             self._updateFrom(text)
         else:
             super().__init__(text, *args, **kwargs)
 
-        self.Tweenable("pos", 0, tags=["complex", "position"])
-        # del self._state["origin"]  # Remove origin tweenable
         self.Tweenable("anchor_x", 0, tags=["scalar"])
         self.Tweenable("anchor_y", 0, tags=["scalar"])
         self.Tweenable("alpha", 1, tags=["scalar"])
@@ -1261,6 +1347,17 @@ class FancyMultiText(MultiText):
         self.Tweenable("background", (1,1,1), tags=["color"])
         self.Tweenable("backAlpha", 0, tags=["scalar"])
         self.Tweenable("backPad", 0, tags=["scalar"])
+        # Dummy value for _refbox is assigned because view and windowShape
+        # are needed to compute it.
+        self.Tweenable("_refbox", [-1,1,-1,1], tags=["scalar", "list"])
+
+    @property
+    def pos(self):
+        return self.origin
+
+    @pos.setter
+    def pos(self, value):
+        self.origin = value
 
     @property
     def align(self):
@@ -1278,109 +1375,15 @@ class FancyMultiText(MultiText):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
-    # # Special getattr() returns the common value of the attribute
-    # # `name` across all component figures, if `name` is not found
-    # # as a valid attribute of self.
-    # def __getattr__(self, name):
-    #     # First try using the Frame's built-in getattr()
-    #     # which should grab any valid attribute returns in the
-    #     # main class.
-    #     try:
-    #         return morpho.Frame.__getattr__(self, name)
-    #     except AttributeError:
-    #         pass
+    def partition(self, *args, **kwargs):
+        raise NotImplementedError("partition() is not supported for FancyMultiText figures.")
 
-    #     # If you got to this point in the code, it means the
-    #     # Frame's getattr() failed.
+    def combine(self, *args, **kwargs):
+        raise NotImplementedError("combine() is not supported for FancyMultiText figures.")
 
-    #     # If figure list is empty, there's nothing more we can do, so
-    #     # attempt to call the superclass's getattr() again, and this
-    #     # time actually throw the error!
-    #     if len(self.figures) == 0:
-    #         # This line is guaranteed to fail because it failed
-    #         # in the protected clause above. However, this time
-    #         # I WANT the error to be thrown!
-    #         # return super().__getattr__(name)
-    #         return morpho.Frame.__getattr__(self, name)
-
-    #     # Go thru the (non-empty) figure list and get the common
-    #     # value of attribute `name` if it exists AND is the same
-    #     # across all component figures.
-    #     for n,fig in enumerate(self.figures):
-    #         try:
-    #             value = getattr(fig, name)
-    #         except AttributeError:
-    #             raise AttributeError(f"Attribute `{name}` not found in some component figures.")
-    #         if n > 0 and not isequal(value, oldValue):
-    #             raise AttributeError(f"Attribute `{name}` has different values across component figures.")
-    #         oldValue = value
-
-    #     return value
-
-    # # Modified setattr() first checks if the requested attribute already
-    # # exists as a findable attribute in the main class. If it is, it just
-    # # sets it as normal. Otherwise it attempts to set the attribute
-    # # on all component figures in the figure list. If it fails for the
-    # # first component figure, it treats the attribute as a new attribute
-    # # to be assigned to self.
-    # def __setattr__(self, name, value):
-    #     # Set the attribute as normal if the MultiFigure is not active yet,
-    #     # or it's a concrete attribute of the main class,
-    #     # or it's a tweenable in the main class.
-
-    #     if not self._active:
-    #         morpho.Figure.__setattr__(self, name, value)
-    #         return
-
-    #     try:
-    #         # Attempt to access attribute `name` according to
-    #         # both of the Figure class's getattrs.
-    #         # This should handle getting both regular attributes
-    #         # and tweenables / intangible attributes
-    #         try:
-    #             morpho.Figure.__getattribute__(self, name)
-    #         except AttributeError:
-    #             morpho.Figure.__getattr__(self, name)
-    #         selfHasName = True
-    #     except AttributeError:
-    #         selfHasName = False
-    #     if selfHasName:
-    #         morpho.Figure.__setattr__(self, name, value)
-    #     # If the figure list is empty, just set the attribute to self
-    #     # normally.
-    #     elif len(self.figures) == 0:
-    #         morpho.Figure.__setattr__(self, name, value)
-    #     # Attempt to modify (existent) attributes of all the component
-    #     # figures to the specified value
-    #     else:
-    #         try:
-    #             # This flag becomes True if ANY component figure's
-    #             # attributes get modified in the following loop
-    #             modifiedOneFigure = False
-    #             for fig in self.figures:
-    #                 # See if it already exists as an attribute
-    #                 # of the component figure.
-    #                 getattr(fig, name)
-
-    #                 # If you got here, we didn't get an attribute error,
-    #                 # so it should be a real attribute! Go ahead and set it!
-    #                 fig.__setattr__(name, value)
-
-    #                 modifiedOneFigure = True
-
-    #         # Got an attribute error, so the given attribute isn't
-    #         # even in the first member figure. Therefore, just assign it
-    #         # as a regular (but new) attribute of the main class.
-    #         except AttributeError:
-    #             # Some components were modified, but others couldn't be.
-    #             # This situation can't be handled, so throw error.
-    #             if modifiedOneFigure:
-    #                 raise AttributeError(f"Some component figures have `{name}` attribute and others don't!")
-    #             # The very first component figure failed to have `name` as
-    #             # an attribute, so assume `name` is a new attribute name
-    #             # intended for the main class object, self.
-    #             else:
-    #                 morpho.Figure.__setattr__(self, name, value)
+    def updateReferenceBox(self, *args, **kwargs):
+        self._refbox = self.box(*args, raw=True, **kwargs)
+        return self
 
     # General version of totalBox() that can be used to implement totalBox()
     # for both FancyMultiText and FancyMultiPText.
@@ -1417,9 +1420,11 @@ class FancyMultiText(MultiText):
 
     # Returns the physical bounding box of the whole text group as
     # [xmin, xmax, ymin, ymax].
-    def box(self, *args, **kwargs):
+    def box(self, *args, raw=False, **kwargs):
         boxdata = self.totalBox(*args, _verbose=True, **kwargs)
         rawbox = boxdata["rawbox"]
+        if raw:
+            return rawbox
         bigbox = boxdata["bigbox"]
 
         left, right, bottom, top = rawbox
@@ -1429,7 +1434,7 @@ class FancyMultiText(MultiText):
         alignShift = complex(-self.anchor_x*width/2, -self.anchor_y*height/2)
         alignShift = morpho.matrix.Mat(self._transform) * (cmath.exp(self.rotation*1j)*alignShift)
 
-        return shiftBox(bigbox, alignShift+self.pos+self.origin)
+        return shiftBox(bigbox, alignShift+self.origin)
 
     corners = Text.corners
 
@@ -1450,11 +1455,9 @@ class FancyMultiText(MultiText):
         for fig in self.figures:
             fig.pos -= center
 
-    def _makeFrameFromBoxes(self, boxes, *, ignoreBackground=False):
-        left = min(box[0] for box in boxes)
-        right = max(box[1] for box in boxes)
-        bottom = min(box[2] for box in boxes)
-        top = max(box[3] for box in boxes)
+    def makeFrame(self, *args, ignoreBackground=False, **kwargs):
+        # Reference box for use in calculating alignment parameters
+        left, right, bottom, top = self._refbox
 
         width = right - left
         height = top - bottom
@@ -1470,56 +1473,45 @@ class FancyMultiText(MultiText):
         figs = []
         rot = cmath.exp(1j*self.rotation) if self.rotation != 0 else 1
         mat = 1 if np.array_equal(self._transform, I2) else morpho.matrix.Mat(self._transform)
+        maxSubalpha = 0  # Will eventually hold the max subfigure alpha value for use later
         for fig in self.figures:
+            maxSubalpha = max(maxSubalpha, fig.alpha)
             fig = fig.copy()
             fig.pos += dz
             fig.pos = mat*(rot*(fig.pos))
-            fig.pos += self.pos
+            fig.pos += self.origin
             fig.alpha *= self.alpha
             fig.rotation += self.rotation
             fig._transform = self._transform @ fig._transform
             figs.append(fig)
 
         if self.backAlpha > 0 and not ignoreBackground:
-            rect = morpho.grid.rect(
-                [left-self.backPad+dx, right+self.backPad+dx, bottom-self.backPad+dy, top+self.backPad+dy]
-                )
-            rect.origin = self.pos
+            rect = morpho.grid.rect(padbox(shiftBox(self.box(*args, raw=True, **kwargs), complex(dx,dy)), self.backPad))
+            rect.origin = self.origin
             rect.width = 0
             rect.fill = self.background
-            rect.alpha = self.backAlpha*self.alpha
+            rect.alpha = self.backAlpha*self.alpha*maxSubalpha
             rect.rotation = self.rotation
             rect._transform = self._transform
 
             frm = morpho.Frame([rect, MultiText(figs)])
-            frm.origin = self.origin
             return frm
 
         return MultiText(figs)
 
-    def makeFrame(self, *args, **kwargs):
-        boxes = [fig.box(*args, **kwargs) for fig in self.figures]
-
-        return self._makeFrameFromBoxes(boxes)
-
     def draw(self, camera, ctx):
-        # NOTE: I *think* `raw=True` can be removed here
-        # which would allow for correct rendering of background
-        # boxes for paragraphs that contain transformed subfigures.
-        # However, I'm not 100% sure yet it's safe to remove
-        # `raw=True`, so that's why it's still here.
-        self.makeFrame(camera, ctx, raw=True).draw(camera, ctx)
+        self.makeFrame(camera, ctx).draw(camera, ctx)
 
     ### TWEEN METHODS ###
 
     @morpho.TweenMethod
     def tweenLinear(self, other, t):
-        tw = MultiText.tweenLinear(self, other, t)
+        tw = MultiTextBase.tweenLinear(self, other, t)
         return tw
 
     @morpho.TweenMethod
     def tweenSpiral(self, other, t):
-        tw = MultiText.tweenSpiral(self, other, t)
+        tw = MultiTextBase.tweenSpiral(self, other, t)
         return tw
 
     @classmethod
@@ -1537,18 +1529,22 @@ class FancyMultiText(MultiText):
 
         return pivot
 
-@FancyMultiText.action
-def fadeIn(*args, **kwargs):
-    return morpho.Figure.actions["fadeIn"](*args, **kwargs)
-
-@FancyMultiText.action
-def fadeOut(*args, **kwargs):
-    return morpho.Figure.actions["fadeOut"](*args, **kwargs)
-
-@FancyMultiText.action
-def rollback(*args, **kwargs):
-    return morpho.Figure.actions["rollback"](*args, **kwargs)
-
+# Fancier MultiText figure that has some global attributes
+# that affect the entire group. These attributes include
+# pos, anchor_x/y, alpha, rotation, transform, background,
+# backAlpha, backPad.
+#
+# This class is mainly for internal use by the paragraph()
+# function, and you probably don't want to use it directly.
+# If you just want something like a morphable single Text
+# figure, use vanilla MultiText instead.
+@TransformableFrame.modifyFadeActions
+class FancyMultiText(FancyMultiTextBase):
+    pass
+    # NOTE: This originally also inherited from TransformableFrame,
+    # but commitTransforms() didn't work correctly (I think because
+    # of how toplevel `align` interacts with it). Correct this in the
+    # future.
 
 # Fancy version of MultiPText.
 # See FancyMultiText and MultiPText for more info.
@@ -1570,11 +1566,6 @@ class FancyMultiPText(FancyMultiText):
 
     corners = PText.corners
 
-    def makeFrame(self, *args, ignoreBackground=False, **kwargs):
-        boxes = [fig.box(*args, **kwargs) for fig in self.figures]
-
-        return self._makeFrameFromBoxes(boxes, ignoreBackground=ignoreBackground)
-
     # EXPERIMENTAL! May be changed in a future version!
     # Converts the text figure into an equivalent MultiSpline figure.
     # The origin attribute of the MultiSpline will match the pos
@@ -1582,39 +1573,38 @@ class FancyMultiPText(FancyMultiText):
     def toSpline(self):
         multispline = MultiPText(self.makeFrame(raw=True, ignoreBackground=True).figures).toSpline()
         for spline in multispline.figures:
-            spline.origin += multispline.origin - self.pos
+            spline.origin += multispline.origin - self.origin
             spline.commitTransforms()
-        multispline.origin = self.pos
+        multispline.origin = self.origin
         return multispline
 
     def draw(self, camera, ctx):
-        # NOTE: I *think* `raw=True` can be removed here
-        # which would allow for correct rendering of background
-        # boxes for paragraphs that contain transformed subfigures.
-        # However, I'm not 100% sure yet it's safe to remove
-        # `raw=True`, so that's why it's still here.
-        self.makeFrame(raw=True).draw(camera, ctx)
+        self.makeFrame().draw(camera, ctx)
 
 FancyMultiPtext = FancyMultiPText
 
 
 # Special class used to render 3D paragraphs.
 # Mainly for internal use by the paragraph3d() function.
-class SpaceParagraph(FancyMultiText):
+class SpaceParagraph(FancyMultiTextBase, morpho.SpaceFrame):
     _baseMultiFigure = FancyMultiText
 
     def __init__(self, text="", *args, **kwargs):
 
-        if isinstance(text, FancyMultiText):
+        if isinstance(text, FancyMultiTextBase):
             super().__init__()
             self._updateFrom(text)
         else:
             super().__init__(text, *args, **kwargs)
 
         # Redefine pos tweenable to be 3D.
-        self.Tweenable("_pos", morpho.matrix.array(self.pos), tags=["nparray", "fimage", "3d"])
-        self._state.pop("pos")
+        self.Tweenable("_pos", morpho.matrix.array(self.origin), tags=["nparray", "fimage", "3d"])
         self.Tweenable("_orient", np.identity(3), tags=["nparray", "orient"])
+
+        # Reset origin attribute because it has already been accounted for
+        # in setting the `_pos` tweenable and in SpaceParagraphs, `pos` and
+        # `origin` play different roles.
+        self.origin = 0
 
     @property
     def pos(self):
@@ -1658,7 +1648,7 @@ class SpaceParagraph(FancyMultiText):
         # del txt._state["_pos"]
         # del txt._state["_orient"]
         # txt.text = self.text
-        txt.pos = (pos3d[0] + 1j*pos3d[1]).tolist()
+        txt.origin += (pos3d[0] + 1j*pos3d[1]).tolist()
         txt.zdepth = pos3d[2]
         # txt.size = self.size
         txt._transform = (orient @ self.orient)[:2,:2] @ self._transform
@@ -1684,6 +1674,17 @@ class SpaceParagraph(FancyMultiText):
         # Use default SpaceFigure draw()
         morpho.SpaceFigure.draw(self, camera, ctx)
 
+@SpaceParagraph.action
+def fadeIn(*args, **kwargs):
+    return morpho.Figure.actions["fadeIn"](*args, **kwargs)
+
+@SpaceParagraph.action
+def fadeOut(*args, **kwargs):
+    return morpho.Figure.actions["fadeOut"](*args, **kwargs)
+
+# @SpaceParagraph.action
+# def rollback(*args, **kwargs):
+#     return morpho.Figure.actions["rollback"](*args, **kwargs)
 
 # Physical version of SpaceParagraph.
 # Mainly for internal use by paragraph3dPhys().
@@ -1696,7 +1697,18 @@ class SpaceParagraphPhys(SpaceParagraph):
 # A rough way to provide a one-off space between two clauses
 # in a paragraph figure.
 def space(**kwargs):
-    return Text("..", alpha=0).set(**kwargs)
+    return Text("..", alpha=0).set(**kwargs, _isWhitespace=True)
+
+# Adds the special underline character "\u0332" after every
+# character in a string. Can be used as part of defining a
+# Text object to add underlining to it:
+#   Text(underline("Hello world!"))
+# Note that underlines may break partially across spaces
+# and may otherwise incorrectly render as this is a somewhat
+# hack of an implementation. Use at your own risk and don't
+# rely on it!
+def underline(string):
+    return string.replace("", "\u0332")[1:]
 
 # Takes a collection of Text figures and returns a FancyMultiText
 # figure that concatenates all the individual Text figures.
@@ -1898,14 +1910,19 @@ def conformText(textarray):
 #       Default: None (ignore and just use given xgap value)
 # rotation = Rotation angle of entire paragraph about anchor point
 #            Default: 0 radians
+# transform = Transformation matrix of entire paragraph about
+#             anchor point. Default: identity
 # **kwargs = Any other keyword arguments will be applied to the
 #            every component Text figure:
 #            txt.set(**kwargs) for each txt in the textarray
 def paragraph(textarray, view, windowShape=None,
     pos=0, anchor_x=0, anchor_y=0, alpha=1, xgap=0, ygap=0,
     *, flush=0, align=None, gap=None, xbuf=None, ybuf=None,
-    rotation=0, background=(1,1,1), backAlpha=0, backPad=0,
+    rotation=0, transform=None,
+    background=(1,1,1), backAlpha=0, backPad=0,
     **kwargs):
+
+    if transform is None: transform = np.eye(2)
 
     # If windowShape unspecified, try to infer it
     # from the given `view` value.
@@ -1994,7 +2011,7 @@ def paragraph(textarray, view, windowShape=None,
     yPositions = [0]
     rowBoxes = []
     for i, row in enumerate(textarray[:-1]):
-        boxes = [fig.box(*camctx, raw=True) for fig in row]
+        boxes = [shiftBox(fig.box(*camctx, raw=True), fig.pos) for fig in row]
         rowBoxes.append(boxes)
         rowHeight = max(box[-1]-box[-2] for box in boxes)
         yPositions.append(yPositions[-1]-ygaps[i]-rowHeight)
@@ -2002,7 +2019,7 @@ def paragraph(textarray, view, windowShape=None,
     yPositions = [y+adjust for y in yPositions]
 
     # Append final row of boxes
-    rowBoxes.append([fig.box(*camctx, raw=True) for fig in textarray[-1]])
+    rowBoxes.append([shiftBox(fig.box(*camctx, raw=True), fig.pos) for fig in textarray[-1]])
 
     # Create rows
     rows = []
@@ -2023,11 +2040,13 @@ def paragraph(textarray, view, windowShape=None,
         parag = FancyMultiPText(figs)
     else:
         parag = FancyMultiText(figs)
+    parag.updateReferenceBox(*camctx)
     parag.pos = pos
     parag.anchor_x = anchor_x
     parag.anchor_y = anchor_y
     parag.alpha = alpha
     parag.rotation = rotation
+    parag._transform = transform
     parag.background = background
     parag.backAlpha = backAlpha
     parag.backPad = backPad

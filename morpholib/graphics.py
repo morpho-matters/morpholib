@@ -3,6 +3,7 @@ import morpholib as morpho
 import morpholib.anim
 import morpholib.color
 import morpholib.grid
+from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import BoundingBoxFigure
 
@@ -104,6 +105,14 @@ class Image(BoundingBoxFigure):
         self.NonTweenable("linked", True)
         self.NonTweenable("aspectRatioWH", self.width/self.height)
         self.NonTweenable("physical", True)  # Are width and height in physical units, or pixel?
+
+    @property
+    def origin(self):
+        return self.pos
+
+    @origin.setter
+    def origin(self, value):
+        self.pos = value
 
     # The "width" and "height" attrs are set up as properties,
     # because we may need to dynamically modify one in response
@@ -211,7 +220,7 @@ class Image(BoundingBoxFigure):
             self.imageSurface = None
         elif isinstance(source, str):
             self.imageSurface = cr.ImageSurface.create_from_png(source)
-        elif isinstance(source, Image) or isinstance(source, MultiImage):
+        elif isinstance(source, Image) or isinstance(source, MultiImageBase):
             self.imageSurface = source.imageSurface
         elif isinstance(source, cairo.ImageSurface):
             self.imageSurface = source
@@ -276,13 +285,11 @@ class Image(BoundingBoxFigure):
         self.align = [2*X/self.imageWidth-1, 2*Y/self.imageHeight-1]
 
     # Returns the bounding box (with possible padding) of the image.
-    # If keyword `raw` is set to True, it will ignore `rotation`,
-    # `transform`, and `scale` attributes.
+    # If keyword `raw` is set to True, it will ignore `origin`,
+    # `rotation`, `transform`, and `scale` attributes.
     # Also assumes the image has `physical` set to True.
     def box(self, *args, **kwargs):
-        a,b,c,d = self.relbox(*args, **kwargs)
-        x,y = self.pos.real, self.pos.imag
-        return [a+x, b+x, c+y, d+y]
+        return self._boxFromRelbox(*args, **kwargs)
 
     # Same as box(), but the coordinates are relative to the image's
     # physical position.
@@ -726,7 +733,7 @@ Spaceimage = SpaceImage  # Synonym for SpaceImage for people who hate camel case
 # This was originally developed to solve the problem of decorating
 # tweenPivot() because it is not symmetric in swapping
 # self with other.
-def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, *, reverseMethod=None):
+def Multi(imageMethod, mainMethod=morpho.Figure.tweenLinear, *, reverseMethod=None):
     if reverseMethod is None:
         reverseMethod = imageMethod
 
@@ -803,22 +810,8 @@ def Multi(imageMethod, mainMethod=morpho.MultiFigure.tweenLinear, *, reverseMeth
 selfmethods = ["rescaleAspectRatioWH", "scaleByWidth", "scaleByHeight",
     "rescaleWidth", "rescaleHeight", "newSource", "link", "unlink"]
 
-# Image class that can support drawing multiple images at once. Useful for having
-# one image morph into another image.
-#
-# It can be used very similarly to the vanilla Image class. But in reality, it
-# is internally more like a subclass of Frame. Contains at attribute called
-# "images" which is a list of vanilla Image instances that should be drawn.
-# However, attempting to access or modify an attribute that is NOT a part of
-# MultiImage will cause it to attempt to access/modify the attribute as part of
-# the first figure inside the "images" list. This allows you to syntactically treat
-# MultiImage as if it is a single Image, because you will mostly just be modifying
-# the first image in the "images" list.
-#
-# Bottom line: It's just like Image except you can tween between different
-# underlying image files.
 @morpho.MultiFigure._modifyMethods(selfmethods, Image, morpho.MultiFigure._returnOrigCaller)
-class MultiImage(morpho.MultiFigure):
+class MultiImageBase(morpho.MultiFigure):
 
     def __init__(self, source=None):
         if source is None:
@@ -851,8 +844,8 @@ class MultiImage(morpho.MultiFigure):
 
     ### TWEEN METHODS ###
 
-    tweenLinear = Multi(Image.tweenLinear, mainMethod=morpho.MultiFigure.tweenLinear)
-    tweenSpiral = Multi(Image.tweenSpiral, mainMethod=morpho.MultiFigure.tweenSpiral)
+    tweenLinear = Multi(Image.tweenLinear, mainMethod=morpho.Figure.tweenLinear)
+    tweenSpiral = Multi(Image.tweenSpiral, mainMethod=morpho.Figure.tweenSpiral)
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):
@@ -866,13 +859,37 @@ class MultiImage(morpho.MultiFigure):
 
         return pivot
 
+# Image class that can support drawing multiple images at once. Useful for having
+# one image morph into another image.
+#
+# It can be used very similarly to the vanilla Image class. But in reality, it
+# is internally more like a subclass of Frame. Contains at attribute called
+# "images" which is a list of vanilla Image instances that should be drawn.
+# However, attempting to access or modify an attribute that is NOT a part of
+# MultiImage will cause it to attempt to access/modify the attribute as part of
+# the first figure inside the "images" list. This allows you to syntactically treat
+# MultiImage as if it is a single Image, because you will mostly just be modifying
+# the first image in the "images" list.
+#
+# Bottom line: It's just like Image except you can tween between different
+# underlying image files.
+@TransformableFrame.modifyFadeActions
+class MultiImage(MultiImageBase, TransformableFrame):
+    @property
+    def pos(self):
+        return self.origin
+
+    @pos.setter
+    def pos(self, value):
+        self.origin = value
+
 # Alternative name
 MultImage = MultiImage
 
 
 # Multi version of the SpaceImage class.
 # See "SpaceImage" and "MultiImage" for more info.
-class SpaceMultiImage(MultiImage):
+class SpaceMultiImage(MultiImageBase, morpho.SpaceFrame):
     def __init__(self, source=None):
         if source is None:
             images = []
@@ -884,12 +901,6 @@ class SpaceMultiImage(MultiImage):
         # Create frame figure
         super().__init__(images)
 
-    def primitives(self, camera): # orient=np.identity(3), focus=np.zeros(3)):
-        primlist = []
-        for img in self.images:
-            primlist.extend(img.primitives(camera))
-
-        return primlist
 
     def draw(self, camera, ctx): #, orient=np.identity(3), focus=np.zeros(3)):
         for img in self.primitives(camera):

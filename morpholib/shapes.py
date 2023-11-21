@@ -3,9 +3,12 @@ import morpholib as morpho
 import morpholib.tools.color, morpholib.grid, morpholib.matrix
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    totalBox, shiftBox, translateArrayUnderTransforms, handleBoxTypecasting
+    BackgroundBoxFigure, AlignableFigure, totalBox, shiftBox, \
+    translateArrayUnderTransforms, handleBoxTypecasting, typecastView, \
+    typecastWindowShape, findOwnerByType
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
+from morpholib.combo import TransformableFrame, AlignableTFrame
 
 from morpholib import object_hasattr
 
@@ -14,7 +17,8 @@ from morpholib import object_hasattr
 from morpholib.grid import Polygon, SpacePolygon, Spacepolygon, \
     Path, SpacePath, Spacepath, MultiPath, Multipath, MultiPath3D, \
     MultiPath3d, Arrow, SpaceArrow, Point, SpacePoint, Spacepoint, \
-    Track, SpaceTrack, line, spaceLine, spaceline, rect
+    Track, SpaceTrack, line, spaceLine, spaceline, rect, cross, \
+    rectPath, ellipsePath
 from morpholib.grid import ellipse as ellipsePolygon
 
 import cairo
@@ -25,6 +29,7 @@ import io
 
 import math, cmath
 import numpy as np
+from collections.abc import Iterable
 
 I2 = np.identity(2)
 
@@ -133,7 +138,7 @@ def handleSplineNodeInterp(tweenmethod):
 #                debugging use while creating an animation.
 #                Final animations should usually have showTangents = False.
 #                By default, showTangents = False
-class Spline(BoundingBoxFigure):
+class Spline(BackgroundBoxFigure, AlignableFigure):
 
     # Dummy headSize and tailSize so that functions that expect
     # them to exist don't crash
@@ -176,9 +181,6 @@ class Spline(BoundingBoxFigure):
             width, dash, dashOffset, origin, rotation, _transform]
             )
 
-        self.Tweenable("background", (1,1,1), tags=["color"])
-        self.Tweenable("backAlpha", 0, tags=["scalar"])
-        self.Tweenable("backPad", 0, tags=["scalar"])
         # Set of indices that represent where a path should terminate.
         self.Tweenable("deadends", set(), tags=["notween"])
 
@@ -235,6 +237,10 @@ class Spline(BoundingBoxFigure):
     # bounding box is computed without applying
     # the transformation attributes origin, rotation, transform.
     def box(self, *, raw=False):
+        # The check for self.origin != 0 is done elsewhere because
+        # it's by far the most common transformation attribute to
+        # modify, and it's not worth making a copy and committing
+        # transforms if the only transform is a translation.
         if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
             temp = self.copy()
             temp.commitTransforms()
@@ -284,33 +290,8 @@ class Spline(BoundingBoxFigure):
 
         # return shiftBox(totalBox(subboxes), self.origin if not raw else 0)
 
-    boxAlign = morpho.grid.Path.boxAlign
     rescale = morpho.grid.Path.rescale
     resize = morpho.grid.Path.resize
-
-    # Transforms the spline so that the `origin` attribute
-    # is in the physical position indicated by the alignment
-    # parameter. The spline should be visually unchanged after
-    # this transformation.
-    def alignOrigin(self, align):
-        anchor = self.anchorPoint(align, raw=True)
-        # Apply transforms
-        rotator = cmath.exp(self.rotation*1j)
-        transformer = morpho.matrix.Mat(self._transform)
-        anchor = transformer*(rotator*anchor) + self.origin
-
-        # Move origin to anchor point while transforming
-        # the internal spline data in the opposite way so
-        # that the appearance of the spline will not change.
-        self._data = self._data.copy()
-        translateArrayUnderTransforms(self._data, self.origin-anchor, rotator, transformer)
-        nan2inf(self._data)
-        self.origin = anchor
-
-        return self
-
-    realign = morpho.grid.Path.realign
-    align = morpho.grid.Path.align
 
     # Mainly for internal use by fromsvg().
     # Computes the needed translation vector for the raw spline
@@ -330,7 +311,9 @@ class Spline(BoundingBoxFigure):
     # Applies the necessary transformations to a spline to make it
     # fit the specifications outlined in the arguments of fromsvg(),
     # such as making it meet the given boxHeight.
-    def _transformForSVG(self, svgbbox, boxWidth, boxHeight, svgOrigin, align, flip):
+    def _transformForSVG(self,
+        svgbbox, boxWidth, boxHeight, svgOrigin, align, flip,
+        view=None, windowShape=None):
         xmin, ymin, xmax, ymax = svgbbox
         if svgOrigin is None:
             # Infer origin from `align` parameter and bounding box
@@ -361,6 +344,26 @@ class Spline(BoundingBoxFigure):
         if flip:
             self._transform = morpho.matrix.scale2d(1, -1)
             self.commitTransforms()
+
+        # Attempt to adjust the spline stroke width into pixel
+        # values that correspond with the physical values given
+        # by the SVG data.
+        if view is not None:
+            if windowShape is None:
+                # Try to infer Animation object from view
+                mation = findOwnerByType(view, morpho.Animation)
+                if mation is not None:
+                    windowShape = mation.windowShape
+            if windowShape is not None:
+                view = typecastView(view)  # Extract actual viewbox
+                windowShape = typecastWindowShape(windowShape)
+                # Convert physical width into pixel width by averaging
+                WIDTH_X = morpho.pixelWidth(self.width, view, windowShape)
+                WIDTH_Y = morpho.pixelHeight(self.width, view, windowShape)
+                self.width = mean([WIDTH_X, WIDTH_Y])
+                # Multiply by the geometric mean of the scale factors used.
+                self.width *= math.sqrt(scale_x*scale_y)
+
 
     # Mainly for internal use.
     # Computes the svg bounding box of an svg path object, but
@@ -408,6 +411,18 @@ class Spline(BoundingBoxFigure):
     #          note that the element will be reified IN PLACE.
     #
     # OPTIONAL KEYWORD-ONLY INPUTS
+    # view = Viewbox the figure will be visible in. This only
+    #        needs to be specified if the imported SVG has
+    #        non-zero stroke widths as they need to be converted
+    #        into pixel widths in a Morpho Spline.
+    #        Can optionally be a layer, camera, or camera actor
+    #        in which case the viewbox will be inferred.
+    # windowShape = A pair specifying the pixel width and height
+    #       of the animation. Like `view`, it is only needed if
+    #       importing an SVG with non-zero stroke widths. Even
+    #       then it's optional to specify this, as specifying
+    #       a Layer object to `view` will allow `windowShape` to
+    #       infer the pixel dimensions.
     # svgOrigin = SVG coordinates that should be converted into
     #              (0,0) Morpho physical coordinates.
     #              Can be specified as tuple or complex number.
@@ -444,7 +459,7 @@ class Spline(BoundingBoxFigure):
     # Any additional keyword arguments are set as attributes of
     # the returned figure.
     @classmethod
-    def fromsvg(cls, source, *,
+    def fromsvg(cls, source, *, view=None, windowShape=None,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
         index=0, flip=True, arcError=0.1, tightbox=False, **kwargs):
 
@@ -514,7 +529,10 @@ class Spline(BoundingBoxFigure):
             svgbbox = Spline._tightbbox(svgpath)
         else:
             svgbbox = np.array(svgpath.bbox()).tolist()
-        spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
+        spline._transformForSVG(
+            svgbbox, boxWidth, boxHeight, svgOrigin, align, flip,
+            view, windowShape
+            )
 
         spline.set(**kwargs)  # Pass any additional kwargs to set()
         return spline
@@ -1351,11 +1369,16 @@ class Spline(BoundingBoxFigure):
             x,y = zprev.real, zprev.imag
             ctx.move_to(x,y)
 
+            # Extract these objects so that we can save
+            # on repeated Figure tweenable accesses (which
+            # may be slow).
+            self_data = self.data
+            self_deadends = self.deadends
             # Draw each curve
             # for n in range(self.data.shape[0]-1):
             for n in range(init, final):
                 # Get next node, inhandle, and outhandle
-                z, inhandle, outhandle = self.data[n+1,:].tolist()
+                z, inhandle, outhandle = self_data[n+1,:].tolist()
                 # Update handles based on possible inf values
                 inhandle, outhandle = replaceInfHandles(z, inhandle, outhandle)
 
@@ -1364,7 +1387,7 @@ class Spline(BoundingBoxFigure):
                 # If previous node is a deadend, or current or previous
                 # nodes are bad, move to next node.
                 # Else, draw a curve to the next node.
-                if n in self.deadends or isbadnum(z) or isbadnum(zprev):
+                if n in self_deadends or isbadnum(z) or isbadnum(zprev):
                     ctx.move_to(x,y)
                 else:
                     # Snap handles to nodes if they are within
@@ -1695,50 +1718,26 @@ def drawIn(actor, *args, **kwargs):
     "splitAt", "splitAtIndex", "insertNodes"],
     Spline, MultiFigure._returnOrigCaller
     )
-class MultiSpline(morpho.grid.MultiPath):
+class MultiSplineBase(morpho.grid.MultiPathBase):
 
     _basetype = Spline
 
     def __init__(self, data=None, *args, **kwargs):
         super().__init__(data, *args, **kwargs)
 
-    # Transforms the spline so that the `origin` attribute
-    # is in the physical position indicated by the alignment
-    # parameter. The spline should be visually unchanged after
-    # this transformation.
-    def alignOrigin(self, align):
-        anchor = self.anchorPoint(align, raw=True)
-        # Apply transforms
-        rotator = cmath.exp(self.rotation*1j)
-        transformer = morpho.matrix.Mat(self._transform)
-        anchor = transformer*(rotator*anchor) + self.origin
-
-        # Shift subpath arrays so that the global translation leaves
-        # the multipath visually unchanged.
-        shift = self.origin - anchor
-        globalFullTransformer = self._transform @ morpho.matrix.rotation2d(self.rotation)
-        for fig in self.figures:
-            fig._data = fig._data.copy()
-            mat = morpho.matrix.Mat(globalFullTransformer @ fig._transform @ morpho.matrix.rotation2d(fig.rotation))
-            translateArrayUnderTransforms(fig._data, shift, 1, mat)
-            nan2inf(fig._data)
-        self.origin = anchor
-        return self
-
     # Parses an SVG file/stream to construct a MultiSpline
     # representation of it. See Spline.fromsvg() for more info.
     #
     # By default it constructs a Spline from every SVG Path element
     # found within the source, but this can be changed by passing
-    # in a tuple for the `index` input:
-    #      index=(start, stop, step)
-    # The tuple is interpreted identically to how range() works.
-    # Any additional keyword arguments are set as attributes of
-    # the returned figure or its subfigures.
+    # in an index, a tuple of indices, a slice, or a tuple of slices
+    # into the `index` keyword.
+    # Any additional keyword arguments not explicitly listed here
+    # are set as attributes of the returned figure or its subfigures.
     @classmethod
-    def fromsvg(cls, source, *,
+    def fromsvg(cls, source, *, view=None, windowShape=None,
         svgOrigin=None, align=(0,0), boxWidth=None, boxHeight=None,
-        index=(None,), flip=True, arcError=0.1, tightbox=False,
+        index=sel[:], flip=True, arcError=0.1, tightbox=False,
         **kwargs):
 
         svg = parseSVG(source)
@@ -1748,12 +1747,9 @@ class MultiSpline(morpho.grid.MultiPath):
         if len(svgpaths) == 0:
             return cls()
 
-        if isinstance(index, int):
-            index = (index, index+1)
-
         # Generate raw Spline figures
         splines = []
-        for svgpath in svgpaths[slice(*index)]:
+        for svgpath in listselect(svgpaths, index).values():
             spline = Spline.fromsvg(svgpath,
                 svgOrigin=0, flip=False, arcError=arcError, tightbox=tightbox)
             splines.append(spline)
@@ -1775,7 +1771,10 @@ class MultiSpline(morpho.grid.MultiPath):
             raise TypeError("Given SVG has no well-defined bounding box.")
 
         for spline in splines:
-            spline._transformForSVG(svgbbox, boxWidth, boxHeight, svgOrigin, align, flip)
+            spline._transformForSVG(
+                svgbbox, boxWidth, boxHeight, svgOrigin, align, flip,
+                view, windowShape
+                )
 
         multispline = cls(splines)
         multispline.squeeze()  # Remove empty and singleton splines
@@ -1790,11 +1789,42 @@ class MultiSpline(morpho.grid.MultiPath):
         multipath._updateFrom(self, common=True, ignore="figures")
         return multipath
 
+    # For internal use by replaceTex().
+    # Given a gauge string and a match function, returns the
+    # first subfigure that matches the gauge. Raises KeyError
+    # if no matches found.
+    def _findGaugeMatch(self, gauge, matches):
+        found = False
+        for glyph in self.figures:
+            if matches(glyph):
+                found = True
+                break
+        if not found:
+            raise KeyError(f"Could not find gauge {repr(gauge)} among subfigures.")
+        return glyph
+
     # Replaces the MultiSpline with a MultiSpline generated
     # from morpho.latex.parse(). Intended to provide an easier
     # way to morph one LaTeX spline into another one, like this:
     #   myTexSpline.newendkey(30).replaceTex(r"E = mc^2")
-    def replaceTex(self, tex, *, pos=None, align=None, boxWidth=None, boxHeight=None, **kwargs):
+    # If a string is passed in to the optional keyword `gauge`,
+    # the glyph corresponding to the string will be used as a
+    # reference to rescale the final MultiSpline so that the
+    # gauge glyph's size remains unchanged. If the MultiSpline
+    # contains multiple glyphs that match the given gauge, the
+    # first instance is always used in both the old and new
+    # MultiSplines.
+    def replaceTex(self, tex, *, pos=None, align=None,
+            boxWidth=None, boxHeight=None,
+            gauge=None, **kwargs):
+
+        if gauge is not None:
+            if not(boxWidth is None and boxHeight is None):
+                raise ValueError("A gauge cannot be used when a boxWidth/boxHeight is also specified.")
+            # Extract box height of symbol
+            matchfunc = morpho.latex.matches(gauge)
+            oldHeight = self._findGaugeMatch(gauge, matchfunc).boxHeight()
+
         box = shiftBox(self.box(raw=True), self.origin)
         if align is None:
             align = self.boxAlign(box=box, invalidValue=0)
@@ -1809,6 +1839,13 @@ class MultiSpline(morpho.grid.MultiPath):
             # Using self.pos is intentional here! Don't replace with self.origin!
             # This is because self.pos means something different for MultiSpline3D!
             self.pos = pos
+
+        if gauge is not None:
+            # Extract new height of symbol and rescale the whole
+            # MultiSpline so it stays the same as the old height.
+            newHeight = self._findGaugeMatch(gauge, matchfunc).boxHeight()
+            self.rescale(oldHeight/newHeight)
+
         return self
 
     # Checks if every corresponding subfigure between self and other
@@ -1829,19 +1866,23 @@ class MultiSpline(morpho.grid.MultiPath):
 
     ### TWEEN METHODS ###
 
-    tweenLinear = MultiFigure.Multi(Spline.tweenLinear, MultiFigure.tweenLinear)
-    tweenSpiral = MultiFigure.Multi(Spline.tweenSpiral, MultiFigure.tweenSpiral)
+    tweenLinear = MultiFigure.Multi(Spline.tweenLinear, morpho.Figure.tweenLinear)
+    tweenSpiral = MultiFigure.Multi(Spline.tweenSpiral, morpho.Figure.tweenSpiral)
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):
         pivot = MultiFigure.Multi(
             Spline.tweenPivot(angle, *args, **kwargs),
-            MultiFigure.tweenPivot(angle, *args, **kwargs)
+            morpho.Figure.tweenPivot(angle, *args, **kwargs)
             )
         # Enable splitting for this tween method
         pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
 
         return pivot
+
+@TransformableFrame.modifyFadeActions
+class MultiSpline(MultiSplineBase, AlignableTFrame):
+    pass
 
 Multispline = MultiSpline  # Alias
 
@@ -1871,11 +1912,11 @@ Spline._multitype = MultiSpline
 # for 2D MultiSplines. Here they are distinct: `pos` controls 3D
 # position, whereas `origin` controls 2D position within the
 # MultiSpline's local plane.
-class MultiSpline3D(morpho.grid.MultiPath3D, MultiSpline):
+class MultiSpline3D(morpho.grid.MultiPath3D, MultiSplineBase):
 
     ### TWEEN METHODS ###
 
-    tweenLinear = MultiSpline.tweenLinear
+    tweenLinear = MultiSplineBase.tweenLinear
 
 
 # Space version of Spline figure. See "Spline" for more info.
@@ -2430,6 +2471,13 @@ class Ellipse(morpho.Figure):
         self.Tweenable("rotation", 0, tags=["scalar"])
         self.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
+    @property
+    def origin(self):
+        return self.pos
+
+    @origin.setter
+    def origin(self, value):
+        self.pos = value
 
     @property
     def transform(self):
@@ -2563,6 +2611,7 @@ def popIn(ellipse, duration=30, atFrame=None):
     ellipse1.visible = True
     ellipse.newendkey(duration)
     ellipse1.radius = 0
+    ellipse1.set(strokeWeight=0)
 
 # Animates an Ellipse actor disappearing by shrinking
 # its radii to zero.
@@ -2573,7 +2622,7 @@ def popOut(ellipse, duration=30, atFrame=None):
 
     ellipse.newkey(atFrame)
     ellipse1 = ellipse.newendkey(duration)
-    ellipse1.set(radius=0, visible=False)
+    ellipse1.set(radius=0, strokeWeight=0, visible=False)
 
 
 # Creates an arc of an ellipse.
@@ -2617,6 +2666,14 @@ class EllipticalArc(morpho.Figure):
 
         self.Tweenable("dash", [], tags=["scalar", "list"])
         self.Tweenable("dashOffset", 0, tags=["scalar"])
+
+    @property
+    def origin(self):
+        return self.pos
+
+    @origin.setter
+    def origin(self, value):
+        self.pos = value
 
     # Setting `radius` property sets both `xradius` and `yradius` to
     # the same value.

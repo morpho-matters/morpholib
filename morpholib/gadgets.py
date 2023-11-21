@@ -41,20 +41,24 @@ def crossout_old(box, time=30, width=3, color=(1,0,0), view=None):
 
 # Returns a path actor which when animated makes a colored X cross
 # out the box you specify.
+#
+# INPUTS
 # box = a 4-item list/tuple [xmin,xmax,ymin,ymax]
 # time/duration = duration for the animation
 # width = thickness of the lines
 # color = color of the lines
 # transition = Transition function assigned to path.
 #              Default: morpho.transition.default
-# origin = origin point of path (complex number). Default: 0
-# relative = Boolean indicating whether the box values are relative to the origin
-#            point, or are in absolute physical coordinates of the layer.
-#            Default: False (absolute coordinates)
+# KEYWORD-ONLY INPUTS
+# pad = Padding to apply to given box. Default: 0
+# alignOrigin = Alignment of path origin point.
+#       Default: (0,0) (centered)
+#       Can also be None to use absolute coordinates.
+# Additional keywords are set as attributes of the path.
 @handleBoxTypecasting
 def crossoutPath(box, time=30, width=3, color=(1,0,0),
-    transition=None, origin=0, relative=False,
-    *, duration=None, pad=0, **kwargs):
+    transition=None, *, duration=None, pad=0, alignOrigin=(0,0),
+    **kwargs):
 
     # "duration" is a dominant alias for the "time" parameter
     if duration is not None:
@@ -70,9 +74,11 @@ def crossoutPath(box, time=30, width=3, color=(1,0,0),
     path.color = list(color)
     path.end = 0
     path.transition = transition if transition is not None else morpho.transition.default
-    path.origin = mean(box[:2]) + 1j*mean(box[2:]) if relative else 0
-    path.origin += origin
+    # path.origin = mean(box[:2]) + 1j*mean(box[2:])
+    if alignOrigin is not None:
+        path.alignOrigin(alignOrigin)
     path.set(**kwargs)
+
 
     path = morpho.Actor(path)
     path.newkey(time).end = 1
@@ -83,7 +89,7 @@ crossout = crossoutPath
 
 # Returns a path actor that circles a given box region.
 #
-# ARGUMENTS
+# INPUTS
 # box = 4-item list/tuple [xmin,xmax,ymin,ymax]
 # time/duration = Duration of animation (in frames). Default: 30
 # width = Border thickness (in pixels). Default: 3
@@ -94,14 +100,16 @@ crossout = crossoutPath
 # steps = Number of line segments in path. Default: 75
 # transition = Transition function assigned to path.
 #              Default: morpho.transition.default
-# origin = origin point of path (complex number). Default: 0
-# relative = Boolean indicating whether the box values are relative to the origin
-#            point, or are in absolute physical coordinates of the layer.
-#            Default: False (absolute coordinates)
+# KEYWORD-ONLY INPUTS
+# pad = Padding to apply to given box. Default: 0
+# alignOrigin = Alignment of path origin point.
+#       Default: (0,0) (centered)
+#       Can also be None to use absolute coordinates.
+# Additional keywords are set as attributes of the path.
 @handleBoxTypecasting
 def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
-    CCW=True, steps=75, transition=None, origin=0, relative=False,
-    *, duration=None, pad=0, **kwargs):
+    CCW=True, steps=75, transition=None,
+    *, duration=None, pad=0, alignOrigin=(0,0), **kwargs):
 
     # "duration" is a dominant alias for the "time" parameter
     if duration is not None:
@@ -110,22 +118,24 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
     box = padbox(box, pad)
 
     orbit = 2*int(CCW) - 1
-    z0 = (box[0]+box[1])/2 + (box[2]+box[3])/2*1j if not relative else 0
     a = (box[1] - box[0])/2
     b = (box[3] - box[2])/2
-    seq = [z0 + a*math.cos(orbit*n/steps*tau + phase) + 1j*b*math.sin(orbit*n/steps*tau + phase) for n in range(steps)]
+    seq = [a*math.cos(orbit*n/steps*tau + phase) + 1j*b*math.sin(orbit*n/steps*tau + phase) for n in range(steps)]
     seq.append(seq[0])
 
     path = morpho.grid.Path(seq)
     path.width = width
     path.color = list(color)
     path.end = 0
-    path.origin = mean(box[:2]) + 1j*mean(box[2:]) if relative else 0
-    path.origin += origin
+    path.origin = mean(box[:2]) + 1j*mean(box[2:])
     if transition is None:
         path.transition = morpho.transition.default
     else:
         path.transition = transition
+    if alignOrigin is None:
+        path.commitTransforms()
+    else:
+        path.alignOrigin(alignOrigin)
     path.set(**kwargs)  # Set any other attributes
 
     path = morpho.Actor(path)
@@ -136,7 +146,7 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
 
 # Draws an enboxing animation. Good for highlighting important things on screen.
 #
-# ARGUMENTS
+# INPUTS
 # box = 4-item list/tuple [xmin,xmax,ymin,ymax]
 # time/duration = Duration of animation (in frames). Default: 30
 # width = Border thickness (in pixels). Default: 3
@@ -148,10 +158,15 @@ def encircle(box, time=30, width=3, color=(1,0,0), phase=tau/4,
 #       Default: True
 # transition = Transition function assigned to path.
 #              Default: morpho.transition.default
-# origin = origin point of path (complex number). Default: 0
+# KEYWORD-ONLY INPUTS
+# pad = Padding to apply to given box. Default: 0
+# alignOrigin = Alignment of path origin point.
+#       Default: (0,0) (centered)
+#       Can also be None to use absolute coordinates.
+# Additional keywords are set as attributes of the path.
 @handleBoxTypecasting
 def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
-    transition=None, origin=0, *, duration=None, pad=0,
+    transition=None, *, duration=None, pad=0, alignOrigin=(0,0),
     _debox=False, _pause=0,
     **kwargs):
 
@@ -190,7 +205,6 @@ def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
     path.width = width
     path.color = list(color)
     constTrans = path.constantSpeedTransition()
-    path.origin = origin
     if transition is None:
         transition = morpho.transition.default
 
@@ -206,6 +220,8 @@ def enboxPath(box, time=30, width=3, color=(1,0,0), corner="NW", CCW=True,
     else:
         path.transition = lambda t: constTrans(transition(t))
     path.end = 0
+    if alignOrigin is not None:
+        path.alignOrigin(alignOrigin)
     path.set(**kwargs)  # Set any other attributes
 
     path = morpho.Actor(path)

@@ -11,9 +11,12 @@ tau = 2*pi
 oo = inf = float("inf")
 nan = float("nan")
 # Basic unit vectors for 3D animations
-ihat = np.array([1,0,0], dtype=float)
-jhat = np.array([0,1,0], dtype=float)
-khat = np.array([0,0,1], dtype=float)
+ihat = np.array([1,0,0], dtype=float); ihat.flags.writeable = False
+jhat = np.array([0,1,0], dtype=float); jhat.flags.writeable = False
+khat = np.array([0,0,1], dtype=float); khat.flags.writeable = False
+# Basic matrices
+I2 = np.eye(2); I2.flags.writeable = False
+I3 = np.eye(3); I3.flags.writeable = False
 
 ### DECORATORS ###
 
@@ -52,7 +55,7 @@ def isbadarray(x):
 
 # isequal(a,b) does a == b, but works even if a and/or b is
 # a numpy array.
-def isequal(a, b):
+def isequal(a, b, /):
     if isinstance(a, np.ndarray) and isinstance(b, np.ndarray):
         return np.array_equal(a,b)
     elif isinstance(a, np.ndarray) != isinstance(b, np.ndarray):

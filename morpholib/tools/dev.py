@@ -11,6 +11,7 @@ import morpholib.anim
 from morpholib.figure import object_hasattr
 from morpholib.tools.basics import *
 
+import cairo
 import numpy as np
 import math, cmath
 
@@ -24,6 +25,95 @@ import math, cmath
 class AmbiguousValueError(ValueError):
     pass
 
+
+# Extracts viewbox from the given input object `view`.
+#
+# If `view` is a Layer, Camera actor, or Camera figure, it
+# infers the viewbox. In the case of Layer or Camera actor,
+# this is inferred by taking the latest keyfigure's viewbox.
+def typecastView(view):
+    # Handle Layer/Camera/Animation type inputs to view.
+    if isinstance(view, morpho.Layer):
+        view = view.camera.last().view
+    elif isinstance(view, morpho.Actor):
+        view = view.last().view
+    elif isinstance(view, morpho.anim.Camera):
+        view = view.view
+    return view
+
+# Extracts window shape from the given input object `window`.
+#
+# If `window` is an Animation or cairo context, it extracts
+# the pixel dimensions as (width, height).
+def typecastWindowShape(window):
+    if isinstance(window, morpho.Animation):
+        window = window.windowShape
+    elif isinstance(window, cairo.Context):
+        target = window.get_target()
+        window = (target.get_width(), target.get_height())
+    return window
+
+# NOT IMPLEMENTED YET because I'm not sure it's functionality
+# is all that important in light of typecastView/WindowShape().
+# The idea is this function would do the job of checking thru
+# the owner chain to infer a viewbox, whereas typecastView()
+# deals with extracting the actual viewbox from a
+# layer/camera/etc. Of note, this function would treat Camera
+# figures and actors like any other figure, so it shouldn't
+# be used as a replacement for typecastView().
+#
+# Tries to infer the viewbox the given figure is in.
+# Returns None if unsuccessful.
+def inferView(figure):
+    raise NotImplementedError
+    if isinstance(figure, morpho.Actor):
+        figure = figure.last()
+    # Try to find the layer this figure is a part of
+    try:
+        layer = figure.owner.owner
+    except AttributeError:
+        return None
+    if layer is None:
+        return None
+    return typecastView(layer)
+
+# NOT IMPLEMENTED YET because I'm not sure it's functionality
+# is all that important in light of typecastView/WindowShape().
+# The idea is this function would do the job of checking thru
+# the owner chain to infer a window shape, whereas
+# typecastWindowShape() deals with extracting the actual viewbox
+# from a layer/camera/etc. Of note, this function would treat
+# Camera figures and actors like any other figure, so it shouldn't
+# be used as a replacement for typecastView().
+#
+# Tries to infer the window shape of the animation the figure
+# belongs to. Returns None if unsuccessful.
+def inferWindowShape(figure):
+    raise NotImplementedError
+    if isinstance(figure, morpho.Actor):
+        figure = figure.last()
+    # Try to find the Animation object this figure is a part of
+    try:
+        mation = figure.owner.owner.owner
+    except AttributeError:
+        return None
+    if mation is None:
+        return None
+    return typecastWindowShape(mation)
+
+# Goes up the owner chain of a Morpho object (e.g. Figure, Actor,
+# Layer) searching for an owner of the given type. If it finds it,
+# it returns the owner found, otherwise it returns None.
+# Optionally, an iteration limit can be specified to ensure
+# a very wrongly configured Morpho object that has a cycle in its
+# owner chain doesn't result in an infinite loop. If the limit is
+# reached, a RecursionError is thrown. The default limit is 5.
+def findOwnerByType(obj, cls, *, iterLimit=5):
+    for n in range(iterLimit):
+        obj = getattr(obj, "owner", None)
+        if isinstance(obj, cls) or obj is None:
+            return obj
+    raise RecursionError(f"Iteration limit of {iterLimit} reached.")
 
 # Decorator allows a method to extract the needed
 # `view` and `ctx` parameters from Layer/Camera/Animation
@@ -68,14 +158,9 @@ def typecastViewCtx(method):
 
         # Handle Layer/Camera/Animation type inputs to
         # view and ctx.
-        if isinstance(view, morpho.Layer):
-            view = view.camera.last().view
-        elif isinstance(view, morpho.Actor):
-            view = view.last().view
-        elif isinstance(view, morpho.anim.Camera):
-            view = view.view
-        if isinstance(ctx, morpho.Animation):
-            ctx = ctx.windowShape
+        view = typecastView(view)
+        if not isinstance(ctx, cairo.Context):
+            ctx = typecastWindowShape(ctx)
 
         return method(self, view, ctx, *args, **kwargs)
     return wrapper
@@ -192,28 +277,6 @@ class BoundingBoxFigure(morpho.Figure):
         box = self.box(*args, **kwargs)
         return (box[1] - box[0], box[-1] - box[-2])
 
-    # Only works for BoundingBoxFigures that have
-    # background box tweenables `background`,
-    # `backAlpha`, and `backPad` defined and the general
-    # `alpha` tweenable, along with a box() method that
-    # accepts the `raw` kwarg.
-    #
-    # Optionally, a kwarg `_alpha` can be passed in which
-    # will bypass accessing the top-level `alpha` attribute
-    # of self.
-    def _drawBackgroundBox(self, camera, ctx, origin=0, rotation=0, transform=np.eye(2), *,
-        _alpha=None):
-        if self.backAlpha > 0:
-            alpha = self.alpha if _alpha is None else _alpha
-            # Draw background box
-            brect = morpho.grid.rect(padbox(self.box(raw=True), self.backPad))
-            brect.set(
-                origin=origin, rotation=rotation,
-                _transform=transform,
-                width=0, fill=self.background, alpha=self.backAlpha*alpha
-                )
-            brect.draw(camera, ctx)
-
     # Returns the bounding box of a box that is being subjected
     # to a shift, rotation, and transformation.
     @staticmethod
@@ -230,6 +293,190 @@ class BoundingBoxFigure(morpho.Figure):
         D = max(z.imag for z in newcorners)
 
         return [A-pad, B+pad, C-pad, D+pad]
+
+    # Mainly for use by subclasses that implement box()
+    # using relbox(). Computes bounding box using relbox()
+    # and the `origin` transformation attribute. Also
+    # assumes relbox() possess a `raw` keyword.
+    # Currently this is used to implement box() for both
+    # the Text class and the Image class.
+    def _boxFromRelbox(self, *args, raw=False, **kwargs):
+        relbox = self.relbox(*args, raw=raw, **kwargs)
+        if raw:
+            return relbox
+        else:
+            a,b,c,d = relbox
+            x,y = self.origin.real, self.origin.imag
+            return [a+x, b+x, c+y, d+y]
+
+
+# Mainly to be used as a base class to inherit from.
+# When inherited, it implements an implicit `align` property
+# as well as the method `alignOrigin()` based on the figure's
+# bounding box, and origin value.
+#
+# To use, the inheriting class must implement an `origin`
+# attribute, a box() method capable of accepting the keyword
+# parameter `raw=True`, and a commitTransforms() method.
+# Implementing `rotation` and `transform` should be optional.
+class AlignableFigure(BoundingBoxFigure):
+
+    # Note that many of the methods here accept *args, **kwargs
+    # which are (eventually) passed down to the underlying
+    # box() method. A big reason for this is to allow non-physical
+    # figure types (like Text/MultiText) to use these classes,
+    # since their box() methods need additional arguments to
+    # function correctly and can't be called empty.
+
+    # Transforms the figure so that the `origin` attribute
+    # is in the physical position indicated by the alignment
+    # parameter. The figure should be visually unchanged after
+    # this transformation.
+    def alignOrigin(self, align, *args, **kwargs):
+        anchor = self.anchorPoint(align, *args, raw=True, **kwargs)
+
+        # Creating a new one each time just in case
+        # commitTransforms() modifies matrices in place.
+        I2 = np.eye(2)
+
+        # Store original transformation values.
+        # The usage of default values here is in case the
+        # class that inherits this method doesn't have
+        # `rotation` and/or `transform` implemented.
+        origin_orig = self.origin
+        rotation_orig = getattr(self, "rotation", 0)
+        transform_orig = getattr(self, "transform", I2)
+
+        # Reset transformations temporarily so we can apply
+        # a translation via commitTransforms()
+        self.origin = 0
+        if rotation_orig != 0: self.rotation = 0
+        if transform_orig is not I2: self.transform = I2
+
+        # Use try block to ensure that even if an error is thrown,
+        # we reset the transformation values!
+        try:
+            self.origin = -anchor
+            self.commitTransforms()
+        finally:
+            # Restore original transformation values
+            self.origin = origin_orig
+            if rotation_orig != 0: self.rotation = rotation_orig
+            if transform_orig is not I2: self.transform = transform_orig
+
+        # Now translate the final origin value, which must be
+        # subjected to the transformations first.
+        rotator = cmath.exp(rotation_orig*1j)
+        transformer = morpho.matrix.Mat(transform_orig)
+        # Use manual += here in case origin is a np.array.
+        self.origin = self.origin + transformer*(rotator*anchor)
+
+        return self
+
+    # Returns the alignment of the figure's origin relative
+    # to its bounding box.
+    #
+    # If the bounding box is degenerate (i.e. width or height is 0),
+    # the alignment value for the offending dimension will be set to nan.
+    # This can be changed by passing a value into the `invalidValue`
+    # optional keyword argument.
+    #
+    # Optionally, the bounding box may be provided to the function
+    # so that it doesn't have to be computed on the fly.
+    # If given, this bounding box must be raw except for translation.
+    # That is, the box ignores `rotation` and `transform` but not
+    # `origin`.
+    def boxAlign(self, *args, box=None, invalidValue=nan, **kwargs):
+        if box is None:
+            box = shiftBox(self.box(*args, raw=True, **kwargs), self.origin)
+        xmin, xmax, ymin, ymax = box
+        anchor_x = invalidValue if xmin == xmax else morpho.lerp(-1, 1, self.origin.real, start=xmin, end=xmax)
+        anchor_y = invalidValue if ymin == ymax else morpho.lerp(-1, 1, self.origin.imag, start=ymin, end=ymax)
+        return (anchor_x, anchor_y)
+
+    # Translates the path so that the current positional point
+    # agrees with the given alignment parameter.
+    # Can also be invoked by setting the `align` property:
+    #   mypath.align = [-1,1]
+    def realign(self, align, *args, **kwargs):
+        origOrigin = self.origin
+        self.alignOrigin(align, *args, **kwargs)
+        self.origin = origOrigin
+        return self
+
+    @property
+    def align(self):
+        return self.boxAlign()
+
+    @align.setter
+    def align(self, value):
+        self.realign(value)
+
+    def commitTransforms(self):
+        # Should be implemented by a subclass.
+        pass
+
+
+# Implements methods that allow the figure to have a background
+# box drawn behind it. Mainly meant as a base class to be inherited
+# from. To be used correctly, the `box()` method must implement the
+# `raw` keyword argument that returns the bounding box without
+# transformation attributes applied, and the figure must also possess
+# an `origin` attribute (at least implicitly).
+class BackgroundBoxFigure(BoundingBoxFigure):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.Tweenable("background", (1,1,1), tags=["color"])
+        self.Tweenable("backAlpha", 0, tags=["scalar"])
+        self.Tweenable("backPad", 0, tags=["scalar"])
+
+    # Only works for BoundingBoxFigures that have
+    # background box tweenables `background`,
+    # `backAlpha`, and `backPad` defined and the general
+    # `alpha` tweenable, along with a box() method that
+    # accepts the `raw` kwarg.
+    #
+    # Optionally, a kwarg `_alpha` can be passed in which
+    # will bypass accessing the top-level `alpha` attribute
+    # of self.
+    def _drawBackgroundBox(self, camera, ctx,
+            origin=None, rotation=None, transform=None, *args,
+            _alpha=None, **kwargs):
+
+        if self.backAlpha <= 0:
+            # No need to attempt to draw invisible background box
+            return
+
+        # Infer transformation attributes if not specified.
+        if origin is None:
+            origin = self.origin
+        if rotation is None:
+            rotation = getattr(self, "rotation", 0)
+        if transform is None:
+            transform = getattr(self, "transform", I2)
+        if _alpha is None:
+            _alpha = getattr(self, "alpha", 1)
+            # alpha = self.alpha if _alpha is None else _alpha
+
+        # Draw background box
+        brect = morpho.grid.rect(padbox(self.box(*args, raw=True, **kwargs), self.backPad))
+        brect.set(
+            origin=origin, rotation=rotation,
+            _transform=transform,
+            width=0, fill=self.background, alpha=self.backAlpha*_alpha
+            )
+        brect.draw(camera, ctx)
+
+    # def draw(self, camera, ctx):
+    #     origin = self.origin
+    #     rotation = getattr(self, "rotation", 0)
+    #     transform = getattr(self, "transform", I2)
+    #     alpha = getattr(self, "alpha", 1)
+
+    #     self._drawBackgroundBox(camera, ctx, origin, rotation, transform, _alpha=alpha)
+
+    #     super().draw(camera, ctx)
 
 
 # Mainly for internal use by the Frame class (and its derivatives)
@@ -400,16 +647,24 @@ def drawOutOfBoundsStartEnd(fig, camera, ctx):
         fig.start = start_orig
         fig.end = end_orig
 
+# Mainly for use by the select[] feature of Frames/MultiFigures.
+# Packages the methods for getting, setting, and deleting
+# slices of indices into an object whereby the python bracket
+# syntax works.
 class Slicer(object):
-    def __init__(self, getter=None, setter=None):
+    def __init__(self, getter=None, setter=None, deller=None):
         self.getter = getter
         self.setter = setter
+        self.deller = deller
 
     def __getitem__(self, index):
         return self.getter(index)
 
     def __setitem__(self, index, value):
         self.setter(index, value)
+
+    def __delitem__(self, index):
+        self.deller(index)
 
 
 def translateArrayUnderTransforms(array, shift, rotator, transformer):

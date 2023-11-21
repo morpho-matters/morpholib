@@ -4,10 +4,11 @@ mo = morpho
 import morpholib.tools.color, morpholib.anim, morpholib.transitions
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
+from morpholib.combo import TransformableFrame, AlignableTFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
-    totalBox, shiftBox, translateArrayUnderTransforms, handleBoxTypecasting, \
-    AmbiguousValueError
+    BackgroundBoxFigure, AlignableFigure, totalBox, shiftBox, \
+    translateArrayUnderTransforms, handleBoxTypecasting, AmbiguousValueError
 
 from morpholib import object_hasattr
 
@@ -50,7 +51,7 @@ I2 = np.identity(2)
 #        number of pixels of visibility and invisibility.
 # dashOffset = Where along the dash pattern it will start. Default: 0
 class Point(morpho.Figure):
-    def __init__(self, pos=0, size=15, strokeWeight=1, color=None, fill=None,
+    def __init__(self, pos=0, size=15, strokeWeight=1, color=(0,0,0), fill=(1,0,0),
         alpha=1):
 
         # Construct a default figure.
@@ -64,11 +65,6 @@ class Point(morpho.Figure):
             pos = pos[0] + 1j*pos[1]
         else:
             pos = complex(pos)
-
-        if color is None:
-            color = [0,0,0]
-        if fill is None:
-            fill = [1,0,0]
 
         # pos = morpho.Tweenable("pos", pos, tags=["complex", "position"])
         # strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
@@ -188,7 +184,7 @@ class PointPolar(Point):
 
 # 3D version of the Point figure. See "Point" for more info.
 class SpacePoint(Point):
-    def __init__(self, pos=0, size=15, strokeWeight=1, color=None, fill=None,
+    def __init__(self, pos=0, size=15, strokeWeight=1, color=(0,0,0), fill=(1,0,0),
         alpha=1):
         # Use superclass constructor
         super().__init__(0, size, strokeWeight, color, fill, alpha)
@@ -289,7 +285,7 @@ def handleDeadendInterp(tweenmethod):
 
     # Convert given tweenmethod into a MultiFigure tween method
     # so it can be applied to multiself and multiother.
-    multiTweenMethod = PathlikeMulti(tweenmethod, MultiFigure.tweenLinear)
+    multiTweenMethod = PathlikeMulti(tweenmethod, morpho.Figure.tweenLinear)
 
     def wrapper(self, other, t, *args, **kwargs):
         # Do nothing fancy if both paths have identical deadends and node counts
@@ -302,6 +298,15 @@ def handleDeadendInterp(tweenmethod):
 
         multiself = self.splitAtDeadends()
         multiother = other.splitAtDeadends()
+
+        # Subpools are artificially set to 0 because PathlikeMulti()
+        # assumes the supplemented subfigures are prepended to the
+        # originals' figure lists, not evenly distributed which is
+        # what is done by default. Not doing this will result in
+        # certain morphs between different topological genuses failing
+        # e.g. morphing PText("OO").toSpline() to PText("O").toSpline()
+        multiself._subpool = {0}
+        multiother._subpool = {0}
 
         multitweened = multiTweenMethod(multiself, multiother, t, *args, **kwargs)
         return multitweened.joinUsingDeadends()
@@ -531,7 +536,7 @@ def handleDash(tweenmethod):
 #       line caps, which produces decent results even for large tailSize.
 #       The default outline method for all paths can be set by setting
 #       the class attribute `Path.defaultOutlineMethod`.
-class Path(BoundingBoxFigure):
+class Path(BackgroundBoxFigure, AlignableFigure):
     defaultOutlineMethod = "classic"
     outlineMethods = ("classic", "cap")  # List of all supported outline styles
 
@@ -570,9 +575,6 @@ class Path(BoundingBoxFigure):
             outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform]
             )
 
-        self.Tweenable("background", (1,1,1), tags=["color"])
-        self.Tweenable("backAlpha", 0, tags=["scalar"])
-        self.Tweenable("backPad", 0, tags=["scalar"])
         # Set of indices that represent where a path should terminate.
         self.Tweenable("deadends", set(), tags=["notween"])
 
@@ -691,78 +693,6 @@ class Path(BoundingBoxFigure):
         self.transform = np.identity(2)
         return self
 
-    # Returns the alignment of the Path's origin relative
-    # to its bounding box.
-    #
-    # If the bounding box is degenerate (i.e. width or height is 0),
-    # the alignment value for the offending dimension will be set to nan.
-    # This can be changed by passing a value into the `invalidValue`
-    # optional keyword argument.
-    #
-    # Optionally, the bounding box may be provided to the function
-    # so that it doesn't have to be computed on the fly.
-    def boxAlign(self, *, box=None, invalidValue=nan):
-        if box is None:
-            box = shiftBox(self.box(raw=True), self.origin)
-        xmin, xmax, ymin, ymax = box
-        anchor_x = invalidValue if xmin == xmax else morpho.lerp(-1, 1, self.origin.real, start=xmin, end=xmax)
-        anchor_y = invalidValue if ymin == ymax else morpho.lerp(-1, 1, self.origin.imag, start=ymin, end=ymax)
-        return (anchor_x, anchor_y)
-
-    # Transforms the path so that the `origin` attribute
-    # is in the physical position indicated by the alignment
-    # parameter. The path should be visually unchanged after
-    # this transformation.
-    def alignOrigin(self, align):
-        anchor = self.anchorPoint(align, raw=True)
-        # Apply transforms
-        rotator = cmath.exp(self.rotation*1j)
-        transformer = morpho.matrix.Mat(self._transform)
-        anchor = transformer*(rotator*anchor) + self.origin
-
-        # Move origin to anchor point while transforming
-        # the internal path data in the opposite way so
-        # that the appearance of the path will not change.
-        array = np.array(self.seq, dtype=complex)
-        translateArrayUnderTransforms(array, self.origin-anchor, rotator, transformer)
-        self.seq = array.tolist()
-        self.origin = anchor
-
-        return self
-
-    # Translates the path so that the current origin point
-    # agrees with the given alignment parameter.
-    # Can also be invoked by setting the `align` property:
-    #   mypath.align = [-1,1]
-    def realign(self, align):
-        origOrigin = self.origin
-        self.alignOrigin(align)
-        self.origin = origOrigin
-        return self
-
-    @property
-    def align(self):
-        return self.boxAlign()
-
-    @align.setter
-    def align(self, value):
-        self.realign(value)
-
-    # Mainly for internal use.
-    # Calculates the bounding box of a numpy array of
-    # complex number positional data.
-    @staticmethod
-    def _calculateBox(array, origin=0):
-        reals = array.real
-        imags = array.imag
-
-        left = np.min(reals).tolist() + origin.real
-        right = np.max(reals).tolist() + origin.real
-        bottom = np.min(imags).tolist() + origin.imag
-        top = np.max(imags).tolist() + origin.imag
-
-        return [left, right, bottom, top]
-
     # Returns physical bounding box of path as
     # [xmin, xmax, ymin, ymax]
     #
@@ -770,12 +700,16 @@ class Path(BoundingBoxFigure):
     # bounding box is computed without applying
     # the transformation attributes origin, rotation, transform.
     def box(self, *, raw=False):
+        # The check for self.origin != 0 is done elsewhere because
+        # it's by far the most common transformation attribute to
+        # modify, and it's not worth making a copy and committing
+        # transforms if the only transform is a translation.
         if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
             temp = self.copy()
             temp.commitTransforms()
             return temp.box()
         array = np.array(self.seq)
-        return self._calculateBox(array, self.origin if not raw else 0)
+        return _calculateBoxFromArray(array, self.origin if not raw else 0)
 
     # Rescales the path by the given scale factors.
     # If a single scale factor is omitted it will copy its partner.
@@ -1577,19 +1511,25 @@ class Path(BoundingBoxFigure):
 
         ctx.move_to(x,y)
 
+        # Extract these objects so that we can save
+        # on repeated Figure tweenable accesses (which
+        # may be slow).
+        self_seq = self.seq
+        self_deadends = self.deadends
+        self_color = self.color
         if isinstance(self.color, morpho.color.Gradient):
             pat = cairo.MeshPattern()
             ortho_prev = 0
             for n in range(init, final):
                 # Get next node
-                z = self.seq[n+1]
+                z = self_seq[n+1]
                 # Get xy coords of both nodes
                 xn, yn = zn.real, zn.imag
                 x, y = z.real, z.imag
 
                 # If previous node is a deadend, move to next node,
                 # else draw a line to the next node.
-                if n in self.deadends or isbadnum(z) or isbadnum(zn):
+                if n in self_deadends or isbadnum(z) or isbadnum(zn):
                     ctx.move_to(x,y)
                     ortho_prev = 0
                 else:
@@ -1601,8 +1541,8 @@ class Path(BoundingBoxFigure):
                         ortho = p_semiwidth_i * delta/abs(delta)
 
                         # Get colors from gradient
-                        RGBA_zn = list(self.color.value(n/maxIndex))
-                        RGBA_z = list(self.color.value((n+1)/maxIndex))
+                        RGBA_zn = list(self_color.value(n/maxIndex))
+                        RGBA_z = list(self_color.value((n+1)/maxIndex))
                         if RGBAmode:
                             RGBA_zn[3] *= A
                             RGBA_z[3] *= A
@@ -1673,13 +1613,13 @@ class Path(BoundingBoxFigure):
                 #     ctx.move_to(x,y)
 
                 # Get next node
-                z = self.seq[n+1]
+                z = self_seq[n+1]
                 # X,Y = morpho.screenCoords(z, view, ctx)
                 x,y = z.real, z.imag
 
                 # If previous node is a deadend, move to next node,
                 # else draw a line to the next node.
-                if n in self.deadends or isbadnum(z) or isbadnum(zn):
+                if n in self_deadends or isbadnum(z) or isbadnum(zn):
                     ctx.move_to(x,y)
                 else:
                     ctx.line_to(x,y)
@@ -1926,44 +1866,46 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
         path1.end = 0
 
 # Animates a Path actor appearing by enlarging from a focus point.
-# By default the focus point is taken to be the box center of the
-# path, but this can be changed by passing in a position value to
-# the `focus` optional kwarg. Note that the coordinates will be
+# By default the focus point is taken to be the origin position of
+# the path, but this can be changed by passing in a position value
+# to the `focus` optional kwarg. Note that the coordinates will be
 # taken within the path's LOCAL coordinates (i.e. relative to
 # the path's transformation attributes). Alternatively, an `align`
 # parameter can be passed in by keyword to specify the focus point
 # in terms of a location on the path's bounding box.
 @Path.action
-def popIn(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
+def popIn(path, duration=30, atFrame=None, *, align=None, focus=0):
     if atFrame is None:
         atFrame = path.lastID()
 
     path0 = path.last()
     final = path0.copy().set(visible=True)
     path0.visible = False
-    if focus is None:
+    if align is not None:
         focus = path0.anchorPoint(align, raw=True)
     path1 = path.newkey(atFrame, path0.fimage(lambda z: focus))
+    path1.set(width=0, outlineWidth=0)
     path1.visible = True
     path.newendkey(duration, final)
 
 # Animates a Path actor disappearing by shrinking to a focus point.
-# By default the focus point is taken to be the box center of the
-# path, but this can be changed by passing in a position value to
-# the `focus` optional kwarg. Note that the coordinates will be
+# By default the focus point is taken to be the origin position of
+# the path, but this can be changed by passing in a position value
+# to the `focus` optional kwarg. Note that the coordinates will be
 # taken within the path's LOCAL coordinates (i.e. relative to
 # the path's transformation attributes). Alternatively, an `align`
 # parameter can be passed in by keyword to specify the focus point
 # in terms of a location on the path's bounding box.
 @Path.action
-def popOut(path, duration=30, atFrame=None, *, align=(0,0), focus=None):
+def popOut(path, duration=30, atFrame=None, *, align=None, focus=0):
     if atFrame is None:
         atFrame = path.lastID()
 
-    if focus is None:
+    if align is not None:
         focus = path.last().anchorPoint(align, raw=True)
     path.newkey(atFrame)
     path.newendkey(duration, path.last().fimage(lambda z: focus))
+    path.last().set(width=0, outlineWidth=0)
     path.last().visible = False
 
 # Highlights the Path actor
@@ -1976,6 +1918,15 @@ def highlight(actor, duration=15, atFrame=None, *,
         atFrame = actor.lastID()
 
     path0 = actor.last()
+
+    # Leave values unchanged if specified as None
+    if width is None:
+        width = path0.width
+    if fill is None:
+        fill = path0.fill[:]
+    if color is None:
+        color = path0.color[:]
+
     path1 = actor.newkey(atFrame)
     path2 = actor.newendkey(duration)
     path2.set(width=width, color=color, **kwargs)
@@ -2043,8 +1994,11 @@ def drawIn(actor, duration=30, atFrame=None, *,
     actor.newkey(atFrame + duration, final)
 
 
-# MultiFigure version of Path.
-# See "morpho.graphics.MultiImage" for more info on the basic idea here.
+# Base class for MultiPath that exists to be inherited by MultiPath-like
+# subclasses. It exists because if a proper SpaceMultiPath is ever
+# implemented, it will need to have some features/methods/etc. removed
+# from the 2D MultiPath, meaning a direct inheritance from MultiPath is
+# undesirable.
 @MultiFigure._modifyMethods(
     ["close"],
     Path, MultiFigure._applyToSubfigures
@@ -2053,7 +2007,7 @@ def drawIn(actor, duration=30, atFrame=None, *,
     ["insertNodesUniformly", "concat"],
     Path, MultiFigure._returnOrigCaller
     )
-class MultiPath(MultiFigure):
+class MultiPathBase(MultiFigure, BackgroundBoxFigure, AlignableFigure):
 
     _basetype = Path
 
@@ -2071,16 +2025,6 @@ class MultiPath(MultiFigure):
             path = self._basetype(seq, *args, **kwargs)
             super().__init__([path])
 
-        self.Tweenable("background", (1,1,1), tags=["color"])
-        self.Tweenable("backAlpha", 0, tags=["scalar"])
-        self.Tweenable("backPad", 0, tags=["scalar"])
-        self.Tweenable("rotation", 0, tags=["scalar"])
-        self.Tweenable("_transform", np.eye(2), tags=["nparray"])
-
-    # anchorPoint = Path.anchorPoint
-    realign = Path.realign
-    boxAlign = Path.boxAlign
-
     @property
     def pos(self):
         return self.origin
@@ -2090,14 +2034,6 @@ class MultiPath(MultiFigure):
         self.origin = value
 
     @property
-    def transform(self):
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
-
-    @property
     def boxWidth(self):
         return lambda *args, **kwargs: BoundingBoxFigure.boxWidth(self, *args, **kwargs)
 
@@ -2105,47 +2041,14 @@ class MultiPath(MultiFigure):
     def boxHeight(self):
         return lambda *args, **kwargs: BoundingBoxFigure.boxHeight(self, *args, **kwargs)
 
-    rescale = Path.rescale
-    resize = Path.resize
-
-    # Transforms the path so that the `origin` attribute
-    # is in the physical position indicated by the alignment
-    # parameter. The path should be visually unchanged after
-    # this transformation.
-    def alignOrigin(self, align):
-        anchor = self.anchorPoint(align, raw=True)
-        # Apply transforms
-        rotator = cmath.exp(self.rotation*1j)
-        transformer = morpho.matrix.Mat(self._transform)
-        anchor = transformer*(rotator*anchor) + self.origin
-
-        # Shift subpath arrays so that the global translation leaves
-        # the multipath visually unchanged.
-        shift = self.origin - anchor
-        globalFullTransformer = self._transform @ morpho.matrix.rotation2d(self.rotation)
-        for fig in self.figures:
-            array = np.array(fig.seq, dtype=complex)
-            mat = morpho.matrix.Mat(globalFullTransformer @ fig._transform @ morpho.matrix.rotation2d(fig.rotation))
-            translateArrayUnderTransforms(array, shift, 1, mat)
-            fig.seq = array.tolist()
-
-        self.origin = anchor
+    # Rescales the MultiPath by the given factors.
+    # See Path.rescale() for more info.
+    def rescale(self, *args, **kwargs):
+        Path.rescale(self, *args, **kwargs)
+        self.all.commitTransforms()
         return self
 
-    align = Path.align
-
-    # Computes the bounding box of the entire figure.
-    # Returned as [xmin, xmax, ymin, ymax]
-    #
-    # If optional kwarg `raw` is set to True, the
-    # bounding box is computed without applying
-    # the transformation attributes origin, rotation, transform.
-    def box(self, *, raw=False):
-        if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
-            temp = self.copy()
-            temp.commitTransforms()
-            return temp.box(raw=True)
-        return shiftBox(totalBox(path.box() for path in self.figures), self.origin if not raw else 0)
+    resize = Path.resize
 
     # Joins all of the subpaths into a single Path
     # with the jumps between different subpaths being implemented
@@ -2165,21 +2068,6 @@ class MultiPath(MultiFigure):
             path.concat(subpath)
 
         return path
-
-
-    def commitTransforms(self):
-        # Calculate as a single matrix the overall effect
-        # of both the global rotation and transform.
-        rotateAndTransform = self._transform @ morpho.matrix.rotation2d(self.rotation)
-        rotateAndTransform_mat = morpho.matrix.Mat(rotateAndTransform)
-        for path in self.figures:
-            path.origin = (rotateAndTransform_mat * path.origin) + self.origin
-            path._transform = rotateAndTransform @ path._transform
-            path.commitTransforms()
-        self.origin = 0
-        self.rotation = 0
-        self._transform = np.eye(2)
-        return self
 
     # Removes subpaths IN PLACE whose node counts are less than 2
     # (and are therefore non-drawable).
@@ -2201,61 +2089,28 @@ class MultiPath(MultiFigure):
             _alpha=max(subpath.alpha for subpath in self.figures)
             )
 
-        # Temporarily apply additional transforms to subfigures if global
-        # rotation/transform are non-identity
-        if not(self.rotation == 0 and np.array_equal(self._transform, I2)):
-            # Calculate as a single matrix the overall effect
-            # of both the global rotation and transform.
-            rotateAndTransform = self._transform @ morpho.matrix.rotation2d(self.rotation)
-            rotateAndTransform_mat = morpho.matrix.Mat(rotateAndTransform)
-
-            # Initialize lists to store original origin/transform values
-            # so they can be restored after being modified
-            orig_origins = []
-            orig_transforms = []
-            for fig in self.figures:
-                # Save original origin and transform values
-                orig_origins.append(fig.origin)
-                orig_transforms.append(fig._transform)
-
-                # Temporarily modify origin and transform
-                if fig.origin != 0:
-                    fig.origin = rotateAndTransform_mat * fig.origin
-                fig._transform = rotateAndTransform @ fig._transform
-            MultiFigure.draw(self, camera, ctx)
-
-            # Restore original transformation values
-            for fig, origin, transform in zip(self.figures, orig_origins, orig_transforms):
-                fig.origin = origin
-                fig._transform = transform
-        else:
-            MultiFigure.draw(self, camera, ctx)
+        super().draw(camera, ctx)
 
     ### TWEEN METHODS ###
 
-    tweenLinear = MultiFigure.Multi(Path.tweenLinear, MultiFigure.tweenLinear)
-    tweenSpiral = MultiFigure.Multi(Path.tweenSpiral, MultiFigure.tweenSpiral)
+    tweenLinear = MultiFigure.Multi(Path.tweenLinear, morpho.Figure.tweenLinear)
+    tweenSpiral = MultiFigure.Multi(Path.tweenSpiral, morpho.Figure.tweenSpiral)
 
     @classmethod
     def tweenPivot(cls, angle=tau/2, *args, **kwargs):
         pivot = MultiFigure.Multi(
             Path.tweenPivot(angle, *args, **kwargs),
-            MultiFigure.tweenPivot(angle, *args, **kwargs)
+            morpho.Figure.tweenPivot(angle, *args, **kwargs)
             )
         # Enable splitting for this tween method
         pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
 
         return pivot
 
-Multipath = MultiPath  # Alias
-
-# Assign MultiPath as the Path class's dedicated multifigure version.
-Path._multitype = MultiPath
-
 # Like regular morphFrom(), except the source can optionally
 # be a list of actors/figures, in which case, the morph will
 # be performed from all of those figures.
-@MultiPath.action
+@MultiPathBase.action
 def morphFrom(actor, source, *args, **kwargs):
     if isinstance(source, (list, tuple)):
         if len(source) == 0:
@@ -2264,6 +2119,7 @@ def morphFrom(actor, source, *args, **kwargs):
         mpaths = [mpath.last().copy() if isinstance(mpath, morpho.Actor) else mpath.copy() for mpath in source]
         for mpath in mpaths:
             mpath.commitTransforms()
+            mpath.all.commitTransforms()
 
         # Combine into a single MultiPath figure
         combined = mpaths[0]
@@ -2274,16 +2130,16 @@ def morphFrom(actor, source, *args, **kwargs):
     else:
         return morpho.Figure.actions["morphFrom"](actor, source, *args, **kwargs)
 
-@MultiPath.action
+@MultiPathBase.action
 def popIn(actor, *args, **kwargs):
     actor.subaction.popIn(*args, **kwargs)
 
-@MultiPath.action
+@MultiPathBase.action
 def popOut(actor, *args, **kwargs):
     actor.subaction.popOut(*args, **kwargs)
 
 # Highlights the MultiPath actor
-@MultiPath.action
+@MultiPathBase.action
 def highlight(actor, *args, **kwargs):
     actor.subaction.highlight(*args, **kwargs)
 
@@ -2291,7 +2147,7 @@ def highlight(actor, *args, **kwargs):
 # Optional keyword input `pause` can be used to specify a number
 # of frames to pause after highlighting and before de-highlighting.
 # See also: Path.flourish()
-@MultiPath.action
+@MultiPathBase.action
 def flourish(actor, *args, **kwargs):
     actor.subaction.flourish(*args, **kwargs)
 
@@ -2320,7 +2176,7 @@ def flourish(actor, *args, **kwargs):
 #       Default: None (use half the subduration value).
 # select = Slice or tuple of slices representing the selection of
 #       subpaths to apply the action to.
-@MultiPath.action
+@MultiPathBase.action
 def drawIn(actor, subduration=30, atFrame=None, *,
     tempWidth=2, transition=morpho.transitions.uniform,
     substagger=None, select=None):
@@ -2347,6 +2203,19 @@ def drawIn(actor, subduration=30, atFrame=None, *,
     actor.fin = final
 
 
+# True MultiPath class for end-users inherits from
+# TransformableFrame too.
+
+# MultiFigure version of Path.
+# See "morpho.graphics.MultiImage" for more info on the basic idea here.
+@TransformableFrame.modifyFadeActions
+class MultiPath(MultiPathBase, AlignableTFrame):
+    pass
+
+Multipath = MultiPath  # Alias
+
+# Assign MultiPath as the Path class's dedicated multifigure version.
+Path._multitype = MultiPath
 
 # 3D version of MultiPath meant to enable 2D MultiPaths to be
 # positionable and orientable in 3D space. This is NOT a full
@@ -2367,9 +2236,9 @@ def drawIn(actor, subduration=30, atFrame=None, *,
 # for 2D MultiPaths. Here they are distinct: `pos` controls 3D
 # position, whereas `origin` controls 2D position within the
 # MultiPath's local plane.
-class MultiPath3D(MultiPath):
+class MultiPath3D(MultiPath, morpho.SpaceFrame):
     def __init__(self, seq=None, *args, **kwargs):
-        if isinstance(seq, MultiPath):
+        if isinstance(seq, MultiPathBase):
             # Convert 2D MultiPath into 3D MultiPath
             mpath = seq
             super().__init__(None, *args, **kwargs)
@@ -2398,6 +2267,8 @@ class MultiPath3D(MultiPath):
     def orient(self, value):
         self._orient = morpho.matrix.array(value)
 
+    partition = morpho.SpaceFrame.partition
+
     def primitives(self, camera):
         pos3d = camera.orient @ (self.pos - camera.focus) + camera.focus
         pos3d = pos3d.tolist()
@@ -2423,6 +2294,10 @@ class MultiPath3D(MultiPath):
         raise NotImplementedError
 
 MultiPath3d = MultiPath3D
+
+# Fade actions are re-implemented partly because substaggering
+# is not supported because subfigure jumps would be restricted
+# to the plane of orientation.
 
 @MultiPath3D.action
 def fadeIn(mpath, duration=30, atFrame=None, jump=0, alpha=1):
@@ -3949,6 +3824,15 @@ class Polygon(BoundingBoxFigure):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
+    @property
+    def seq(self):
+        return self.vertices
+
+    @seq.setter
+    def seq(self, value):
+        self.vertices = value
+
+
     # Applies all of the transformation attributes
     # origin, rotation, transform
     # to the actual vertices list itself and then
@@ -3966,9 +3850,8 @@ class Polygon(BoundingBoxFigure):
     # Returns physical bounding box of polygon as
     # [xmin, xmax, ymin, ymax]
     # ignoring rotation and transform.
-    def box(self):
-        array = np.array(self.vertices)
-        return Path._calculateBox(array, self.origin)
+    def box(self, *args, **kwargs):
+        return Path.box(self, *args, **kwargs)
 
     # Returns the center of mass of all vertices
     # ignoring transformation attributes.
@@ -4772,7 +4655,7 @@ class Arrow(Path):
 # are unsupported.
 # Also note that the "angle" property is not implemented for this class.
 class SpaceArrow(SpacePath, Arrow):
-    def __init__(self, tail=0, head=1, color=None, alpha=1, width=3,
+    def __init__(self, tail=0, head=1, color=(1,1,1), alpha=1, width=3,
         headSize=25, tailSize=0):
 
         # Use superclass constructor
@@ -4823,6 +4706,20 @@ class SpaceArrow(SpacePath, Arrow):
 ### HELPERS ###
 
 DEG2RAD = math.pi/180
+
+# Mainly for internal use.
+# Calculates the bounding box of a numpy array of
+# complex number positional data.
+def _calculateBoxFromArray(array, offset=0):
+    reals = array.real
+    imags = array.imag
+
+    left = np.min(reals).tolist() + offset.real
+    right = np.max(reals).tolist() + offset.real
+    bottom = np.min(imags).tolist() + offset.imag
+    top = np.max(imags).tolist() + offset.imag
+
+    return [left, right, bottom, top]
 
 # Draws an ellipse at the point (x,y) with width 2a
 # and height 2b.
@@ -5010,6 +4907,11 @@ def ellipse(z0, a, b=None, dTheta=tau/72, phase=0, *, relative=False):
         poly = poly.fimage(lambda z: z + z0)
     return poly
 
+# Like ellipse(), but returns a Path figure representing the
+# ellipse's edge. See ellipse() for more info.
+def ellipsePath(*args, **kwargs):
+    return ellipse(*args, **kwargs).edge()
+
 # Older version of the ellipse() function which returns a path figure instead
 # of a polygon. I changed it because an ellipse is more naturally a polygon
 # and you can get the path version by calling the Polygon edge() method.
@@ -5064,6 +4966,46 @@ def rect(box, pad=0, *, relative=False):
 
     poly.vertices = corners
     return poly
+
+# Like rect(), but returns a Path figure representing the
+# rectangle's edge. See rect() for more info.
+def rectPath(*args, **kwargs):
+    return rect(*args, **kwargs).edge()
+
+# Returns a generic path figure in the shape of an X.
+# X is drawn in this corner order: NW, SE, NE, SW.
+# Box is specified as [xmin, xmax, ymin, ymax]
+#
+# If optional keyword input `relative` is set to True, the path
+# will be centered using the `origin` attribute.
+@handleBoxTypecasting
+def cross(box, pad=0, *, relative=False):
+    box = padbox(box, pad)
+    x_min, x_max, y_min, y_max = box
+
+    path = morpho.grid.Path([x_min+y_max*1j, x_max+y_min*1j, x_max+y_max*1j, x_min+y_min*1j])
+    path.deadends.add(1)
+    if relative:
+        path.alignOrigin([0,0])
+
+    return path
+
+# Returns a generic path figure in the shape of a line that slashes
+# across a diagonal of a box. The initial corner of the slash can
+# be controlled by specifying "NW", "NE", "SW", or "SE" to the
+# `corner` keyword input.
+#
+# If optional keyword input `relative` is set to True, the path
+# will be centered using the `origin` attribute.
+@handleBoxTypecasting
+def slash(box, pad=0, *, corner="NW", relative=False):
+    box = padbox(box, pad)
+    corners = boxCorners(box, initCorner=corner)
+    path = Path(corners[::2])
+    if relative:
+        path.alignOrigin([0,0])
+    return path
+
 
 # Given a list of complex numbers and a (possibly non-integer)
 # index t, linearly interpolates the sequence to give a point on the
