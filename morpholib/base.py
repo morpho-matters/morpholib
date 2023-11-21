@@ -19,7 +19,7 @@ import cairo
 cr = cairo
 
 
-version = "0.8.2.dev1"  # Current public morpho version
+version = "0.9.0"  # Current public morpho version
 internalVersion = "2.4.1ip"  # Current internal morpho version
 subversion = ""
 DEBUG_MODE = False
