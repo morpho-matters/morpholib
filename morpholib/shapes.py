@@ -18,7 +18,7 @@ from morpholib.grid import Polygon, SpacePolygon, Spacepolygon, \
     Path, SpacePath, Spacepath, MultiPath, Multipath, MultiPath3D, \
     MultiPath3d, Arrow, SpaceArrow, Point, SpacePoint, Spacepoint, \
     Track, SpaceTrack, line, spaceLine, spaceline, rect, cross, \
-    rectPath, ellipsePath
+    slash, rectPath, ellipsePath
 from morpholib.grid import ellipse as ellipsePolygon
 
 import cairo
