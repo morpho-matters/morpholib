@@ -229,7 +229,8 @@ TFrame = TransformableFrame  # Alias
 # and AlignableFigure classes and implements some new methods
 # using both.
 class AlignableTFrame(TransformableFrame, AlignableFigure):
-    # Align the origins of a subset of subfigures.
+    # Align the origins of a subset of subfigures relative to the
+    # bounding box of the entire subset.
     # Behaves the same as alignOrigin(), but takes an additional
     # input `select` in which you can specify which subfigures to act
     # on using the same syntax as sub[] and select[] use. By default
