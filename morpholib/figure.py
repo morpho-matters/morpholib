@@ -292,13 +292,9 @@ class Figure(object):
     # `transition`, `modifier`, `delay` will all be set to their
     # default values.
     def dup(self, *args, **kwargs):
+        defaultFigure = type(self)()
         copy = self.copy(*args, **kwargs)
-        copy.set(
-            visible=True, static=False,
-            tweenMethod=type(copy).tweenLinear,
-            transition=morpho.transitions.default,
-            modifier=None, delay=0
-            )
+        copy._updateSettings(defaultFigure, includeTweenMethod=True, includeModifier=True)
         return copy
 
     # Updates the standard "meta-settings" of the figure with those
