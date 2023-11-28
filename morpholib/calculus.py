@@ -13,9 +13,9 @@ from cmath import exp
 
 deg90 = tau/4
 deg270 = 3*tau/4
-rot90x = morpho.matrix.rotation([1,0,0], tau/4)
-rot270y = morpho.matrix.rotation([0,1,0], -tau/4)
-swapxy = morpho.array([[0,1,0],[1,0,0],[0,0,1]])
+rot90x = morpho.matrix.rotation([1,0,0], tau/4); rot90x.flags.writeable = False
+rot270y = morpho.matrix.rotation([0,1,0], -tau/4); rot270y.flags.writeable = False
+swapxy = morpho.array([[0,1,0],[1,0,0],[0,0,1]]); swapxy.flags.writeable = False
 
 
 class IntegralArea(morpho.Figure):
