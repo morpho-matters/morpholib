@@ -17,6 +17,15 @@ rot90x = morpho.matrix.rotation([1,0,0], tau/4); rot90x.flags.writeable = False
 rot270y = morpho.matrix.rotation([0,1,0], -tau/4); rot270y.flags.writeable = False
 swapxy = morpho.array([[0,1,0],[1,0,0],[0,0,1]]); swapxy.flags.writeable = False
 
+# Simple numerical derivative.
+# Takes the derivative of `f` at `t` according to the formula
+#   (f(t+dt) - f(t-dt)) / (2*dt)
+#
+# Optionally `dt` can be given to specify finite
+# difference in `t` to use. Default: 1e-6
+def diff(f, t, dt=1e-6):
+    return (f(t+dt) - f(t-dt))/(2*dt)
+
 
 class IntegralArea(morpho.Figure):
 
