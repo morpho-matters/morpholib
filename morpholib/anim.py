@@ -611,8 +611,9 @@ class Frame(BoundingBoxFigure):
 
     # Given a Frame of subframes generated from calling partition(),
     # combine() recombines them back into a single Frame figure
-    # and returns the result. Note that this method leaves the
-    # original Frame figure that called it unchanged.
+    # and returns the result. Note that this method creates copies
+    # of all subfigures and leaves the original Frame figure that
+    # called it unchanged.
     #
     # This method may not combine them perfectly if transformation
     # tweenables of the underlying subframes were modified
