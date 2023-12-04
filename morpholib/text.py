@@ -2,6 +2,7 @@ import io
 
 import morpholib as morpho
 import morpholib.anim, morpholib.grid, morpholib.shapes
+from morpholib.actions import wiggle
 from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import typecastViewCtx, typecastView, \
@@ -456,6 +457,8 @@ class Text(BackgroundBoxFigure):
 
         ctx.restore()
         ctx.new_path()
+
+Text.action(wiggle)
 
 
 _referenceString = "A"
@@ -948,6 +951,8 @@ class MultiText(MultiTextBase, TransformableFrame):
     def box(self, view, ctx, *args, **kwargs):
         return super().box(view, ctx, *args, **kwargs)
 
+MultiText.action(wiggle)
+
 
 class MultiPTextBase(MultiTextBase):
     _baseFigure = PText
@@ -986,6 +991,8 @@ class MultiPText(MultiPTextBase, TransformableFrame):
         self.origin = value
 
 MultiPtext = MultiPText
+
+MultiPText.action(wiggle)
 
 
 # 3D version of the Text class.
@@ -1529,6 +1536,8 @@ class FancyMultiTextBase(MultiTextBase):
 
         return pivot
 
+FancyMultiTextBase.action(wiggle)
+
 # Fancier MultiText figure that has some global attributes
 # that affect the entire group. These attributes include
 # pos, anchor_x/y, alpha, rotation, transform, background,
@@ -1545,6 +1554,7 @@ class FancyMultiText(FancyMultiTextBase):
     # but commitTransforms() didn't work correctly (I think because
     # of how toplevel `align` interacts with it). Correct this in the
     # future.
+
 
 # Fancy version of MultiPText.
 # See FancyMultiText and MultiPText for more info.

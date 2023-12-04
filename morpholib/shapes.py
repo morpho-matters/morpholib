@@ -9,6 +9,7 @@ from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.combo import TransformableFrame, AlignableTFrame
+from morpholib.actions import wiggle
 
 from morpholib import object_hasattr
 
@@ -1709,6 +1710,8 @@ def flourish(actor, *args, **kwargs):
 def drawIn(actor, *args, **kwargs):
     return Path.actions["drawIn"](actor, *args, **kwargs)
 
+Spline.action(wiggle)
+
 
 # MultiFigure version of Spline.
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.
@@ -1891,6 +1894,8 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
 @TransformableFrame.modifyFadeActions
 class MultiSpline(MultiSplineBase, AlignableTFrame):
     pass
+
+MultiSpline.action(wiggle)
 
 Multispline = MultiSpline  # Alias
 
@@ -2631,6 +2636,8 @@ def popOut(ellipse, duration=30, atFrame=None):
     ellipse.newkey(atFrame)
     ellipse1 = ellipse.newendkey(duration)
     ellipse1.set(radius=0, strokeWeight=0, visible=False)
+
+Ellipse.action(wiggle)
 
 
 # Creates an arc of an ellipse.

@@ -6,6 +6,7 @@ import morpholib as morpho
 import morpholib.anim
 from morpholib.anim import Frame, SpaceFrame, MultiFigure, SpaceMultiFigure, \
     SpaceMultifigure, Spacemultifigure
+from morpholib.actions import wiggle
 from morpholib import object_hasattr
 from morpholib.tools.dev import AlignableFigure, BackgroundBoxFigure
 from morpholib.tools.basics import *
@@ -223,6 +224,8 @@ class TransformableFrame(Frame):
         return cls
 
 TFrame = TransformableFrame  # Alias
+
+TransformableFrame.action(wiggle)
 
 
 # Base class that combines the functionality of the TransformableFrame

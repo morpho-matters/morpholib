@@ -5,6 +5,7 @@ import morpholib.tools.color, morpholib.anim, morpholib.transitions
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.combo import TransformableFrame, AlignableTFrame
+from morpholib.actions import wiggle
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
     BackgroundBoxFigure, AlignableFigure, totalBox, shiftBox, \
@@ -1993,6 +1994,8 @@ def drawIn(actor, duration=30, atFrame=None, *,
     actor.newkey(atFrame + duration/2).set(start=final.start, end=final.end)
     actor.newkey(atFrame + duration, final)
 
+Path.action(wiggle)
+
 
 # Base class for MultiPath that exists to be inherited by MultiPath-like
 # subclasses. It exists because if a proper SpaceMultiPath is ever
@@ -2213,6 +2216,8 @@ class MultiPath(MultiPathBase, AlignableTFrame):
     pass
 
 Multipath = MultiPath  # Alias
+
+MultiPath.action(wiggle)
 
 # Assign MultiPath as the Path class's dedicated multifigure version.
 Path._multitype = MultiPath
@@ -4002,6 +4007,8 @@ class Polygon(BoundingBoxFigure):
         pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
 
         return pivot
+
+Polygon.action(wiggle)
 
 
 # 3D version of the Polygon figure. Draws a flat polygon in 3D space.

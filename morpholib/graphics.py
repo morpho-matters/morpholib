@@ -3,6 +3,7 @@ import morpholib as morpho
 import morpholib.anim
 import morpholib.color
 import morpholib.grid
+from morpholib.actions import wiggle
 from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import BoundingBoxFigure
@@ -562,6 +563,8 @@ def shrinkOut(img, duration=30, atFrame=None):
     img1 = img.newendkey(duration)
     img1.set(height=0, visible=False, linked=linked)
 
+Image.action(wiggle)
+
 # Image class with winding number.
 # NOT IMPLEMENTED! I believe this class's purpose has been obsoleted by
 # the new "rotation" attribute of the Image class.
@@ -885,6 +888,8 @@ class MultiImage(MultiImageBase, TransformableFrame):
 
 # Alternative name
 MultImage = MultiImage
+
+MultiImage.action(wiggle)
 
 
 # Multi version of the SpaceImage class.

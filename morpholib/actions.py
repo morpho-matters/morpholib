@@ -7,7 +7,7 @@ import morpholib as morpho
 # import morpho, morpho.anim
 # import morpho.grid
 # from morpho.tools.basics import *
-# import math, cmath
+import math
 
 autoJumpNames = {"pos", "origin", "_pos", "_origin"}
 
@@ -208,6 +208,36 @@ def rollback(actors, duration=30, atFrame=None, stagger=0):
 # fading into pig.
 def transform(fig, pig, time=30):
     raise NotImplementedError
+
+# Wiggles the actor by rotating it about its origin point
+# a set number of times by a certain angle.
+# Note that this is only possible if the actor's figure type
+# supports the `rotation` transformation attribute.
+#
+# INPUTS
+# duration = Total duration in frames for action. Default: 30 frames
+# atFrame = Initial frame to use. Default: None (latest keyframe)
+# KEYWORD-ONLY INPUTS
+# rotation = Rotation angle in radians. Can be negative to start with a
+#       clockwise rotation. Default: pi/6 (30 degs)
+# times = Number of times to rotate by a full swing. Default: 1
+def wiggle(actor, duration=30, atFrame=None, *,
+        rotation=math.pi/6, times=1):
+
+    if atFrame is None:
+        atFrame = actor.lastID()
+
+    path0 = actor.last()
+    final = path0.copy()
+
+    tstep = duration / (2*times + 2)
+    actor.newkey(atFrame)
+    # Not using newendkey() because intermediate rounding
+    # may throw off the time coordinates.
+    actor.newkey(atFrame + tstep).rotation = rotation
+    for n in range(1, times+1):
+        actor.newkey(atFrame + (2*n + 1)*tstep).rotation *= -1
+    actor.newkey(atFrame+duration, final)
 
 
 # Multi-action summoner
