@@ -553,13 +553,21 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
 
     # Returns a "normalized" version of the spline where
     # its box center is at the origin, all transformation attributes
-    # have been reset, and its boxHeight has been set to 1.
+    # have been reset, and its largest dimension has been resized to 1.
+    # If the spline has zero size (i.e. both its box dimensions are 0),
+    # this method will do no resizing.
     # Mainly for use by matchesShape() to compare different splines.
     def _normalizedShape(self):
         source = self.copy()
         source.rotation = 0
         source._transform = I2
-        source.resize(boxHeight=1)
+        boxWidth, boxHeight = source.boxDimensions()
+        if boxWidth == 0 and boxHeight == 0:
+            pass
+        elif boxWidth > boxHeight:
+            source.resize(boxWidth=1)
+        else:
+            source.resize(boxHeight=1)
         source.origin -= source.center()
         if source.origin != 0:
             source.commitTransforms()
