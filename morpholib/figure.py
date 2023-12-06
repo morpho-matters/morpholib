@@ -375,6 +375,25 @@ class Figure(object):
 
         return self
 
+    # Attempts to convert a copy of the figure into the given
+    # figure type by copying over all common tweenables and
+    # non-tweenables.
+    #
+    # Note that tween method and modifier will NOT be
+    # transferred to the new type.
+    #
+    # This method is currently hidden from the end-user
+    # because type conversions are too messy a process in the
+    # general case to handle using this basic technique.
+    # However, this method may be useful in performing PART of
+    # type conversions for many figures, and therefore may be
+    # useful under the hood as part of toType() methods
+    # implemented by subclasses.
+    def _toType_basic(self, figureType):
+        fig = figureType()
+        fig._updateFrom(self, common=True)
+        return fig
+
     # Update the state with a new set of tweenables.
     def update(self, tweenables):
         if "zdepth" not in self._state:

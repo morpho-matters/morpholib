@@ -632,10 +632,8 @@ class Frame(BoundingBoxFigure):
     #
     # Note that tween method and modifier will NOT be
     # transferred to the new type.
-    def toType(self, frameType):
-        frm = frameType()
-        frm._updateFrom(self, common=True)
-        return frm
+    def toType(self, frameType, *args, **kwargs):
+        return self._toType_basic(frameType, *args, **kwargs)
 
     # Allows you to give a name to a figure in the Frame that can
     # be referenced later using attribute access syntax.
