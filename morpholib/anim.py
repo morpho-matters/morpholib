@@ -627,6 +627,16 @@ class Frame(BoundingBoxFigure):
         root.origin = self.origin
         return root
 
+    # Attempts to convert a copy of the Frame into the given
+    # frame type.
+    #
+    # Note that tween method and modifier will NOT be
+    # transferred to the new type.
+    def toType(self, frameType):
+        frm = frameType()
+        frm._updateFrom(self, common=True)
+        return frm
+
     # Allows you to give a name to a figure in the Frame that can
     # be referenced later using attribute access syntax.
     # This name mapping will persist even for a copy made of the
