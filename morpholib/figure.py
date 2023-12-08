@@ -1969,10 +1969,10 @@ class Actor(object):
     # actor from the previous in the sequence by a certain number of
     # frames.
     # Optional keyword `template` is an empty Frame or Frame subtype
-    # that will be used to construct the Actor.
+    # instance that will be used to construct the Actor.
     # Default: morpho.Frame()
-    @staticmethod
-    def zip(*actors, stagger=0, template=None):
+    @classmethod
+    def zip(cls, *actors, stagger=0, template=None):
         if len(actors) == 0:
             raise TypeError("No actors to zip.")
         if isinstance(actors[0], (list, tuple)):
@@ -1985,7 +1985,7 @@ class Actor(object):
         films = []
         for n, actor in enumerate(actors):
             actor = actor.copy()
-            film = Actor(type(template))
+            film = cls(type(template))
             for time, keyfig in actor.timeline.items():
                 # Incorporate non-uniform transitions into tween methods
                 # since Frame tweening ignores subfigure transitions.
