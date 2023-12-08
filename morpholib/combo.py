@@ -439,8 +439,7 @@ class FigureArray(Frame):
 #   at least one of width or height must be specified.
 # filler = Figure whose copies will be used as "filler" to pad out the
 #   figure list if the given shape is incompatible with the length of
-#   the figure list. Note that this feature will not work if `figures`
-#   is a dict; it must be a sequence type.
+#   the figure list.
 #   Default: None (no filler; error will be thrown for incompatible shape)
 # cls = FigureArray subtype to use to construct the grid.
 #       Default: FigureArray.
@@ -458,11 +457,18 @@ def figureGrid(figures, *,
         figure = figures
         figures = [figure.copy() for n in range(abs(shape[0]*shape[1]))]
 
+    # Empty default dict that may be replaced later with a dict
+    # mapping names to subfigures
+    namedict = dict()
+
     # Add copies of the filler figure to the figure list if
     # the shape is incompatible with the number of figures in the list.
     if filler is not None:
         if isinstance(figures, dict):
-            raise TypeError("Cannot use filler with dict input for figures.")
+            # Save the name mapping for later and replace `figures`
+            # with just the list of figures (without names).
+            namedict = figures
+            figures = list(figures.values())
         # Check that shape is compatible
         if -1 in shape:
             dim = max(shape)
@@ -483,6 +489,7 @@ def figureGrid(figures, *,
         figgrid.setName(**figures)
     else:
         figgrid.figures = figures
+    figgrid.setName(**namedict)  # Set any additional names
 
     figgrid.shape = shape
 
