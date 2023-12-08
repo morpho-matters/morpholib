@@ -1745,15 +1745,11 @@ class Actor(object):
     # Optionally specify parameter "center" which denotes an index that
     # will be unaffected by the speed change.
     def speedUp(self, factor, center=0):
-        # TODO: Implement this. (Actually, I think I already did :) )
         # Note: Remember keyIDs are always ints, so you'll need to round!
         # Implement this by going thru the sorted list of key indices
         # and building a new timeline with the adjusted indices.
         # It's important to go thru the key indices IN ORDER so that
         # if there is an index collision, the LATER index is favored.
-        # Also, you can implement the center by cheating with shift().
-        # Just shift so the actor is rezeroed, and then invert the shift
-        # later. Maybe.
         timeline = {}
         for keyID in self.keyIDs:
             newID = round((keyID - center)/factor + center)
