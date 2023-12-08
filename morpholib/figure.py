@@ -1965,9 +1965,9 @@ class Actor(object):
         return self
 
     # Combines all the actors into a single Frame actor.
-    # Optional keyword `stagger` can be given an integer
-    # to offset each actor from the previous in the sequence by
-    # a certain number of frames.
+    # Optional keyword `stagger` can be specified to offset each
+    # actor from the previous in the sequence by a certain number of
+    # frames.
     # Optional keyword `template` is an empty Frame or Frame subtype
     # that will be used to construct the Actor.
     # Default: morpho.Frame()
