@@ -517,12 +517,12 @@ def handleDash(tweenmethod):
 # origin = Translation value (complex number). Default: 0 (complex number).
 # rotation = Path rotation about origin point (radians). Default: 0
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
-#
-# NON-TWEENABLE ATTRIBUTES
 # deadends = Set of ints specifying indices of seq that are "deadends". Meaning
 #            no line segment will be drawn from the deadend index to the next index.
 #            This is mainly used under the hood by helper functions like mathgrid()
 #            to speed up rendering.
+#
+# NON-TWEENABLE ATTRIBUTES
 # headExternal/tailExternal = Boolean controlling arrow triangle
 #       placement. If set to True, the arrow triangle's base will be
 #       drawn at the corresponding path endpoint instead of its tip.
