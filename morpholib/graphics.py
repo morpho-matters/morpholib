@@ -1044,7 +1044,9 @@ class RasterMap(morpho.Figure):
 #             RGBA are supported, you must stick to a consistent
 #             scheme if tweening between multiple color patterns.
 # domain = Box of the complex plane on which to evaluate the
-#          color function. Specified as [xmin,xmax,ymin,ymax]
+#          color function. Specified as [xmin,xmax,ymin,ymax].
+#          Can also be a figure/actor in which case its bounding
+#          box will be inferred if possible and used.
 # res = Pixel resolution of the pattern (xres, yres).
 #       Default: (100,100)
 # alpha = Opacity. Default: 1 (opaque)
@@ -1061,6 +1063,8 @@ class RasterMap(morpho.Figure):
 #       color pattern.
 def colorPattern(colorfunc, domain, res=(100,100), alpha=1,
     *, view=None, vectorized=False):
+
+    domain = inferBox(domain)
 
     if view is None:
         view = domain[:]
