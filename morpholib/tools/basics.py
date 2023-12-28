@@ -27,12 +27,7 @@ I3 = np.eye(3); I3.flags.writeable = False
 # If given an Actor object, it will use the latest keyfigure.
 def handleBoxTypecasting(func):
     def wrapper(box, *args, **kwargs):
-        if isinstance(box, morpho.Actor):
-            box = box.last()
-        if isinstance(box, morpho.Figure):
-            if not hasattr(box, "box"):
-                raise TypeError(f"`{type(box).__name__}` type figure does not support box() method.")
-            box = box.box()
+        box = inferBox(box)
         return func(box, *args, **kwargs)
     return wrapper
 
@@ -410,6 +405,22 @@ def totalBox(boxes, pad=0):
         raise ValueError("Total box is unbounded or undefined.")
 
     return padbox(bigbox, pad)
+
+# Attempts to infer the bounding box of an Actor or Figure.
+# Given a figure, calls its box() method and returns the result.
+# Given an Actor, calls the box() method of its latest keyfigure
+# and returns the result.
+# Otherwise returns the original input unchanged.
+def inferBox(obj):
+    if isinstance(obj, morpho.Actor):
+        obj = obj.last()
+    if isinstance(obj, morpho.Figure):
+        if not hasattr(obj, "box"):
+            raise TypeError(f"`{type(obj).__name__}` type figure does not support box() method.")
+        box = obj.box()
+    else:
+        box = obj
+    return box
 
 # Converts minutes with seconds into just seconds.
 # minsec(m,s) --> 60*m + s
