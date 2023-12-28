@@ -435,6 +435,14 @@ def minsec(mins, secs=None, /):
         secs = (value-mins)/0.6 * 60
     return 60*mins + secs
 
+# Concatenates several sequences into a single list.
+# No underlying sequence is modified in the process.
+def concat(*seqs):
+    total = []
+    for seq in seqs:
+        total.extend(seq)
+    return total
+
 # Allows one to easily define a Python slice object
 # using slice syntax.
 # Example: sel[1:3] --> slice(1,3)
