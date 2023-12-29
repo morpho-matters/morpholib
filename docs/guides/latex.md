@@ -119,6 +119,24 @@ equ.newendkey(30).replaceTex(r"a^2 + b^2 = c^2",
     )
 ```
 
+If using Morpho 0.9.0+, you can also pass in a string to the keyword `gauge` to automatically scale the new LaTeX figure so that the glyph sizes do not change. The idea is to pass in a string of LaTeX code that codes for exactly one LaTeX glyph that will be used as a reference to rescale the new LaTeX figure so that the gauge glyph's size remains unchanged. For example, suppose we want to morph the LaTeX `2x + y` into `\frac{1}{x}` while ensuring the size of the `x` glyphs remains unchanged after the transformation. Since `x` is a common glyph between the two LaTeX figures, we can set it as a gauge to tell Morpho to rescale the entire LaTeX figure so that the `x` glyph's size remains unchanged after replacement:
+```python
+expr = mainlayer.Actor(morpho.latex.parse(r"2x + y", boxHeight=1))
+expr.newendkey(30).replaceTex(r"\frac{1}{x}", gauge=r"x")
+```
+
+Some important caveats for this to work:
+- The gauge glyph must exist in both the starting *and* ending LaTeX figures. The above example works because `x` is a shared glyph between the two figures, but using `y` as the gauge would result in an error because the ending figure does not possess a `y` glyph. If the starting and ending LaTeX figures contain no common glyphs, the gauge feature cannot be used directly<sup>[</sup>[^1]<sup>]</sup>.
+- The LaTeX code used for the gauge must code for ***exactly*** one glyph. Usually a single LaTeX character/command corresponds to one glyph, but not always. For example, `\iff` actually codes for two glyphs and therefore cannot be used as a gauge.
+- Subscripted and superscripted glyphs are treated differently than their normal forms. For example, to use the `2` in the LaTeX expression `x^2` as a gauge, you must specify it as `^2`.
+- If a LaTeX figure has multiple glyphs that match the given gauge, the first instance will always be used for the reference. This is true of both the starting *and* ending figures.
+
+[^1]: There is a trick to workaround this limitation, but it requires creating a hidden intermediate LaTeX figure. For example, to morph `x` to `y` while preserving general font size, you can replace `x` with `xy` using `x` as the gauge, and then morph `xy` to `y` with `y` as the gauge. A compact implementation might look something like this:
+```python
+expr = mainlayer.Actor(morpho.latex.parse(r"x", boxHeight=1))
+expr.newendkey(30).replaceTex(r"xy", gauge="x").replaceTex(r"y", gauge="y")
+```
+
 ## Aligning multiple LaTeX expressions
 
 LaTeX figures (and MultiSplines more generally) possess the bounding box corner/side methods `left()`, `right()`, `bottom()`, `top()`, `northwest()`, `southwest()`, `southeast()`, `northeast()` which each return the position (as a complex number) of the corresponding point on the LaTeX figure's bounding box. These are handy when trying to line up two separate LaTeX figures relative to each other.
