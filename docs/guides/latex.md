@@ -125,7 +125,7 @@ LaTeX figures (and MultiSplines more generally) possess the bounding box corner/
 
 For example, let's say we have written the equation "_a_ + _b_ = 9 + 16", and we want to place a simplified version of it directly beneath it. The corner/side methods make this easy. We'll just position the simplified equation a little lower than the original equation's southwest corner while having the simplified equation's position aligned with its northwest corner:
 ```python
-equ = mainlayer.Actor(morpho.latex.parse(r"e^{\pi i} = -1", boxHeight=1))
+equ = mainlayer.Actor(morpho.latex.parse(r"a + b = 9 + 16", boxHeight=1))
 
 simp = mainlayer.Actor(morpho.latex.parse(r"a + b = 25", boxHeight=1,
     pos=equ.last().southwest()-0.75j, align=[-1,1]))
