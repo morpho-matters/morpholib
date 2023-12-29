@@ -1805,26 +1805,24 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
     # first subfigure that matches the gauge. Raises KeyError
     # if no matches found.
     def _findGaugeMatch(self, gauge, matches):
-        found = False
         for glyph in self.figures:
             if matches(glyph):
-                found = True
-                break
-        if not found:
-            raise KeyError(f"Could not find gauge {repr(gauge)} among subfigures.")
-        return glyph
+                return glyph
+        raise KeyError(f"Could not find gauge {repr(gauge) if isinstance(gauge, str) else ''} among subfigures.")
 
     # Replaces the MultiSpline with a MultiSpline generated
     # from morpho.latex.parse(). Intended to provide an easier
     # way to morph one LaTeX spline into another one, like this:
     #   myTexSpline.newendkey(30).replaceTex(r"E = mc^2")
+    #
     # If a string is passed in to the optional keyword `gauge`,
     # the glyph corresponding to the string will be used as a
     # reference to rescale the final MultiSpline so that the
     # gauge glyph's size remains unchanged. If the MultiSpline
     # contains multiple glyphs that match the given gauge, the
     # first instance is always used in both the old and new
-    # MultiSplines.
+    # MultiSplines. The `gauge` can also be specified as a
+    # Spline or MultiSpline figure directly.
     def replaceTex(self, tex, *, pos=None, align=None,
             boxWidth=None, boxHeight=None,
             gauge=None, **kwargs):
@@ -1833,7 +1831,17 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
             if not(boxWidth is None and boxHeight is None):
                 raise ValueError("A gauge cannot be used when a boxWidth/boxHeight is also specified.")
             # Extract box height of symbol
-            matchfunc = morpho.latex.matches(gauge)
+            if isinstance(gauge, str):
+                matchfunc = morpho.latex.matches(gauge)
+            elif isinstance(gauge, Spline):
+                matchfunc = lambda glyph, target=gauge: glyph.matchesShape(target)
+            elif isinstance(gauge, MultiSpline):
+                if len(gauge.figures) != 1:
+                    raise ValueError("MultiSpline `gauge` must contain exactly one subspline.")
+                target = gauge.figures[0]
+                matchfunc = lambda glyph, target=target: glyph.matchesShape(target)
+            else:
+                raise TypeError(f"Unexpected type {repr(type(gauge).__name__)} used for gauge.")
             oldHeight = self._findGaugeMatch(gauge, matchfunc).boxHeight()
 
         box = shiftBox(self.box(raw=True), self.origin)
