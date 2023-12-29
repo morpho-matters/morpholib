@@ -131,11 +131,7 @@ Some important caveats for this to work:
 - Subscripted and superscripted glyphs are treated differently than their normal forms. For example, to use the `2` in the LaTeX expression `x^2` as a gauge, you must specify it as `^2`.
 - If a LaTeX figure has multiple glyphs that match the given gauge, the first instance will always be used for the reference. This is true of both the starting *and* ending figures.
 
-[^1]: There is a trick to workaround this limitation, but it requires creating a hidden intermediate LaTeX figure. For example, to morph `x` to `y` while preserving general font size, you can replace `x` with `xy` using `x` as the gauge, and then morph `xy` to `y` with `y` as the gauge. A compact implementation might look something like this:
-```python
-expr = mainlayer.Actor(morpho.latex.parse(r"x", boxHeight=1))
-expr.newendkey(30).replaceTex(r"xy", gauge="x").replaceTex(r"y", gauge="y")
-```
+[^1]: There is a trick to workaround this limitation, but it requires creating a hidden intermediate LaTeX figure. For example, to morph `x` to `y` while preserving general font size, you can replace `x` with `xy` using `x` as the gauge, and then morph `xy` to `y` with `y` as the gauge. A compact implementation might look something like this: `expr.newendkey(30).replaceTex(r"xy", gauge=r"x").replaceTex(r"y", gauge=r"y")`
 
 ## Aligning multiple LaTeX expressions
 
