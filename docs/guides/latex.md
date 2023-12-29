@@ -119,6 +119,8 @@ equ.newendkey(30).replaceTex(r"a^2 + b^2 = c^2",
     )
 ```
 
+#### Gauge feature
+
 If using Morpho 0.9.0+, you can also pass in a string to the keyword `gauge` to automatically scale the new LaTeX figure so that the glyph sizes do not change. The idea is to pass in a string of LaTeX code that codes for exactly one LaTeX glyph that will be used as a reference to rescale the new LaTeX figure so that the gauge glyph's size remains unchanged. For example, suppose we want to morph the LaTeX `2x + y` into `\frac{1}{x}` while ensuring the size of the `x` glyphs remains unchanged after the transformation. Since `x` is a common glyph between the two LaTeX figures, we can set it as a gauge to tell Morpho to rescale the entire LaTeX figure so that the `x` glyph's size remains unchanged after replacement:
 ```python
 expr = mainlayer.Actor(morpho.latex.parse(r"2x + y", boxHeight=1))
