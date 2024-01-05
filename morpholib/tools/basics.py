@@ -192,6 +192,9 @@ def argShiftArray(th1, th2):
 #        It should be chosen so that the winding angle traveled
 #        from any f(t) to f(t+step) is strictly less than pi radians.
 def windingAngle(f, a, b, step):
+    if b < a:
+        return -windingAngle(f, b, a, step)
+
     length = b-a
     if length == 0:
         return 0
