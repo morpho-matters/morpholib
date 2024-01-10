@@ -17,14 +17,45 @@ rot90x = morpho.matrix.rotation([1,0,0], tau/4); rot90x.flags.writeable = False
 rot270y = morpho.matrix.rotation([0,1,0], -tau/4); rot270y.flags.writeable = False
 swapxy = morpho.array([[0,1,0],[1,0,0],[0,0,1]]); swapxy.flags.writeable = False
 
-# Simple numerical derivative.
-# Takes the derivative of `f` at `t` according to the formula
-#   (f(t+dt) - f(t-dt)) / (2*dt)
+# Simple numerical derivative. Calculated according to the
+# double-sided formula (f(x+dx) - f(x-dx))/(2*dx) but falls back on
+# a single-sided method if one of x+dx or x-dx results in an
+# illegal value (e.g. nan, inf, throws error, etc.).
 #
-# Optionally `dt` can be given to specify finite
-# difference in `t` to use. Default: 1e-6
-def diff(f, t, dt=1e-6):
-    return (f(t+dt) - f(t-dt))/(2*dt)
+# func = Callable function to take derivative of
+# x0 = Input value to take derivative at
+# dx = Change in x value. Default: 1.0e-6
+#
+# Returns approximation of derivative of func at x0.
+def derivative(func, x, dx=1.0e-6):
+    x_left = x0 - dx
+    x_right = x0 + dx
+
+    # Attempt to compute function values at x_left and x_right.
+    # If it fails for any reason, just use func(x0) instead
+    # for a one-sided derivative.
+    try:
+        f_left = func(x_left)
+    except Exception:
+        f_left = nan
+    if isbadnum(f_left):
+        x_left = x0
+        f_left = func(x0)
+
+    try:
+        f_right = func(x_right)
+    except Exception:
+        f_right = nan
+    if isbadnum(f_right):
+        x_right = x0
+        f_right = func(x0)
+
+    if x_left == x_right:
+        raise ValueError("Cannot evaluate function on left or right of target point.")
+
+    return (f_right - f_left)/(x_right - x_left)
+
+diff = derivative  # Alias
 
 
 class IntegralArea(morpho.Figure):
