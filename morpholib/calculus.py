@@ -23,32 +23,32 @@ swapxy = morpho.array([[0,1,0],[1,0,0],[0,0,1]]); swapxy.flags.writeable = False
 # illegal value (e.g. nan, inf, throws error, etc.).
 #
 # func = Callable function to take derivative of
-# x0 = Input value to take derivative at
+# x = Input value to take derivative at
 # dx = Change in x value. Default: 1.0e-6
 #
-# Returns approximation of derivative of func at x0.
+# Returns approximation of derivative of func at x.
 def derivative(func, x, dx=1.0e-6):
-    x_left = x0 - dx
-    x_right = x0 + dx
+    x_left = x - dx
+    x_right = x + dx
 
     # Attempt to compute function values at x_left and x_right.
-    # If it fails for any reason, just use func(x0) instead
+    # If it fails for any reason, just use func(x) instead
     # for a one-sided derivative.
     try:
         f_left = func(x_left)
     except Exception:
         f_left = nan
     if isbadnum(f_left):
-        x_left = x0
-        f_left = func(x0)
+        x_left = x
+        f_left = func(x)
 
     try:
         f_right = func(x_right)
     except Exception:
         f_right = nan
     if isbadnum(f_right):
-        x_right = x0
-        f_right = func(x0)
+        x_right = x
+        f_right = func(x)
 
     if x_left == x_right:
         raise ValueError("Cannot evaluate function on left or right of target point.")
