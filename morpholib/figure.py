@@ -1136,6 +1136,27 @@ def blink(actor, duration=15, atFrame=None, *, times=1):
         fig = actor.newkey(atFrame + n*duration/(2*times-1))
         fig.visible = not fig.visible  # Toggle visibility
 
+# Moves a figure by a given displacement vector (given as a
+# complex number for 2D figures, else a numpy 3-vector).
+# Additionally, the duration of the animation can be specified.
+# Default: 30 frames.
+#
+# Note this action assumes the target actor's figure type
+# possesses either a `pos` or `origin` attribute.
+# If a figure possesses both, only `pos` will be used.
+@Figure.action
+def move(actor, vector, duration=30):
+    # if vector is None:
+    #     raise ValueError("No movement vector given.")
+
+    fig = actor.newendkey(duration)
+    if hasattr(fig, "pos"):
+        fig.pos = fig.pos + vector  # Don't use += for sake of np.arrays!
+    elif hasattr(fig, "origin"):
+        fig.origin = fig.origin + vector  # Don't use += for sake of np.arrays!
+    else:
+        raise TypeError(f"`{type(fig).__name__}` figure has neither `pos` nor `origin` attribute.")
+
 # Animates the current latest keyfigure in the actor morphing
 # into itself from a given source figure. Useful as an opening
 # animation to create a new figure morphing out of a copy of
