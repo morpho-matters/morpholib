@@ -236,7 +236,7 @@ def arcCenterArray(p, q, angle):
 
 # Converts a 2D tuple/list into a complex number
 def vect2complex(v):
-    return v[0] + 1j*v[1]
+    return complex(*v)
 
 # Converts a complex number into an ordered pair
 # (z.real, z.imag)
