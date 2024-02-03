@@ -187,6 +187,22 @@ def wedge(u, v):
 def tilt(u, v):
     return wedge(v,u)
 
+# Given two N-dimensional vectors u,v and an angle theta,
+# returns the rotation matrix that rotates theta radians in the
+# direction from u toward v.
+#
+# Optionally the keyword `orthonormal=True` may be passed in to
+# tell the function to assume u and v are orthogonal unit vectors,
+# thus bypassing an unneccessary initial computation.
+def rotationNd(u, v, theta, *, orthonormal=False):
+    G = tilt(u,v)
+    if not orthonormal:
+        mag = np.sqrt((u@u)*(v@v) - (u @ v)**2)
+        G = G / mag
+
+    # Apply General Euler's Formula
+    return np.eye(*G.shape) + G*np.sin(theta) + (G@G)*(1-np.cos(theta))
+
 # Returns the 2D rotation matrix associated with the
 # input angle.
 def rotation2d(angle):
