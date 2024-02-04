@@ -446,6 +446,15 @@ def concat(*seqs):
         total.extend(seq)
     return total
 
+# Converts an iterable object into a list, but if it's not
+# iterable, returns a singleton list containing the object.
+def aslist(x, /):
+    try:
+        x = list(x)
+    except TypeError:
+        x = [x]
+    return x
+
 # Allows one to easily define a Python slice object
 # using slice syntax.
 # Example: sel[1:3] --> slice(1,3)
