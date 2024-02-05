@@ -4,9 +4,7 @@ animation actions.
 '''
 
 import morpholib as morpho
-# import morpho, morpho.anim
-# import morpho.grid
-# from morpho.tools.basics import *
+from morpholib.tools.basics import aslist
 import math
 
 autoJumpNames = {"pos", "origin", "_pos", "_origin"}
@@ -48,6 +46,9 @@ def _applyJump(figure, dz):
 #           5 frames after the first actor STARTS fading. Likewise,
 #           the third actor will begin fading 5 frames after the
 #           second actor starts fading, and so on.
+#           `stagger` can also be a sequence of numbers for variable
+#           stagger values. If the sequence exhausts early, the sequence
+#           will repeat.
 #           Default: 0 (meaning all actors begin fading at the same time)
 # KEYWORD ONLY
 # jump = Displacement each actor should "jump" during the fade out.
@@ -63,6 +64,8 @@ def fadeOut(actors, duration=30, atFrame=None, stagger=0, *, jump=()):
     if isinstance(actors, morpho.Actor):
         actors = [actors]
 
+    stagger = aslist(stagger)
+
     if atFrame is None:
         atFrame = max(actor.lastID() for actor in actors)
 
@@ -73,9 +76,11 @@ def fadeOut(actors, duration=30, atFrame=None, stagger=0, *, jump=()):
     if not isinstance(jump, list) and not isinstance(jump, tuple):
         jump = [jump]
 
+    offset = 0
     for n in range(len(actors)):
         actor = actors[n]
-        actor.newkey(atFrame+n*stagger)
+        actor.newkey(atFrame+offset)
+        offset += stagger[n % len(stagger)]
         keyfig = actor.newendkey(duration)
         keyfig.alpha = 0
         keyfig.visible = False
@@ -127,6 +132,8 @@ def fadeIn(actors, duration=30, atFrame=None, stagger=0, *,
     if atFrame is None:
         atFrame = max(actor.lastID() for actor in actors)
 
+    stagger = aslist(stagger)
+
     # # If jump isn't a subscriptable type, turn it into a singleton list
     # if not hasattr(jump, "__getitem__"):
 
@@ -138,10 +145,12 @@ def fadeIn(actors, duration=30, atFrame=None, stagger=0, *,
     if not isinstance(alpha, list) and not isinstance(alpha, tuple):
         alpha = [alpha]
 
+    offset = 0
     for n in range(len(actors)):
         actor = actors[n]
         actor.last().set(alpha=0, visible=False)
-        keyfigInit = actor.newkey(atFrame+n*stagger)
+        keyfigInit = actor.newkey(atFrame+offset)
+        offset += stagger[n % len(stagger)]
         keyfigInit.visible = True
         keyfig = actor.newendkey(duration)
         keyfig.alpha = alpha[n%len(alpha)]
@@ -185,18 +194,25 @@ def fadeIn(actors, duration=30, atFrame=None, stagger=0, *,
 #           back 5 frames after the first actor STARTS fading. Likewise,
 #           the third actor will begin rolling back 5 frames after the
 #           second actor starts rolling back, and so on.
+#           `stagger` can also be a sequence of numbers for variable
+#           stagger values. If the sequence exhausts early, the sequence
+#           will repeat.
 #           Default: 0 (all actors begin rolling back at the same time)
 def rollback(actors, duration=30, atFrame=None, stagger=0):
-    # if not isinstance(actors, list) and not isinstance(actors, tuple):
-    #     actors = [actors]
+
+    stagger = aslist(stagger)
+
     # Turn into a list if necessary
     if isinstance(actors, morpho.Actor):
         actors = [actors]
     if atFrame is None:
         atFrame = max(actor.lastID() for actor in actors)
+
+    offset = 0
     for n in range(len(actors)):
         actor = actors[n]
-        actor.newkey(atFrame+n*stagger)
+        actor.newkey(atFrame+offset)
+        offset += stagger[n % len(stagger)]
         actor.newendkey(duration, actor.first().copy())
         actor.last().visible = False
 
@@ -264,6 +280,8 @@ class MultiActionSummoner(object):
             elif isinstance(actors, morpho.Layer):
                 actors = actors.actors
 
+            stagger = aslist(stagger)
+
             now = max(actor.lastID() for actor in actors)
             for n,actor in enumerate(actors):
                 if isinstance(action, str):
@@ -277,14 +295,16 @@ class MultiActionSummoner(object):
                 if now not in actor.timeline:
                     actor.newkey(now)
                 action_n(*args, **kwargs)
-            if stagger > 0:
+            if stagger != [0]:
                 # Go thru the actors and shift them by the stagger
                 # amount starting at the present. Also preserve the
                 # keyfigure at the original present time.
+                offset = 0
                 for n,actor in enumerate(actors[1:], start=1):
                     # Post-action present-state of the actor
                     present = actor.time(now).copy()
-                    actor.shiftAfter(now-1, n*stagger)
+                    offset += stagger[n % len(stagger)]
+                    actor.shiftAfter(now-1, offset)
                     actor.newkey(now, present, seamless=False)
 
         return multiaction

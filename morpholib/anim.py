@@ -139,6 +139,8 @@ class _SubactionSummoner(object):
 
         now = film.lastID()
 
+        substagger = aslist(substagger)
+
         if select is None:
             select = sel[:]
         elif isinstance(select, Iterable):
@@ -185,8 +187,10 @@ class _SubactionSummoner(object):
             subactors.append(subactor)
 
         # Apply substagger to the affected subactors
+        offset = 0
         for count, n in enumerate(selectedIndices):
-            subactors[n].shift(count*substagger)
+            subactors[n].shift(offset)
+            offset += substagger[count % len(substagger)]
 
         # Delete current final keyfigure so that insertion
         # will overwrite it.
@@ -815,7 +819,9 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0, se
     finalframe = frame0.copy()
     frame0.all.static = False
 
-    if substagger == 0 and select is None:
+    substagger = aslist(substagger)
+
+    if substagger == [0] and select is None:
         # Do traditional fade in action. The traditional way exists
         # since using the subaction feature on MultiFigures incurs
         # some drawbacks that I would like to not have to deal with
@@ -844,10 +850,13 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0, se
 
 @Frame.action
 def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0, select=None):
+
+    substagger = aslist(substagger)
+
     # Record of who was static so we can restore this later
     staticRecord = [fig.static for fig in film.last().figures]
     film.last().all.static = False
-    if substagger == 0 and select is None:
+    if substagger == [0] and select is None:
         # Do traditional fade out action. The traditional way exists
         # since using the subaction feature on MultiFigures incurs
         # some drawbacks that I would like to not have to deal with
@@ -1254,9 +1263,12 @@ Multifigure = MultiFigure
 @MultiFigure.action
 def fadeIn(actor, duration=30, atFrame=None, jump=0, alpha=1, *,
         substagger=0, select=None, **kwargs):
+
+    substagger = aslist(substagger)
+
     actor.last().visible = True
     finalkey = actor.last().copy()
-    if substagger != 0 or select is not None:
+    if substagger != [0] or select is not None:
         actor.last().tweenMethod = Frame.tweenLinear
     Frame.actions["fadeIn"](actor, duration, atFrame, jump, alpha,
         substagger=substagger, select=select, **kwargs)
@@ -1265,8 +1277,11 @@ def fadeIn(actor, duration=30, atFrame=None, jump=0, alpha=1, *,
 
 @MultiFigure.action
 def fadeOut(actor, *args, substagger=0, select=None, **kwargs):
+
+    substagger = aslist(substagger)
+
     origTweenMethod = actor.last().tweenMethod
-    if substagger != 0 or select is not None:
+    if substagger != [0] or select is not None:
         actor.last().tweenMethod = Frame.tweenLinear
     Frame.actions["fadeOut"](actor, *args, substagger=substagger, select=select, **kwargs)
     actor.last().tweenMethod = origTweenMethod

@@ -2001,9 +2001,12 @@ class Actor(object):
         if template is None:
             template = morpho.Frame()
 
+        stagger = aslist(stagger)
+
         # Turn each individual actor into a singleton Frame Actor
         # (aka "Film") before combining them all into a single Film.
         films = []
+        offset = 0
         for n, actor in enumerate(actors):
             actor = actor.copy()
             film = cls(type(template))
@@ -2016,7 +2019,8 @@ class Actor(object):
                 # Transitions are handled within the tween methods of
                 # subfigures, so the toplevel transition of the film
                 # should be uniform.
-                film.newkey(time+n*stagger, template.copy()).set(figures=[keyfig], transition=morpho.transitions.uniform)
+                film.newkey(time+offset, template.copy()).set(figures=[keyfig], transition=morpho.transitions.uniform)
+            offset += stagger[n % len(stagger)]
             films.append(film)
 
         # Combine all the individual singleton films into
