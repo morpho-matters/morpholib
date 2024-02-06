@@ -1286,6 +1286,29 @@ def fadeOut(actor, *args, substagger=0, select=None, **kwargs):
     Frame.actions["fadeOut"](actor, *args, substagger=substagger, select=select, **kwargs)
     actor.last().tweenMethod = origTweenMethod
 
+# Like regular morphFrom(), except the source can optionally
+# be a list of actors/figures, in which case, the morph will
+# be performed from all of those figures.
+@MultiFigure.action
+def morphFrom(actor, source, *args, **kwargs):
+    if isinstance(source, (list, tuple)):
+        if len(source) == 0:
+            raise TypeError("Source to morph from is empty.")
+        # Prepare the list of figures to morph from
+        subfigs = [subfig.last().copy() if isinstance(subfig, morpho.Actor) else subfig.copy() for subfig in source]
+        if hasattr(actor.figureType, "commitTransforms"):
+            from morpholib.combo import TFrame
+            frm = TFrame(subfigs)
+        else:
+            frm = Frame(subfigs)
+
+        # Combine into a single multifigure
+        combined = frm.combine()
+
+        return actor.morphFrom(combined, *args, **kwargs)
+    else:
+        return morpho.Figure.actions["morphFrom"](actor, source, *args, **kwargs)
+
 
 # Class encapsulates all the tweenables of a list of figures of common
 # type so that you can easily modify a single tweenable across all the

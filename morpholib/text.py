@@ -1538,6 +1538,12 @@ class FancyMultiTextBase(MultiTextBase):
 
 FancyMultiTextBase.action(wiggle)
 
+@FancyMultiTextBase.action
+def morphFrom(actor, source, *args, **kwargs):
+    if isinstance(source, (list, tuple)):
+        raise NotImplementedError("Multi-morphFrom() cannot be used with Paragraph types.")
+    return morpho.Figure.actions["morphFrom"](actor, source, *args, **kwargs)
+
 # Fancier MultiText figure that has some global attributes
 # that affect the entire group. These attributes include
 # pos, anchor_x/y, alpha, rotation, transform, background,

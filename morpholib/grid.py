@@ -2110,29 +2110,6 @@ class MultiPathBase(MultiFigure, BackgroundBoxFigure, AlignableFigure):
 
         return pivot
 
-# Like regular morphFrom(), except the source can optionally
-# be a list of actors/figures, in which case, the morph will
-# be performed from all of those figures.
-@MultiPathBase.action
-def morphFrom(actor, source, *args, **kwargs):
-    if isinstance(source, (list, tuple)):
-        if len(source) == 0:
-            raise TypeError("Source to morph from is empty.")
-        # Prepare the list of figures to morph from
-        mpaths = [mpath.last().copy() if isinstance(mpath, morpho.Actor) else mpath.copy() for mpath in source]
-        for mpath in mpaths:
-            mpath.commitTransforms()
-            mpath.all.commitTransforms()
-
-        # Combine into a single MultiPath figure
-        combined = mpaths[0]
-        for mpath in mpaths[1:]:
-            combined.merge(mpath)
-
-        return actor.morphFrom(combined, *args, **kwargs)
-    else:
-        return morpho.Figure.actions["morphFrom"](actor, source, *args, **kwargs)
-
 @MultiPathBase.action
 def popIn(actor, *args, **kwargs):
     actor.subaction.popIn(*args, **kwargs)
