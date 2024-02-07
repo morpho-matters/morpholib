@@ -1928,7 +1928,7 @@ def conformText(textarray):
 #            Default: 0 radians
 # transform = Transformation matrix of entire paragraph about
 #             anchor point. Default: identity
-# **kwargs = Any other keyword arguments will be applied to the
+# **kwargs = Any other keyword arguments will be applied to
 #            every component Text figure:
 #            txt.set(**kwargs) for each txt in the textarray
 def paragraph(textarray, view, windowShape=None,
