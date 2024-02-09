@@ -423,7 +423,7 @@ class FigureArray(Frame):
 # Returns a FigureArray of the given figures.
 #
 # INPUTS
-# figures = List of figures to combine into a FigureArray.
+# figures = List/Dict of figures to combine into a FigureArray.
 #           If given a figure object (not as part of a list),
 #           it will make copies of the figure to create an
 #           array of the given shape.
