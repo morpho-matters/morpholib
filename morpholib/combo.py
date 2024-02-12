@@ -258,6 +258,12 @@ class AlignableTFrame(TransformableFrame, AlignableFigure):
             fig.alignOrigin(fig.boxCoords(unrot*(untransform*(anchor-fig.origin)), *args, raw=True, **kwargs), *args, **kwargs)
         return self
 
+    # Special version of Frame.partition().
+    def partition(self, *args, cls=None, **kwargs):
+        if cls is None:
+            cls = AlignableTFrame
+        return super().partition(*args, cls=cls, **kwargs)
+
 
 # Frame with a large collection of extra features.
 # Supports toplevel transformations, alignment, and background boxes.
@@ -272,6 +278,12 @@ class AlignableTFrame(TransformableFrame, AlignableFigure):
 # method, but this is only really required if using the
 # subalignOrigin() method.
 class FancyFrame(AlignableTFrame, BackgroundBoxFigure):
+    # Special version of Frame.partition().
+    def partition(self, *args, cls=None, **kwargs):
+        if cls is None:
+            cls = FancyFrame
+        return super().partition(*args, cls=cls, **kwargs)
+
     def draw(self, camera, ctx, *args, **kwargs):
         if self.numfigs == 0:
             return
