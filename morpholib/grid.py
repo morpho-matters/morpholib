@@ -4,7 +4,7 @@ mo = morpho
 import morpholib.tools.color, morpholib.anim, morpholib.transitions
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
-from morpholib.combo import TransformableFrame, AlignableTFrame
+from morpholib.combo import TransformableFrame, FancyFrame
 from morpholib.actions import wiggle
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
@@ -2010,7 +2010,7 @@ Path.action(wiggle)
     ["insertNodesUniformly", "concat"],
     Path, MultiFigure._returnOrigCaller
     )
-class MultiPathBase(MultiFigure, BackgroundBoxFigure, AlignableFigure):
+class MultiPathBase(MultiFigure):
 
     _basetype = Path
 
@@ -2079,20 +2079,6 @@ class MultiPathBase(MultiFigure, BackgroundBoxFigure, AlignableFigure):
             if path.nodeCount() < 2:
                 self.figures.remove(path)
         return self
-
-    def draw(self, camera, ctx):
-        # Don't draw empty MultiPath
-        if len(self.figures) == 0:
-            return
-
-        # Since there is no top-level alpha attribute for MultiPaths,
-        # it is inferred from the maximum alpha across all subpaths.
-        self._drawBackgroundBox(
-            camera, ctx, self.origin, self.rotation, self._transform,
-            _alpha=max(subpath.alpha for subpath in self.figures)
-            )
-
-        super().draw(camera, ctx)
 
     ### TWEEN METHODS ###
 
@@ -2189,7 +2175,7 @@ def drawIn(actor, subduration=30, atFrame=None, *,
 # MultiFigure version of Path.
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.
 @TransformableFrame.modifyFadeActions
-class MultiPath(MultiPathBase, AlignableTFrame):
+class MultiPath(MultiPathBase, FancyFrame):
     pass
 
 Multipath = MultiPath  # Alias

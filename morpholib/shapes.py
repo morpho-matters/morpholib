@@ -8,7 +8,7 @@ from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
     typecastWindowShape, findOwnerByType
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
-from morpholib.combo import TransformableFrame, AlignableTFrame
+from morpholib.combo import TransformableFrame, FancyFrame
 from morpholib.actions import wiggle
 
 from morpholib import object_hasattr
@@ -1900,7 +1900,7 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
         return pivot
 
 @TransformableFrame.modifyFadeActions
-class MultiSpline(MultiSplineBase, AlignableTFrame):
+class MultiSpline(MultiSplineBase, FancyFrame):
     pass
 
 MultiSpline.action(wiggle)
