@@ -273,6 +273,9 @@ class AlignableTFrame(TransformableFrame, AlignableFigure):
 # subalignOrigin() method.
 class FancyFrame(AlignableTFrame, BackgroundBoxFigure):
     def draw(self, camera, ctx, *args, **kwargs):
+        if self.numfigs == 0:
+            return
+
         # Try to infer a global alpha value from subfigures.
         try:
             alpha = max(fig.alpha for fig in self.figures)
