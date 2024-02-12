@@ -268,11 +268,10 @@ class _SubactionSummonerForMultiFigures(_SubactionSummoner):
 # a frame's tween method directly (via defaultTween) will only tween
 # the frame's attributes and NOT the underlying figure list.
 #
-# Also note that the transition function supplied to a frame will NOT
-# propagate down to the figures in the figures list. When tweening a frame,
-# the individual transition functions of each figure are used.
-# The transition of the Frame figure itself really only applies to its
-# own `origin` tweenable.
+# Note that subfigure transition functions are ignored when
+# tweening a Frame. This behavior can still be circumnavigated
+# by incorporating transitions directly into the subfigure
+# tween methods using `morpho.transitions.incorporateTransition()`.
 class Frame(BoundingBoxFigure):
     def __init__(self, figures=None, /, **kwargs):
         # By default, do what the superclass does.
