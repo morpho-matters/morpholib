@@ -146,8 +146,7 @@ class _SubactionSummoner(object):
         elif isinstance(select, Iterable):
             select = tuple(select)
 
-        frame0 = film.last()
-        initframe = frame0.copy()
+        initframe = film.last().copy()
 
         # Get a dict containing the selected indices
         selectedIndices = initframe._selectionMap(select)
@@ -566,10 +565,12 @@ class Frame(BoundingBoxFigure):
 
         if len(indices) == 0:
             return Frame([self.sub[:]])
-        if len(indices) == 1 and isinstance(indices[0], Iterable):
+        if len(indices) == 1 and isinstance(indices[0], (Iterable, slice)):
             indices = indices[0]
 
         # Convert to list if needed
+        if isinstance(indices, slice):
+            indices = list(listselect(range(self.numfigs), indices).keys())
         if not isinstance(indices, list):
             indices = list(indices)
 
