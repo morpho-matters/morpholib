@@ -399,6 +399,12 @@ my_figure.tween(my_other_figure, 0.5)
 # should then reassign new tween methods to those keyfigures (usually
 # just `beg` and `mid`) as well as perform any other needed
 # modifications to those keyfigures to make a seamless split.
+# However, splitters should generally only modify the tween methods
+# of `beg` and `mid`. These splitters are called "standard splitters".
+# Splitters that modify `fin` or have other side-effects are called
+# "non-standard splitters", and may not always cooperate with other
+# features of Morpho that assume more standard splitters
+# (for example, morpho.transitions.incorporateTransitions()).
 # The splitter function can alternatively be assigned afterward with
 # the @newSplitter decorator:
 #   @myNewTweenMethod.newSplitter

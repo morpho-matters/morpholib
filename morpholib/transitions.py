@@ -170,8 +170,31 @@ def _generateTransitionSplitter(transition, tweenmethod):
         trans1, trans2 = split(transition, t)
 
         if morpho.tweenSplittable(tweenmethod):
-            tweenmethod.splitter(transition(t), beg, mid, fin)
-            basetween1, basetween2 = beg.tweenMethod, mid.tweenMethod
+            # Create temporary copies of the keyfigures
+            # with their tween methods set to `tweenmethod`
+            # so that we can split `tweenmethod` into its
+            # two partial methods independent of whatever
+            # the tween methods of the original beg, mid,
+            # and fin are.
+            beg0 = beg.copy().set(tweenMethod=tweenmethod)
+            mid0 = mid.copy().set(tweenMethod=tweenmethod)
+            fin0 = fin.copy().set(tweenMethod=tweenmethod)
+            tr_t = transition(t)
+
+            # Apply splitter at transition(t) to the temporary
+            # keyfigures in order to extract the partial tween
+            # methods of `tweenmethod` which are needed later
+            # to split the transition-incorporated tween method.
+            tweenmethod.splitter(tr_t, beg0, mid0, fin0)
+            # Apply the splitter a second time to the original
+            # keyfigures in case the splitter needs to actually
+            # modify them beyond just their tween methods
+            # (i.e. non-standard splitters).
+            # NOTE FOR FUTURE: Possibly get rid of this line, as
+            # I suspect it will very, very rarely be useful, and
+            # might not be worth the slight code slowdown.
+            tweenmethod.splitter(tr_t, beg, mid, fin)
+            basetween1, basetween2 = beg0.tweenMethod, mid0.tweenMethod
         else:
             # Assume the tween method respects splitting
             basetween1 = basetween2 = tweenmethod
@@ -193,6 +216,10 @@ def _generateTransitionSplitter(transition, tweenmethod):
 # transition will produce the same effect as the original tween method
 # with the given transition function applied separately.
 # The modified tween method is returned and is not changed in place.
+#
+# Note that to work reliably, the given tween method's splitter should
+# be a standard splitter, meaning it only modifies the tween methods
+# of the beginning and middle keyfigures and has no other effects.
 def incorporateTransition(transition, tweenmethod):
     @morpho.TweenMethod(splitter=_generateTransitionSplitter(transition, tweenmethod))
     def newTween(self, other, t, *args, **kwargs):
