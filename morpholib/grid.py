@@ -97,6 +97,10 @@ class Point(morpho.Figure):
 
     # Draws the point on the given cairo context.
     def draw(self, camera, ctx):
+        # Do nothing given invisible or zero-size point.
+        if self.alpha <= 0 or self.size <= 0:
+            return
+
         view = camera.view
         X,Y = morpho.anim.screenCoords(self.pos, view, ctx)
         R = self.size/2
