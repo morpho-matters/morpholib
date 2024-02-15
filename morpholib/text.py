@@ -3,11 +3,11 @@ import io
 import morpholib as morpho
 import morpholib.anim, morpholib.grid, morpholib.shapes
 from morpholib.actions import wiggle
-from morpholib.combo import TransformableFrame
+from morpholib.combo import FancyFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import typecastViewCtx, typecastView, \
     typecastWindowShape, BoundingBoxFigure, BackgroundBoxFigure, \
-    AlignableFigure
+    PreAlignableFigure, AlignableFigure
 
 import cairo
 cr = cairo
@@ -65,7 +65,7 @@ I2 = np.identity(2)
 # font = Font to use. Default: "Times New Roman"
 # bold = Boolean indicating whether to bold. Default: False
 # italic = Boolean indicating whether to use italics. Default: False
-class Text(BackgroundBoxFigure):
+class Text(PreAlignableFigure, BackgroundBoxFigure):
     def __init__(self, text="", pos=0,
         size=64, font=None,
         bold=False, italic=False,
@@ -929,8 +929,8 @@ class MultiTextBase(morpho.MultiFigure):
 #
 # Bottom line: It's just like Text except you can tween between different
 # underlying text strings.
-@TransformableFrame.modifyFadeActions
-class MultiText(MultiTextBase, TransformableFrame):
+@FancyFrame.modifyFadeActions
+class MultiText(MultiTextBase, FancyFrame):
     def __init__(self, text="", pos=0, *args, **kwargs):
         super().__init__(text, *args, **kwargs)
         self.origin = pos
@@ -976,8 +976,8 @@ class MultiPTextBase(MultiTextBase):
 
 # Physical version of the MultiText class.
 # See MultiText and PText for more info.
-@TransformableFrame.modifyFadeActions
-class MultiPText(MultiPTextBase, TransformableFrame):
+@FancyFrame.modifyFadeActions
+class MultiPText(MultiPTextBase, FancyFrame):
     def __init__(self, text="", pos=0, *args, **kwargs):
         super().__init__(text, *args, **kwargs)
         self.origin = pos
@@ -1553,7 +1553,7 @@ def morphFrom(actor, source, *args, **kwargs):
 # function, and you probably don't want to use it directly.
 # If you just want something like a morphable single Text
 # figure, use vanilla MultiText instead.
-@TransformableFrame.modifyFadeActions
+@FancyFrame.modifyFadeActions
 class FancyMultiText(FancyMultiTextBase):
     pass
     # NOTE: This originally also inherited from TransformableFrame,
