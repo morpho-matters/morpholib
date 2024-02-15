@@ -310,16 +310,16 @@ class BoundingBoxFigure(morpho.Figure):
             return [a+x, b+x, c+y, d+y]
 
 
-# Mainly to be used as a base class to inherit from.
-# When inherited, it implements an implicit `align` property
-# as well as the method `alignOrigin()` based on the figure's
-# bounding box, and origin value.
+# Base class for AlignableFigure.
+# Implements some methods related to aligning figures with
+# respect to their bounding boxes. Assumes the inheriting
+# class has already implemented an `align` property.
 #
-# To use, the inheriting class must implement an `origin`
-# attribute, a box() method capable of accepting the keyword
-# parameter `raw=True`, and a commitTransforms() method.
+# To use, the inheriting class must implement an `origin` or `pos`
+# attribute, and a box() method capable of accepting the keyword
+# parameter `raw=True`.
 # Implementing `rotation` and `transform` should be optional.
-class AlignableFigure(BoundingBoxFigure):
+class PreAlignableFigure(BoundingBoxFigure):
 
     # Note that many of the methods here accept *args, **kwargs
     # which are (eventually) passed down to the underlying
@@ -335,41 +335,20 @@ class AlignableFigure(BoundingBoxFigure):
     def alignOrigin(self, align, *args, **kwargs):
         anchor = self.anchorPoint(align, *args, raw=True, **kwargs)
 
-        # Creating a new one each time just in case
-        # commitTransforms() modifies matrices in place.
-        I2 = np.eye(2)
+        self.align = align
 
-        # Store original transformation values.
         # The usage of default values here is in case the
         # class that inherits this method doesn't have
         # `rotation` and/or `transform` implemented.
-        origin_orig = self.origin
-        rotation_orig = getattr(self, "rotation", 0)
-        transform_orig = getattr(self, "transform", I2)
-
-        # Reset transformations temporarily so we can apply
-        # a translation via commitTransforms()
-        self.origin = 0
-        if rotation_orig != 0: self.rotation = 0
-        if transform_orig is not I2: self.transform = I2
-
-        # Use try block to ensure that even if an error is thrown,
-        # we reset the transformation values!
-        try:
-            self.origin = -anchor
-            self.commitTransforms()
-        finally:
-            # Restore original transformation values
-            self.origin = origin_orig
-            if rotation_orig != 0: self.rotation = rotation_orig
-            if transform_orig is not I2: self.transform = transform_orig
+        rotation = getattr(self, "rotation", 0)
+        transform = getattr(self, "transform", np.eye(2))
 
         # Now translate the final origin value, which must be
         # subjected to the transformations first.
-        rotator = cmath.exp(rotation_orig*1j)
-        transformer = morpho.matrix.Mat(transform_orig)
+        rotator = cmath.exp(rotation*1j)
+        transformer = morpho.matrix.Mat(transform)
         # Use manual += here in case origin is a np.array.
-        self.origin = self.origin + transformer*(rotator*anchor)
+        self._oripos = self._oripos + transformer*(rotator*anchor)
 
         return self
 
@@ -388,20 +367,58 @@ class AlignableFigure(BoundingBoxFigure):
     # `origin`.
     def boxAlign(self, *args, box=None, invalidValue=nan, **kwargs):
         if box is None:
-            box = shiftBox(self.box(*args, raw=True, **kwargs), self.origin)
+            box = shiftBox(self.box(*args, raw=True, **kwargs), self._oripos)
         xmin, xmax, ymin, ymax = box
-        anchor_x = invalidValue if xmin == xmax else morpho.lerp(-1, 1, self.origin.real, start=xmin, end=xmax)
-        anchor_y = invalidValue if ymin == ymax else morpho.lerp(-1, 1, self.origin.imag, start=ymin, end=ymax)
+        anchor_x = invalidValue if xmin == xmax else morpho.lerp(-1, 1, self._oripos.real, start=xmin, end=xmax)
+        anchor_y = invalidValue if ymin == ymax else morpho.lerp(-1, 1, self._oripos.imag, start=ymin, end=ymax)
         return (anchor_x, anchor_y)
 
+# Mainly to be used as a base class to inherit from.
+# When inherited, it implements an implicit `align` property.
+#
+# To use, the inheriting class must implement an `origin` or `pos`
+# attribute, a box() method capable of accepting the keyword
+# parameter `raw=True`, and a commitTransforms() method.
+# Implementing `rotation` and `transform` should be optional.
+class AlignableFigure(PreAlignableFigure):
     # Translates the path so that the current positional point
     # agrees with the given alignment parameter.
     # Can also be invoked by setting the `align` property:
     #   mypath.align = [-1,1]
     def realign(self, align, *args, **kwargs):
-        origOrigin = self.origin
-        self.alignOrigin(align, *args, **kwargs)
-        self.origin = origOrigin
+        anchor = self.anchorPoint(align, *args, raw=True, **kwargs)
+
+        # Creating a new one each time just in case
+        # commitTransforms() modifies matrices in place.
+        I2 = np.eye(2)
+
+        # Store original transformation values.
+        # The usage of default values here is in case the
+        # class that inherits this method doesn't have
+        # `rotation` and/or `transform` implemented.
+        origin_orig = self._oripos
+        rotation_orig = getattr(self, "rotation", 0)
+        transform_orig = getattr(self, "transform", I2)
+
+        # Reset transformations temporarily so we can apply
+        # a translation via commitTransforms()
+        self._oripos = 0
+        # These conditionals are here in case `self` does not
+        # implement rotation or transform attributes.
+        if rotation_orig != 0: self.rotation = 0
+        if transform_orig is not I2: self.transform = I2
+
+        # Use try block to ensure that even if an error is thrown,
+        # we reset the transformation values!
+        try:
+            self._oripos = -anchor
+            self.commitTransforms()
+        finally:
+            # Restore original transformation values
+            self._oripos = origin_orig
+            if rotation_orig != 0: self.rotation = rotation_orig
+            if transform_orig is not I2: self.transform = transform_orig
+
         return self
 
     @property
