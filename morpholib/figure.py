@@ -244,6 +244,35 @@ class Figure(object):
             setattr(self, name, value)
         return self
 
+    # `_oripos` is a hidden property that accesses/sets a figure's
+    # `origin` attribute if it exists, otherwise tries to do so
+    # for its `pos` attribute. If neither exists, throws an
+    # AttributeError.
+    #
+    # Its purpose is to provide a unified way to get/set a
+    # figure's "origin" transformation attribute even if the
+    # figure uses `pos` for that purpose (e.g. Image)
+    @property
+    def _oripos(self):
+        try:
+            return self.origin
+        except AttributeError:
+            pass
+
+        try:
+            return self.pos
+        except AttributeError:
+            raise AttributeError("Figure possesses neither `origin` nor `pos` attribute.")
+
+    @_oripos.setter
+    def _oripos(self, value):
+        if hasattr(self, "origin"):
+            self.origin = value
+        elif hasattr(self, "pos"):
+            self.pos = value
+        else:
+            raise AttributeError("Figure possesses neither `origin` nor `pos` attribute.")
+
     # # Creates a struct representation of the object.
     # def Struct(self):
     #     st = ps.Struct()
