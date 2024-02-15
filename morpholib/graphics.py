@@ -4,9 +4,9 @@ import morpholib.anim
 import morpholib.color
 import morpholib.grid
 from morpholib.actions import wiggle
-from morpholib.combo import TransformableFrame
+from morpholib.combo import FancyFrame
 from morpholib.tools.basics import *
-from morpholib.tools.dev import BoundingBoxFigure
+from morpholib.tools.dev import BoundingBoxFigure, PreAlignableFigure
 
 import cairo
 cr = cairo
@@ -49,7 +49,7 @@ I2 = np.identity(2)
 #                 Generally only used under the hood.
 # physical = Boolean on whether width and height are in physical units or pixels.
 #            Default: True (physical units)
-class Image(BoundingBoxFigure):
+class Image(PreAlignableFigure):
     def __init__(self, source=None):
 
         # morpho.Figure.__init__(self)
@@ -876,8 +876,8 @@ class MultiImageBase(morpho.MultiFigure):
 #
 # Bottom line: It's just like Image except you can tween between different
 # underlying image files.
-@TransformableFrame.modifyFadeActions
-class MultiImage(MultiImageBase, TransformableFrame):
+@FancyFrame.modifyFadeActions
+class MultiImage(MultiImageBase, FancyFrame):
     @property
     def pos(self):
         return self.origin
