@@ -1328,7 +1328,7 @@ def formatNumber(*args, **kwargs):
 
 ### GROUPS AND PARAGRAPHS ###
 
-class FancyMultiTextBase(MultiTextBase):
+class FancyMultiTextBase(MultiTextBase, PreAlignableFigure):
 
     def __init__(self, text="", *args, **kwargs):
 
