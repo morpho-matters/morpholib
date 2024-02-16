@@ -930,7 +930,7 @@ class MultiTextBase(morpho.MultiFigure):
 # Bottom line: It's just like Text except you can tween between different
 # underlying text strings.
 @TransformableFrame.modifyFadeActions
-class MultiText(MultiTextBase, TransformableFrame):
+class MultiText(MultiTextBase, TransformableFrame, PreAlignableFigure):
     def __init__(self, text="", pos=0, *args, **kwargs):
         super().__init__(text, *args, **kwargs)
         self.origin = pos

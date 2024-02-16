@@ -877,7 +877,7 @@ class MultiImageBase(morpho.MultiFigure):
 # Bottom line: It's just like Image except you can tween between different
 # underlying image files.
 @TransformableFrame.modifyFadeActions
-class MultiImage(MultiImageBase, TransformableFrame):
+class MultiImage(MultiImageBase, TransformableFrame, PreAlignableFigure):
     @property
     def pos(self):
         return self.origin
