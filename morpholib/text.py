@@ -1388,24 +1388,54 @@ class FancyMultiTextBase(MultiTextBase):
     def combine(self, *args, **kwargs):
         raise NotImplementedError("combine() is not supported for FancyMultiText figures.")
 
+    # Mainly for internal use.
+    # Updates the internal reference box of the paragraph.
     def updateReferenceBox(self, *args, **kwargs):
-        self._refbox = self.box(*args, raw=True, **kwargs)
+        # Do I really need _dz=0 here? Weirdly, it seems to make
+        # no difference, but I feel like it should.
+        # Upon closer inspection, I think it doesn't matter because
+        # the only thing part of the refbox that's used is its
+        # width and height. However, I think it's safer to set
+        # _dz=0 here, so that's what I'll do.
+        self._refbox = self.box(*args, raw=True, _dz=0, **kwargs)
         return self
+
+    # For internal use.
+    # Calculates the translation vector needed to handle positioning
+    # the paragraph according to its align parameter.
+    def _refboxTranslation(self):
+        # Reference box for use in calculating alignment parameters
+        left, right, bottom, top = self._refbox
+
+        width = right - left
+        height = top - bottom
+
+        # Calculate translation
+        dx = -morpho.lerp(-width/2, width/2, self.anchor_x, start=-1, end=1)
+        dy = -morpho.lerp(-height/2, height/2, self.anchor_y, start=-1, end=1)
+        return complex(dx, dy)
 
     # General version of totalBox() that can be used to implement totalBox()
     # for both FancyMultiText and FancyMultiPText.
-    def _totalBoxGeneral(self, viewctx=(), pad=0, *, raw=False, _verbose=False):
+    def _totalBoxGeneral(self, viewctx=(), pad=0, *, raw=False, _dz=None, _verbose=False):
         boxes = [fig.box(*viewctx, pad=0, raw=False) for fig in self.figures]
         left = min(box[0] for box in boxes)
         right = max(box[1] for box in boxes)
         bottom = min(box[2] for box in boxes)
         top = max(box[3] for box in boxes)
-        rawbox = [left, right, bottom, top]
 
-        if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
-            bigbox = BoundingBoxFigure._transformedBox(rawbox, 0, self.rotation, self._transform, pad)
-        else:
+        dz = self._refboxTranslation() if _dz is None else _dz
+        rawbox = shiftBox([left, right, bottom, top], dz)
+
+        if raw:
             bigbox = padbox(rawbox, pad)
+        else:
+            if self.rotation == 0 and np.array_equal(self._transform, I2):
+                # No fancy calculations, just shift
+                bigbox = shiftBox(padbox(rawbox, pad), self.origin)
+            else:
+                # Do fancy transformation calculations
+                bigbox = BoundingBoxFigure._transformedBox(rawbox, self.origin, self.rotation, self._transform, pad)
 
         if _verbose:
             return dict(rawbox=rawbox, bigbox=bigbox)
@@ -1432,16 +1462,7 @@ class FancyMultiTextBase(MultiTextBase):
         rawbox = boxdata["rawbox"]
         if raw:
             return rawbox
-        bigbox = boxdata["bigbox"]
-
-        left, right, bottom, top = rawbox
-        width = right - left
-        height = top - bottom
-
-        alignShift = complex(-self.anchor_x*width/2, -self.anchor_y*height/2)
-        alignShift = morpho.matrix.Mat(self._transform) * (cmath.exp(self.rotation*1j)*alignShift)
-
-        return shiftBox(bigbox, alignShift+self.origin)
+        return boxdata["bigbox"]
 
     corners = Text.corners
 
@@ -1463,18 +1484,7 @@ class FancyMultiTextBase(MultiTextBase):
             fig.pos -= center
 
     def makeFrame(self, *args, ignoreBackground=False, **kwargs):
-        # Reference box for use in calculating alignment parameters
-        left, right, bottom, top = self._refbox
-
-        width = right - left
-        height = top - bottom
-
-        # Calculate translation
-        # dx = self.pos.real - morpho.lerp(-width/2, width/2, self.anchor_x, start=-1, end=1)
-        # dy = self.pos.imag - morpho.lerp(-height/2, height/2, self.anchor_y, start=-1, end=1)
-        dx = -morpho.lerp(-width/2, width/2, self.anchor_x, start=-1, end=1)
-        dy = -morpho.lerp(-height/2, height/2, self.anchor_y, start=-1, end=1)
-        dz = dx + 1j*dy
+        dz = self._refboxTranslation()
 
         # Apply translations/transformations
         figs = []
@@ -1493,7 +1503,7 @@ class FancyMultiTextBase(MultiTextBase):
             figs.append(fig)
 
         if self.backAlpha > 0 and not ignoreBackground:
-            rect = morpho.grid.rect(padbox(shiftBox(self.box(*args, raw=True, **kwargs), complex(dx,dy)), self.backPad))
+            rect = morpho.grid.rect(padbox(self.box(*args, raw=True, _dz=dz, **kwargs), self.backPad))
             rect.origin = self.origin
             rect.width = 0
             rect.fill = self.background
@@ -1658,31 +1668,11 @@ class SpaceParagraph(FancyMultiTextBase, morpho.SpaceFrame):
             pos3d = orient @ (self.pos - focus) + focus
 
         # Create equivalent 2D FancyMultiText object
-        # txt = FancyMultiText()
         txt = self._baseMultiFigure()
         txt._updateFrom(self, common=True)
-        # del txt._state["_pos"]
-        # del txt._state["_orient"]
-        # txt.text = self.text
-        txt.origin += (pos3d[0] + 1j*pos3d[1]).tolist()
+        txt.origin = txt.origin + (pos3d[0] + 1j*pos3d[1]).tolist()
         txt.zdepth = pos3d[2]
-        # txt.size = self.size
         txt._transform = (orient @ self.orient)[:2,:2] @ self._transform
-        # txt.color = self.color
-        # txt.alpha = self.alpha
-        # txt.background = self.background
-        # txt.backAlpha = self.backAlpha
-        # txt.backPad = self.backPad
-        # txt.rotation = self.rotation
-        # txt.anchor_x = self.anchor_x
-        # txt.anchor_y = self.anchor_y
-
-        # txt.prescale_x = self.prescale_x
-        # txt.prescale_y = self.prescale_y
-
-        # txt.font = self.font
-        # txt.bold = self.bold
-        # txt.italic = self.italic
 
         return [txt]
 
@@ -2066,7 +2056,11 @@ def paragraph(textarray, view, windowShape=None,
     parag.background = background
     parag.backAlpha = backAlpha
     parag.backPad = backPad
-    parag.recenter(*camctx, raw=True)
+    # _dz is set to 0 here because we don't want to
+    # center based on the current alignment settings.
+    # That is, we want to recenter AS IF the paragraph
+    # is center-aligned.
+    parag.recenter(*camctx, raw=True, _dz=0)
 
     return parag
 
