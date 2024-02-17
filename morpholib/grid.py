@@ -2193,7 +2193,23 @@ def drawIn(actor, subduration=30, atFrame=None, *,
 # See "morpho.graphics.MultiImage" for more info on the basic idea here.
 @TransformableFrame.modifyFadeActions
 class MultiPath(MultiPathBase, FancyFrame):
-    pass
+    # Converts the MultiPath into an equivalent MultiSpline.
+    # Note that some path attributes cannot be converted, such
+    # as arrow tips and outlines, since Spline does not support
+    # these features.
+    def toSpline(self, *, _cls=None):
+        # `_cls` is a hidden keyword parameter that can override
+        # using MultiSpline as the container type. Mainly for use
+        # by MultiPath3D so it can override it to be MultiSpline3D.
+        if _cls is None:
+            import morpholib.shapes
+            _cls = morpho.shapes.MultiSpline
+
+        mspline = _cls()
+        mspline._updateFrom(self, common=True, ignore="figures")
+        mspline.figures = [path.toSpline() for path in self.figures]
+
+        return mspline
 
 Multipath = MultiPath  # Alias
 
@@ -2251,6 +2267,16 @@ class MultiPath3D(MultiPath, morpho.SpaceFrame):
     @orient.setter
     def orient(self, value):
         self._orient = morpho.matrix.array(value)
+
+    # Converts the MultiPath3D figure into an equivalent
+    # MultiSpline3D figure.
+    # See `MultiPath.toSpline()` for more info.
+    def toSpline(self, *, _cls=None):
+        if _cls is None:
+            import morpholib.shapes
+            _cls = morpho.shapes.MultiSpline3D
+
+        return super().toSpline(_cls=_cls)
 
     partition = morpho.SpaceFrame.partition
 
