@@ -3139,6 +3139,9 @@ def shrinkOut(grid, *args, **kwargs):
 # Special SpaceFrame figure for 3D mathgrids
 class SpaceMathGrid(MathGrid, morpho.SpaceFrame):
 
+    def toMultiPath(self, *args, **kwargs):
+        raise NotImplementedError("toMultiPath() is not implemented for SpaceMathGrid.")
+
     ### TWEEN METHODS ###
 
     def tweenSpiral(self, other, t):
