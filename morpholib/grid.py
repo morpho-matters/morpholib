@@ -1040,6 +1040,19 @@ class Path(BackgroundBoxFigure, AlignableFigure):
     def centroid(self):
         return mean(self.seq)
 
+    # Converts the Path into an equivalent Spline figure.
+    # Note that some attributes cannot transfer over, such as
+    # arrow tips and outlines, since Spline does not support
+    # these features.
+    def toSpline(self):
+        import morpholib.shapes
+
+        spline = morpho.shapes.Spline()
+        spline._updateFrom(self, common=True)
+        spline.newNodes(self.seq)
+
+        return spline
+
     # NOTE: FOR INTERNAL USE ONLY! NOT WELL-MAINTAINED. USE AT OWN RISK!
     # Returns boolean on whether a path has the same
     # color and width as another. This method is useful
@@ -2752,6 +2765,9 @@ class SpacePath(Path):
         segment = np.linalg.norm(self.seq[n] - self.seq[n-1])
         T = n + (s-ell)/segment
         return (T/(len(self.seq)-1)).tolist()
+
+    def toSpline(self):
+        raise NotImplementedError("toSpline() is currently not implemented for SpacePath")
 
     def primitives(self, camera): # orient=np.identity(3), focus=np.array([0,0,0], dtype=float)):
         # Path with fewer than 2 nodes is invisible, so return nothing.
