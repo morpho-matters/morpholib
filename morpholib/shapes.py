@@ -1794,9 +1794,12 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
 
     # Converts the MultiSpline into a similar looking MultiPath figure.
     # See also: Spline.toPath()
-    def toPath(self, segsteps=30):
+    def toPath(self, segsteps=30, *, _cls=morpho.grid.MultiPath):
+        # `_cls` is a hidden keyword parameter that can override
+        # using MultiPath as the container type. Mainly for use
+        # by MultiSpline3D so it can override it to be MultiPath3D.
         subpaths = [subspline.toPath(segsteps) for subspline in self.figures]
-        multipath = morpho.grid.MultiPath(subpaths)
+        multipath = _cls(subpaths)
         multipath._updateFrom(self, common=True, ignore="figures")
         return multipath
 
@@ -1934,6 +1937,12 @@ Spline._multitype = MultiSpline
 # position, whereas `origin` controls 2D position within the
 # MultiSpline's local plane.
 class MultiSpline3D(morpho.grid.MultiPath3D, MultiSplineBase):
+
+    # Converts the MultiSpline3D figure into a similar looking
+    # MultiPath3D figure.
+    # See also: MultiSpline.toPath()
+    def toPath(self, segsteps=30, *, _cls=morpho.grid.MultiPath3D):
+        return super().toPath(segsteps, _cls=_cls)
 
     ### TWEEN METHODS ###
 
