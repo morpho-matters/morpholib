@@ -4471,6 +4471,8 @@ class Animation(object):
                     else:
                         # Draw frames at specified framerate
                         pg.clock.schedule_interval(self.update, 1.0/self.frameRate)
+                    # Extra clearContext() call in case overdraw=True.
+                    mation.clearContext()
                 else:
                     mation.active = False
             elif mation.paused:
