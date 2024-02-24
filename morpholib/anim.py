@@ -3150,6 +3150,11 @@ class Animation(object):
         # Options are "bevel", "miter", and "round". Default: "round"
         self.jointStyle = "round"
 
+        # If set to True, the animation window will not be refreshed
+        # before drawing a new frame, meaning previous frames will
+        # not be erased before drawing a new one on top of it.
+        self.overdraw = False
+
         # Active animation variables
         self.active = False
         self.context = None
@@ -3256,6 +3261,7 @@ class Animation(object):
         ani.currentIndex = self.currentIndex
         ani.antialiasText = self.antialiasText
         ani.jointStyle = self.jointStyle
+        ani.overdraw = self.overdraw
         ani.clickCopy = self.clickCopy
         ani.clickRound = self.clickRound
 
@@ -4022,7 +4028,8 @@ class Animation(object):
         # clearWindow(self.background)
         if self.window is not None:
             self.window.clear()
-        self.clearContext()
+        if not self.overdraw:
+            self.clearContext()
 
         # Draw one layer at a time.
         for i in range(len(self.layers)):
