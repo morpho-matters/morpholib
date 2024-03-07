@@ -2188,7 +2188,9 @@ class Actor(object):
             raise TypeError("No global timeline to reference.")
 
         f = currentIndex - self.owner.timeOffset
-        if Actor.useTimeCache and f in self.timeCache:
+        # Check if cache can be used
+        if Actor.useTimeCache and f in self.timeCache \
+                and self.timeCache["useModifier"] == useModifier:
             fig = self.timeCache[f].copy()
         else:
             fig = self.time(f, copykeys=True)  # Make a copy in case it's a keyfigure
@@ -2198,6 +2200,7 @@ class Actor(object):
                 # Replace stored time index.
                 self.timeCache.clear()
                 self.timeCache[f] = fig.copy()
+                self.timeCache["useModifier"] = useModifier
 
         # Lie and say that self owns this figure so that methods like
         # Text.box() work correctly. I think it's okay for it to lie here since
