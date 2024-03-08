@@ -2195,7 +2195,9 @@ class Actor(object):
         else:
             fig = self.time(f, copykeys=True)  # Make a copy in case it's a keyfigure
             if useModifier:
-                fig = applyFigureModifier(fig)
+                # No need to make a copy since `fig` is guaranteed
+                # to be either a copy or a new figure.
+                fig = applyFigureModifier(fig, forceOrig=True)
             if Actor.useTimeCache:
                 # Replace stored time index.
                 self.timeCache.clear()
@@ -2374,25 +2376,35 @@ class _KeyIDContainer(object):
 
 ### HELPERS ###
 
-def applyFigureModifier(fig):
+# Mainly for internal use.
+# Applies a figure's modifier to (a copy of) itself if it
+# exists and returns the modified figure.
+# By default, if the figure has no modifier, it is returned
+# without being copied. Otherwise, a copy is created,
+# modified, and returned.
+# But if optional keyword `forceOrig=True`, then a copy will
+# not be made, and the original figure will be modified.
+def applyFigureModifier(fig, *, forceOrig=False):
     if fig.modifier is None:
         return fig
-    # Figure is copied because we don't want the
-    # modifier to actually modify the original
-    # keyfigures of the actor.
-    # This can alternatively be solved by setting
-    # `copykeys=True` in the time() call in Layer.draw(),
-    # but I think that is less efficient, since
-    # copying complex figures like LaTeX MultiSplines
-    # can be slow.
-    fig_orig = fig
-    fig = fig.copy()
-    # Assign copy's owner to be the original figure's owner.
-    # This is technically a lie, but it's important to make
-    # things like Text.box() work. I think it's okay to lie
-    # here since this copy's only job is to be drawn and then
-    # deleted. It won't persist.
-    fig.owner = fig_orig.owner
+
+    if not forceOrig:
+        # Figure is copied because we don't want the
+        # modifier to actually modify the original
+        # keyfigures of the actor.
+        # This can alternatively be solved by setting
+        # `copykeys=True` in the time() call in Layer.draw(),
+        # but I think that is less efficient, since
+        # copying complex figures like LaTeX MultiSplines
+        # can be slow.
+        fig_orig = fig
+        fig = fig.copy()
+        # Assign copy's owner to be the original figure's owner.
+        # This is technically a lie, but it's important to make
+        # things like Text.box() work. I think it's okay to lie
+        # here since this copy's only job is to be drawn and then
+        # deleted. It won't persist.
+        fig.owner = fig_orig.owner
     fig.modifier(fig)
     return fig
 
