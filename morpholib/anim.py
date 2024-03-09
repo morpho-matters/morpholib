@@ -2779,9 +2779,9 @@ class Layer(object):
 
         # Compute current view
         cam = self.viewtime(f, returnCamera=True, keepOwner=True, _skipTrivialTweens=True)  # Get camera figure
-        cam = applyFigureModifier(cam)
         if not cam.visible:
             return
+        cam = applyFigureModifier(cam)
 
         # Compile list of figures to draw
         figlist = []
@@ -2791,8 +2791,8 @@ class Layer(object):
             fig = actor.time(f, keepOwner=True, _skipTrivialTweens=True)
             if fig is None: continue
 
-            fig = applyFigureModifier(fig)
             if fig.visible:
+                fig = applyFigureModifier(fig)
                 figlist.append(fig)
 
         # Sort based on zdepth
@@ -2930,9 +2930,9 @@ class SpaceLayer(Layer):
 
         # Compute current view
         cam = self.viewtime(f, returnCamera=True, keepOwner=True, _skipTrivialTweens=True)  # Get camera figure
-        cam = applyFigureModifier(cam)
         if not cam.visible:
             return
+        cam = applyFigureModifier(cam)
 
         # Compile list of figures to draw
         figlist = []
@@ -2942,8 +2942,8 @@ class SpaceLayer(Layer):
             fig = actor.time(f, keepOwner=True, _skipTrivialTweens=True)
             if fig is None: continue
 
-            fig = applyFigureModifier(fig)
             if fig.visible:
+                fig = applyFigureModifier(fig)
                 figlist.append(fig)
 
         # Sort based on zdepth
