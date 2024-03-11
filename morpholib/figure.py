@@ -1833,68 +1833,56 @@ class Actor(object):
         self.shiftBefore(a, numFrames + numBefore)
         self.shiftAfter(b, numFrames + numAfter)
 
-    # Returns a "subactor" of the original actor between
-    # the specified start and end times (inclusive).
-    # Optional argument `edgeInterp` determines what to do
-    # if segment boundaries fall at a non-key.
-    # "seamless" : Will make new keys in the subactor to
-    #              ensure the segment plays EXACTLY like
-    #              it did within the ambient actor. (Default)
-    # "boundary only" : Will only make keys at the start
-    #                   and end frames.
-    # "none" : Do no interpolation.
-    # Optional argument `rezero` determines whether the subactor
-    # will be rezeroed before being returned. Default: True.
-    # start and end default to minkeyID and maxkeyID.
-    # FUTURE: Implement this via python's slicing commands.
-    def segment(self, start=None, end=None, edgeInterp="seamless", rezero=True):
+    # Returns a "subactor" copy of the original actor between
+    # the specified start and end time indices (inclusive).
+    # If unspecified, `start` and `end` will be set to the
+    # first and last keyindices respectively.
+    #
+    # OPTIONAL KEYWORD-ONLY INPUTS
+    # seamless = Boolean which if set to True, modifies the
+    #       starting and ending keyfigures of the resulting subactor
+    #       so that it plays (hopefully) exactly like the original
+    #       actor. Default: True.
+    # rezero = Boolean determining whether the subactor will be
+    #       rezeroed before being returned. Default: True.
+    def segment(self, start=None, end=None, *, seamless=True, rezero=True):
+        # POSS FUTURE: Implement this via python's slicing commands.
+        # But keep in mind, we already have a slicing feature
+        # using the syntax key[a:b]
+
+        if len(self.timeline) == 0:
+            return Actor(self.figureType)
+
         if start is None:
             start = self.firstID()
         if end is None:
             end = self.lastID()
 
-        start = flattenFloat(start)
-        end = flattenFloat(end)
+        if start > end:
+            raise ValueError("Start time must be before end time.")
 
-        edgeInterp = edgeInterp.lower()
+        start = round(start)
+        end = round(end)
 
-        # Get sorted list of keyIDs
-        keyIDs = list(self.timeline)
-        keyIDs.sort()
-
-        # Find min and max keyIDs in [start, end]
-        a = listceil(keyIDs, start)
-        b = listfloor(keyIDs, end)
+        # Get the smallest possible "clean" subactor containing
+        # `start` and `end` (i.e. subactor bounded by keyfigures).
+        a = max(0, listfloor(self.keyIDs, start))
+        b = min(len(self.keyIDs)-1, listceil(self.keyIDs, end))
 
         # Create a new actor with the keys found in self between
         # the times a and b.
         subactor = Actor(self.figureType)
-        for i in range(a,b+1):
-            keyID = keyIDs[i]
+        for keyID in self.keyIDs[a:b+1]:
             subactor.newkey(keyID, self.time(keyID).copy(), seamless=False)
 
-        # Make extra keys at the start and end times on the subactor
-        if edgeInterp == "boundary only":
-            if start not in self.timeline and start > self.firstID():
-                subactor.newkey(start, self.time(start), seamless=False)
-            if end not in self.timeline and len(self.timeline) > 0:
-                subactor.newkey(end, self.time(end), seamless=False)
-
-        # Make extra keys in the padding between [start,end] and
-        # the subactor so far.
-        elif edgeInterp == "seamless":
-            if a < len(self.timeline):
-                keyID = keyIDs[a]
-                for t in range(start, keyID):
-                    subactor.newkey(t, self.time(t), seamless=False)
-
-            if b >= 0:
-                keyID = keyIDs[b]
-                for t in range(keyID+1, end+1):
-                    subactor.newkey(t, self.time(t), seamless=False)
-
-        elif edgeInterp != "none":
-            raise ValueError('Unrecognized edgeInterp method: "' + edgeInterp + '"')
+        # Trim the subactor if start or end does not correspond to
+        # a keyindex.
+        if start > self.keyIDs[a]:
+            subactor.newkey(start, self.time(start, copykeys=True), seamless=seamless)
+            del subactor.key[0]
+        if end < self.keyIDs[b]:
+            subactor.newkey(end, self.time(end, copykeys=True), seamless=seamless)
+            del subactor.key[-1]
 
         if rezero:
             subactor.rezero()
