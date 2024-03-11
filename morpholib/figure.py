@@ -1769,7 +1769,8 @@ class Actor(object):
 
     # Shifts the timeline so that the lowest keyID is zero.
     def rezero(self):
-        self.shift(-self.firstID())
+        if len(self.timeline) > 0:
+            self.shift(-self.firstID())
         return self
 
     # Reverses the order of keyindices, making the actor
