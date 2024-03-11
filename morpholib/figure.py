@@ -1907,7 +1907,9 @@ class Actor(object):
     # with the optional argument afterFrame.
     # Optionally, the keyword-only argument `atFrame` can be set
     # instead, which will insert the actor BEFORE the specified frame.
-    def insert(self, actor, afterFrame=None, *, atFrame=None):
+    # Optional keyword-only `timeOffset` can be set to an integer
+    # to offset the target index by a certain number of frames.
+    def insert(self, actor, afterFrame=None, *, atFrame=None, timeOffset=0):
         # Check type compatibility
         if actor.figureType is not self.figureType:
             raise TypeError("Can't insert actor of different figure type!")
@@ -1922,6 +1924,8 @@ class Actor(object):
             afterFrame = self.lastID()
             if afterFrame == -oo:
                 afterFrame = 0
+
+        afterFrame += timeOffset
 
         # Make some room for the incoming actor!
         self.shiftAfter(afterFrame, len(actor))
