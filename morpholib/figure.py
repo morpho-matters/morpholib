@@ -1891,20 +1891,15 @@ class Actor(object):
 
     # subactor = segment  # Alternate name for segment()
 
+    # NOT IMPLEMENTED!
     # Like segment(), but removes the given subactor from
-    # the given actor. Has additional
-    # optional arg outerEdgeInterp which takes the same
-    # values as edgeInterp but determines what to do with
-    # the superactor.
-    def remove(self, start=None, end=None, outerEdgeInterp="seamless"):
+    # the given actor.
+    def remove(self, start=None, end=None, *args, **kwargs):
         raise NotImplementedError
 
     # NOT IMPLEMENTED!
     # Does both segment() and remove() simult.
-    # segment from the original actor. Has both edgeInterp
-    # and outerEdgeInterp optional args.
-    def cut(self, start=None, end=None, edgeInterp="seamless",
-        outerEdgeInterp="seamless"):
+    def cut(self, start=None, end=None, *args, **kwargs):
         raise NotImplementedError
 
     # Inserts the given actor into self.

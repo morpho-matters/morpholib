@@ -182,7 +182,7 @@ class _SubactionSummoner(object):
                     )
             # Remove past keyframes as they should not be
             # modified by a standard action.
-            subactor = subactor.segment(start=now, rezero=True, edgeInterp="none")
+            subactor = subactor.segment(start=now, rezero=True, seamless=False)
             subactors.append(subactor)
 
         # Apply substagger to the affected subactors
