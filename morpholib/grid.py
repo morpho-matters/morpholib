@@ -1009,6 +1009,8 @@ class Path(BackgroundBoxFigure, AlignableFigure):
     def s_inv(self, s):
         if s < 0:
             raise ValueError("Given length must be nonnegative!")
+        if s == 0:
+            return 0
 
         ell = 0
         n = 0
