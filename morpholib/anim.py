@@ -1803,11 +1803,23 @@ class Camera(BoundingBoxFigure):
     def convertWidth(self, other, width):
         return other.physicalWidth(self.normalizedWidth(width))
 
+    # Converts physical width from another camera system to self's.
+    # Similar to convertWidth(), but reverses the roles of self
+    # and other.
+    def convertWidthFrom(self, other, width):
+        return self.physicalWidth(other.normalizedWidth(width))
+
     # Converts physical height from one camera system to another.
     # Given `height`, this method returns the corresponding height
     # in the camera system of `other`.
     def convertHeight(self, other, height):
         return other.physicalHeight(self.normalizedHeight(height))
+
+    # Converts physical height from another camera system to self's.
+    # Similar to convertHeight(), but reverses the roles of self
+    # and other.
+    def convertHeightFrom(self, other, height):
+        return self.physicalHeight(other.normalizedHeight(height))
 
     # NOT IMPLEMENTED YET!
     # Converts a box [xmin,xmax,ymin,ymax] in physical coordinates
