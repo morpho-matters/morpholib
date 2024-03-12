@@ -1389,7 +1389,7 @@ class Actor(object):
     # Segments of actors can also be extracted with this syntax:
     # myactor.key[i:j]
     # which extracts a subactor starting from the i-th keyfigure
-    # and ending with the j-th keyfigure, inclusive.
+    # and ending with the (j-1)-st keyfigure, inclusive.
     @property
     def key(self):
         return _KeyContainer(self)
@@ -2326,7 +2326,7 @@ class _KeyContainer(object):
                 start = 0
             if stop is None:
                 stop = -1
-            return self.actor.segment(self.actor.keyID[start], self.actor.keyID[stop])
+            return self.actor.segment(self.actor.keyID[start], self.actor.keyID[stop-1])
 
         return self.actor._keyno(i)
 
