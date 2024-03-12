@@ -1105,7 +1105,8 @@ class Path(BackgroundBoxFigure, AlignableFigure):
     # in the classic way so that the outline uniformly covers the original.
     # Also computes what the new arrow size should be and returns it.
     def _adjustSeqForOutline(back, camera, ctx, endIndex, prevIndex,
-        outlineWidth, arrowDraw, arrowSize, arrowExternal, xRatio, yRatio):
+            outlineWidth, arrowDraw, arrowSize, arrowExternal,
+            xRatio, yRatio, Tmat):
 
         diff = back.seq[endIndex] - back.seq[prevIndex]  # Ending segment vector
         diff_length = abs(diff)
@@ -1116,7 +1117,7 @@ class Path(BackgroundBoxFigure, AlignableFigure):
         dX, dY = dL.real, dL.imag
         dx = morpho.physicalWidth(dX, camera.view, ctx)
         dy = morpho.physicalHeight(dY, camera.view, ctx)
-        dl = abs(dx + 1j*dy)  # Outline thickness physical vector
+        dl = abs(complex(dx,dy))  # Outline thickness physical vector
         if arrowDraw:
             sign = sgn(arrowSize)
             arrowSize += 4*root3over2*outlineWidth*sign
@@ -1129,6 +1130,10 @@ class Path(BackgroundBoxFigure, AlignableFigure):
         # `shift` is the amount to shift the final node of the
         # outline path so that the outline evenly covers the
         # original path.
+
+        # Rescale `shift` to account for scaling distortions
+        # caused by transformations
+        shift *= abs(diff)/abs(Tmat*diff)
 
         # If the final node will be shifted basically on top of
         # the penultimate node, slightly perturb the shift value
@@ -1184,16 +1189,21 @@ class Path(BackgroundBoxFigure, AlignableFigure):
             ctx.set_line_cap(cairo.LINE_CAP_SQUARE)
             back._tipExpand = self.outlineWidth
         else:  # Classic rendering
+            # Compute transformation factor matrix
+            Tmat = morpho.matrix.Mat(self._transform @ morpho.matrix.rotation2d(self.rotation)) if not np.array_equal(self._transform, I2) else 1
+
             # Handle head
             back.headSize = back._adjustSeqForOutline(
                 camera, ctx, -1, -2,
-                self.outlineWidth, headDraw, self.headSize, self.headExternal, xRatio, yRatio
+                self.outlineWidth, headDraw, self.headSize, self.headExternal,
+                xRatio, yRatio, Tmat
                 )
 
             # Handle tail
             back.tailSize = back._adjustSeqForOutline(
                 camera, ctx, 0, 1,
-                self.outlineWidth, tailDraw, self.tailSize, self.tailExternal, xRatio, yRatio
+                self.outlineWidth, tailDraw, self.tailSize, self.tailExternal,
+                xRatio, yRatio, Tmat
                 )
             # Offset the dash by the outline width if
             # tailSize is positive
