@@ -1135,7 +1135,8 @@ class Path(BackgroundBoxFigure, AlignableFigure):
 
         # Rescale `shift` to account for scaling distortions
         # caused by transformations
-        shift *= abs(diff)/abs(Tmat*diff)
+        if diff != 0:
+            shift *= abs(diff)/abs(Tmat*diff)
 
         # If the final node will be shifted basically on top of
         # the penultimate node, slightly perturb the shift value
