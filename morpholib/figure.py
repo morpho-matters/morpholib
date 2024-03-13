@@ -27,7 +27,7 @@ import numpy as np
 pyset = set
 
 # Set of all Figure metasetting names
-METASETTINGS = {"transition", "visible", "static", "delay"}
+METASETTINGS = {"transition", "visible", "static", "delay", "_static_acute"}
 
 
 ### CLASSES ###
