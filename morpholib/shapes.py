@@ -2779,14 +2779,14 @@ class EllipticalArc(morpho.Figure):
         # If angular span is greater than tau,
         # just draw a circle
         if abs(theta1 - theta0) >= tau:
-            theta0 = 0
-            theta1 = tau
-        elif theta1 < theta0:
-            theta0, theta1 = theta1, theta0
+            theta1 = theta0 + sgn(theta1-theta0)*tau
 
         Z0 = cmath.exp(theta0*1j)
         ctx.move_to(Z0.real, Z0.imag)
-        ctx.arc(0,0, 1, theta0, theta1)
+        if theta0 <= theta1:
+            ctx.arc(0,0, 1, theta0, theta1)
+        else:
+            ctx.arc_negative(0,0, 1, theta0, theta1)
         ctx.restore()
 
         if self.strokeWeight < 0.5:  # Don't stroke if strokeWeight is too small
