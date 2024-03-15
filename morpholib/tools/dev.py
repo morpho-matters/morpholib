@@ -352,6 +352,25 @@ class PreAlignableFigure(BoundingBoxFigure):
 
         return self
 
+    # Moves the `origin` attribute to the specified position
+    # without moving the figure itself.
+    #
+    # Note that this method will throw an error if the
+    # figure possesses a `transform` attribute set to a
+    # singular matrix.
+    def placeOrigin(self, pos, *args, **kwargs):
+        # The usage of default values here is in case the
+        # class that inherits this method doesn't have
+        # `rotation` and/or `transform` implemented.
+        rotation = getattr(self, "rotation", 0)
+        transform = getattr(self, "transform", np.eye(2))
+
+        try:
+            pos = cmath.exp(-rotation*1j) * (morpho.matrix.Mat(transform).inv*(pos-self._oripos))
+        except np.linalg.LinAlgError:
+            raise ValueError("Figure transform matrix is singular. Cannot place origin.")
+        return self.alignOrigin(self.boxCoords(pos, *args, raw=True, **kwargs), *args, **kwargs)
+
     # Returns the alignment of the figure's origin relative
     # to its bounding box.
     #
