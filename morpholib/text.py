@@ -1348,7 +1348,6 @@ class FancyMultiTextBase(MultiTextBase, PreAlignableFigure):
 
         self.Tweenable("anchor_x", 0, tags=["scalar"])
         self.Tweenable("anchor_y", 0, tags=["scalar"])
-        self.Tweenable("alpha", 1, tags=["scalar"])
         self.Tweenable("rotation", 0, tags=["scalar"])
         self.Tweenable("_transform", np.identity(2), tags=["nparray"])
         self.Tweenable("background", (1,1,1), tags=["color"])
@@ -1497,7 +1496,6 @@ class FancyMultiTextBase(MultiTextBase, PreAlignableFigure):
             fig.pos += dz
             fig.pos = mat*(rot*(fig.pos))
             fig.pos += self.origin
-            fig.alpha *= self.alpha
             fig.rotation += self.rotation
             fig._transform = self._transform @ fig._transform
             figs.append(fig)
@@ -1507,7 +1505,7 @@ class FancyMultiTextBase(MultiTextBase, PreAlignableFigure):
             rect.origin = self.origin
             rect.width = 0
             rect.fill = self.background
-            rect.alpha = self.backAlpha*self.alpha*maxSubalpha
+            rect.alpha = self.backAlpha*maxSubalpha
             rect.rotation = self.rotation
             rect._transform = self._transform
 
@@ -1656,9 +1654,6 @@ class SpaceParagraph(FancyMultiTextBase, morpho.SpaceFrame):
         raise NotImplementedError
 
     def primitives(self, camera):
-        if self.alpha == 0:
-            return []
-
         orient = camera.orient
         focus = camera.focus
 
