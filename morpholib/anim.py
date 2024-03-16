@@ -1145,6 +1145,9 @@ class MultiFigure(Frame):
             # so that both have exactly the same number of subfigures.
             len_self_figures = len(self.figures)
             len_other_figures = len(other.figures)
+            if len_self_figures == 0 or len_other_figures == 0:
+                raise IndexError(f"Cannot tween empty {type(self).__name__}.")
+
             diff = len_self_figures - len_other_figures
 
             target = other if diff > 0 else self
