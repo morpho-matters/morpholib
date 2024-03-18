@@ -25,6 +25,10 @@ subversion = ""
 DEBUG_MODE = False
 
 
+### CONSTANTS ###
+
+GAUGE = object()  # Sentinel object used by MultiSpline.replaceTex()
+
 ### CLASSES ###
 
 

@@ -1826,9 +1826,23 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
     # first instance is always used in both the old and new
     # MultiSplines. The `gauge` can also be specified as a
     # Spline or MultiSpline figure directly.
+    #
+    # Optionally, parameter `align` can be set to `morpho.GAUGE`
+    # to align the final MultiSpline to keep the gauge glyph in
+    # the same position after replacement.
     def replaceTex(self, tex, *, pos=None, align=None,
             boxWidth=None, boxHeight=None,
             gauge=None, **kwargs):
+
+        # Set new flag `alignGauge` so that `align` is freed
+        # to be a normal value.
+        if align is morpho.GAUGE:
+            if gauge is None:
+                raise ValueError("Cannot align gauge because no gauge is set.")
+            alignGauge = True
+            align = None
+        else:
+            alignGauge = False
 
         if gauge is not None:
             if not(boxWidth is None and boxHeight is None):
@@ -1845,7 +1859,7 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
                 matchfunc = lambda glyph, target=target: glyph.matchesShape(target)
             else:
                 raise TypeError(f"Unexpected type {repr(type(gauge).__name__)} used for gauge.")
-            oldHeight = self._findGaugeMatch(gauge, matchfunc).boxHeight()
+            gaugeGlyph_old = self._findGaugeMatch(gauge, matchfunc)
 
         box = shiftBox(self.box(raw=True), self.origin)
         if align is None:
@@ -1865,8 +1879,11 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
         if gauge is not None:
             # Extract new height of symbol and rescale the whole
             # MultiSpline so it stays the same as the old height.
-            newHeight = self._findGaugeMatch(gauge, matchfunc).boxHeight()
-            self.rescale(oldHeight/newHeight)
+            gaugeGlyph_new = self._findGaugeMatch(gauge, matchfunc)
+            self.rescale(gaugeGlyph_old.boxHeight()/gaugeGlyph_new.boxHeight())
+            if alignGauge:
+                # Shift by amount gauge moved.
+                self.iall.origin += gaugeGlyph_old.center() - gaugeGlyph_new.center()
 
         return self
 
