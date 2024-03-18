@@ -400,10 +400,10 @@ class PreAlignableFigure(BoundingBoxFigure):
 # parameter `raw=True`, and a commitTransforms() method.
 # Implementing `rotation` and `transform` should be optional.
 class AlignableFigure(PreAlignableFigure):
-    # Translates the path so that the current positional point
+    # Translates the figure so that the current positional point
     # agrees with the given alignment parameter.
     # Can also be invoked by setting the `align` property:
-    #   mypath.align = [-1,1]
+    #   myfig.align = [-1,1]
     def realign(self, align, *args, **kwargs):
         anchor = self.anchorPoint(align, *args, raw=True, **kwargs)
 
