@@ -846,7 +846,9 @@ def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0, se
     # Ensure final frame really is the original final frame,
     # but with adjusted alpha
     film.fin = finalframe
-    film.fin.select[select if select is not None else sel[:]].alpha = alpha
+    film.fin.select[select if select is not None else sel[:]].set(
+        alpha=alpha, visible=(alpha > 0)
+        )
 
 @Frame.action
 def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0, select=None):
@@ -1276,7 +1278,9 @@ def fadeIn(actor, duration=30, atFrame=None, jump=0, alpha=1, *,
     Frame.actions["fadeIn"](actor, duration, atFrame, jump, alpha,
         substagger=substagger, select=select, **kwargs)
     actor.fin = finalkey
-    actor.fin.select[select if select is not None else sel[:]].alpha = alpha
+    actor.fin.select[select if select is not None else sel[:]].set(
+        alpha=alpha, visible=(alpha > 0)
+        )
 
 @MultiFigure.action
 def fadeOut(actor, *args, substagger=0, select=None, **kwargs):
