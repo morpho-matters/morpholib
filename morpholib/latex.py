@@ -120,7 +120,6 @@ def parse(tex, *args,
             stream.seek(0)
             spline = morpho.shapes.MultiSpline.fromsvg(stream, *args, **kwargs)
     spline.origin = pos
-    # spline.all.backstroke = True
     return spline
 
 # Identical to parse(), except the return value is a MultiSpline3D
