@@ -2801,6 +2801,8 @@ class Layer(object):
         if not cam.visible:
             return
         cam = applyFigureModifier(cam)
+        if not cam.visible:
+            return
 
         # Compile list of figures to draw
         figlist = []
@@ -2812,7 +2814,8 @@ class Layer(object):
 
             if fig.visible:
                 fig = applyFigureModifier(fig)
-                figlist.append(fig)
+                if fig.visible:
+                    figlist.append(fig)
 
         # Sort based on zdepth
         figlist.sort(key=lambda fig: fig.zdepth) #, reverse=True)
@@ -2952,6 +2955,8 @@ class SpaceLayer(Layer):
         if not cam.visible:
             return
         cam = applyFigureModifier(cam)
+        if not cam.visible:
+            return
 
         # Compile list of figures to draw
         figlist = []
@@ -2963,7 +2968,8 @@ class SpaceLayer(Layer):
 
             if fig.visible:
                 fig = applyFigureModifier(fig)
-                figlist.append(fig)
+                if fig.visible:
+                    figlist.append(fig)
 
         # Sort based on zdepth
         figlist.sort(key=lambda fig: fig.zdepth) #, reverse=True)
