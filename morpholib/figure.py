@@ -534,6 +534,46 @@ class Figure(object):
 
         return newfig
 
+    # Applies a keyfigure's modifier in place according to its current
+    # position in the timeline. Optionally a specific frame index can
+    # be given instead.
+    def applyModifier(self, f=None):
+        if self.modifier is None:
+            return self
+
+        # Attempt to find animation owner
+        animation = morpho.tools.dev.findOwnerByType(self, morpho.Animation)
+        if animation is None:
+            raise TypeError(f"Could not find Animation owner for `{type(self).__name__}` figure.")
+
+        if f is None:
+            # Attempt to find Actor owner
+            actor = morpho.tools.dev.findOwnerByType(self, Actor)
+            if actor is None:
+                raise TypeError(f"Could not find Actor owner for `{type(self).__name__}` figure.")
+            f = actor.timeof(self)
+
+        # Temporarily set the animation's current time index to
+        # be the frame index `f` before applying the modifier.
+        # Enables `now()` calls to work correctly.
+        origIndex = animation.currentIndex
+        animation.currentIndex = f
+        try:
+            self.modifier(self)
+        finally:
+            animation.currentIndex = origIndex
+
+        return self
+
+    # Applies a keyfigure's modifier in place and resets its
+    # `modifier` attribute to None.
+    # See also: applyModifier()
+    def actualizeModifier(self, *args, **kwargs):
+        self.applyModifier(*args, **kwargs)
+        self.modifier = None
+        return self
+
+
     # BUILT-IN TWEEN METHODS
 
     # Linear tween method. This linearly tweens pretty much all tweenables
