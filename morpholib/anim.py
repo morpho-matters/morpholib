@@ -4628,6 +4628,7 @@ class IntDict(dict):
             #     self.pop(key)
 
     def __setitem__(self, key, value):
+        key = round(key)
         # Given finite value, round it to an int.
         if abs(value) != oo:
             value = round(value)
