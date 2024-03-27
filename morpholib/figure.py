@@ -2436,6 +2436,30 @@ def applyFigureModifier(fig, *, forceOrig=False):
     fig.modifier(fig)
     return fig
 
+# Mainly for internal use.
+# Same as applyFigureModifier(), but it first checks to see
+# if the needed modified figure is already cached, and uses the
+# cache if so. Otherwise, applies applyFigureModifier() as usual
+# and then caches it (with the `useModifier` flag set to True).
+#
+# INPUTS:
+# actor = Actor object whose cache is checked
+# fig = Figure we want to modify
+# f = Frame index `fig` corresponds to in the actor.
+#
+# Any additional inputs are passed to applyFigureModifier(),
+# assuming it gets called.
+def applyFigureModifierWithCaching(actor, fig, f, *args, **kwargs):
+    if Actor.useTimeCache and f in actor.timeCache:
+        return actor.timeCache[f].copy()
+
+    fig = applyFigureModifier(fig, *args, **kwargs)
+    if Actor.useTimeCache:
+        actor.timeCache.clear()
+        actor.timeCache[f] = fig.copy()
+        actor.timeCache["useModifier"] = True
+    return fig
+
 # Flattens a list of lists into a single list.
 # Thanks to Alex Martelli on StackOverflow
 # https://stackoverflow.com/a/952952

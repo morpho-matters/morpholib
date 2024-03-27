@@ -20,7 +20,7 @@ from morpholib.tools.dev import BoundingBoxFigure, makesubcopies, listselect, \
 from morpholib import screenCoords, physicalCoords, \
     pixelWidth, physicalWidth, pixelHeight, physicalHeight, \
     setupContext, clearContext, cairoJointStyle, object_hasattr, \
-    applyFigureModifier
+    applyFigureModifierWithCaching
 
 import math, cmath
 import numpy as np
@@ -2800,7 +2800,7 @@ class Layer(object):
         cam = self.viewtime(f, returnCamera=True, keepOwner=True, _skipTrivialTweens=True)  # Get camera figure
         if not cam.visible:
             return
-        cam = applyFigureModifier(cam)
+        cam = applyFigureModifierWithCaching(self.camera, cam, f)
         if not cam.visible:
             return
 
@@ -2813,7 +2813,7 @@ class Layer(object):
             if fig is None: continue
 
             if fig.visible:
-                fig = applyFigureModifier(fig)
+                fig = applyFigureModifierWithCaching(actor, fig, f)
                 if fig.visible:
                     figlist.append(fig)
 
@@ -2954,7 +2954,7 @@ class SpaceLayer(Layer):
         cam = self.viewtime(f, returnCamera=True, keepOwner=True, _skipTrivialTweens=True)  # Get camera figure
         if not cam.visible:
             return
-        cam = applyFigureModifier(cam)
+        cam = applyFigureModifierWithCaching(self.camera, cam, f)
         if not cam.visible:
             return
 
@@ -2967,7 +2967,7 @@ class SpaceLayer(Layer):
             if fig is None: continue
 
             if fig.visible:
-                fig = applyFigureModifier(fig)
+                fig = applyFigureModifierWithCaching(actor, fig, f)
                 if fig.visible:
                     figlist.append(fig)
 
