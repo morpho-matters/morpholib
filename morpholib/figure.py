@@ -542,8 +542,9 @@ class Figure(object):
     # modifier to a copy of the keyfigure instead and return the
     # result.
     def applyModifier(self, f=None, *, inplace=True):
+        fig = self if inplace else self.copy()
         if self.modifier is None:
-            return self
+            return fig
 
         # Attempt to find animation owner
         animation = morpho.tools.dev.findOwnerByType(self, morpho.Animation)
@@ -556,8 +557,6 @@ class Figure(object):
             if actor is None:
                 raise TypeError(f"Could not find Actor owner for `{type(self).__name__}` figure.")
             f = actor.timeof(self)
-
-        fig = self if inplace else self.copy()
 
         # Temporarily set the animation's current time index to
         # be the frame index `f` before applying the modifier.
