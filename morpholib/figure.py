@@ -537,7 +537,11 @@ class Figure(object):
     # Applies a keyfigure's modifier in place according to its current
     # position in the timeline. Optionally a specific frame index can
     # be given instead.
-    def applyModifier(self, f=None):
+    #
+    # Optional keyword `inplace` can be set to False to apply the
+    # modifier to a copy of the keyfigure instead and return the
+    # result.
+    def applyModifier(self, f=None, *, inplace=True):
         if self.modifier is None:
             return self
 
@@ -553,25 +557,36 @@ class Figure(object):
                 raise TypeError(f"Could not find Actor owner for `{type(self).__name__}` figure.")
             f = actor.timeof(self)
 
+        fig = self if inplace else self.copy()
+
         # Temporarily set the animation's current time index to
         # be the frame index `f` before applying the modifier.
         # Enables `now()` calls to work correctly.
         origIndex = animation.currentIndex
         animation.currentIndex = f
         try:
-            self.modifier(self)
+            fig.modifier(fig)
         finally:
             animation.currentIndex = origIndex
 
-        return self
+        return fig
 
-    # Applies a keyfigure's modifier in place and resets its
+    # Applies a keyfigure's modifier IN PLACE and resets its
     # `modifier` attribute to None.
-    # See also: applyModifier()
-    def actualizeModifier(self, *args, **kwargs):
+    # See also: actualized(), applyModifier()
+    def actualize(self, *args, **kwargs):
         self.applyModifier(*args, **kwargs)
         self.modifier = None
         return self
+
+    # Applies a keyfigure's modifier TO A COPY OF the keyfigure,
+    # resets the copy's `modifier` attribute to None, and then
+    # returns it.
+    # See also: actualize(), applyModifier()
+    def actualized(self, *args, **kwargs):
+        fig = self.applyModifier(*args, inplace=False, **kwargs)
+        fig.modifier = None
+        return fig
 
 
     # BUILT-IN TWEEN METHODS
