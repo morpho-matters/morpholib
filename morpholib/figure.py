@@ -2225,13 +2225,14 @@ class Actor(object):
     # optional keyword input `useModifier` to False.
     def now(self, *, useModifier=True):
         try:
-            currentIndex = self.owner.owner.currentIndex
+            mation = self.owner.owner
+            currentIndex = mation.currentIndex
         except AttributeError:
             raise TypeError("No global timeline to reference.")
 
         f = currentIndex - self.owner.timeOffset
         # Check if cache can be used
-        if Actor.useTimeCache and f in self.timeCache \
+        if Actor.useTimeCache and mation.running and f in self.timeCache \
                 and self.timeCache["useModifier"] == useModifier:
             fig = self.timeCache[f].copy()
         else:
@@ -2240,7 +2241,7 @@ class Actor(object):
                 # No need to make a copy since `fig` is guaranteed
                 # to be either a copy or a new figure.
                 fig = applyFigureModifier(fig, forceOrig=True)
-            if Actor.useTimeCache:
+            if Actor.useTimeCache and mation.running:
                 # Replace stored time index.
                 self.timeCache.clear()
                 self.timeCache[f] = fig.copy()

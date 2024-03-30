@@ -3182,6 +3182,7 @@ class Animation(object):
 
         # Active animation variables
         self.active = False
+        self.running = True
         self.context = None
         self.window = None
         self.renderData = None
@@ -4077,6 +4078,14 @@ class Animation(object):
         for layer in self.layers:
             layer._deoptimize()
 
+    # Clears all time caches for all actors in all layers.
+    # Used when beginning to play/export an animation to make
+    # sure it renders with a clean cache.
+    def _clearAllTimeCaches(self):
+        for layer in self.layers:
+            for actor in layer.actors:
+                actor.timeCache.clear()
+
     # Export animation to file.
     # Can either be MP4, GIF animation, or PNG sequence depending on
     # the file extension given in the filepath.
@@ -4106,6 +4115,7 @@ class Animation(object):
 
         if optimize:
             self._optimize()
+        self._clearAllTimeCaches()
 
         # Get first and final indices if specified.
         if self.finalIndex is None:
@@ -4254,6 +4264,7 @@ class Animation(object):
             # Prepare to "play" animation
             self.currentIndex = firstIndex
             self.setupContext()
+            self.running = True
             while self.currentIndex <= finalIndex:
                 self.draw()
 
@@ -4311,6 +4322,7 @@ class Animation(object):
 
         if optimize:
             self._optimize()
+        self._clearAllTimeCaches()
 
         if self.finalIndex is None:
             finalIndex = self.lastID()
@@ -4353,6 +4365,7 @@ class Animation(object):
             self.window = window
 
         self.active = True
+        self.running = True
         self.window.switch_to()  # Focus on this window for rendering.
 
         # Setup context for rendering to a pyglet window
@@ -4571,6 +4584,7 @@ class Animation(object):
     def resetMation(self):
         # Reset active animation attributes
         self.active = False
+        self.running = False
         self.window = None
         self.context = None
         self.update = None
