@@ -1325,6 +1325,14 @@ def formatNumber(*args, **kwargs):
     num = Number(*args, **kwargs)
     return str(num)
 
+# Converts a number into a string by rounding it to the
+# given number of decimal places, appending zeros if necessary
+# to ensure there are always the same number of digits trailing
+# the decimal point.
+def fixedLengthDecimal(number, decimal):
+    num = Number(number, decimal, rightDigits=decimal)
+    return str(num)
+
 
 ### GROUPS AND PARAGRAPHS ###
 
