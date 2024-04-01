@@ -158,33 +158,23 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
         # morpho.Figure.__init__(self)
         super().__init__()
 
-        _data = morpho.Tweenable(name="_data", value=np.array(data, dtype=complex), tags=["nparray"])
-        start = morpho.Tweenable(name="start", value=0, tags=["scalar"])
-        end = morpho.Tweenable(name="end", value=1, tags=["scalar"])
-        color = morpho.Tweenable(name="color", value=color, tags=["color"])
-        alphaEdge = morpho.Tweenable(name="alphaEdge", value=1, tags=["scalar"])
-        fill = morpho.Tweenable(name="fill", value=[1,0,0], tags=["color", "gradientfill", "notween"])
-        alphaFill = morpho.Tweenable(name="alphaFill", value=0, tags=["scalar"])
-        alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
-        width = morpho.Tweenable(name="width", value=width, tags=["size"])
-        dash = morpho.Tweenable("dash", [], tags=["scalar", "list"])
-        dashOffset = morpho.Tweenable("dashOffset", 0, tags=["scalar"])
-        # headSize = morpho.Tweenable("headSize", 0, tags=["scalar"])
-        # tailSize = morpho.Tweenable("tailSize", 0, tags=["scalar"])
-        # outlineWidth = morpho.Tweenable("outlineWidth", value=0, tags=["size"])
-        # outlineColor = morpho.Tweenable("outlineColor", value=[0,0,0], tags=["color"])
-        # outlineAlpha = morpho.Tweenable("outlineAlpha", value=1, tags=["scalar"])
-        origin = morpho.Tweenable("origin", value=0, tags=["complex", "nofimage"])
-        rotation = morpho.Tweenable("rotation", value=0, tags=["scalar"])
-        _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
-
-        self.extendState([_data, start, end, color, alphaEdge, fill, alphaFill, alpha,
-            width, dash, dashOffset, origin, rotation, _transform]
-            )
+        self.Tweenable(name="_data", value=np.array(data, dtype=complex), tags=["nparray"])
+        self.Tweenable(name="start", value=0, tags=["scalar"])
+        self.Tweenable(name="end", value=1, tags=["scalar"])
+        self.Tweenable(name="color", value=color, tags=["color"])
+        self.Tweenable(name="alphaEdge", value=1, tags=["scalar"])
+        self.Tweenable(name="fill", value=[1,0,0], tags=["color", "gradientfill", "notween"])
+        self.Tweenable(name="alphaFill", value=0, tags=["scalar"])
+        self.Tweenable(name="alpha", value=alpha, tags=["scalar"])
+        self.Tweenable(name="width", value=width, tags=["size"])
+        self.Tweenable("dash", [], tags=["scalar", "list"])
+        self.Tweenable("dashOffset", 0, tags=["scalar"])
+        self.Tweenable("origin", value=0, tags=["complex", "nofimage"])
+        self.Tweenable("rotation", value=0, tags=["scalar"])
+        self.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
         # Set of indices that represent where a path should terminate.
         self.Tweenable("deadends", set(), tags=["notween"])
-
 
         # The dash pattern for this line. The format is identical to how
         # pycairo handles dash patterns: each item in the list is how long
@@ -198,6 +188,11 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
         # Boolean indicates whether the control point tangents
         # should be shown. This is mainly for debugging purposes.
         self.NonTweenable("showTangents", False)
+
+        # Contains either `None` or a color value indicating the
+        # color tangents should have if drawn. If `None`, just copies
+        # the `color` value.
+        self.NonTweenable("_tancolor", None)
 
         # # Should strokes occur behind fills?
         # self.NonTweenable("backstroke", False)
@@ -227,6 +222,15 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
     @pos.setter
     def pos(self, value):
         self.origin = value
+
+    @property
+    def tancolor(self):
+        return self._tancolor if self._tancolor is not None else self.color[:]
+
+    @tancolor.setter
+    def tancolor(self, value):
+        self._tancolor = value
+
 
     # Computes the loose bounding box of the spline.
     # That is, it returns the bounding box of all the
@@ -1489,7 +1493,7 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
             outx, outy = outhandle.real, outhandle.imag
 
             ctx.set_line_width(width)
-            ctx.set_source_rgba(*self.color, self.alpha)
+            ctx.set_source_rgba(*self.tancolor, self.alpha)
 
             # Temporarily modify cairo coordinates to coincide with
             # physical coordinates.
