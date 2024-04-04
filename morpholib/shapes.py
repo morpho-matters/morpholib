@@ -691,6 +691,37 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
 
         return [p, pin, pout]
 
+    # Mainly for internal use.
+    # Returns a squeezed column of the data array and converts
+    # it to a python list by default.
+    def _getcol(self, k, *, aslist=True):
+        col = self.data[:,k].squeeze()
+        return col.tolist() if aslist else col
+
+    # Returns a list of all the nodes in the Spline.
+    # Set keyword `aslist=False` to return np.array.
+    def nodes(self, *, aslist=True):
+        return self._getcol(0, aslist=aslist)
+
+    # # Returns a list of all the inhandles in the Spline.
+    # # Set keyword `aslist=False` to return np.array.
+    # def inhandles(self, *, aslist=True):
+    #     return self._getcol(1, aslist=aslist)
+
+    # # Returns a list of all the inhandles in the Spline,
+    # # relative to their corresponding node positions.
+    # # Set keyword `aslist=False` to return np.array.
+    # def inhandlesRel(self, *, aslist=True):
+    #     array = self.inhandles(aslist=False) - self.nodes(aslist=False)
+    #     return array.tolist() if aslist else array
+
+    # def outhandles(self, *, aslist=True):
+    #     return self_getcol(2, aslist=aslist)
+
+    # def outhandlesRel(self, *, aslist=True):
+    #     array = self.outhandles(aslist=False) - self.nodes(aslist=False)
+    #     return array.tolist() if aslist else array
+
     # Returns or sets the position of the inward handle
     # of the node at the given index relative to the node position.
     # See also: inhandle()
