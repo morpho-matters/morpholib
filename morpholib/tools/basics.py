@@ -355,6 +355,20 @@ def boxCorners(box, initCorner="NW", CCW=True):
 
     return corners
 
+# Computes the box 4-item list [xmin, xmax, ymin, ymax]
+# given the positions of two of its opposite corners
+# (specified as complex numbers).
+def boxFromDiagonal(c1, c2, /):
+    x1, y1 = c1.real, c1.imag
+    x2, y2 = c2.real, c2.imag
+
+    xmin = min(x1, x2)
+    xmax = max(x1, x2)
+    ymin = min(y1, y2)
+    ymax = max(y1, y2)
+
+    return [xmin, xmax, ymin, ymax]
+
 # Pads a bounding box by the given pad amount.
 # Usage: padbox(box, pad) -> paddedBox
 # where `box` is a 4-tuple defining the bounding box in the format
