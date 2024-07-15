@@ -399,7 +399,13 @@ class Frame(BoundingBoxFigure):
         #     # calls Frame.merge()
         #     other.commitTransforms()
 
-        if not isinstance(other, morpho.Frame) and isinstance(other, morpho.Figure):
+        if isinstance(other, (list, tuple)):
+            # Implicitly convert a list/tuple to a Frame of the same subtype
+            # as self and then merge as normal.
+            other = type(self)(other)
+        elif not isinstance(other, Frame) and isinstance(other, morpho.Figure):
+            # Implicitly convert non-Frame figures into a singleton Frame
+            # of the same subtype as self and then merge as normal.
             other = type(self)([other])
 
         # Shift ahead all indices in the _names dict that are
