@@ -191,13 +191,27 @@ def tilt(u, v):
 # returns the rotation matrix that rotates theta radians in the
 # direction from u toward v.
 #
+# If theta is unspecified, it defaults to the angle between u and v.
+#
 # Optionally the keyword `orthonormal=True` may be passed in to
 # tell the function to assume u and v are orthogonal unit vectors,
 # thus bypassing an unneccessary initial computation.
-def rotationNd(u, v, theta, *, orthonormal=False):
+def rotationNd(u, v, theta=None, *, orthonormal=False):
+    if theta is None:
+        # Normalize u,v
+        unorm = np.linalg.norm(u)
+        vnorm = np.linalg.norm(v)
+        if unorm == 0 or vnorm == 0:
+            raise ZeroDivisionError("u and v must be non-zero vectors.")
+        u = u / unorm
+        v = v / vnorm
+
+        G = tilt(u,v)
+        return np.eye(*G.shape) + G + (G@G)/(1+(u@v))
+
     G = tilt(u,v)
     if not orthonormal:
-        mag = np.sqrt((u@u)*(v@v) - (u @ v)**2)
+        mag = np.sqrt((u@u)*(v@v) - (u @ v)**2)  # ||u tilt v||_2
         G = G / mag
 
     # Apply General Euler's Formula
