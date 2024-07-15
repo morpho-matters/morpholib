@@ -370,6 +370,12 @@ class Frame(BoundingBoxFigure):
     # Also adds in the named subfigures of other into self's registry,
     # but skips any duplicate names so that self's names are
     # not overwritten.
+    #
+    # If given a list/tuple of figures, merges them one by one.
+    #
+    # By default, the figures are appended to the end of the figure list,
+    # but this can be changed by passing in a value to the `beforeFigure`
+    # parameter (either an index value or a figure object).
     def merge(self, other, beforeFigure=oo):
 
         # Handle case that beforeFigure is an actual Figure object
@@ -400,9 +406,16 @@ class Frame(BoundingBoxFigure):
         #     other.commitTransforms()
 
         if isinstance(other, (list, tuple)):
-            # Implicitly convert a list/tuple to a Frame of the same subtype
-            # as self and then merge as normal.
-            other = type(self)(other)
+            # Convert beforeFigure index value into equivalent negative or
+            # infinite form so that we don't have to update its value after
+            # each merge in the for loop below.
+            if beforeFigure == len(self.figures):
+                beforeFigure = oo
+            else:
+                beforeFigure -= len(self.figures)
+            for fig in other:
+                self.merge(fig, beforeFigure)
+            return self
         elif not isinstance(other, Frame) and isinstance(other, morpho.Figure):
             # Implicitly convert non-Frame figures into a singleton Frame
             # of the same subtype as self and then merge as normal.
