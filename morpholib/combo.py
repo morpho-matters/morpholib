@@ -393,7 +393,14 @@ class FigureArray(Frame):
                     posname = None
                 if posname is None:
                     raise AttributeError("Some subfigures do not possess toplevel positional tweenables.")
-                setattr(subfig, posname, complex(xmin + j*dx, ymax - i*dy))
+
+                z = complex(xmin + j*dx, ymax - i*dy)
+                posvalue = getattr(subfig, posname)  # Current value of `posname`
+                if isinstance(posvalue, np.ndarray) and posvalue.size == 3:
+                    # Convert to np.array if `posname` is a 3D position.
+                    z = morpho.array(z)
+
+                setattr(subfig, posname, z)
         return self
 
     def _select(self, index, *, _asFrame=False, **kwargs):
