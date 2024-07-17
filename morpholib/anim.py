@@ -814,6 +814,44 @@ class Frame(BoundingBoxFigure):
 
         return pivot
 
+# Tweens a Frame actor to a target Frame in a staggered manner.
+#
+# INPUTS
+# target = Target Frame figure. Must have same figure count as source.
+# subduration = Duration in frames to animate each subfigure.
+#       Default: 30
+#
+# KEYWORD-ONLY INPUTS
+# substagger = Frame offset between animating adjacent subfigures
+#       in the selection. Default: 0
+# select = Index selection to apply action to.
+#
+# Example usage:
+#   myframe.staggerTween(target, 20, substagger=3)
+@Frame.action
+def staggerTween(film, target, subduration=30, *,
+        substagger=0, select=sel[:]
+        ):
+
+    frm0 = film.last()
+    selection = listselect(frm0.figures, select)
+    if frm0.numfigs != target.numfigs:
+        raise TypeError(f"Source and target have differing subfigure counts ({frm0.numfigs} vs {target.numfigs})")
+
+    target = target.copy()  # Use a copy to be on the safe side.
+
+    # Generator automatically selects the correct target subfigure as
+    # the subaction iteration progresses so that subactionfunc()
+    # doesn't have to know where in the subaction iteration we are.
+    indices = listselect(frm0.figures, select).keys()
+    subtargets = iter(listselect(target.figures, sorted(indices)).values())
+    def subactionfunc(actor):
+        subtarget = next(subtargets)
+        actor.newendkey(subduration, subtarget)
+
+    film.subaction(subactionfunc, select=select, substagger=substagger)
+
+
 # Blank frame used by the Animation class.
 blankFrame = Frame()
 blankFrame.static = True
