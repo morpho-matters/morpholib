@@ -4242,6 +4242,7 @@ class Animation(object):
                         # "-vf", "fps="+str(self.frameRate),
                         "-r", str(self.frameRate),
                         "-vcodec", "libx264",
+                        "-vf", "pad=ceil(iw/2)*2:ceil(ih/2)*2",  # Handles odd window dimensions
                         "-crf", str(ffmpegConfig["crf"]),  # Quality 18 generally highest quality
                         "-pix_fmt", "yuv420p",
                         # tempDir + os.sep + "temp.mp4"
