@@ -814,7 +814,8 @@ class Frame(BoundingBoxFigure):
 
         return pivot
 
-# Tweens a Frame actor to a target Frame in a staggered manner.
+# Tweens a Frame actor (or a subset of its subfigures) to a target
+# Frame, possibly with substaggering.
 #
 # INPUTS
 # target = Target Frame figure. Must have same figure count as source.
@@ -824,12 +825,13 @@ class Frame(BoundingBoxFigure):
 # KEYWORD-ONLY INPUTS
 # substagger = Frame offset between animating adjacent subfigures
 #       in the selection. Default: 0
-# select = Index selection to apply action to.
+# select = Selection of subfigures to apply the action to.
+#       Default: sel[:] (all subfigures in the usual order).
 #
 # Example usage:
-#   myframe.staggerTween(target, 20, substagger=3)
+#   myframe.subtween(target, 20, substagger=3)
 @Frame.action
-def staggerTween(film, target, subduration=30, *,
+def subtween(film, target, subduration=30, *,
         substagger=0, select=sel[:]
         ):
 
