@@ -817,6 +817,9 @@ class Frame(BoundingBoxFigure):
 # Tweens a Frame actor (or a subset of its subfigures) to a target
 # Frame, possibly with substaggering.
 #
+# Note that this action will ignore toplevel attributes (such as
+# `origin`) of the target.
+#
 # INPUTS
 # target = Target Frame figure. Must have same figure count as source.
 # subduration = Duration in frames to animate each subfigure.
