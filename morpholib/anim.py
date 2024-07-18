@@ -833,17 +833,17 @@ def staggerTween(film, target, subduration=30, *,
         substagger=0, select=sel[:]
         ):
 
-    frm0 = film.last()
-    selection = listselect(frm0.figures, select)
-    if frm0.numfigs != target.numfigs:
-        raise TypeError(f"Source and target have differing subfigure counts ({frm0.numfigs} vs {target.numfigs})")
+    source = film.last()
+    selection = listselect(source.figures, select)
+    if source.numfigs != target.numfigs:
+        raise TypeError(f"Source and target have differing subfigure counts ({source.numfigs} vs {target.numfigs})")
 
     target = target.copy()  # Use a copy to be on the safe side.
 
     # Generator automatically selects the correct target subfigure as
     # the subaction iteration progresses so that subactionfunc()
     # doesn't have to know where in the subaction iteration we are.
-    indices = listselect(frm0.figures, select).keys()
+    indices = listselect(source.figures, select).keys()
     subtargets = iter(listselect(target.figures, sorted(indices)).values())
     def subactionfunc(actor):
         subtarget = next(subtargets)
