@@ -84,7 +84,7 @@ class Mat(object):
     def __str__(self):
         return str(self.array)
 
-
+mat = MAT = Mat  # Any case works.
 
 
 # # Converts a numpy matrix into a Morpho _Mat
@@ -368,7 +368,6 @@ def roundlist(v, ndigits=None):
 
 ### VARIOUS OTHER CONSTANTS AND FUNCTIONS ###
 
-mat = MAT = Mat  # Any case works.
 det = lambda M: np.linalg.det(M)  # For mats only
 
 # Returns a measure of how "thin" the matrix transformation is.
