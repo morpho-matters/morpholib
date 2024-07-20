@@ -5067,7 +5067,7 @@ def interpSeqLinear(seq, t):
 # occurs. After interpolation, the copy of the first item is
 # removed from the end of the list.
 # This is useful for interpolating loops like polygon vertex lists
-# because the it will insert vertices between the final and first
+# because it will insert vertices between the final and first
 # vertices. By default, close = False.
 def insertNodesUniformlyTo(seq, numNodes, segment=(0,1), *, close=False):
     # If path closure should be done, append seq[0] to the end
