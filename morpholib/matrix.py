@@ -79,7 +79,14 @@ class Mat(object):
         return type(self)(np.linalg.inv(self.array))
 
     def __repr__(self):
-        return repr(self.array)
+        prefix = type(self).__name__ + "("
+        rep = repr(self.array)
+        lines = rep.split("\n")
+        lines[0] = prefix + lines[0]
+        for n in range(1, len(lines)):
+            lines[n] = " "*len(prefix) + lines[n]
+        lines[-1] += ")"
+        return "\n".join(lines)
 
     def __str__(self):
         return str(self.array)
