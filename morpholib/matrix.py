@@ -68,7 +68,7 @@ class Mat(object):
             return self.array * other
 
     def __rmul__(self, other):
-        return self.array * other
+        return type(self)(self.array * other)
 
     @property
     def T(self):
