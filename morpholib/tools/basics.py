@@ -286,6 +286,24 @@ def listselect(lst, index, /):
             index = sel[index:index+1]
         return dict(zip(range(len(lst))[index], lst[index]))
 
+# Removes duplicate items in a sequence, keeping only the first
+# occurrence of each item, and returns the result as a new list
+# (the original sequence will not be modified).
+#
+# Optionally, a key function may be passed in to optional keyword
+# input `key` which will apply the function once to each item in
+# the sequence and use the results as the basis to remove duplicates.
+#
+# Assumes the items in the sequence (or their key function values)
+# are hashable.
+def removeDuplicates(seq, /, *, key=lambda item: item):
+    d = dict()
+    for item in seq:
+        # Assign new key-value pair only if key(item) ISN'T
+        # already in the dict.
+        d.setdefault(key(item), item)
+    return list(d.values())
+
 # # If x is a float that is really an integer, returns int(x).
 # # Otherwise, just returns back x unchanged.
 # def flattenFloat(x):
