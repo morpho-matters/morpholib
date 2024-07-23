@@ -107,6 +107,11 @@ def truncate(num, ndigits):
     decshift = 10**ndigits
     return int(num*decshift)/decshift
 
+# Rounding function for complex numbers. Applies round() to the
+# real and imaginary parts independently.
+def cround(z, ndigits=None):
+    return complex(round(z.real, ndigits), round(z.imag, ndigits))
+
 def _rounder(x, roundfunc):
     # Convert to np.array if needed
     array = np.array(x) if not isinstance(x, np.ndarray) else x
