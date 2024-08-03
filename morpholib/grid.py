@@ -90,9 +90,9 @@ class Point(morpho.Figure):
         self.Tweenable("alpha", alpha, tags=["scalar"])
         self.style = "circle"
         # size = diameter in pixels
-        self.Tweenable("size", size, tags=["size"])
-        self.Tweenable("dash", [], tags=["scalar", "list"])
-        self.Tweenable("dashOffset", 0, tags=["scalar"])
+        self.Tweenable("size", size, tags=["size", "pixel"])
+        self.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
+        self.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
 
 
     # Draws the point on the given cairo context.
