@@ -4061,6 +4061,14 @@ class Animation(object):
                 for keyfig in actor.keys():
                     keyfig._rescalePixels(scale)
 
+    # Rescales the window shape by the given scale factor,
+    # while also rescaling all the pixel units of all the keyfigures
+    # in the animation, meaning attributes like stroke widths will
+    # look the same even after rescaling the window shape.
+    def rescale(self, scale):
+        self.windowShape = tuple(round(scale*item) for item in self.windowShape)
+        self.rescalePixels(scale)
+
     # Convenience function for user. Creates a pyglet window of specified (or not)
     # width and height and automatically associates the animation with that window.
     def setupWindow(self):
