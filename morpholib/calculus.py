@@ -75,7 +75,7 @@ class IntegralArea(morpho.Figure):
         alphaEdge = morpho.Tweenable("alphaEdge", alphaEdge, tags=["scalar"])
         alphaFill = morpho.Tweenable("alphaFill", alphaFill, tags=["scalar"])
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
-        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
+        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar", "pixel"])
         steps = morpho.Tweenable("steps", steps, tags=["integer"])
 
         self.update([func, start, end, color, fill,
@@ -153,7 +153,7 @@ class DoubleIntegralVolume(morpho.SpaceFigure):
         _inmax = morpho.Tweenable("_inmax", inmax, tags=["function"])
         outmin = morpho.Tweenable("outmin", outmin, tags=["scalar"])
         outmax = morpho.Tweenable("outmax", outmax, tags=["scalar"])
-        width = morpho.Tweenable("width", width, tags=["scalar"])
+        width = morpho.Tweenable("width", width, tags=["scalar", "pixel"])
         # strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
         color = morpho.Tweenable("color", color, tags=["color"])
         alphaEdge = morpho.Tweenable("alphaEdge", alphaEdge, tags=["scalar"])
@@ -382,7 +382,7 @@ class Wall(morpho.SpaceFigure):
         func = morpho.Tweenable("func", func, tags=["function"])
         _start = morpho.Tweenable("_start", morpho.array(start), tags=["nparray"])
         _end = morpho.Tweenable("_end", morpho.array(end), tags=["nparray"])
-        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
+        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar", "pixel"])
         color = morpho.Tweenable("color", color, tags=["color"])
         alphaEdge = morpho.Tweenable("alphaEdge", alphaEdge, tags=["scalar"])
         alphaFill = morpho.Tweenable("alphaFill", alphaFill, tags=["scalar"])
@@ -463,7 +463,7 @@ class RiemannRect(morpho.Figure):
         fill = morpho.Tweenable("fill", list(fill), tags=["color"])
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
         align = morpho.Tweenable("align", align, tags=["scalar"])
-        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
+        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar", "pixel"])
 
         # Initialize tweenables
         self.update([width, height, pos, color, fill, alpha, align, strokeWeight])
@@ -521,7 +521,7 @@ class RiemannDisk(morpho.Figure):
         edgeFill = morpho.Tweenable("edgeFill", list(edgeFill), tags=["color"])
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
         align = morpho.Tweenable("align", align, tags=["scalar"])
-        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
+        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar", "pixel"])
 
         # Initialize tweenables
         self.update([thickness, radius, tilt, pos, outlineColor,

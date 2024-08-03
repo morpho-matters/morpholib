@@ -166,9 +166,9 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
         self.Tweenable(name="fill", value=[1,0,0], tags=["color", "gradientfill", "notween"])
         self.Tweenable(name="alphaFill", value=0, tags=["scalar"])
         self.Tweenable(name="alpha", value=alpha, tags=["scalar"])
-        self.Tweenable(name="width", value=width, tags=["size"])
-        self.Tweenable("dash", [], tags=["scalar", "list"])
-        self.Tweenable("dashOffset", 0, tags=["scalar"])
+        self.Tweenable(name="width", value=width, tags=["size", "pixel"])
+        self.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
+        self.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
         self.Tweenable("origin", value=0, tags=["complex", "nofimage"])
         self.Tweenable("rotation", value=0, tags=["scalar"])
         self.Tweenable("_transform", np.identity(2), tags=["nparray"])
@@ -2542,14 +2542,14 @@ class Ellipse(morpho.Figure):
         self.Tweenable("pos", pos, tags=["complex", "position"])
         self.Tweenable("xradius", xradius, tags=["scalar"])
         self.Tweenable("yradius", yradius, tags=["scalar"])
-        self.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
+        self.Tweenable("strokeWeight", strokeWeight, tags=["scalar", "pixel"])
         self.Tweenable("color", list(color), tags=["color"])
         self.Tweenable("fill", list(fill), tags=["color"])
         self.Tweenable("alphaEdge", alphaEdge, tags=["scalar"])
         self.Tweenable("alphaFill", alphaFill, tags=["scalar"])
         self.Tweenable("alpha", alpha, tags=["scalar"])
-        self.Tweenable("dash", [], tags=["scalar", "list"])
-        self.Tweenable("dashOffset", 0, tags=["scalar"])
+        self.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
+        self.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
         self.Tweenable("rotation", 0, tags=["scalar"])
         self.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
@@ -2742,14 +2742,14 @@ class EllipticalArc(morpho.Figure):
         yradius = morpho.Tweenable("yradius", yradius, tags=["scalar"])
         theta0 = morpho.Tweenable("theta0", theta0, tags=["scalar"])
         theta1 = morpho.Tweenable("theta1", theta1, tags=["scalar"])
-        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar"])
+        strokeWeight = morpho.Tweenable("strokeWeight", strokeWeight, tags=["scalar", "pixel"])
         color = morpho.Tweenable("color", list(color), tags=["color"])
         alpha = morpho.Tweenable("alpha", alpha, tags=["scalar"])
 
         self.extendState([pos, xradius, yradius, theta0, theta1, strokeWeight, color, alpha])
 
-        self.Tweenable("dash", [], tags=["scalar", "list"])
-        self.Tweenable("dashOffset", 0, tags=["scalar"])
+        self.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
+        self.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
 
     @property
     def origin(self):

@@ -4045,6 +4045,22 @@ class Animation(object):
                 yield currentLayer
                 currentLayer = currentLayer.mask
 
+    # Multiplies all the pixel values of all the tweenables of all
+    # the keyfigures in the animation across all layers by the given
+    # scale factor, e.g. the `width` attribute of a Path figure.
+    #
+    # Useful when changing an animation's resolution
+    # so that it pixel-dependent attributes of actors remain unchanged
+    # after the resolution change.
+    #
+    # Note that this method may not help if a pixel-valued tweenable
+    # is determined directly via a modifier.
+    def rescalePixels(self, scale):
+        for layer in self.allLayers():
+            for actor in layer.actors:
+                for keyfig in actor.keys():
+                    keyfig._rescalePixels(scale)
+
     # Convenience function for user. Creates a pyglet window of specified (or not)
     # width and height and automatically associates the animation with that window.
     def setupWindow(self):

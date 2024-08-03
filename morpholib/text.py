@@ -114,7 +114,7 @@ class Text(PreAlignableFigure, BackgroundBoxFigure):
 
         # Create tweenables
         self.Tweenable("pos", pos, tags=["complex"])
-        self.Tweenable("size", size, tags=["size"])
+        self.Tweenable("size", size, tags=["size", "pixel"])
         self.Tweenable("anchor_x", anchor_x, tags=["scalar"])
         self.Tweenable("anchor_y", anchor_y, tags=["scalar"])
         self.Tweenable("_transform", np.identity(2), tags=["nparray"])
@@ -478,6 +478,9 @@ class PText(Text):
         size=1, *args, **kwargs):
 
         super().__init__(text, pos, size, *args, **kwargs)
+
+        # Size here is physical, so remove the "pixel" tag.
+        self._state["size"].tags.remove("pixel")
 
         # del self._nontweenables["text"]
         self._nontweenables.remove("font")

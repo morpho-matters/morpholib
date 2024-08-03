@@ -273,6 +273,26 @@ class Figure(object):
         else:
             raise AttributeError("Figure possesses neither `origin` nor `pos` attribute.")
 
+    # Multiplies the value of any tweenable possessing a "pixel"
+    # tag by the given scale factor. If the tweenable also possesses
+    # a "list" tag, it will multiply item-wise.
+    #
+    # Will also recursively apply to subfigures if a tweenable has
+    # the "figures" tag.
+    #
+    # Mainly for use by Animation.rescalePixels()
+    def _rescalePixels(self, scale):
+        for tweenable in self._state.values():
+            if "pixel" in tweenable.tags:
+                if "list" in tweenable.tags:
+                    tweenable.value = [scale*item for item in tweenable.value]
+                else:
+                    tweenable.value = scale*tweenable.value
+            elif "figures" in tweenable.tags:
+                for subfig in tweenable.value:
+                    subfig._rescalePixels(scale)
+        return self
+
     # # Creates a struct representation of the object.
     # def Struct(self):
     #     st = ps.Struct()
