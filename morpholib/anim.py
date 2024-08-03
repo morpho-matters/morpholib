@@ -4034,6 +4034,17 @@ class Animation(object):
         for i in range(start, end+1):
             self.layers[i].timeOffset += time
 
+    # Returns a generator that yields all the layers (including their
+    # masks) in the animation via a depth-first search.
+    def allLayers(self):
+        for layer in self.layers:
+            if layer.maskChainFormsLoop():
+                raise MaskConfigurationError("The mask chain of the layers form a loop.")
+            currentLayer = layer
+            while currentLayer is not None:
+                yield currentLayer
+                currentLayer = currentLayer.mask
+
     # Convenience function for user. Creates a pyglet window of specified (or not)
     # width and height and automatically associates the animation with that window.
     def setupWindow(self):
