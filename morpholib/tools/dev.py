@@ -306,7 +306,7 @@ class BoundingBoxFigure(morpho.Figure):
             return relbox
         else:
             a,b,c,d = relbox
-            x,y = self.origin.real, self.origin.imag
+            x,y = self._oripos.real, self._oripos.imag
             return [a+x, b+x, c+y, d+y]
 
 
@@ -486,7 +486,7 @@ class BackgroundBoxFigure(BoundingBoxFigure):
 
         # Infer transformation attributes if not specified.
         if origin is None:
-            origin = self.origin
+            origin = self._oripos
         if rotation is None:
             rotation = getattr(self, "rotation", 0)
         if transform is None:
@@ -503,16 +503,6 @@ class BackgroundBoxFigure(BoundingBoxFigure):
             width=0, fill=self.background, alpha=self.backAlpha*_alpha
             )
         brect.draw(camera, ctx)
-
-    # def draw(self, camera, ctx):
-    #     origin = self.origin
-    #     rotation = getattr(self, "rotation", 0)
-    #     transform = getattr(self, "transform", I2)
-    #     alpha = getattr(self, "alpha", 1)
-
-    #     self._drawBackgroundBox(camera, ctx, origin, rotation, transform, _alpha=alpha)
-
-    #     super().draw(camera, ctx)
 
 
 # Mainly for internal use by the Frame class (and its derivatives)

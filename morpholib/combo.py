@@ -26,7 +26,7 @@ class _FigureTransformMemory(object):
         # Initialize lists to store original origin/transform values
         # so they can be restored after being modified.
         self.figures = figures
-        self.orig_origins = [fig.origin for fig in figures]
+        self.orig_origins = [fig._oripos for fig in figures]
         self.orig_rotations = [fig.rotation for fig in figures]
         self.orig_transforms = [fig.transform for fig in figures]
 
@@ -38,7 +38,7 @@ class _FigureTransformMemory(object):
     def __exit__(self, type, value, traceback):
         # Restore original transformation values
         for fig, origin, rotation, transform in zip(self.figures, self.orig_origins, self.orig_rotations, self.orig_transforms):
-            fig.origin = origin
+            fig._oripos = origin
             fig.rotation = rotation
             fig.transform = transform
 
@@ -83,7 +83,7 @@ class TransformableFrame(Frame):
             temp = self.copy()
             temp.commitTransforms()
             return temp.box(*args, raw=True, **kwargs)
-        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), self.origin if not raw else 0)
+        return shiftBox(totalBox(subfig.box(*args, **kwargs) for subfig in self.figures), self._oripos if not raw else 0)
 
     # Meant to be called in a `with` statement like follows:
     #   with myframe.TemporarySubfigureTransforms():
@@ -117,8 +117,8 @@ class TransformableFrame(Frame):
 
         for fig in self.figures:
             # Temporarily modify origin and transform
-            if fig.origin != 0:
-                fig.origin = rotateAndTransform_mat * fig.origin
+            if fig._oripos != 0:
+                fig._oripos = rotateAndTransform_mat * fig._oripos
             fig.transform = rotateAndTransform @ fig.transform
         return self
 
@@ -135,10 +135,10 @@ class TransformableFrame(Frame):
             # this method is used for space figures where `origin`
             # might be an np.array and so in-place addition is not
             # advisable.
-            subfig.origin = subfig.origin + self.origin
+            subfig._oripos = subfig._oripos + self._oripos
 
         # Reset toplevel transformation tweenables
-        self.origin = 0
+        self._oripos = 0
         self.rotation = 0
         self.transform = np.eye(2)
 
@@ -181,7 +181,7 @@ class TransformableFrame(Frame):
                 # Apply these "untransformations" to the toplevel
                 # transformations of other.
                 other.transform = untransform @ other.transform
-                other.origin = unmat*(other.origin - self.origin)
+                other._oripos = unmat*(other._oripos - self._oripos)
             other.commitTransforms()
 
         return super().merge(other, *args, **kwargs)
@@ -255,7 +255,7 @@ class AlignableTFrame(TransformableFrame, AlignableFigure):
         for fig in listselect(self.figures, select).values():
             unrot = cmath.exp(-fig.rotation*1j) if fig.rotation != 0 else 1
             untransform = morpho.matrix.Mat(np.linalg.inv(fig.transform)) if not np.array_equal(fig.transform, I2) else 1
-            fig.alignOrigin(fig.boxCoords(unrot*(untransform*(anchor-fig.origin)), *args, raw=True, **kwargs), *args, **kwargs)
+            fig.alignOrigin(fig.boxCoords(unrot*(untransform*(anchor-fig._oripos)), *args, raw=True, **kwargs), *args, **kwargs)
         return self
 
     # Special version of Frame.partition().
