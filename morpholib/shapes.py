@@ -242,6 +242,9 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
     # bounding box is computed without applying
     # the transformation attributes origin, rotation, transform.
     def box(self, *, raw=False):
+        if self.nodeCount() == 0:
+            raise ValueError("Cannot find bounding box of a spline with no nodes.")
+
         # The check for self.origin != 0 is done elsewhere because
         # it's by far the most common transformation attribute to
         # modify, and it's not worth making a copy and committing
