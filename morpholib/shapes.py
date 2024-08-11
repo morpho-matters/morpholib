@@ -1849,7 +1849,7 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
         for glyph in self.figures:
             if matches(glyph):
                 return glyph
-        raise KeyError(f"Could not find gauge {repr(gauge) if isinstance(gauge, str) else ''} among subfigures.")
+        raise KeyError(f"Could not find gauge {repr(gauge)+' ' if isinstance(gauge, str) else ''}among subfigures.")
 
     # Replaces the MultiSpline with a MultiSpline generated
     # from morpho.latex.parse(). Intended to provide an easier
