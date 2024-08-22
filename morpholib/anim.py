@@ -4057,7 +4057,7 @@ class Animation(object):
     # is determined directly via a modifier.
     def rescalePixels(self, scale):
         for layer in self.allLayers():
-            for actor in layer.actors:
+            for actor in list(layer.actors) + [layer.camera]:
                 for keyfig in actor.keys():
                     keyfig._rescalePixels(scale)
 
