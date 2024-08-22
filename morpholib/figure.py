@@ -285,7 +285,7 @@ class Figure(object):
         for tweenable in self._state.values():
             if "pixel" in tweenable.tags:
                 if "list" in tweenable.tags:
-                    tweenable.value = [scale*item for item in tweenable.value]
+                    tweenable.value = type(tweenable.value)([scale*item for item in tweenable.value])
                 else:
                     tweenable.value = scale*tweenable.value
             elif "figures" in tweenable.tags:
