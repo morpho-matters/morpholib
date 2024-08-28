@@ -1999,13 +1999,16 @@ def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
 #       Note that this only applies to the portion of the actor's
 #       timeline affected by this action. After the action
 #       concludes, the original transition of this actor will
-#       be used for future keyfigures. Default: uniform.
+#       be used for future keyfigures.
+#       Default: morpho.transition.default
 @Path.action
 def drawIn(actor, duration=30, atFrame=None, *,
-    tempWidth=2, transition=morpho.transitions.uniform):
+    tempWidth=2, transition=None):
 
     if atFrame is None:
         atFrame = actor.lastID()
+    if transition is None:
+        transition = mo.transition.default
 
     path0 = actor.last()
     # Save current final state of the actor which should be
