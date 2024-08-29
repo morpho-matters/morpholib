@@ -3868,6 +3868,10 @@ class Polygon(BoundingBoxFigure):
     def seq(self, value):
         self.vertices = value
 
+    # Returns number of nodes in the polygon.
+    # Equivalent to len(self.vertices)
+    def nodeCount(self):
+        return len(self.vertices)
 
     # Applies all of the transformation attributes
     # origin, rotation, transform
