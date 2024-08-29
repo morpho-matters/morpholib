@@ -244,6 +244,22 @@ class BoundingBoxFigure(morpho.Figure):
         NW, SW, SE, NE = self.corners(*args, **kwargs)
         return SE
 
+    @property
+    def topleft(self):
+        return self.northwest
+
+    @property
+    def topright(self):
+        return self.northeast
+
+    @property
+    def bottomleft(self):
+        return self.southwest
+
+    @property
+    def bottomright(self):
+        return self.southeast
+
     # Returns the corresponding physical position of an
     # alignment parameter with respect to the bounding box.
     def anchorPoint(self, align, *args, **kwargs):
