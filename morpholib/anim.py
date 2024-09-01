@@ -765,7 +765,9 @@ class Frame(BoundingBoxFigure):
         with self._pushTranslation(camera, ctx):
             for fig in figlist:
                 if fig.visible:
-                    fig.draw(camera, ctx, *args, **kwargs)
+                    fig = applyFigureModifier(fig)
+                    if fig.visible:
+                        fig.draw(camera, ctx, *args, **kwargs)
 
     # Copies the frame. Supplying False to the optional arg "deep"
     # means the resulting frame copy will not make copies of the
