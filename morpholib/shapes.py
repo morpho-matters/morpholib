@@ -400,9 +400,9 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
     # Generates a Spine figure by parsing an SVG file/stream
     # and taking the first SVG path element found.
     #
-    # The stroke and fill color is also imported from the SVG
-    # as well as their alpha values. All other style attributes
-    # are ignored and the Spline default values are used.
+    # The stroke width and color, and fill color are also imported
+    # from the SVG as well as their alpha values. All other style
+    # attributes are ignored and the Spline default values are used.
     # However, future versions of this method may use this data,
     # so this behavior should not be depended on.
     #
