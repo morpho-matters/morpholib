@@ -1664,8 +1664,23 @@ class Camera(BoundingBoxFigure):
         self.defaultTween = type(self).tweenZoom
 
     # Returns the current viewbox.
-    def box(self):
+    def box(self, *, raw=False):
+        if not raw and self.rotation != 0:
+            # Use the bounding box of the rotated corners
+            # of the original viewbox.
+            corners = boxCorners(self.view)
+            center = mean(corners)
+            rot = cmath.exp(-self.rotation*1j)
+
+            corners = [(z-center)*rot + center for z in corners]
+            xmin = min(z.real for z in corners)
+            xmax = max(z.real for z in corners)
+            ymin = min(z.imag for z in corners)
+            ymax = max(z.imag for z in corners)
+
+            return [xmin, xmax, ymin, ymax]
         return self.view[:]
+
 
     # Zoom out the camera IN PLACE by the specified factor.
     # Optionally specify a complex number as the "focus", meaning
