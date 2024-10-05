@@ -3194,7 +3194,7 @@ def axesPath(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
 #   axes = mathaxes(...)
 #   axes.xaxis, axes.yaxis
 #
-# INPUTS (all keyword-only)
+# INPUTS (all keyword-only except `view`)
 # view = Bounding box of the grid ([xmin,xmax,ymin,ymax]).
 #        Default: [-5,5, -5,5]
 # axis = String containing the axis types to include.
@@ -3215,8 +3215,9 @@ def axesPath(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
 #       tween method. Default: Axis.tweenLinear
 # transition = Transition function to assign to all axes
 #       Default: None (meaning it uses morpho.transition.default)
-def mathaxes(*,
-    view=(-5,5, -5,5), axis="xy",
+def mathaxes(
+    view=(-5,5, -5,5), *,
+    axis="xy",
     xwidth=5, ywidth=5, width=None,
     xcolor=(1,1,1), ycolor=(1,1,1), color=None, alpha=1,
     xtickLength=0, ytickLength=0, tickLength=None,
@@ -3298,7 +3299,7 @@ def mathaxes3d(*args, **kwargs):
 
 # Construct a grid-like frame figure.
 #
-# INPUTS (keyword-only)
+# INPUTS (keyword-only except `view`)
 # view = Bounding box of the grid ([xmin,xmax,ymin,ymax]). Default: [-5,5, -5,5]
 # dx,dy = Grid spacing in physical units. Default: 1
 #         You can also specify `spacing` to set both to the same value.
@@ -3344,8 +3345,8 @@ def mathaxes3d(*args, **kwargs):
 #
 # Note that hmidlines and vmidlines can also be nonnegative ints instead of
 # bools, which then means how many midlines to place.
-def mathgrid(*,
-    view=(-5,5, -5,5),
+def mathgrid(
+    view=(-5,5, -5,5), *,
     dx=1, dy=1, spacing=None,
     hsteps=50, vsteps=50, steps=None,
     hnodes=None, vnodes=None, nodes=None,
@@ -3422,8 +3423,8 @@ mathGrid = mathgrid  # Alternate camel-case name.
 
 # 3D version of mathgrid(). Creates a grid in the xy-plane.
 # See "mathgrid" for more info.
-def mathgrid3d(*,
-    view=(-5,5, -5,5),
+def mathgrid3d(
+    view=(-5,5, -5,5), *,
     dx=1, dy=1, spacing=None,
     hsteps=50, vsteps=50, steps=None,
     hnodes=None, vnodes=None, nodes=None,
@@ -3466,12 +3467,13 @@ def mathgrid3d(*,
 # Equivalent to mathgrid(), but hsteps/vsteps default to 1,
 # and `BGgrid` and `axes` default to False.
 # See mathgrid() for more info.
-def basicgrid(*,
+def basicgrid(*args,
     hsteps=1, vsteps=1,
     BGgrid=False, axes=False,
     **kwargs):
 
     return mathgrid(
+        *args,
         hsteps=hsteps, vsteps=vsteps,
         BGgrid=BGgrid, axes=axes,
         **kwargs
@@ -3480,12 +3482,13 @@ def basicgrid(*,
 # Equivalent to mathgrid3d(), but hsteps/vsteps default to 1,
 # and `axes` defaults to False.
 # See mathgrid3d() for more info.
-def basicgrid3d(*,
+def basicgrid3d(*args,
     hsteps=1, vsteps=1,
     axes=False,
     **kwargs):
 
     return mathgrid3d(
+        *args,
         hsteps=hsteps, vsteps=vsteps,
         axes=axes,
         **kwargs
@@ -3493,7 +3496,7 @@ def basicgrid3d(*,
 
 # Identical to mathgrid3d() except the "axes" argument
 # defaults to False.
-def wireframe(*,
+def wireframe(*args,
     axes=False, **kwargs
     # view=(-5,5, -5,5),
     # dx=1, dy=1,
@@ -3512,6 +3515,7 @@ def wireframe(*,
     ):
 
     return mathgrid3d(
+        *args,
         axes=axes, **kwargs
         # view=view,
         # dx=dx, dy=dy,
@@ -3533,8 +3537,8 @@ def wireframe(*,
 # This function isn't usually used directly anymore, as mathgrid()
 # has somewhat obsoleted it.
 # See "mathgrid" for more info.
-def standardGrid(*,
-    view=(-5,5, -5,5),
+def standardGrid(
+    view=(-5,5, -5,5), *,
     nhorz=11, nvert=11,
     hsteps=50, vsteps=50,
     hnodes=None, vnodes=None,
