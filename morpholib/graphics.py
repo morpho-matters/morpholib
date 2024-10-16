@@ -17,10 +17,10 @@ I2 = np.identity(2)
 
 ### CLASSES ###
 
-# Draws a PNG image on the screen.
+# Draws an image on the screen.
 # Syntax: Image(source)
 # where "source" can be a string defining a filepath or can be another
-# Image figure (or a derivative figure) to use its internal PNG.
+# Image figure (or a derivative figure) to use its internal image data.
 # Source can be changed after construction by using the newSource()
 # method.
 #
@@ -220,7 +220,18 @@ class Image(PreAlignableFigure):
         if source is None:
             self.imageSurface = None
         elif isinstance(source, str):
-            self.imageSurface = cr.ImageSurface.create_from_png(source)
+            if source[-3:].lower() == "png":
+                self.imageSurface = cr.ImageSurface.create_from_png(source)
+            else:
+                # This is based on user Marwan Alsabbagh's code on StackOverflow.
+                # https://stackoverflow.com/a/13457584
+                from PIL import Image as PIL_Image
+                from io import BytesIO
+                img = PIL_Image.open(source)
+                buffer = BytesIO()
+                img.save(buffer, format="PNG")
+                buffer.seek(0)
+                self.imageSurface = cr.ImageSurface.create_from_png(buffer)
         elif isinstance(source, Image) or isinstance(source, MultiImageBase):
             self.imageSurface = source.imageSurface
         elif isinstance(source, cairo.ImageSurface):
