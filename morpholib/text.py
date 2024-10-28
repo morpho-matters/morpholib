@@ -2026,7 +2026,7 @@ def paragraph(textarray, view, windowShape=None,
         boxes = [shiftBox(fig.box(*camctx, raw=True), fig.pos) for fig in row]
         rowBoxes.append(boxes)
         rowHeight = max(box[-1]-box[-2] for box in boxes)
-        yPositions.append(yPositions[-1]-ygaps[i]-rowHeight)
+        yPositions.append(yPositions[-1]-ygaps[i+1]-rowHeight)
     adjust = -mean([yPositions[0], yPositions[-1]])
     yPositions = [y+adjust for y in yPositions]
 
