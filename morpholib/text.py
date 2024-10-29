@@ -328,9 +328,13 @@ class Text(PreAlignableFigure, BackgroundBoxFigure):
     # if it only consisted of the single capital letter "M".
     # Mainly used to help define horizontal spacing relative
     # to the style and size of the text.
-    def em(self):
+    #
+    # Optionally, a different glyph may be supplied to use it
+    # instead of "M":
+    #   mytext.em("A")
+    def em(self, glyph="M"):
         textOrig = self.text
-        self.text = "M"
+        self.text = glyph
         M_width = self.pixelWidth()
         self.text = textOrig
         return M_width
@@ -340,9 +344,13 @@ class Text(PreAlignableFigure, BackgroundBoxFigure):
     # if it only consisted of the single lowercase letter "x".
     # Mainly used to help define vertical spacing relative
     # to the style and size of the text.
-    def ex(self):
+    #
+    # Optionally, a different glyph may be supplied to use it
+    # instead of "x":
+    #   mytext.ex("a")
+    def ex(self, glyph="x"):
         textOrig = self.text
-        self.text = "x"
+        self.text = glyph
         x_height = self.pixelHeight()
         self.text = textOrig
         return x_height
@@ -635,9 +643,13 @@ class PText(Text):
     # if it only consisted of the single capital letter "M".
     # Mainly used to help define horizontal spacing relative
     # to the style and size of the text.
-    def em(self):
+    #
+    # Optionally, a different glyph may be supplied to use it
+    # instead of "M":
+    #   mytext.ex("A")
+    def em(self, glyph="M"):
         textOrig = self.text
-        self.text = "M"
+        self.text = glyph
         M_width = self.width()
         self.text = textOrig
         return M_width
@@ -647,9 +659,13 @@ class PText(Text):
     # if it only consisted of the single lowercase letter "x".
     # Mainly used to help define vertical spacing relative
     # to the style and size of the text.
-    def ex(self):
+    #
+    # Optionally, a different glyph may be supplied to use it
+    # instead of "x":
+    #   mytext.ex("a")
+    def ex(self, glyph="x"):
         textOrig = self.text
-        self.text = "x"
+        self.text = glyph
         x_height = self.height()
         self.text = textOrig
         return x_height
