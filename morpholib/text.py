@@ -28,6 +28,10 @@ DUMMY = object()
 # and its derivatives.
 defaultFont = "Times New Roman"
 
+# Default alphabet to use in calculating line heights
+# for paragraphs
+LINE_HEIGHT_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+
 ### CLASSES ###
 
 '''
@@ -1940,6 +1944,9 @@ def conformText(textarray):
 #            Default: 0 radians
 # transform = Transformation matrix of entire paragraph about
 #             anchor point. Default: identity
+# alphabet = String of characters to use to determine line height.
+#            Default: morpho.text.ALPHABET constant, which by default
+#            is all 52 upper and lowercase glyphs in the English alphabet.
 # **kwargs = Any other keyword arguments will be applied to
 #            every component Text figure:
 #            txt.set(**kwargs) for each txt in the textarray
@@ -1948,6 +1955,7 @@ def paragraph(textarray, view, windowShape=None,
     *, flush=0, align=None, gap=None, xbuf=None, ybuf=None,
     rotation=0, transform=None,
     background=(1,1,1), backAlpha=0, backPad=0,
+    alphabet=None,
     **kwargs):
 
     if transform is None: transform = np.eye(2)
@@ -1966,6 +1974,9 @@ def paragraph(textarray, view, windowShape=None,
                 raise AttributeError
         except AttributeError:
             raise TypeError("Cannot infer windowShape.")
+
+    if alphabet is None:
+        alphabet = LINE_HEIGHT_ALPHABET
 
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):
@@ -2023,7 +2034,6 @@ def paragraph(textarray, view, windowShape=None,
 
     # Calculate line heights (informally)
     lineHeights = []
-    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
     for row in textarray:
         lineHeights.append(max(fig.ex(alphabet) if isinstance(fig, PText) else morpho.physicalHeight(fig.ex(alphabet), *camctx) for fig in row))
     # The mean of the line heights between adjacent lines. Useful later on.
