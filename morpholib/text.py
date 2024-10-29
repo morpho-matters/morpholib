@@ -2021,16 +2021,20 @@ def paragraph(textarray, view, windowShape=None,
         for row in textarray:
             rowgaps.append(xbuf*sum([fig.em() if isinstance(fig, PText) else morpho.physicalWidth(fig.em(), *camctx) for fig in row[:-1]]))
 
+    # Calculate line heights (informally)
+    lineHeights = []
+    alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+    for row in textarray:
+        lineHeights.append(max(fig.ex(alphabet) if isinstance(fig, PText) else morpho.physicalHeight(fig.ex(alphabet), *camctx) for fig in row))
+    # The mean of the line heights between adjacent lines. Useful later on.
+    lineHeightMeans = [mean([h1, h2]) for h1, h2 in zip(lineHeights[:-1], lineHeights[1:])]
+
     # Calculate ygaps between each row based on whether ybuf
     # is specified or not.
     if ybuf is None:
         ygaps = [ygap]*(len(textarray)-1)
     else:
-        ygaps = []
-        for row1, row2 in zip(textarray[:-1], textarray[1:]):
-            ygap1 = ybuf*max([fig.ex() if isinstance(fig, PText) else morpho.physicalHeight(fig.ex(), *camctx) for fig in row1])
-            ygap2 = ybuf*max([fig.ex() if isinstance(fig, PText) else morpho.physicalHeight(fig.ex(), *camctx) for fig in row2])
-            ygaps.append(mean([ygap1, ygap2]))
+        ygaps = [ybuf*lineMean for lineMean in lineHeightMeans]
 
     # Apply align parameter if given
     if align is not None:
@@ -2039,13 +2043,11 @@ def paragraph(textarray, view, windowShape=None,
     # Calculate y-positions of all rows
     yPositions = [0]
     rowBoxes = []
-    for i, row in enumerate(textarray[:-1]):
+    for row, row_next, lineMean, ygap in zip(textarray[:-1], textarray[1:], lineHeightMeans, ygaps):
         boxes = [shiftBox(fig.box(*camctx, raw=True), fig.pos) for fig in row]
-        boxes_next = [fig.box(*camctx, raw=True) for fig in textarray[i+1]]
+        boxes_next = [fig.box(*camctx, raw=True) for fig in row_next]
         rowBoxes.append(boxes)
-        rowHeight = max(box[-1]-box[-2] for box in boxes)
-        rowHeight_next = max(box[-1]-box[-2] for box in boxes_next)
-        yPositions.append(yPositions[-1]-ygaps[i]-mean([rowHeight, rowHeight_next]))
+        yPositions.append(yPositions[-1]-ygap-lineMean)
     adjust = -mean([yPositions[0], yPositions[-1]])
     yPositions = [y+adjust for y in yPositions]
 
