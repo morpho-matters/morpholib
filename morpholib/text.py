@@ -2008,12 +2008,13 @@ def paragraph(textarray, view, windowShape=None,
     # Calculate ygaps between each row based on whether ybuf
     # is specified or not.
     if ybuf is None:
-        ygaps = [ygap]*len(textarray)
+        ygaps = [ygap]*(len(textarray)-1)
     else:
         ygaps = []
-        for row in textarray:
-            ygap = ybuf*max([fig.ex() if isinstance(fig, PText) else morpho.physicalHeight(fig.ex(), *camctx) for fig in row])
-            ygaps.append(ygap)
+        for row1, row2 in zip(textarray[:-1], textarray[1:]):
+            ygap1 = ybuf*max([fig.ex() if isinstance(fig, PText) else morpho.physicalHeight(fig.ex(), *camctx) for fig in row1])
+            ygap2 = ybuf*max([fig.ex() if isinstance(fig, PText) else morpho.physicalHeight(fig.ex(), *camctx) for fig in row2])
+            ygaps.append(mean([ygap1, ygap2]))
 
     # Apply align parameter if given
     if align is not None:
@@ -2024,9 +2025,11 @@ def paragraph(textarray, view, windowShape=None,
     rowBoxes = []
     for i, row in enumerate(textarray[:-1]):
         boxes = [shiftBox(fig.box(*camctx, raw=True), fig.pos) for fig in row]
+        boxes_next = [fig.box(*camctx, raw=True) for fig in textarray[i+1]]
         rowBoxes.append(boxes)
         rowHeight = max(box[-1]-box[-2] for box in boxes)
-        yPositions.append(yPositions[-1]-ygaps[i+1]-rowHeight)
+        rowHeight_next = max(box[-1]-box[-2] for box in boxes_next)
+        yPositions.append(yPositions[-1]-ygaps[i]-mean([rowHeight, rowHeight_next]))
     adjust = -mean([yPositions[0], yPositions[-1]])
     yPositions = [y+adjust for y in yPositions]
 
