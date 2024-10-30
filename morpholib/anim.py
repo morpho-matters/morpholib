@@ -1800,6 +1800,11 @@ class Camera(BoundingBoxFigure):
     def dimensions(self):
         return (self.width(), self.height())
 
+    @property
+    def aspectRatioWH(self):
+        width, height = self.dimensions()
+        return width/height
+
     # Given a complex number "pos" representing a position, this method returns
     # a new complex number corresponding to this position had the camera's
     # view been the unit square [0,1] x [0,1].
