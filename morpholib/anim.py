@@ -3279,6 +3279,14 @@ class Animation(object):
         # self._keyIDs = None  # This var is only used once play() is called.
 
     @property
+    def windowShape(self):
+        return self._windowShape
+
+    @windowShape.setter
+    def windowShape(self, pair):
+        self._windowShape = tuple(round(item) for item in pair)
+
+    @property
     def background(self):
         return self._background
 
