@@ -293,6 +293,18 @@ class BoundingBoxFigure(morpho.Figure):
         box = self.box(*args, **kwargs)
         return (box[1] - box[0], box[-1] - box[-2])
 
+    # This is commented out for now because I'm not sure
+    # whether aspect ratio should be with respect to the
+    # raw box or the true box.
+    # # Returns box width / box height.
+    # # If box height == 0, returns nan.
+    # @property
+    # def aspectRatioWH(self):
+    #     width, height = self.boxDimensions()
+    #     if height == 0:
+    #         return nan
+    #     return width/height
+
     # Returns the bounding box of a box that is being subjected
     # to a shift, rotation, and transformation.
     @staticmethod
