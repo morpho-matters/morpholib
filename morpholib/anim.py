@@ -15,6 +15,7 @@ from morpholib.tools.ktimer import tic, toc
 import morpholib.tools.dev
 from morpholib.tools.dev import BoundingBoxFigure, makesubcopies, listselect, \
     _SubAttributeManager, _InPlaceSubAttributeManager, AmbiguousValueError
+from morpholib.tools.img import surfaceSave
 
 # Backward compatibility because these functions used to live in anim.py
 from morpholib import screenCoords, physicalCoords, \
@@ -4214,7 +4215,7 @@ class Animation(object):
                 actor.timeCache.clear()
 
     # Export animation to file.
-    # Can either be MP4, GIF animation, or PNG sequence depending on
+    # Can either be MP4, GIF animation, or PNG/JPG sequence depending on
     # the file extension given in the filepath.
     # Optional argument scale is a scale factor that scales the entire
     # animation window shape before exporting. Useful for downscaling an
@@ -4223,10 +4224,17 @@ class Animation(object):
     # scale > 1 will not actually increase the resolution of your animation.
     # Use Animation.rescale() instead to increase resolution.
     #
-    # Optional argument "optimize" can be set to False to prevent
-    # the animation from being optimized. This will probably rarely be
+    # OPTIONAL KEYWORD-ONLY INPUTS
+    # imageOptions = Dict providing additional options passed to the
+    #       PIL image writer when exporting in a format other than PNG.
+    #       If an option is unrecognized, it is silently ignored.
+    #       Default: dict(quality=85), meaning JPEG quality is
+    #       set to 85 by default.
+    # optimize = Boolean which if set to False will prevent the
+    # animation from being optimized. This will probably rarely be
     # desired.
-    def export(self, filepath, scale=1, *, optimize=True):
+    def export(self, filepath, scale=1, *,
+            imageOptions=dict(quality=85), optimize=True):
         # # Handle non-trivial scale factor.
         # if scale != 1:
         #     # Save original window shape
@@ -4378,7 +4386,7 @@ class Animation(object):
                 print("Cleaning up temp directory...")
             print("DONE!")
 
-        elif extension.lower() == "png":
+        elif extension.lower() in ("png", "jpg", "jpeg"):
             if scale != 1:
                 # Make a fake secondary animation which will house the scaled version
                 # of each frame.
@@ -4400,15 +4408,15 @@ class Animation(object):
                 # If the animation is just one frame, don't
                 # label the file by frame number.
                 if firstIndex == finalIndex:
-                    imgfile = Dir+os.sep+filename+".png"
+                    imgfile = Dir+os.sep+filename+"."+extension
                 else:
                     imgfile = Dir+os.sep+filename \
                         + "_" + int2fixedstr(self.currentIndex-firstIndex,
                             digits=numdigits(finalIndex-firstIndex)) \
-                        + ".png"
+                        + "." + extension
 
                 if scale == 1:
-                    self.context.get_target().write_to_png(imgfile)
+                    surfaceSave(self.context.get_target(), imgfile, options=imageOptions)
                 else:
                     # # Setup a modified standard context and scale it.
                     # anim2.setupContext()
@@ -4419,7 +4427,7 @@ class Animation(object):
                     # then paint it onto the secondary animation and export!
                     anim2.context.set_source_surface(self.context.get_target())
                     anim2.context.paint()
-                    anim2.context.get_target().write_to_png(imgfile)
+                    surfaceSave(anim2.context.get_target(), imgfile, options=imageOptions)
 
                 self.currentIndex += 1
 
