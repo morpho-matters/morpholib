@@ -4234,17 +4234,11 @@ class Animation(object):
     # animation from being optimized. This will probably rarely be
     # desired.
     def export(self, filepath, scale=1, *,
-            imageOptions=dict(quality=85), optimize=True):
-        # # Handle non-trivial scale factor.
-        # if scale != 1:
-        #     # Save original window shape
-        #     windowShape = self.windowShape[:]
-        #     # Scale window shape and export
-        #     self.windowShape = tuple(map(lambda x: round(scale*x), windowShape))
-        #     self.export(filepath)
-        #     # Restore original window shape.
-        #     self.windowShape = windowShape
-        #     return
+            imageOptions=dict(), optimize=True):
+
+        imgopts = imageOptions
+        imageOptions = dict(quality=85)
+        imageOptions.update(imgopts)
 
         if scale > 1:
             warn("scale > 1 will not actually improve resolution. Use Animation.rescale() instead.")
