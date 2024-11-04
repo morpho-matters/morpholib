@@ -4238,7 +4238,7 @@ class Animation(object):
         #     return
 
         if scale > 1:
-            warn("scale > 1 will not actually improve resolution.")
+            warn("scale > 1 will not actually improve resolution. Use Animation.rescale() instead.")
 
         if optimize:
             self._optimize()
