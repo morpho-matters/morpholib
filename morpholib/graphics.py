@@ -227,11 +227,10 @@ class Image(PreAlignableFigure):
                 # https://stackoverflow.com/a/13457584
                 from PIL import Image as PIL_Image
                 from io import BytesIO
-                img = PIL_Image.open(source)
-                buffer = BytesIO()
-                img.save(buffer, format="PNG")
-                buffer.seek(0)
-                self.imageSurface = cr.ImageSurface.create_from_png(buffer)
+                with PIL_Image.open(source) as img, BytesIO() as buffer:
+                    img.save(buffer, format="PNG")
+                    buffer.seek(0)
+                    self.imageSurface = cr.ImageSurface.create_from_png(buffer)
         elif isinstance(source, Image) or isinstance(source, MultiImageBase):
             self.imageSurface = source.imageSurface
         elif isinstance(source, cairo.ImageSurface):
