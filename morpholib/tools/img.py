@@ -21,11 +21,11 @@ def toPil(surface):
         pilData = rgbArray.reshape( -1 ).tostring()
     else:
         raise ValueError( 'Unsupported cairo format: %d' % cairoFormat )
-    pilImage = Image.frombuffer( pilMode,
+    with Image.frombuffer( pilMode,
             ( surface.get_width(), surface.get_height() ), pilData, "raw",
-            pilMode, 0, 1 )
-    pilImage = pilImage.convert( 'RGB' )
-    return pilImage
+            pilMode, 0, 1 ) as pilImage:
+        pilImage_converted = pilImage.convert( 'RGB' )
+    return pilImage_converted
 
 # Saves a cairo image surface object to a file.
 #
@@ -37,5 +37,5 @@ def surfaceSave(surface, filename, *, options):
     if filename.lower().strip().endswith("png"):
         surface.write_to_png(filename)
     else:
-        img = toPil(surface)
-        img.save(filename, **options)
+        with toPil(surface) as img:
+            img.save(filename, **options)
