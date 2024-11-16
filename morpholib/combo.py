@@ -240,9 +240,9 @@ class AlignableTFrame(TransformableFrame, AlignableFigure):
     # it's all subfigures.
     #
     # To work reliably, each subfigure should be an instance of
-    # AlignableFigure (such as Paths and Splines, though ironically
-    # not Images or Text) and possess the transformation attributes
-    # `origin`, `rotation`, `transform`.
+    # AlignableFigure (such as Paths and Splines, but not figures whose
+    # sizes are pixel based like `Text`) and possess the transformation
+    # attributes `origin`, `rotation`, `transform`.
     #
     # Any additional inputs supplied to this method are passed to
     # the subfigures' boxCoords() method.
