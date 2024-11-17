@@ -247,6 +247,7 @@ def vect2complex(v):
 # (z.real, z.imag)
 def complex2vect(z):
     return (z.real, z.imag)
+cparts = complex2vect  # Alias
 
 # Given a sorted list of numbers a and value x,
 # returns the highest index i such that a[i] <= x.
