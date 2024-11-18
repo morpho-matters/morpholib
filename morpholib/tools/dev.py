@@ -736,9 +736,9 @@ def translateArrayUnderTransforms(array, shift, rotator, transformer):
 #   makesubcopies([10,20,30,40,50], [0,2,3], 5)
 # produces [10,10,10, 20, 30,30,30, 40,40, 50]
 #
-# Optionally, an additional argument `itemfunc` can be supplied
-# which is applied to the original list item before it is
-# inserted as a duplicate back into the list. For example,
+# Optionally, an additional function `itemfunc` can be supplied
+# which is applied to each original list item and its return value
+# is inserted as a duplicate back into the list. For example,
 # supplying `lambda item: item.copy()` will cause each item
 # to have its `copy()` method called before being inserted into
 # the list as a duplicate, in order to produce a deep copy
