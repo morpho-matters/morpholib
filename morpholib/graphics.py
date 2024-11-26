@@ -6,7 +6,8 @@ import morpholib.grid
 from morpholib.actions import wiggle
 from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
-from morpholib.tools.dev import BoundingBoxFigure, PreAlignableFigure
+from morpholib.tools.dev import BoundingBoxFigure, \
+    BackgroundBoxFigure, PreAlignableFigure
 
 import cairo
 cr = cairo
@@ -955,7 +956,7 @@ SpaceMultimage = SpaceMultImage = SpaceMultiImage  # Synonyms
 #        Specified as [xmin,xmax,ymin,ymax]. Default: (0,1,0,1)
 # alpha = Opacity. Default: 1 (opaque)
 # origin = Translation value (complex number). Default: 0.
-class RasterMap(morpho.Figure):
+class RasterMap(BackgroundBoxFigure):
     def __init__(self, array=None, view=(0,1,0,1), alpha=1):
         if array is None:
             array = np.array([1,1,1]).reshape(1,1,3)
@@ -970,8 +971,8 @@ class RasterMap(morpho.Figure):
 
         # Transformation tweenables
         self.Tweenable("origin", 0, tags=["complex", "nofimage"])
-        # self.Tweenable("rotation", 0, tags=["scalar"])
-        # self.Tweenable("_transform", np.eye(2), tags=["nparray"])
+        self.Tweenable("rotation", 0, tags=["scalar"])
+        self.Tweenable("_transform", np.eye(2), tags=["nparray"])
         # self.Tweenable("scale_x", 1, tags=["scalar"])
         # self.Tweenable("scale_y", 1, tags=["scalar"])
 
@@ -988,13 +989,13 @@ class RasterMap(morpho.Figure):
         self._array = morpho.array(value)
         # self._updateSurface()
 
-    # @property
-    # def transform(self):
-    #     return self._transform
+    @property
+    def transform(self):
+        return self._transform
 
-    # @transform.setter
-    # def transform(self, value):
-    #     self._transform = morpho.matrix.array(value)
+    @transform.setter
+    def transform(self, value):
+        self._transform = morpho.matrix.array(value)
 
     def _createSurface(self):
         colorLength = self._array.shape[2]
@@ -1005,7 +1006,16 @@ class RasterMap(morpho.Figure):
             data, cairo.FORMAT_ARGB32, data.shape[1], data.shape[0]
             )
 
-    def _createImage(self):
+    # Mainly for internal use by draw().
+    # Creates a corresponding Image figure for the RasterMap
+    # ready for drawing.
+    #
+    # If optional kwarg _forceZeroing=True, the corresponding
+    # Image figure will be made to have its `pos` at 0.
+    # This is mainly for use in making the Image more usable
+    # outside of merely immediately drawing it, and is used
+    # mainly by the toImage() method.
+    def _createImage(self, *, _forceZeroing=False):
         surface = self._createSurface()
         img = Image(surface)
         img.unlink()
@@ -1017,7 +1027,35 @@ class RasterMap(morpho.Figure):
         img.height = self.view[3] - self.view[2]
         img.alpha = self.alpha
 
+        # If non-trivial transformations are at play,
+        # ensure the image is positioned at 0 so that transformations
+        # are applied correctly.
+        if _forceZeroing or not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+            img.placeOrigin(self.origin)
+            img.set(
+                rotation=self.rotation,
+                _transform=self._transform,
+                )
+        img.set(
+            background=self.background,
+            backAlpha=self.backAlpha,
+            backPad=self.backPad
+            )
+
         return img
+
+    # Returns an Image figure representation of the RasterMap.
+    # The Image figure will be aligned such that its position
+    # is at 0.
+    def toImage(self):
+        img = self._createImage(_forceZeroing=True)
+        img._updateFrom(self, common=True)
+        return img
+
+    def box(self, *, raw=False):
+        if raw:
+            return self.view
+        return morpho.grid.rect(self.view).box(raw=False)
 
     def draw(self, camera, ctx):
         img = self._createImage()
