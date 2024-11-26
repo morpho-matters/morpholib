@@ -496,9 +496,7 @@ class BackgroundBoxFigure(BoundingBoxFigure):
         self.Tweenable("backPad", 0, tags=["scalar"])
 
     # Only works for BoundingBoxFigures that have
-    # background box tweenables `background`,
-    # `backAlpha`, and `backPad` defined and the general
-    # `alpha` tweenable, along with a box() method that
+    # a general `alpha` tweenable, along with a box() method that
     # accepts the `raw` kwarg.
     #
     # Optionally, a kwarg `_alpha` can be passed in which
