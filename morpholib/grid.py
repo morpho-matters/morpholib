@@ -3154,6 +3154,7 @@ def shrinkOut(grid, *args, **kwargs):
     for fig, static in zip(grid.last().figures, staticRecord):
         fig.static = static
 
+@FancyFrame.modifyFadeActions
 class MathGrid(MathGridBase, FancyFrame):
     pass
 
