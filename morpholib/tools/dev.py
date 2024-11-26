@@ -165,6 +165,69 @@ def typecastViewCtx(method):
         return method(self, view, ctx, *args, **kwargs)
     return wrapper
 
+
+# Class decorator that adds the standard 2D transformation tweenables
+# origin, rotation, and transform, along with implementing
+# `transform` as a property so that setting its value auto-converts
+# it into an np.array.
+#
+# Note that this decorator only adds the tweenables and the
+# properties THEMSELVES. It does not automatically implement
+# drawing or otherwise handling these tweenables.
+#
+# Optionally, keyword parameters can be passed into the decorator
+# as follows:
+#   @Transformable2D(...)
+#   class MyClass:
+#       ...
+# with these options:
+# exclude = List of names of transformation tweenables to exclude.
+#       Valid names are "origin", "rotation", and "transform"
+#       (case-sensitive). Can also be inputted as a single string.
+# usepos = Boolean if set to True renames the `origin` tweenable to
+#       `pos` since some implementations use that name instead.
+#       Default: False
+def Transformable2D(cls=None, *, exclude=set(), usepos=False):
+    # Case where additional arguments are passed in to
+    # the decorator
+    if cls is None:
+        if isinstance(exclude, str):
+            exclude = {exclude}
+        else:
+            exclude = set(exclude)
+
+        def deco(cls):
+            newcls = Transformable2D(cls, exclude=exclude, usepos=usepos)
+            return newcls
+        return deco
+
+    # Name to use for `origin` tweenable
+    oname = "origin" if not usepos else "pos"
+
+    # Define new __init__() method
+    oldInit = cls.__init__
+    def __init__(self, *args, **kwargs):
+        oldInit(self, *args, **kwargs)
+        # Transformation tweenables
+        if "origin" not in exclude:
+            self.Tweenable(oname, 0, tags=["complex", "nofimage"])
+        if "rotation" not in exclude:
+            self.Tweenable("rotation", 0, tags=["scalar"])
+        if "transform" not in exclude:
+            self.Tweenable("_transform", np.eye(2), tags=["nparray"])
+    cls.__init__ = __init__
+
+    # Implement special properties for transform
+    if "transform" not in exclude:
+        def getter(self):
+            return self._transform
+        def setter(self, value):
+            self._transform = morpho.array(value)
+        cls.transform = property(getter, setter)
+
+    return cls
+
+
 # Abstract base class for figures that are meant to have
 # a bounding box (e.g. Image and Text).
 # Currently its main function is to automatically implement
