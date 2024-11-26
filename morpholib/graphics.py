@@ -7,7 +7,7 @@ from morpholib.actions import wiggle
 from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import BoundingBoxFigure, \
-    BackgroundBoxFigure, PreAlignableFigure
+    BackgroundBoxFigure, PreAlignableFigure, Transformable2D
 
 import cairo
 cr = cairo
@@ -956,6 +956,7 @@ SpaceMultimage = SpaceMultImage = SpaceMultiImage  # Synonyms
 #        Specified as [xmin,xmax,ymin,ymax]. Default: (0,1,0,1)
 # alpha = Opacity. Default: 1 (opaque)
 # origin = Translation value (complex number). Default: 0.
+@Transformable2D
 class RasterMap(BackgroundBoxFigure):
     def __init__(self, array=None, view=(0,1,0,1), alpha=1):
         if array is None:
@@ -969,16 +970,6 @@ class RasterMap(BackgroundBoxFigure):
         self.Tweenable("view", view, tags=["scalar", "list"])
         self.Tweenable("alpha", alpha, tags=["scalar"])
 
-        # Transformation tweenables
-        self.Tweenable("origin", 0, tags=["complex", "nofimage"])
-        self.Tweenable("rotation", 0, tags=["scalar"])
-        self.Tweenable("_transform", np.eye(2), tags=["nparray"])
-        # self.Tweenable("scale_x", 1, tags=["scalar"])
-        # self.Tweenable("scale_y", 1, tags=["scalar"])
-
-        # self.NonTweenable("_surface", None)
-
-        # self._updateSurface()
 
     @property
     def array(self):
@@ -988,14 +979,6 @@ class RasterMap(BackgroundBoxFigure):
     def array(self, value):
         self._array = morpho.array(value)
         # self._updateSurface()
-
-    @property
-    def transform(self):
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
 
     def _createSurface(self):
         colorLength = self._array.shape[2]
