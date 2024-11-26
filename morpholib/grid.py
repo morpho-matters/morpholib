@@ -3114,14 +3114,14 @@ class SpaceAxis(SpaceTrack):
 
 
 # Special Frame figure for mathgrids
-class MathGrid(morpho.Frame):
+class MathGridBase(morpho.Frame):
 
     # Returns equivalent MultiPath figure of this MathGrid
     def toMultiPath(self):
         multipath = MultiPath(self.figures)
         return multipath
 
-@MathGrid.action
+@MathGridBase.action
 def growIn(grid, duration=30, atFrame=None, *, reverse=False, substagger=0):
     lasttime = grid.lastID()
     if atFrame is None:
@@ -3141,7 +3141,7 @@ def growIn(grid, duration=30, atFrame=None, *, reverse=False, substagger=0):
     # again.
     grid.fin = gridfinal
 
-@MathGrid.action
+@MathGridBase.action
 def shrinkOut(grid, *args, **kwargs):
     # Remember who was static so we can restore later
     staticRecord = [fig.static for fig in grid.last().figures]
@@ -3154,9 +3154,11 @@ def shrinkOut(grid, *args, **kwargs):
     for fig, static in zip(grid.last().figures, staticRecord):
         fig.static = static
 
+class MathGrid(MathGridBase, FancyFrame):
+    pass
 
 # Special SpaceFrame figure for 3D mathgrids
-class SpaceMathGrid(MathGrid, morpho.SpaceFrame):
+class SpaceMathGrid(MathGridBase, morpho.SpaceFrame):
 
     def toMultiPath(self, *args, **kwargs):
         raise NotImplementedError("toMultiPath() is not implemented for SpaceMathGrid.")
@@ -3169,7 +3171,6 @@ class SpaceMathGrid(MathGrid, morpho.SpaceFrame):
     @classmethod
     def tweenPivot(cls, *args, **kwargs):
         raise NotImplementedError
-
 
 # Returns a single Path figure that represents the axes for
 # the given viewbox.
