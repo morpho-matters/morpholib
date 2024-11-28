@@ -1786,6 +1786,7 @@ class Camera(BoundingBoxFigure):
         delta = (c*d1 + d**2 - (c+c1)*d) / height1
 
         self.view = [alpha, beta, gamma, delta]
+        return self
 
 
     # Returns width of the viewbox: view[1] - view[0]
