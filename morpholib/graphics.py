@@ -258,6 +258,11 @@ class Image(PreAlignableFigure):
     def transform(self, value):
         self._transform = morpho.matrix.array(value)
 
+    # Returns both imageWidth and imageHeight as a tuple.
+    @property
+    def imageDimensions(self):
+        return (self.imageWidth, self.imageHeight)
+
 
     def copy(self):
 
