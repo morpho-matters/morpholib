@@ -7,7 +7,7 @@ from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import typecastViewCtx, typecastView, \
     typecastWindowShape, BoundingBoxFigure, BackgroundBoxFigure, \
-    PreAlignableFigure, AlignableFigure
+    PreAlignableFigure, AlignableFigure, Transformable2D
 
 import cairo
 cr = cairo
@@ -69,6 +69,7 @@ I2 = np.identity(2)
 # font = Font to use. Default: "Times New Roman"
 # bold = Boolean indicating whether to bold. Default: False
 # italic = Boolean indicating whether to use italics. Default: False
+@Transformable2D(exclude="origin")
 class Text(PreAlignableFigure, BackgroundBoxFigure):
     def __init__(self, text="", pos=0,
         size=64, font=None,
@@ -121,11 +122,9 @@ class Text(PreAlignableFigure, BackgroundBoxFigure):
         self.Tweenable("size", size, tags=["size", "pixel"])
         self.Tweenable("anchor_x", anchor_x, tags=["scalar"])
         self.Tweenable("anchor_y", anchor_y, tags=["scalar"])
-        self.Tweenable("_transform", np.identity(2), tags=["nparray"])
         self.Tweenable("color", color, tags=["color"])
         self.Tweenable("alpha", alpha, tags=["scalar"])
         # CCW rotation in radians
-        self.Tweenable("rotation", 0, tags=["scalar"])
 
         # These are the pre-transformation scale factors. These get
         # applied to the text BEFORE rotation and transform do.
@@ -155,14 +154,6 @@ class Text(PreAlignableFigure, BackgroundBoxFigure):
     @origin.setter
     def origin(self, value):
         self.pos = value
-
-    @property
-    def transform(self):
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
 
     @property
     def align(self):
@@ -469,8 +460,6 @@ class Text(PreAlignableFigure, BackgroundBoxFigure):
 
         ctx.restore()
         ctx.new_path()
-
-Text.action(wiggle)
 
 
 _referenceString = "A"
