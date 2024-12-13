@@ -8,7 +8,8 @@ from morpholib.anim import Frame, SpaceFrame, MultiFigure, SpaceMultiFigure, \
     SpaceMultifigure, Spacemultifigure
 from morpholib.actions import wiggle
 from morpholib import object_hasattr
-from morpholib.tools.dev import AlignableFigure, BackgroundBoxFigure
+from morpholib.tools.dev import AlignableFigure, BackgroundBoxFigure, \
+    Transformable2D
 from morpholib.tools.basics import *
 
 import math, cmath
@@ -48,6 +49,7 @@ class _FigureTransformMemory(object):
 # takes toplevel transformation attributes and implements methods that
 # allow toplevel and sublevel transformations to interact compatibly
 # with each other.
+@Transformable2D(exclude="origin")
 class TransformableFrame(Frame):
     # It's tempting to make TransformableFrame inherit from
     # AlignableFigure and/or BackgroundBoxFigure, but I've
@@ -57,20 +59,6 @@ class TransformableFrame(Frame):
     # BackgroundBoxFigure, it doesn't automatically implement
     # DRAWING the background box; it has to be done manually, and
     # users may not want to implement that themselves.
-    def __init__(self, *args, **kwargs):
-
-        super().__init__(*args, **kwargs)
-
-        self.Tweenable("rotation", 0, tags=["scalar"])
-        self.Tweenable("_transform", np.eye(2), tags=["nparray"])
-
-    @property
-    def transform(self):
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
 
     # Computes the bounding box of the entire figure.
     # Returned as [xmin, xmax, ymin, ymax]
@@ -225,7 +213,6 @@ class TransformableFrame(Frame):
 
 TFrame = TransformableFrame  # Alias
 
-TransformableFrame.action(wiggle)
 
 
 # Base class that combines the functionality of the TransformableFrame
