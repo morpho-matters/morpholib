@@ -210,11 +210,11 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
         oldInit(self, *args, **kwargs)
         # Transformation tweenables
         if "origin" not in exclude:
-            self.Tweenable(oname, 0, tags=["complex", "nofimage"])
+            self.Tweenable(oname, getattr(self, oname, 0), tags=["complex", "nofimage"])
         if "rotation" not in exclude:
-            self.Tweenable("rotation", 0, tags=["scalar"])
+            self.Tweenable("rotation", getattr(self, "rotation", 0), tags=["scalar"])
         if "transform" not in exclude:
-            self.Tweenable("_transform", np.eye(2), tags=["nparray"])
+            self.Tweenable("_transform", getattr(self, "_transform", np.eye(2)), tags=["nparray"])
     cls.__init__ = __init__
 
     # Implement special properties for transform
