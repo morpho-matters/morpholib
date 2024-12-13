@@ -1441,14 +1441,18 @@ class Actor(object):
         return new
 
     # If attribute doesn't exist, searches the figure type's
-    # registry of action names.
+    # registry of action names. Upon failure, searches thru
+    # the entire MRO in order until a match is found.
     def __getattr__(self, name):
-        if name in self.figureType.actions:
-            actionFunc = self.figureType.actions[name]
-            return lambda *args, **kwargs: actionFunc(self, *args, **kwargs)
-        else:
-            # Should throw error
-            object.__getattribute__(self, name)
+        for cls in self.figureType.mro():
+            try:
+                actionFunc = cls.actions[name]
+                return lambda *args, **kwargs: actionFunc(self, *args, **kwargs)
+            except (AttributeError, KeyError):
+                continue
+
+        # Should throw error
+        object.__getattribute__(self, name)
 
 
     # Returns the i-th keyfigure in the timeline.
