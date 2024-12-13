@@ -2,7 +2,6 @@ import io
 
 import morpholib as morpho
 import morpholib.anim, morpholib.grid, morpholib.shapes
-from morpholib.actions import wiggle
 from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import typecastViewCtx, typecastView, \
@@ -963,8 +962,6 @@ class MultiText(MultiTextBase, TransformableFrame, PreAlignableFigure):
     def box(self, view, ctx, *args, **kwargs):
         return super().box(view, ctx, *args, **kwargs)
 
-MultiText.action(wiggle)
-
 
 class MultiPTextBase(MultiTextBase):
     _baseFigure = PText
@@ -1003,8 +1000,6 @@ class MultiPText(MultiPTextBase, TransformableFrame):
         self.origin = value
 
 MultiPtext = MultiPText
-
-MultiPText.action(wiggle)
 
 
 # 3D version of the Text class.
@@ -1348,6 +1343,7 @@ def fixedLengthDecimal(number, decimal):
 
 ### GROUPS AND PARAGRAPHS ###
 
+@Transformable2D(exclude="origin")
 class FancyMultiTextBase(MultiTextBase, PreAlignableFigure):
 
     def __init__(self, text="", *args, **kwargs):
@@ -1368,8 +1364,6 @@ class FancyMultiTextBase(MultiTextBase, PreAlignableFigure):
 
         self.Tweenable("anchor_x", 0, tags=["scalar"])
         self.Tweenable("anchor_y", 0, tags=["scalar"])
-        self.Tweenable("rotation", 0, tags=["scalar"])
-        self.Tweenable("_transform", np.identity(2), tags=["nparray"])
         self.Tweenable("background", (1,1,1), tags=["color"])
         self.Tweenable("backAlpha", 0, tags=["scalar"])
         self.Tweenable("backPad", 0, tags=["scalar"])
@@ -1392,14 +1386,6 @@ class FancyMultiTextBase(MultiTextBase, PreAlignableFigure):
     @align.setter
     def align(self, value):
         self.anchor_x, self.anchor_y = value
-
-    @property
-    def transform(self):
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
 
     def partition(self, *args, **kwargs):
         raise NotImplementedError("partition() is not supported for FancyMultiText figures.")
@@ -1563,8 +1549,6 @@ class FancyMultiTextBase(MultiTextBase, PreAlignableFigure):
             return tw
 
         return pivot
-
-FancyMultiTextBase.action(wiggle)
 
 @FancyMultiTextBase.action
 def morphFrom(actor, source, *args, **kwargs):
