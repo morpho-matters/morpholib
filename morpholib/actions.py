@@ -250,9 +250,11 @@ def wiggle(actor, duration=30, atFrame=None, *,
     actor.newkey(atFrame)
     # Not using newendkey() because intermediate rounding
     # may throw off the time coordinates.
-    actor.newkey(atFrame + tstep).rotation = rotation
+    actor.newkey(atFrame + tstep).rotation += rotation
+    sign = -1
     for n in range(1, times+1):
-        actor.newkey(atFrame + (2*n + 1)*tstep).rotation *= -1
+        actor.newkey(atFrame + (2*n + 1)*tstep).rotation += sign*2*rotation
+        sign *= -1
     actor.newkey(atFrame+duration, final)
 
 
