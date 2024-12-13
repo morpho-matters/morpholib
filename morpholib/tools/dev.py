@@ -10,6 +10,7 @@ import morpholib as morpho
 import morpholib.anim
 from morpholib.figure import object_hasattr
 from morpholib.tools.basics import *
+from morpholib.actions import wiggle
 
 import cairo
 import numpy as np
@@ -175,6 +176,9 @@ def typecastViewCtx(method):
 # properties THEMSELVES. It does not automatically implement
 # drawing or otherwise handling these tweenables.
 #
+# Also auto-implements the actor actions `wiggle`, `growIn`, and
+# `shrinkOut` where applicable.
+#
 # Optionally, keyword parameters can be passed into the decorator
 # as follows:
 #   @Transformable2D(...)
@@ -217,6 +221,10 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
             self.Tweenable("_transform", getattr(self, "_transform", np.eye(2)), tags=["nparray"])
     cls.__init__ = __init__
 
+    # Implement wiggle action if `rotation` attribute included.
+    if "rotation" not in exclude:
+        cls.action(wiggle)
+
     # Implement special properties for transform
     if "transform" not in exclude:
         def getter(self):
@@ -224,6 +232,28 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
         def setter(self, value):
             self._transform = morpho.array(value)
         cls.transform = property(getter, setter)
+
+        @cls.action
+        def growIn(actor, duration=30, atFrame=None):
+            if atFrame is None:
+                atFrame = actor.lastID()
+
+            fig0 = actor.last()
+            fig1 = actor.newkey(atFrame)
+            fig0.visible = False
+            fig2 = actor.newendkey(duration).set(visible=True)
+            fig1.transform = np.array([[0,0],[0,0]])
+
+        @cls.action
+        def shrinkOut(actor, duration=30, atFrame=None):
+            if atFrame is None:
+                atFrame = actor.lastID()
+
+            actor.newkey(atFrame)
+            fig1 = actor.newendkey(duration)
+            fig1.set(
+                transform=np.array([[0,0],[0,0]]), visible=False
+                )
 
     return cls
 
