@@ -50,6 +50,7 @@ I2 = np.identity(2)
 #                 Generally only used under the hood.
 # physical = Boolean on whether width and height are in physical units or pixels.
 #            Default: True (physical units)
+@Transformable2D(exclude="origin")
 class Image(PreAlignableFigure):
     def __init__(self, source=None):
 
@@ -82,15 +83,6 @@ class Image(PreAlignableFigure):
         scale_x = morpho.Tweenable("scale_x", 1, tags=["scalar"])
         scale_y = morpho.Tweenable("scale_y", 1, tags=["scalar"])
 
-        # CCW rotation in radians
-        rotation = morpho.Tweenable("rotation", 0, tags=["scalar"])
-        # self.rotateBeforeScale = False
-
-        # Transformation matrix to be applied last.
-        # It is performed by treating the origin pixel as the origin of the
-        # linear transformation.
-        _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
-
         alpha = morpho.Tweenable("alpha", 1, tags=["scalar"])
 
         # Background box parameters
@@ -100,7 +92,7 @@ class Image(PreAlignableFigure):
 
         # Initialize tweenables
         self.update([pos, align, _width, _height, scale_x, scale_y,
-            rotation, _transform, alpha, background, backAlpha, backPad])
+            alpha, background, backAlpha, backPad])
 
         # If set to True, changing the width or height will
         # automatically change the other to maintain the proportion.
@@ -249,15 +241,6 @@ class Image(PreAlignableFigure):
             self.imageHeight = self.imageSurface.get_height()
 
         return self
-
-
-    @property
-    def transform(self):
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
 
     # Returns both imageWidth and imageHeight as a tuple.
     @property
@@ -554,33 +537,6 @@ class Image(PreAlignableFigure):
 
         # self.sprite.draw()
 
-@Image.action
-def growIn(img, duration=30, atFrame=None):
-    if atFrame is None:
-        atFrame = img.lastID()
-
-    img0 = img.last()
-    height = img0.height
-    linked = img0.linked
-    img0.visible = False
-    img1 = img.newkey(atFrame)
-    img1.link().set(height=0, visible=True)
-    img2 = img.newendkey(duration)
-    img2.set(height=height, linked=linked)
-
-@Image.action
-def shrinkOut(img, duration=30, atFrame=None):
-    if atFrame is None:
-        atFrame = img.lastID()
-
-    img.newkey(atFrame)
-    linked = img.last().linked
-    img.last().link()
-
-    img1 = img.newendkey(duration)
-    img1.set(height=0, visible=False, linked=linked)
-
-Image.action(wiggle)
 
 # Image class with winding number.
 # NOT IMPLEMENTED! I believe this class's purpose has been obsoleted by
