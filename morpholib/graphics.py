@@ -221,7 +221,8 @@ class Image(PreAlignableFigure):
         if source is None:
             self.imageSurface = None
         elif isinstance(source, str):
-            if source[-3:].lower() == "png":
+            source = source.strip()
+            if source.lower().endswith("png"):
                 self.imageSurface = cr.ImageSurface.create_from_png(source)
             else:
                 # This is based on user Marwan Alsabbagh's code on StackOverflow.
