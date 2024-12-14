@@ -336,22 +336,22 @@ class Image(PreAlignableFigure):
 
         return [NW,SW,SE,NE]
 
-    # Returns the visual centerpoint of the image, ignoring
-    # the transformation attributes.
-    @property
-    def center(self):
-        return mean(self.corners())
+    # # Returns the visual centerpoint of the image, ignoring
+    # # the transformation attributes.
+    # @property
+    # def center(self):
+    #     return mean(self.corners())
 
-    @center.setter
-    def center(self, value):
-        center_x, center_y = value.real, value.imag
-        align_x, align_y = self.align
+    # @center.setter
+    # def center(self, value):
+    #     center_x, center_y = value.real, value.imag
+    #     align_x, align_y = self.align
 
-        # Compute new position
-        x = center_x + self.width*align_x/2
-        y = center_y + self.height*align_y/2
+    #     # Compute new position
+    #     x = center_x + self.width*align_x/2
+    #     y = center_y + self.height*align_y/2
 
-        self.pos = complex(x,y)
+    #     self.pos = complex(x,y)
 
 
     def draw(self, camera, ctx):
