@@ -234,7 +234,7 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
         cls.transform = property(getter, setter)
 
         @cls.action
-        def growIn(actor, duration=30, atFrame=None):
+        def popIn(actor, duration=30, atFrame=None):
             if atFrame is None:
                 atFrame = actor.lastID()
 
@@ -243,9 +243,10 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
             fig0.visible = False
             fig2 = actor.newendkey(duration).set(visible=True)
             fig1.transform = np.array([[0,0],[0,0]])
+        cls.actions["growIn"] = popIn
 
         @cls.action
-        def shrinkOut(actor, duration=30, atFrame=None):
+        def popOut(actor, duration=30, atFrame=None):
             if atFrame is None:
                 atFrame = actor.lastID()
 
@@ -254,6 +255,7 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
             fig1.set(
                 transform=np.array([[0,0],[0,0]]), visible=False
                 )
+        cls.actions["shrinkOut"] = popOut
 
     return cls
 
