@@ -388,6 +388,13 @@ class BoundingBoxFigure(morpho.Figure):
         box = self.box(*args, **kwargs)
         return (box[1] - box[0], box[-1] - box[-2])
 
+    # Returns boxWidth/boxHeight.
+    def boxAspectRatioWH(self, *args, **kwargs):
+        box = self.box(*args, **kwargs)
+        width = box[1] - box[0]
+        height = box[3] - box[2]
+        return width/height
+
     # This is commented out for now because I'm not sure
     # whether aspect ratio should be with respect to the
     # raw box or the true box.
