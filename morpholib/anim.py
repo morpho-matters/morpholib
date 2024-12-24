@@ -1801,7 +1801,8 @@ class Camera(BoundingBoxFigure):
     def dimensions(self):
         return (self.width(), self.height())
 
-    @property
+    # Returns the width/height aspect ratio of the current camera's
+    # view.
     def aspectRatioWH(self):
         width, height = self.dimensions()
         return width/height
