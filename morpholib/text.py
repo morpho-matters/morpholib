@@ -1918,8 +1918,9 @@ def conformText(textarray):
 # transform = Transformation matrix of entire paragraph about
 #             anchor point. Default: identity
 # alphabet = String of characters to use to determine line height.
-#            Default: morpho.text.ALPHABET constant, which by default
-#            is all 52 upper and lowercase glyphs in the English alphabet.
+#            Default: morpho.text.LINE_HEIGHT_ALPHABET constant,
+#            which by default is all 52 upper and lowercase glyphs
+#            in the English alphabet.
 # **kwargs = Any other keyword arguments will be applied to
 #            every component Text figure:
 #            txt.set(**kwargs) for each txt in the textarray
