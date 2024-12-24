@@ -1490,8 +1490,7 @@ class SpaceFrame(Frame):
         return super().partition(*args, cls=cls, **kwargs)
 
     # Only for frames consisting only of space figures
-    # (i.e. figures possessing a primitives() method and a 5 input
-    # draw() method)
+    # (i.e. figures possessing a primitives() method)
     #
     # Calls the primitives() method on all figures and merges all of
     # the lists into one big list of primitives and returns it.
