@@ -213,12 +213,12 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
     def __init__(self, *args, **kwargs):
         oldInit(self, *args, **kwargs)
         # Transformation tweenables
-        if "origin" not in exclude:
-            self.Tweenable(oname, getattr(self, oname, 0), tags=["complex", "nofimage"])
-        if "rotation" not in exclude:
-            self.Tweenable("rotation", getattr(self, "rotation", 0), tags=["scalar"])
-        if "transform" not in exclude:
-            self.Tweenable("_transform", getattr(self, "_transform", np.eye(2)), tags=["nparray"])
+        if "origin" not in exclude and oname not in self._state.keys():
+            self.Tweenable(oname, 0, tags=["complex", "nofimage"])
+        if "rotation" not in exclude and "rotation" not in self._state.keys():
+            self.Tweenable("rotation", 0, tags=["scalar"])
+        if "transform" not in exclude and "_transform" not in self._state.keys():
+            self.Tweenable("_transform", np.eye(2), tags=["nparray"])
     cls.__init__ = __init__
 
     # Implement wiggle action if `rotation` attribute included.
