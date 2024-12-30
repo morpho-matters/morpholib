@@ -4231,11 +4231,22 @@ class Animation(object):
     #       If an option is unrecognized, it is silently ignored.
     #       Default: dict(quality=85), meaning JPEG quality is
     #       set to 85 by default.
+    # tempType = Image type to use when generating the temporary
+    #       image sequence as part of exporting to mp4 or gif.
+    #       Can be useful to speed up exports at the expense of
+    #       quality. For example, setting tempType="jpg" can
+    #       significantly speed up exports with small loss to quality.
+    #       Default: "png"
     # optimize = Boolean which if set to False will prevent the
     # animation from being optimized. This will probably rarely be
     # desired.
     def export(self, filepath, scale=1, *,
-            imageOptions=dict(), optimize=True):
+            imageOptions=dict(), tempType="png", optimize=True):
+
+        tempType = tempType.strip()
+        # Check that the tempType is NOT gif.
+        if tempType.lower() == "gif":
+            raise TypeError("GIF cannot be used as a tempType.")
 
         imgopts = imageOptions
         imageOptions = dict(quality=85)
@@ -4304,9 +4315,11 @@ class Animation(object):
                     raise ValueError("Animation contains infinitely-long pauses. You must finitize them before exporting to mp4.")
 
             # Export PNG sequence to temp dir
-            print("Exporting temporary PNG sequence...")
+            print(f"Exporting temporary {tempType.upper()} sequence...")
             with TemporaryDirectory(exportSignature) as tempDir:
-                self.export(tempDir + os.sep + filename.replace("'", "_") + ".png", scale)
+                self.export(tempDir + os.sep + filename.replace("'", "_") + f".{tempType}", scale,
+                    imageOptions=imageOptions, optimize=optimize
+                    )
 
                 if extension.lower() == "gif":
                     # Compile GIF with delays
@@ -4321,7 +4334,7 @@ class Animation(object):
                     for n in range(firstIndex, finalIndex+1):
                         demux.append("file '" + tempDir + os.sep + filename.replace("'", "_") + "_" +
                             int2fixedstr(n-firstIndex, digits=numdigits(finalIndex-firstIndex))
-                        + ".png'")
+                        + f".{tempType}'")
                         demux.append(f"duration {round(gifDelays[n-firstIndex], 8)}")
                     demux.append(demux[-2])  # Needed to handle end delay for some reason
                     demux = "\n".join(demux)
