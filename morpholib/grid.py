@@ -3043,6 +3043,11 @@ def optimizePathList(paths):
 # it can actually handle more, but it may look wrong when rendered
 # in a non-proportional viewspace.
 class Axis(Track):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Remove "pixel" tag since it is now a physical quantity.
+        self._state["tickGap"].tags.remove("pixel")
+
     def draw(self, camera, ctx):
         # Handle simple case with no tickmarks
         if not(self.tickWidth > 0 and self.tickAlpha > 0 and \
