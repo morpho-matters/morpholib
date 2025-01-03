@@ -4097,6 +4097,9 @@ class Animation(object):
     # while also rescaling all the pixel units of all the keyfigures
     # in the animation, meaning attributes like stroke widths will
     # look the same even after rescaling the window shape.
+    #
+    # Note that this may not work as intended if a pixel-valued
+    # attribute is determined directly via a modifier.
     def rescale(self, scale):
         self.windowShape = tuple(round(scale*item) for item in self.windowShape)
         self.rescalePixels(scale)
