@@ -257,6 +257,32 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
                 )
         cls.actions["shrinkOut"] = popOut
 
+        @cls.action
+        def scaleIn(actor, duration=30, along=1):
+            along = along/abs(along)  # Normalize
+
+            # Calculate transform matrix
+            x,y = cparts(along)
+            rot = np.array([[x,y],[-y,x]])
+            transform = rot.T @ morpho.matrix.scale2d(0,1) @ rot
+
+            fig0 = actor.last()
+            actor.newendkey(duration)
+            fig0.transform = transform
+
+        @cls.action
+        def scaleOut(actor, duration=30, along=1):
+            along = along/abs(along)  # Normalize
+
+            # Calculate transform matrix
+            x,y = cparts(along)
+            rot = np.array([[x,y],[-y,x]])
+            transform = rot.T @ morpho.matrix.scale2d(0,1) @ rot
+
+            actor.newendkey(duration).set(
+                transform=transform, visible=False
+                )
+
     return cls
 
 
