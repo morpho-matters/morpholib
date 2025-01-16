@@ -843,6 +843,11 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
         self._data = np.delete(self._data, index, axis=0)
         return self
 
+    # Deletes all nodes from the spline IN PLACE.
+    def clearNodes(self):
+        self._data = np.array([], dtype=complex).reshape(0,3)
+        return self
+
 
     # Closes the spline IN PLACE if it is not already closed.
     # If optional kwarg `local` is set to True, the closure
