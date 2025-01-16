@@ -5,7 +5,7 @@ from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
     BackgroundBoxFigure, AlignableFigure, totalBox, shiftBox, \
     translateArrayUnderTransforms, handleBoxTypecasting, typecastView, \
-    typecastWindowShape, findOwnerByType
+    typecastWindowShape, findOwnerByType, Transformable2D
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.combo import TransformableFrame, FancyFrame
@@ -139,6 +139,7 @@ def handleSplineNodeInterp(tweenmethod):
 #                debugging use while creating an animation.
 #                Final animations should usually have showTangents = False.
 #                By default, showTangents = False
+@Transformable2D
 class Spline(BackgroundBoxFigure, AlignableFigure):
 
     # Dummy headSize and tailSize so that functions that expect
@@ -169,9 +170,6 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
         self.Tweenable(name="width", value=width, tags=["size", "pixel"])
         self.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
         self.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
-        self.Tweenable("origin", value=0, tags=["complex", "nofimage"])
-        self.Tweenable("rotation", value=0, tags=["scalar"])
-        self.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
         # Set of indices that represent where a path should terminate.
         self.Tweenable("deadends", set(), tags=["notween"])
@@ -205,15 +203,6 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
     @data.setter
     def data(self, value):
         self._data = np.array(value, dtype=complex)
-
-
-    @property
-    def transform(self):
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
 
     @property
     def pos(self):
@@ -2536,6 +2525,7 @@ def SVGdata(string):
 # alphaFill = Interior opacity. Default: 1 (opaque)
 # alpha = Overall opacity. Multiplies alphaEdge and alphaFill.
 #         Default: 1 (opaque)
+@Transformable2D(exclude="origin")
 class Ellipse(morpho.Figure):
 
     def __init__(self, pos=0, xradius=1, yradius=None,
@@ -2558,8 +2548,6 @@ class Ellipse(morpho.Figure):
         self.Tweenable("alpha", alpha, tags=["scalar"])
         self.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
         self.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
-        self.Tweenable("rotation", 0, tags=["scalar"])
-        self.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
     @property
     def origin(self):
@@ -2568,14 +2556,6 @@ class Ellipse(morpho.Figure):
     @origin.setter
     def origin(self, value):
         self.pos = value
-
-    @property
-    def transform(self):
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
 
     # Setting `radius` property sets both `xradius` and `yradius` to
     # the same value.

@@ -9,7 +9,8 @@ from morpholib.actions import wiggle
 from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
     BackgroundBoxFigure, AlignableFigure, totalBox, shiftBox, \
-    translateArrayUnderTransforms, handleBoxTypecasting, AmbiguousValueError
+    translateArrayUnderTransforms, handleBoxTypecasting, AmbiguousValueError, \
+    Transformable2D
 
 from morpholib import object_hasattr
 
@@ -541,6 +542,7 @@ def handleDash(tweenmethod):
 #       line caps, which produces decent results even for large tailSize.
 #       The default outline method for all paths can be set by setting
 #       the class attribute `Path.defaultOutlineMethod`.
+@Transformable2D
 class Path(BackgroundBoxFigure, AlignableFigure):
     defaultOutlineMethod = "classic"
     outlineMethods = ("classic", "cap")  # List of all supported outline styles
@@ -571,13 +573,10 @@ class Path(BackgroundBoxFigure, AlignableFigure):
         outlineWidth = morpho.Tweenable("outlineWidth", value=0, tags=["size", "pixel"])
         outlineColor = morpho.Tweenable("outlineColor", value=[0,0,0], tags=["color"])
         outlineAlpha = morpho.Tweenable("outlineAlpha", value=1, tags=["scalar"])
-        origin = morpho.Tweenable("origin", value=0, tags=["complex", "nofimage"])
-        rotation = morpho.Tweenable("rotation", value=0, tags=["scalar"])
-        _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
         self.extendState([seq, start, end, color, alphaEdge, fill, alphaFill, alpha,
             width, headSize, tailSize, dash, dashOffset,
-            outlineWidth, outlineColor, outlineAlpha, origin, rotation, _transform]
+            outlineWidth, outlineColor, outlineAlpha]
             )
 
         # Set of indices that represent where a path should terminate.
@@ -612,23 +611,6 @@ class Path(BackgroundBoxFigure, AlignableFigure):
         # amount. Mainly for use internally when rendering arrow
         # arrow outlines using the "cap" outline method.
         self.NonTweenable("_tipExpand", 0)
-
-    # # Returns a (deep-ish) copy of the path
-    # def copy(self):
-    #     # C = morpho.Figure.copy(self)
-    #     C = super().copy()
-    #     C.interp = self.interp
-    #     C.deadends = self.deadends.copy()
-    #     # C.dash = self.dash.copy() if not isinstance(self.dash, tuple) else self.dash
-    #     return C
-
-    @property
-    def transform(self):
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
 
     # Setting `tipSize` property sets both `headSize` and `tailSize
     # to the same value.
@@ -3797,6 +3779,7 @@ def handlePolyVertexInterp(tweenmethod):
 # origin = Translation value (complex number). Default: 0
 # rotation = Polygon rotation about origin point (radians). Default: 0
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
+@Transformable2D
 class Polygon(BoundingBoxFigure):
     def __init__(self, vertices=None, width=3, color=(1,1,1), alphaEdge=1,
         fill=(1,0,0), alphaFill=1,
@@ -3847,13 +3830,9 @@ class Polygon(BoundingBoxFigure):
         width = morpho.Tweenable(name="width", value=width, tags=["size", "pixel"])
         dash = morpho.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
         dashOffset = morpho.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
-        origin = morpho.Tweenable("origin", value=0, tags=["complex", "nofimage"])
-        rotation = morpho.Tweenable("rotation", value=0, tags=["scalar"])
-        _transform = morpho.Tweenable("_transform", np.identity(2), tags=["nparray"])
 
         self.extendState([vertices, color, alphaEdge,
-            fill, alphaFill, alpha, width, dash, dashOffset,
-            origin, rotation, _transform])
+            fill, alphaFill, alpha, width, dash, dashOffset])
 
         # If set to True, then if fill is a GradientFill,
         # the border will be stroked using the GradientFill
@@ -3862,14 +3841,6 @@ class Polygon(BoundingBoxFigure):
         # seams when width is zero and fill is a color function.
         self.NonTweenable("_strokeGradient", False)
         # self._strokeGradient = False
-
-    @property
-    def transform(self):
-        return self._transform
-
-    @transform.setter
-    def transform(self, value):
-        self._transform = morpho.matrix.array(value)
 
     @property
     def seq(self):
