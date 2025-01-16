@@ -3148,6 +3148,16 @@ def roundedRect(box, radius=oo, *, pad=0, corner="NW", CCW=True, relative=False)
 
     return spline
 
+'''
+def region(path, /, *, cls=FancyFrame):
+    interior = path.copy()
+    path = path.copy()
+
+    interior.set(width=0, start=0, end=1, alphaFill=1)
+
+    frm = cls(interior=interior, edge=path)
+    return frm
+'''
 
 ### SCRAPS ###
 
