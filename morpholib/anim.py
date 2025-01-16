@@ -651,6 +651,61 @@ class Frame(BoundingBoxFigure):
         root.origin = self.origin
         return root
 
+    # Permutes IN PLACE the order of the figure list according to
+    # given `permutation`. `permutation` may be a list containing a
+    # permutation of range(self.numfigs), or can be a dict mapping
+    # a subset of source indices to target indices.
+    # Permutation list can also be supplied directly as arguments
+    # to permute().
+    #
+    # For a sequence input, the permutation is performed as
+    #   self.figures = [self.figures[n] for n in permutation]
+    #
+    # For a dict input, the permutation is performed as
+    #   for source, value in permutation.items():
+    #       self.figures[source] = self.figures[target]
+    def permute(self, /, *permutation):
+        if len(permutation) == 1:
+            permutation = permutation[0]
+
+        if isinstance(permutation, dict):
+            # Convert all dict items into indices in range(self.numfigs)
+            for key, value in list(permutation.items()):
+                pair = [key, value]
+
+                for n, obj in enumerate(pair):
+                    # Convert figure name to index
+                    if isinstance(key, str):
+                        pair[n] = self._names[obj]
+                    # Convert figure to index
+                    elif isinstance(key, morpho.Figure):
+                        pair[n] = self.figures.index(obj)
+                newkey, newvalue = pair
+
+                newkey %= self.numfigs
+                newvalue %= self.numfigs
+
+                del permutation[key]
+                permutation[newkey] = newvalue
+            permutation = [permutation[n] if n in permutation else n for n in range(self.numfigs)]
+
+        # Convert all target indices into range(self.numfigs)
+        permutation = [value % self.numfigs for value in permutation]
+
+        # Sanity check permutation is indeed a permutation
+        if len(permutation) != self.numfigs or set(permutation) != set(range(self.numfigs)):
+            raise ValueError("Invalid permutation given to permute()")
+
+        # Perform permutation. Each source index is assigned the
+        # figure at the corresponding target index.
+        self.figures = [self.figures[n] for n in permutation]
+
+        # Update names dict.
+        for name, index in self._names.items():
+            self._names[name] = permutation.index(index)
+
+        return self
+
     # Attempts to convert a copy of the Frame into the given
     # frame type.
     #
