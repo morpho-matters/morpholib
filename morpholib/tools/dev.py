@@ -258,7 +258,7 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
         cls.actions["shrinkOut"] = popOut
 
         @cls.action
-        def scaleIn(actor, duration=30, along=1):
+        def squishIn(actor, duration=30, along=1):
             along = along/abs(along)  # Normalize
 
             # Calculate transform matrix
@@ -271,7 +271,7 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
             fig0.transform = transform
 
         @cls.action
-        def scaleOut(actor, duration=30, along=1):
+        def squishOut(actor, duration=30, along=1):
             along = along/abs(along)  # Normalize
 
             # Calculate transform matrix
