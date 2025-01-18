@@ -239,9 +239,9 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
                 atFrame = actor.lastID()
 
             fig0 = actor.last()
-            fig1 = actor.newkey(atFrame)
+            fig1 = actor.newkey(atFrame).set(visible=True)
             fig0.visible = False
-            fig2 = actor.newendkey(duration).set(visible=True)
+            fig2 = actor.newendkey(duration)
             fig1.transform = np.array([[0,0],[0,0]])
         cls.actions["growIn"] = popIn
 
@@ -266,7 +266,7 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
             rot = np.array([[x,y],[-y,x]])
             transform = rot.T @ morpho.matrix.scale2d(0,1) @ rot
 
-            fig0 = actor.last()
+            fig0 = actor.last().set(visible=True)
             actor.newendkey(duration)
             fig0.transform = transform @ fig0.transform
 
