@@ -268,7 +268,7 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
 
             fig0 = actor.last()
             actor.newendkey(duration)
-            fig0.transform = transform
+            fig0.transform = transform @ fig0.transform
 
         @cls.action
         def squishOut(actor, duration=30, along=1):
@@ -280,7 +280,8 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
             transform = rot.T @ morpho.matrix.scale2d(0,1) @ rot
 
             actor.newendkey(duration).set(
-                transform=transform, visible=False
+                transform=transform@actor.last().transform,
+                visible=False
                 )
 
     return cls
