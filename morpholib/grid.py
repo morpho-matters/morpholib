@@ -1900,8 +1900,7 @@ def popIn(path, duration=30, atFrame=None, *, align=None, focus=0):
     if align is not None:
         focus = path0.anchorPoint(align, raw=True)
     path1 = path.newkey(atFrame, path0.fimage(lambda z: focus))
-    path1.set(width=0, outlineWidth=0)
-    path1.visible = True
+    path1.set(width=0, outlineWidth=0, visible=True)
     path.newendkey(duration, final)
 
 # Animates a Path actor disappearing by shrinking to a focus point.
@@ -1995,7 +1994,7 @@ def drawIn(actor, duration=30, atFrame=None, *,
     path0 = actor.last()
     # Save current final state of the actor which should be
     # the same final state when this action is finished.
-    final = path0.copy()
+    final = path0.copy().set(visible=True)
     path0.set(start=0, end=0, alphaFill=0, alphaEdge=1, static=False)
     path0.transition = transition
     # Give a temporary stroke width and color to the subpath
@@ -2006,7 +2005,7 @@ def drawIn(actor, duration=30, atFrame=None, *,
             path0.color = path0.fill[:]
             final.color = path0.fill[:]
 
-    path1 = actor.newkey(atFrame)
+    path1 = actor.newkey(atFrame).set(visible=True)
     path0.visible = False
 
     actor.newkey(atFrame + duration/2).set(start=final.start, end=final.end)
@@ -2175,7 +2174,8 @@ def drawIn(actor, subduration=30, atFrame=None, *,
     mpath0 = actor.last()
     final = mpath0.copy().set(visible=True)
     mpath0.static = False
-    actor.subaction.drawIn(subduration, atFrame,
+    actor.newkey(atFrame).set(visible=True)
+    actor.subaction.drawIn(subduration,
         tempWidth=tempWidth, transition=transition,
         substagger=substagger, select=select
         )
@@ -2184,6 +2184,7 @@ def drawIn(actor, subduration=30, atFrame=None, *,
     if atFrame > lasttime:
         mpath0.visible = False
 
+    final.select[select if select is not None else sel[:]].set(visible=True)
     actor.fin = final
 
 
