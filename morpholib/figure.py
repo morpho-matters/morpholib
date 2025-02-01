@@ -1239,7 +1239,7 @@ def blink(actor, duration=15, atFrame=None, *, times=1):
         fig = actor.newkey(atFrame + n*duration/(2*times-1))
         fig.visible = not fig.visible  # Toggle visibility
 
-# Moves a figure by a given displacement vector (given as a
+# Moves an actor by a given displacement vector (given as a
 # complex number for 2D figures, else a numpy 3-vector).
 # Additionally, the duration of the animation can be specified.
 # Default: 30 frames.
