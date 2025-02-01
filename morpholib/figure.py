@@ -1266,21 +1266,27 @@ def move(actor, vector, duration=30):
 # Additionally, the duration of the animation can be specified.
 # Default: 30 frames.
 #
+# The hop can be performed multiple times in a row by supplying
+# optional keyword `times`. All the hops will be performed within
+# the specified `duration`. Default: `times=1`.
+#
 # Note this action assumes the target actor's figure type
 # possesses either a `pos` or `origin` attribute.
 # If a figure possesses both, only `pos` will be used.
 @Figure.action
-def hop(actor, vector, duration=30):
+def hop(actor, vector, duration=30, *, times=1):
     fig0 = actor.last()
-    actor.newendkey(duration)
+    t0 = actor.lastID()
 
-    fig = actor.newendkey(-duration/2, seamless=False)
-    if hasattr(fig, "pos"):
-        fig.pos = fig.pos + vector  # Don't use += for sake of np.arrays!
-    elif hasattr(fig, "origin"):
-        fig.origin = fig.origin + vector  # Don't use += for sake of np.arrays!
-    else:
-        raise TypeError(f"`{type(fig).__name__}` figure has neither `pos` nor `origin` attribute.")
+    for n in range(times):
+        fig = actor.newkey(t0 + (2*n+1)*duration/(2*times))
+        if hasattr(fig, "pos"):
+            fig.pos = fig.pos + vector  # Don't use += for sake of np.arrays!
+        elif hasattr(fig, "origin"):
+            fig.origin = fig.origin + vector  # Don't use += for sake of np.arrays!
+        else:
+            raise TypeError(f"`{type(fig).__name__}` figure has neither `pos` nor `origin` attribute.")
+        actor.newkey(t0 + (n+1)*duration/times, fig0.copy())
 
     # Ensure final keyframe is the original unaltered.
     actor.fin = fig0.copy()
