@@ -1263,20 +1263,35 @@ def move(actor, vector, duration=30):
 # Moves an actor by a given displacement vector (given as a
 # complex number for 2D figures, else a numpy 3-vector) and then
 # returns it to its original state.
-# Additionally, the duration of the animation can be specified.
-# Default: 30 frames.
-#
-# The hop can be performed multiple times in a row by supplying
-# optional keyword `times`. All the hops will be performed within
-# the specified `duration`. Default: `times=1`.
 #
 # Note this action assumes the target actor's figure type
 # possesses either a `pos` or `origin` attribute.
 # If a figure possesses both, only `pos` will be used.
+#
+# INPUTS
+# vector = Displacement vector. Complex number for 2D actor,
+#       np.array for 3D actor.
+# duration = Action duration in frames. Default: 30.
+#
+# KEYWORD-ONLY INPUTS
+# times = Number of hops to perform. All hops will be completed
+#       within the given `duration`. Default: 1.
+# tweenMethod2 = Optionally specify an alternative tween method
+#       to use during the return phase of the hop.
+#       Default: None (use actor's current tween method).
+# transition2 = Optionally specify an alternative transition
+#       to use during the return phase of the hop.
+#       Default: None (use actor's current transition).
 @Figure.action
-def hop(actor, vector, duration=30, *, times=1):
-    fig0 = actor.last()
+def hop(actor, vector, duration=30, *,
+        times=1, tweenMethod2=None, transition2=None):
+    fig0 = actor.last().copy()
     t0 = actor.lastID()
+
+    if tweenMethod2 is None:
+        tweenMethod2 = fig0.tweenMethod
+    if transition2 is None:
+        transition2 = fig0.transition
 
     for n in range(times):
         fig = actor.newkey(t0 + (2*n+1)*duration/(2*times))
@@ -1286,6 +1301,7 @@ def hop(actor, vector, duration=30, *, times=1):
             fig.origin = fig.origin + vector  # Don't use += for sake of np.arrays!
         else:
             raise TypeError(f"`{type(fig).__name__}` figure has neither `pos` nor `origin` attribute.")
+        fig.set(tweenMethod=tweenMethod2, transition=transition2)
         actor.newkey(t0 + (n+1)*duration/times, fig0.copy())
 
     # Ensure final keyframe is the original unaltered.
