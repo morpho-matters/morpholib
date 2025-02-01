@@ -971,16 +971,15 @@ class MultiPTextBase(MultiTextBase):
 
     # EXPERIMENTAL! May be changed in a future version!
     # Converts the MultiPText figure into an equivalent MultiSpline.
-    # The resulting MultiSpline will have its global origin set to the
-    # position of the MultiPText's first component text figure's
-    # position. All subsplines will have origin = 0.
+    # The resulting MultiSpline will have its toplevel origin set to
+    # the toplevel origin of the MultiPText figure.
+    # All subsplines will have origin = 0.
     def toSpline(self):
         multisplines = [ptxt.toSpline().commitTransforms() for ptxt in self.figures]
         finalspline = morpho.shapes.MultiSpline(morpho.flattenList([multispline.figures for multispline in multisplines]))
-        for spline in finalspline.figures:
-            spline.origin -= self.figures[0].pos
-            spline.commitTransforms()
-        finalspline.origin = self.figures[0].pos
+        finalspline.origin = self.origin
+        finalspline.rotation = self.rotation
+        finalspline.transform = self.transform
         return finalspline
 
 # Physical version of the MultiText class.
