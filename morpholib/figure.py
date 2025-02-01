@@ -1260,6 +1260,31 @@ def move(actor, vector, duration=30):
     else:
         raise TypeError(f"`{type(fig).__name__}` figure has neither `pos` nor `origin` attribute.")
 
+# Moves an actor by a given displacement vector (given as a
+# complex number for 2D figures, else a numpy 3-vector) and then
+# returns it to its original state.
+# Additionally, the duration of the animation can be specified.
+# Default: 30 frames.
+#
+# Note this action assumes the target actor's figure type
+# possesses either a `pos` or `origin` attribute.
+# If a figure possesses both, only `pos` will be used.
+@Figure.action
+def hop(actor, vector, duration=30):
+    fig0 = actor.last()
+    actor.newendkey(duration)
+
+    fig = actor.newendkey(-duration/2, seamless=False)
+    if hasattr(fig, "pos"):
+        fig.pos = fig.pos + vector  # Don't use += for sake of np.arrays!
+    elif hasattr(fig, "origin"):
+        fig.origin = fig.origin + vector  # Don't use += for sake of np.arrays!
+    else:
+        raise TypeError(f"`{type(fig).__name__}` figure has neither `pos` nor `origin` attribute.")
+
+    # Ensure final keyframe is the original unaltered.
+    actor.fin = fig0.copy()
+
 # Animates the current latest keyfigure in the actor morphing
 # into itself from a given source figure. Useful as an opening
 # animation to create a new figure morphing out of a copy of
