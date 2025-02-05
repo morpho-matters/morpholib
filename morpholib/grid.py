@@ -4511,6 +4511,8 @@ def handleColorTypeCasting(colorfunc):
 #
 # INPUTS
 # view = Bounding box of the quadmesh ([xmin,xmax,ymin,ymax]). Default: [-5,5, -5,5]
+#
+# KEYWORD-ONLY INPUTS
 # dx,dy = Horizontal or vertical spacing between vertices (physical units).
 #         You can also specify `spacing` to set both to the same value.
 #         Default: 1
@@ -4529,8 +4531,8 @@ def handleColorTypeCasting(colorfunc):
 #
 # Any additional keyword inputs are set as attributes of the returned
 # Quadmesh.
-def quadgrid(*,
-    view=(-5,5, -5,5),
+def quadgrid(
+    view=(-5,5, -5,5), *,
     dx=1, dy=1, spacing=None,
     width=3,
     color=(0,0,0), alphaEdge=1,
