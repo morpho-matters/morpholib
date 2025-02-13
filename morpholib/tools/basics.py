@@ -414,6 +414,12 @@ def padbox(box, xpad, ypad=None, /):
     return box
 padBox = padbox  # Alias
 
+# Returns boxwidth/boxheight for the given box.
+@handleBoxTypecasting
+def boxAspectRatioWH(box):
+    a,b,c,d = box
+    return (b-a) / (d-c)
+
 # Shifts a bounding box of the form [xmin,xmax,ymin,ymax]
 # by the given 2d vector `shift` expressed as a complex number.
 # Returns the modified box.
