@@ -67,6 +67,8 @@ def hashTex(tex):
 # in the current cache directory.
 def iscached(tex):
     filename = hashTex(tex)
+    if not os.path.isdir(cacheDir):
+        return False
     return filename in os.listdir(cacheDir)
 
 # Parses a string containing LaTeX code and returns a
@@ -111,6 +113,9 @@ def parse(tex, *args,
         # If caching is enabled, save the output svg code
         # as a file in the specified cache directory.
         if useCache and cacheDir is not None:
+            if not os.path.isdir(cacheDir):
+                # Create cache directory if it doesn't currently exist.
+                os.makedirs(cacheDir)
             filepath = cacheDir + os.sep + hashTex(tex)
             with open(filepath, "w") as file:
                 file.write(svgcode)
