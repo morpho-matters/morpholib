@@ -2348,6 +2348,8 @@ class Track(Path):
     tickEnd = Final draw point for ticks. A number between 0 and 1.
               0 = Path beginning, 1 = Path end
               Default: 1
+    tickOffset = Amount to offset the tickmarks by in pixels.
+                Default: 0
     '''
 
     def __init__(self, seq=None, width=3, color=(1,1,1), alpha=1,
@@ -2398,7 +2400,7 @@ class Track(Path):
         self.Tweenable("tickGap", tickGap, tags=["scalar", "pixel"])
         self.Tweenable("tickStart", 0, tags=["scalar"])
         self.Tweenable("tickEnd", 1, tags=["scalar"])
-        self.Tweenable("tickOffset", 0, tags=["scalar"])
+        self.Tweenable("tickOffset", 0, tags=["scalar", "pixel"])
 
 
 
@@ -3020,8 +3022,10 @@ def optimizePathList(paths):
 ### GRIDS ###
 
 # Mainly for internal use.
-# It's basically a two-node Track but where tickGap is interpreted
-# in physical units, designed to make axes with physical tickmarks.
+# It's basically a two-node Track but where tickGap and tickOffset are
+# interpreted in physical units, designed to make axes with physical
+# tickmarks.
+#
 # It's designed to only work for a two node vertex sequence, but
 # it can actually handle more, but it may look wrong when rendered
 # in a non-proportional viewspace.
@@ -3030,6 +3034,7 @@ class Axis(Track):
         super().__init__(*args, **kwargs)
         # Remove "pixel" tag since it is now a physical quantity.
         self._state["tickGap"].tags.remove("pixel")
+        self._state["tickOffset"].tags.remove("pixel")
 
     def draw(self, camera, ctx):
         # Handle simple case with no tickmarks
@@ -3199,6 +3204,8 @@ def axesPath(view=(-5,5, -5,5), *, width=5, color=(0,0,0), alpha=1):
 #       You can also specify `tickLength` to set both to the same value.
 # xtickWidth, ytickWidth = Thickness of tickmarks (in pixels).
 #       Default: Half the axis thickness
+# xtickOffset, ytickOffset = Offset of tickmarks (in physical units).
+#       Default: 0
 # dx, dy = Tickmark spacing. Default: 1.
 #          You can also specify `spacing` to set both to the same value.
 # tweenMethod = Tween method to use. Must be a Path-compatible
