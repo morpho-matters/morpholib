@@ -536,7 +536,10 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
 
     # Returns True if the compared spline has exactly the same size, shape,
     # and position as self, ignoring transformation attributes.
-    def coincides(self, other):
+    #
+    # Any additional keyword arguments are passed to np.allclose()
+    # which is used in comparing spline data (e.g. `rtol`, `atol`).
+    def coincides(self, other, **kwargs):
         self = self.copy()
         other = other.copy()
 
@@ -546,7 +549,7 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
         with np.errstate(all="ignore"):  # Suppress numpy warnings
             return self.deadends == other.deadends and \
                 self._data.shape == other._data.shape and \
-                np.allclose(self._data, other._data)
+                np.allclose(self._data, other._data, **kwargs)
 
     # Returns a "normalized" version of the spline where
     # its box center is at the origin, all transformation attributes
