@@ -576,10 +576,13 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
     # Checks if the given spline has the same shape as self,
     # but only differs by size, position, or transformation
     # attribute.
-    def matchesShape(self, other):
+    #
+    # If multiple target splines are given, it checks if any
+    # of them match shape with self.
+    def matchesShape(self, *others):
         source = self._normalizedShape()
-        target = other._normalizedShape()
-        return source.coincides(target)
+        targets = (fig._normalizedShape() for fig in others)
+        return any(source.coincides(target) for target in targets)
 
     # Returns the node count of the spline
     def length(self):
