@@ -596,8 +596,11 @@ class RiemannDisk(morpho.Figure):
 # align = 0 => midpoints
 def RiemannSum(func, interval, rectCount, align=-1,
     color=(0,0,0), fill=(1, 0.3, 0.3), strokeWeight=3,
-    transition=morpho.transitions.slow_fast_slow,
+    transition=None,
     *, alphaFill=1):
+
+    if transition is None:
+        transition = morpho.transitions.default
 
     a,b = interval
     dx = (b-a)/rectCount
@@ -621,7 +624,10 @@ def RiemannSumApproach(
     align=-1, doublings=1,
     tweenDuration=30, pauseDuration=30,
     color=(0,0,0), fill=(1, 0.3, 0.3), strokeWeight=3,
-    view=(-5,5, -5,5), transition=morpho.transitions.slow_fast_slow):
+    view=(-5,5, -5,5), transition=None):
+
+    if transition is None:
+        transition = morpho.transitions.default
 
     frame0 = RiemannSum(
         func, interval, initRectCount, align, color, fill, strokeWeight, transition
@@ -678,7 +684,10 @@ def RiemannSumApproach(
 def RiemannDiskSum(func, interval, diskCount, align=-1, tilt=0.3,
     outlineColor=(0,0,0), faceFill=(0.25,0.25,0.5), edgeFill=(0.5, 0.5, 1),
     strokeWeight=3,
-    transition=morpho.transitions.slow_fast_slow):
+    transition=None):
+
+    if transition is None:
+        transition = morpho.transitions.default
 
     a,b = interval
     dx = (b-a)/diskCount
@@ -702,7 +711,10 @@ def RiemannDiskSumApproach(
     tweenDuration=30, pauseDuration=30,
     outlineColor=(0,0,0), faceFill=(0.25,0.25,0.5), edgeFill=(0.5, 0.5, 1),
     strokeWeight=3,
-    view=(-5,5, -5,5), transition=morpho.transitions.slow_fast_slow):
+    view=(-5,5, -5,5), transition=None):
+
+    if transition is None:
+        transition = morpho.transitions.default
 
     frame0 = RiemannDiskSum(
         func, interval, initDiskCount, align, tilt,
