@@ -3339,9 +3339,6 @@ def mathaxes3d(*args, **kwargs):
 #              grid. Default: None (meaning it uses morpho.transition.default)
 # optimize = Boolean indicating whether the grid lines should be optimized to
 #            speed up rendering. Default: True
-#
-# Note that hmidlines and vmidlines can also be nonnegative ints instead of
-# bools, which then means how many midlines to place.
 def mathgrid(
     view=(-5,5, -5,5), *,
     dx=1, dy=1, spacing=None,
