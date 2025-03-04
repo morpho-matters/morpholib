@@ -166,6 +166,11 @@ def parse3d(*args, orient=None, orientable=False, **kwargs):
 # can be inputted, in which case it will try to match on ANY of the
 # contained expressions.
 #   mytex.select[morpho.latex.matches([r"\pi", r"x"])].set(...)
+#
+# Match filters can also be combined via bitwise operations &, |, ~
+# to make composite or modified filters. For example,
+#   mytex.select[~morpho.latex.matches("x")]
+# will select all glyphs that do NOT match the glyph "x".
 def matches(*tex):
     # If given a single list as input, extract it.
     if len(tex) == 1 and isinstance(tex[0], (list, tuple)):
@@ -179,4 +184,5 @@ def matches(*tex):
         target = target.figures[0]
         targets.append(target)
 
-    return lambda glyph: any(glyph.matchesShape(target) for target in targets)
+    return morpho.Func(lambda glyph: any(glyph.matchesShape(target) for target in targets))
+
