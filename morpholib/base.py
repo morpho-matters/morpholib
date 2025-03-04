@@ -803,3 +803,102 @@ def setupSpareContexts(ctx):
     # Clear the spareContext
     clearContext(spareContext1, background=(0,0,0), alpha=0)
     clearContext(spareContext2, background=(0,0,0), alpha=0)
+
+
+# Modified function-like object that support operations such as
+# addition, subtraction, etc.
+# That is, supports operations like `f1 + f2` which produces a new
+# Func object which when called produces the result
+#   f1(...) + f2(...)
+class Func(object):
+    __slots__ = ("func",)
+
+    def __init__(self, func):
+        object.__setattr__(self, "func", func)
+
+    def __setattr__(self, name, value):
+        raise AttributeError(f"`{type(self).__name__}` object cannot be modified.")
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
+    def __invert__(self):
+        return type(self)(lambda *args, **kwargs: not self(*args, **kwargs))
+
+    def __and__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) and other(*args, **kwargs))
+
+    def __rand__(self, other):
+        return self & other
+
+    def __or__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) or other(*args, **kwargs))
+
+    def __ror__(self, other):
+        return self | other
+
+    def __xor__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) ^ other(*args, **kwargs))
+
+    def __rxor__(self, other):
+        return self ^ other
+
+    def __add__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) + other(*args, **kwargs))
+
+    def __radd__(self, other):
+        return self + other
+
+    def __sub__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) - other(*args, **kwargs))
+
+    def __rsub__(self, other):
+        return type(self)(other) - self
+
+    def __mul__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) * other(*args, **kwargs))
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __div__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) / other(*args, **kwargs))
+
+    def __rdiv__(self, other):
+        return type(self)(other) / self
+
+    def __floordiv__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) // other(*args, **kwargs))
+
+    def __rfloordiv__(self, other):
+        return type(self)(other) // self
+
+    def __mod__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) % other(*args, **kwargs))
+
+    def __rmod__(self, other):
+        return type(self)(other) % self
+
+    def __pow__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) ** other(*args, **kwargs))
+
+    def __rpow__(self, other):
+        return type(self)(other) ** self
+
+    def __matmul__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) @ other(*args, **kwargs))
+
+    def __rmatmul__(self, other):
+        return type(self)(other) @ self
+
+    def __lshift__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) << other(*args, **kwargs))
+
+    def __rlshift__(self, other):
+        return type(self)(other) << self
+
+    def __rshift__(self, other):
+        return type(self)(lambda *args, **kwargs: self(*args, **kwargs) >> other(*args, **kwargs))
+
+    def __rrshift__(self, other):
+        return type(self)(other) >> self
