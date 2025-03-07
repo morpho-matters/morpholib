@@ -661,9 +661,9 @@ class Frame(BoundingBoxFigure):
     # For a sequence input, the permutation is performed as
     #   self.figures = [self.figures[n] for n in permutation]
     #
-    # For a dict input, the permutation is performed as
-    #   for source, value in permutation.items():
-    #       self.figures[source] = self.figures[target]
+    # For a dict input, the permutation is performed essentially as
+    #   for source, target in permutation.items():
+    #       self.figures[source] = figures[target]
     def permute(self, *permutation):
         if len(permutation) == 1:
             permutation = permutation[0]
