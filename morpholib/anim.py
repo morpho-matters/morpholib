@@ -548,6 +548,15 @@ class Frame(BoundingBoxFigure):
     def cut(self):
         return morpho.tools.dev.Slicer(getter=self._cut)
 
+    # Given a choice/filter function for subfigures
+    # (i.e. function that maps subfigures to boolean values)
+    # returns a dict mapping index positions of selected
+    # subfigures to the selected subfigures themselves.
+    #
+    # Equivalent to: listselect(self.figures, index)
+    def selection(self, index):
+        return listselect(self.figures, index)
+
 
     # Partitions the Frame into a Frame of subframes
     # splitting at the given list of indices.
