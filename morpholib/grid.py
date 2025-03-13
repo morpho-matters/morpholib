@@ -1975,7 +1975,7 @@ def flourish(actor, duration=15, atFrame=None, *, pause=0, **kwargs):
 #
 # OPTIONAL KEYWORD-ONLY INPUTS
 # tempWidth = Temporary stroke width to use in the animation
-#       if the stroke width is 0. Default: 3
+#       if the stroke width is 0. Default: 2
 # transition = Transition to use in the animation.
 #       Note that this only applies to the portion of the actor's
 #       timeline affected by this action. After the action
@@ -2149,7 +2149,7 @@ def flourish(actor, *args, **kwargs):
 #
 # OPTIONAL KEYWORD-ONLY INPUTS
 # tempWidth = Temporary stroke width to use in the animation
-#       if the stroke width is 0. Default: 3
+#       if the stroke width is 0. Default: 2
 # transition = Transition to use in the animation.
 #       Note that this only applies to the portion of the actor's
 #       timeline affected by this action. After the action
