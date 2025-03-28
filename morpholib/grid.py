@@ -2113,13 +2113,13 @@ class MultiPathBase(MultiFigure):
 
         return pivot
 
-@MultiPathBase.action
-def popIn(actor, *args, **kwargs):
-    actor.subaction.popIn(*args, **kwargs)
+# @MultiPathBase.action
+# def popIn(actor, *args, **kwargs):
+#     actor.subaction.popIn(*args, **kwargs)
 
-@MultiPathBase.action
-def popOut(actor, *args, **kwargs):
-    actor.subaction.popOut(*args, **kwargs)
+# @MultiPathBase.action
+# def popOut(actor, *args, **kwargs):
+#     actor.subaction.popOut(*args, **kwargs)
 
 # Highlights the MultiPath actor
 @MultiPathBase.action
