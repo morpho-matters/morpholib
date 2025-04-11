@@ -9,7 +9,7 @@ from morpholib.anim import Frame, SpaceFrame, MultiFigure, SpaceMultiFigure, \
 from morpholib.actions import wiggle
 from morpholib import object_hasattr
 from morpholib.tools.dev import AlignableFigure, BackgroundBoxFigure, \
-    Transformable2D
+    Transformable2D, findOwnerByType
 from morpholib.tools.basics import *
 
 import math, cmath
@@ -270,6 +270,48 @@ class FancyFrame(AlignableTFrame, BackgroundBoxFigure):
         if cls is None:
             cls = FancyFrame
         return super().partition(*args, cls=cls, **kwargs)
+
+
+    # Labels all the subfigures of the frame with their corresponding
+    # index positions. Works by constructing a MultiText actor and
+    # affixing it to the layer that owns the calling frame.
+    #
+    # Intended to be used temporarily while creating an animation
+    # to assist in determining subfigure indices.
+    #
+    # OPTIONAL KEYWORD-ONLY INPUTS
+    # align = Alignment of the labels with respect to the subfigures
+    #       Default: (0,0) (center alignment)
+    # layer = Layer to affix the MultiText actor to.
+    #       Default: The layer that owns self.
+    #
+    # Note that this method returns the multitext FIGURE that was
+    # constructed, allowing you to override the default style settings
+    # of the labels using the syntax
+    #   myframe.labelSubfigures().all.set(...)
+    def labelSubfigures(self, *, align=(0,0), layer=None):
+        import morpholib.text
+
+        a,b = align
+        antialign = [-a, -b]
+
+        # Create a copy of self whose toplevel transforms are committed.
+        # Makes it easier to position the labels.
+        mainfig = self.copy().commitTransforms()
+        mtxt = morpho.text.MultiText([
+            morpho.text.Text(str(n),
+                pos=fig.anchorPoint(align), align=antialign,
+                size=18, color=[1,0,0], bold=True
+                ).set(backAlpha=1)
+            for n, fig in enumerate(mainfig.figures)
+            ])
+
+        # Attempt to infer layer if None is specified.
+        if layer is None:
+            layer = findOwnerByType(self, morpho.Layer)
+        layer.Actor(mtxt)
+
+        return mtxt
 
     def draw(self, camera, ctx, *args, **kwargs):
         if self.numfigs == 0:
