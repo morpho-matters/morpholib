@@ -1732,11 +1732,14 @@ class Actor(object):
     # See newkey() for more info.
     # Calling newendkey() without any arguments creates a new key
     # at the end of the GLOBAL timeline.
-    # If optional keyword-only argument `glob` is set to True,
+    # If optional keyword-only argument `glob` or `glo` is set to True,
     # the new key is created relative to the final frame of the
     # global timeline. This is implicitly done when calling
     # newendkey() argumentless.
-    def newendkey(self, df=None, figure=None, *, glob=False, **kwargs):
+    def newendkey(self, df=None, figure=None, *, glob=False, glo=None, **kwargs):
+        # `glo` is overriding alias for `glob`
+        if glo is not None:
+            glob = glo
         # If no df is given, treat it as a global call with df = 0
         if df is None:
             if self.owner is None:
