@@ -673,8 +673,26 @@ class Frame(BoundingBoxFigure):
     # For a dict input, the permutation is performed essentially as
     #   for source, target in permutation.items():
     #       self.figures[source] = figures[target]
-    def permute(self, *permutation):
-        if len(permutation) == 1:
+    #
+    # Optionally, instead of a permutation, a `swaps` dict can be
+    # inputted by keyword like so:
+    #   frame.permute(swaps={...})
+    # where `swaps` is a dict mapping indices to indices where the
+    # subfigures corresponding to the item-pairs will have their
+    # index positions swapped.
+    def permute(self, *permutation, swaps=None):
+        if swaps is not None:
+            if len(permutation) > 0:
+                raise TypeError("Cannot receive both a permutation and a swap dict.")
+            # Convert swaps dict into a permutation dict
+            permutation = dict()
+            for key, value in swaps.items():
+                key %= self.numfigs
+                value %= self.numfigs
+                permutation[key] = value
+                permutation[value] = key
+
+        elif len(permutation) == 1:
             permutation = permutation[0]
 
         if isinstance(permutation, dict):
