@@ -221,7 +221,11 @@ class FlowField(morpho.Layer):
     # a selection of all the newly created keyfigures so
     # attributes can be modified en masse by calling .set()
     #   myflow.newendkey(time).set(width=5, color=(1,0,0), ...)
-    def newendkey(self, df=None, *, glob=False):
+    def newendkey(self, df=None, *, glob=False, glo=None):
+        # `glo` is overriding alias for `glob`
+        if glo is not None:
+            glob = glo
+
         frame = _FlowFrame()
         if df is None:
             df = 0
