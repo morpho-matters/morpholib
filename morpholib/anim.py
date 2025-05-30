@@ -3978,6 +3978,29 @@ class Animation(object):
     def seconds(self):
         return self.length() / self.frameRate
 
+    # Returns the animation's length as a string formatted as
+    # [hours]:minutes:seconds:frames
+    #
+    # Note that `hours` is omitted if it is 0.
+    def lengthstamp(self):
+        from datetime import timedelta
+        sec = self.seconds()
+        wholesec = math.floor(sec)
+        fracs = sec - wholesec
+        frames = round(fracs*self.frameRate)
+        maxframe = self.frameRate - 1
+
+        # Convert into timestamp
+        stamp = str(timedelta(seconds=wholesec)) + ":" + str(frames).rjust(len(str(maxframe)), "0")
+
+        # Remove hours component if it's just 0.
+        components = stamp.split(":")
+        if components[0] == "0":
+            components.pop(0)
+        stamp = ":".join(components)
+
+        return stamp
+
     # Returns the location on the timeline (in frames) corresponding
     # to the given number of seconds after the animation's start
     # taking into account animation delays.
