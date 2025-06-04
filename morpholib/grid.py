@@ -4212,6 +4212,8 @@ Spacepolygon = SpacePolygon  # Synonym for camel-case haters
 # fill2 = Alternate fill used to create a checkerboard pattern (RGB list).
 #         Ignored if primary fill is a color function.
 #         Default: None (match primary fill; i.e. no checkerboard pattern)
+# gamma = Gamma correction. Affects how quickly a surface darkens
+#         as its normal angle to the camera increases. Default: 2.2
 #
 # OTHER ATTRIBUTES
 # shading = Boolean indicating whether to implement a shading effect.
@@ -4271,8 +4273,9 @@ class Quadmesh(morpho.Figure):
         alphaFill = morpho.Tweenable(name="alphaFill", value=alphaFill, tags=["scalar"])
         alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         width = morpho.Tweenable(name="width", value=width, tags=["size", "pixel"])
+        gamma = morpho.Tweenable("gamma", 2.2, tags=["scalar"])
 
-        self.extendState([_array, color, alphaEdge, fill, fill2, alphaFill, alpha, width])
+        self.extendState([_array, color, alphaEdge, fill, fill2, alphaFill, alpha, width, gamma])
 
         # Other attributes
         self.NonTweenable("shading", False)
@@ -4378,7 +4381,7 @@ class Quadmesh(morpho.Figure):
             #     raise TypeError("Shading with color function fills is not yet supported.")
             k = np.array([0,0,1])
             n = 0  # Quad index
-            gamma = 2.2  # Hard-coded for now. Prbly make it a tweenable later.
+            gamma = self.gamma
             gamma_inv = 1/gamma
             for i in range(W-1):
                 for j in range(H-1):
