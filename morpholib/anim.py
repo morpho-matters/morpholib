@@ -4324,9 +4324,9 @@ class Animation(object):
                 actor.timeCache.clear()
 
     # Export animation to file.
-    # Can either be MP4, GIF animation, or PNG/JPG sequence depending on
-    # the file extension given in the filepath.
-    # Optional argument scale is a scale factor that scales the entire
+    # Can either be MP4, GIF, WEBP animation, or PNG/JPG sequence depending
+    # on the file extension given in the filepath.
+    # Optional argument `scale` is a scale factor that scales the entire
     # animation window shape before exporting. Useful for downscaling an
     # animation while exporting test animations to speed up rendering.
     # Note: scaling seems to be done at the final pixel level, so specifying
@@ -4335,10 +4335,27 @@ class Animation(object):
     #
     # OPTIONAL KEYWORD-ONLY INPUTS
     # imageOptions = Dict providing additional options passed to the
-    #       PIL image writer when exporting in a format other than PNG.
+    #       PIL image writer when exporting in JPG format.
     #       If an option is unrecognized, it is silently ignored.
+    #       These apply even when exporting a temporary image sequence
+    #       as part of creating a GIF, MP4, or WEBP animation.
     #       Default: dict(quality=85), meaning JPEG quality is
     #       set to 85 by default.
+    # webpOptions = Dict providing additional options for generating
+    #       the WebP file. These include
+    #       lossy = Boolean for whether to allow lossy compression.
+    #           Default: False
+    #       quality = Integer in the range [0, 100] specifying image
+    #           quality when doing lossy compression. Higher values
+    #           mean better quality. Default: 75 (WebP standard default)
+    #       mixed = Boolean which when True auto-generates a mixture of
+    #           lossy and lossless compression heuristically. Note that
+    #           using this option will cause the `lossy` option to be
+    #           ignored. Default: False
+    #       preprocessing = Integer in the range [0, 100] controlling
+    #           how much near-lossless preprocessing to do to each
+    #           frame to help with compression. Lower values mean more
+    #           preprocessing. Default: 100 (no preprocessing)
     # tempType = Image type to use when generating the temporary
     #       image sequence as part of exporting to mp4 or gif.
     #       Can be useful to speed up exports at the expense of
@@ -4349,16 +4366,26 @@ class Animation(object):
     # animation from being optimized. This will probably rarely be
     # desired.
     def export(self, filepath, scale=1, *,
-            imageOptions=dict(), tempType="png", optimize=True):
+            imageOptions=dict(), webpOptions=dict(),
+            tempType="png", optimize=True):
 
         tempType = tempType.strip()
         # Check that the tempType is NOT gif.
         if tempType.lower() == "gif":
             raise TypeError("GIF cannot be used as a tempType.")
 
-        imgopts = imageOptions
+        imageOptions_orig = imageOptions
         imageOptions = dict(quality=85)
-        imageOptions.update(imgopts)
+        imageOptions.update(imageOptions_orig)
+
+        webpOptions_orig = webpOptions
+        webpOptions = dict(
+            lossy=False,
+            quality=75,
+            mixed=False,
+            preprocessing=100
+            )
+        webpOptions.update(webpOptions_orig)
 
         if scale > 1:
             warn("scale > 1 will not actually improve resolution. Use Animation.rescale() instead.")
@@ -4392,35 +4419,38 @@ class Animation(object):
         # Get output directory and base filename and extension
         filepath = filepath.replace("/", os.sep).replace("\\", os.sep)
         filename = filepath.split(os.sep)[-1]
-        extension = filename.split(".")[-1]
+        extension = filename.split(".")[-1].strip()
         filename = ".".join(filename.split(".")[:-1])  # Filename without extension
         Dir = os.sep.join(filepath.split(os.sep)[:-1])
 
-        if extension.lower() in ("gif", "mp4"):
-            # Prepare to compile GIF by defining gifDelays.
+        if extension.lower() in ("gif", "mp4", "webp"):
+            # Prepare to compile GIF by defining frameDelays.
             # It describes the delay of each gif frame of animation.
             # It is equal to 1/frameRate unless there's an animation delay.
 
-            # Initialize gifDelays to just be based on the framerate
+            # Initialize frameDelays to just be based on the framerate
             # for all frames
-            gifDelays = [1.0/self.frameRate]*(finalIndex - firstIndex + 1)
+            frameDelays = [1.0/self.frameRate]*(finalIndex - firstIndex + 1)
 
             # Look into the mation.delays dict to decide what
-            # indices of gifDelays need to be changed to.
+            # indices of frameDelays need to be changed to.
             for index in self.delays:
                 # Skip if delay index is out of range OR
                 # the delay is only one frame long or shorter.
                 if not(firstIndex <= index <= finalIndex) or self.delays[index] <= 1:
                     continue
 
-                # Update gifDelays with the delay value
+                # Update frameDelays with the delay value
                 # (converted into units of seconds)
-                gifDelays[index - firstIndex] += self.delays[index]/self.frameRate
+                frameDelays[index - firstIndex] += self.delays[index]/self.frameRate
 
             if extension.lower() == "mp4":
                 # Check for infinite delays
-                if max(gifDelays) == oo:
+                if max(frameDelays) == oo:
                     raise ValueError("Animation contains infinitely-long pauses. You must finitize them before exporting to mp4.")
+            elif extension.lower() == "webp" and oo in frameDelays[:-1]:
+                raise ValueError("Animation contains infinitely-long pauses in the middle. You must finitize them before exporting to webp.")
+
 
             # Export PNG sequence to temp dir
             print(f"Exporting temporary {tempType.upper()} sequence...")
@@ -4433,9 +4463,10 @@ class Animation(object):
                     # Compile GIF with delays
                     # Make and optimize the GIF.
                     print("Compiling frames into GIF...")
-                    morpho.giffer.makegif(directory=tempDir, saveas=filepath, duration=gifDelays)
+                    morpho.giffer.makegif(directory=tempDir, saveas=filepath, duration=frameDelays)
                     print("Optimizing GIF...")
                     morpho.giffer.optimizegif(filepath)
+
                 elif extension.lower() == "mp4":
                     # Generate concat demuxer instructions
                     demux = []
@@ -4443,26 +4474,11 @@ class Animation(object):
                         demux.append("file '" + tempDir + os.sep + filename.replace("'", "_") + "_" +
                             int2fixedstr(n-firstIndex, digits=numdigits(finalIndex-firstIndex))
                         + f".{tempType}'")
-                        demux.append(f"duration {round(gifDelays[n-firstIndex], 8)}")
+                        demux.append(f"duration {round(frameDelays[n-firstIndex], 8)}")
                     demux.append(demux[-2])  # Needed to handle end delay for some reason
                     demux = "\n".join(demux)
                     with open(tempDir + os.sep + "demux.txt", "w") as file:
                         file.write(demux)
-
-                    # Use ffmpeg to create initial mp4 via concat
-                    # cmd = [
-                    #     "ffmpeg",
-                    #     "-y",  # Overwrite existing file without warning
-                    #     "-safe", "0",  # Don't complain too much about filenames
-                    #     "-f",
-                    #     "concat",
-                    #     "-i", tempDir + os.sep + "demux.txt",
-                    #     "-vsync", "vfr",
-                    #     "-vcodec", "libx264",
-                    #     "-crf", str(ffmpegConfig["crf"]),  # Quality 18 generally highest quality
-                    #     "-pix_fmt", "yuv420p",
-                    #     tempDir + os.sep + "temp.mp4"
-                    # ]
 
                     cmd = [
                         ffmpeg,
@@ -4485,18 +4501,61 @@ class Animation(object):
                     sp.call(cmd)
                     print()
 
-                    # # Re-encode the mp4 to make it easier to play and manipulate.
-                    # cmd = [
-                    #     "ffmpeg",
-                    #     "-y",
-                    #     "-r", str(self.frameRate),
-                    #     "-i", tempDir + os.sep + "temp.mp4",
-                    #     "-vcodec", "libx264",
-                    #     filepath
-                    # ]
-                    # print("Re-encoding...")
-                    # sp.call(cmd)
-                    # print()
+                elif extension.lower() == "webp":
+                    cmd = ["img2webp"]  # Initial command
+
+                    if frameDelays[-1] == oo:
+                        frameDelays[-1] = 1.0/self.frameRate
+                        cmd.extend(["-loop", "1"])  # Set WebP to NOT loop
+
+                    if webpOptions["mixed"]:
+                        cmd.append("-mixed")
+                        # "-mixed" disables lossy, so disable it in the
+                        # webpOptions dict too so it doesn't have downstream
+                        # effects
+                        webpOptions["lossy"] = False
+
+                    if webpOptions["preprocessing"] < 100:
+                        cmd.extend(["-near_lossless", str(round(webpOptions["preprocessing"]))])
+
+                    # Keep track of the position on the absolute timeline
+                    # and compute millisecond frame delays for WebP based on
+                    # differences between the cumulative absolute time elapsed
+                    # and the total milliseconds. This will prevent rounding
+                    # errors from compounding (in case that's an issue).
+                    cumulativeDelaySoFar = 0
+                    cumulativeMs = 0
+                    for n, delay in enumerate(frameDelays):
+                        # Calculate frame delay command
+                        cumulativeDelaySoFar += delay
+                        delayMs = round(1000*cumulativeDelaySoFar - cumulativeMs)
+                        cumulativeMs += delayMs
+                        cmd.extend(["-d", str(delayMs)])
+
+                        # Input other per-frame options
+                        if webpOptions["mixed"] or webpOptions["lossy"]:
+                            if webpOptions["lossy"]:
+                                cmd.append("-lossy")
+                            cmd.extend(["-q", str(round(webpOptions["quality"]))])
+
+                        # Attach input filename
+                        if len(frameDelays) > 1:
+                            infile = tempDir + os.sep + filename+"_"+int2fixedstr(n, digits=numdigits(finalIndex-firstIndex))+f".{tempType}"
+                        else:
+                            # When exporting an animation with only a single frame,
+                            # the PNG image exported will not have a frame number
+                            # appended to its filename.
+                            infile = tempDir + os.sep + filename + f".{tempType}"
+                        cmd.append(infile)
+
+                    # Attach output filename
+                    cmd.extend(["-o", filepath])
+
+                    # print(cmd)  # TEMP!
+
+                    print("Creating WebP...")
+                    sp.call(cmd)
+                    print()
 
                 # Clean up temp dir
                 print("Cleaning up temp directory...")
