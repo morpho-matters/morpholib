@@ -1400,17 +1400,19 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
             # Handle possible other transformations
             morpho.applyTransforms(ctx, self.origin, self.rotation, self.transform)
 
-
-            # if start == init:
             # Initialize starting point
             zprev, inprev, outprev = self.data[init,:].tolist()
             inprev, outprev = replaceInfHandles(zprev, inprev, outprev)
-            # else:
-            #     p, pin, pout = self.nodeData(init)
-            #     q, qin, qout = self.nodeData(init+1)
-            #     m0, m1, m2, m3 = morpho.bezier.bezierLastSlice(p, pout, qin, q, start-init)
-            #     zprev = m0
-            #     outprev = m1
+            # If True, intermediate loops between deadends in the path will
+            # be auto-closed to make the loops appear more seamless. This requires
+            # the path to be full-length AND be arrowless.
+            allowLoopClosures = self.start == 0 and self.end == 1 and \
+                self.headSize == 0 and self.tailSize == 0 \
+                # (checking for headSize and tailSize is technically unnecessary
+                # since splines don't have arrow support, BUT THEY MIGHT IN THE FUTURE,
+                # so that's why the checks are here)
+            latestDeadStart = zprev if not isbadnum(zprev) else nan
+
 
             # Move to starting point
             x,y = zprev.real, zprev.imag
@@ -1434,8 +1436,15 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
                 # If previous node is a deadend, or current or previous
                 # nodes are bad, move to next node.
                 # Else, draw a curve to the next node.
-                if n in self_deadends or isbadnum(z) or isbadnum(zprev):
+                if isbadnum(z) or isbadnum(zprev):
                     ctx.move_to(x,y)
+                    latestDeadStart = z if not isbadnum(z) else nan
+                elif n in self_deadends:
+                    if allowLoopClosures and zprev == latestDeadStart:
+                        # Close the subpath if it ends where it began
+                        ctx.close_path()
+                    ctx.move_to(x,y)
+                    latestDeadStart = z
                 else:
                     # Snap handles to nodes if they are within
                     # half a pixel of each other.
@@ -1452,27 +1461,8 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
                 # inprev = inhandle
                 outprev = outhandle
 
-            # # Handle non-integer ending index
-            # if end != final:
-            #     x1,y1 = outprev.real, outprev.imag
-
-            #     p, pin, pout = self.nodeData(final)
-            #     q, qin, qout = self.nodeData(final-1)
-            #     m0, m1, m2, m3 = morpho.bezier.bezierFirstSlice(p, pout, qin, q, end-(final-1))
-            #     x2,y2 = m2.real, m2.imag
-            #     x,y = m3.real, m3.imag
-
-            #     ctx.curve_to(x1,y1, x2,y2, x,y)
-
-        # Auto-close path if the path has the simplest possible settings
-        if self.node(0) == self.node(-1) and \
-            self.start == 0 and self.end == 1 and \
-            len(self.deadends) == 0 and \
-            self.headSize == 0 and self.tailSize == 0:
-            # (checking for headSize and tailSize is technically unnecessary
-            # since splines don't have arrow support, BUT THEY MIGHT IN THE FUTURE,
-            # so that's why the checks are here)
-
+        # Do final loop closure if it's allowed
+        if allowLoopClosures and z == latestDeadStart and not isbadnum(z):
             ctx.close_path()
 
         # Stroke and fill the path

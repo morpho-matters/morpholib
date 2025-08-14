@@ -1617,16 +1617,17 @@ class Path(BackgroundBoxFigure, AlignableFigure):
 
         # Color is not a gradient. Color as normal.
         else:
+            # If True, intermediate loops between deadends in the path will
+            # be auto-closed to make the loops appear more seamless. This requires
+            # the path to be full-length AND be arrowless.
+            allowLoopClosures = self.start == 0 and self.end == 1 and \
+                self.headSize == 0 and self.tailSize == 0 \
+                # (checking for headSize and tailSize is technically unnecessary
+                # since splines don't have arrow support, BUT THEY MIGHT IN THE FUTURE,
+                # so that's why the checks are here)
+            latestDeadStart = zn if not isbadnum(zn) else nan
+
             for n in range(init, final):
-                # if isinstance(self.color, morpho.color.Gradient):
-                #     # Redefine color/alpha for gradients
-                #     RGBA = list(self.color.value((n+0.5)/len_seq))
-                #     RGBA.append(A)
-
-
-                #     ctx.stroke()
-                #     ctx.set_source_rgba(*RGBA)
-                #     ctx.move_to(x,y)
 
                 # Get next node
                 z = self_seq[n+1]
@@ -1635,20 +1636,26 @@ class Path(BackgroundBoxFigure, AlignableFigure):
 
                 # If previous node is a deadend, move to next node,
                 # else draw a line to the next node.
-                if n in self_deadends or isbadnum(z) or isbadnum(zn):
+                # If previous node is a deadend, or current or previous
+                # nodes are bad, move to next node.
+                # Else, draw a curve to the next node.
+                if isbadnum(z) or isbadnum(zn):
                     ctx.move_to(x,y)
+                    latestDeadStart = z if not isbadnum(z) else nan
+                elif n in self_deadends:
+                    if allowLoopClosures and zn == latestDeadStart:
+                        # Close the subpath if it ends where it began
+                        ctx.close_path()
+                    ctx.move_to(x,y)
+                    latestDeadStart = z
                 else:
                     ctx.line_to(x,y)
 
                 # Update zn to z
                 zn = z
 
-            # Auto-close path if the path has the simplest possible settings
-            if self.seq[0] == self.seq[-1] and \
-                self.start == 0 and self.end == 1 and \
-                len(self.deadends) == 0 and \
-                self.headSize == 0 and self.tailSize == 0:
-
+            # Do final loop closure if it's allowed
+            if allowLoopClosures and z == latestDeadStart and not isbadnum(z):
                 ctx.close_path()
 
             # Stroke and fill the path
