@@ -669,7 +669,20 @@ class PText(Text):
     # to ensure it closes properly:
     #   with ptxt.tosvg() as source:
     #       ...
-    def tosvg(self):
+    #
+    # OPTIONAL KEYWORD-ONLY INPUTS (should rarely be needed)
+    # dim = Dimensions of the internal SVG surface. Default: 1024
+    # tempsize = Temporary font size to use on the internal
+    #       cairo SVG surface. Advise not going much lower
+    #       than 8. Default: 8
+    # ----
+    # The above options should rarely be needed, but if you notice
+    # some of the converted text has been clipped, try increasing
+    # `dim` or decreasing `tempsize`. This issue should only appear
+    # if attempting to convert a very long string of text.
+    # If the text characters themselves appear distorted or "pixelated"
+    # post-conversion, try increasing `tempsize`.
+    def tosvg(self, *, dim=1024, tempsize=8):
         stream = io.BytesIO()
 
         try:
@@ -677,7 +690,7 @@ class PText(Text):
             # It will all get rescaled later.
             # This code is inspired from code found on geeksforgeeks.org
             # https://www.geeksforgeeks.org/pycairo-creating-text-paths/
-            with cairo.SVGSurface(stream, 700, 700) as surface:
+            with cairo.SVGSurface(stream, dim, dim) as surface:
 
                 # surface.restrict_to_version(cairo.SVGVersion.VERSION_1_1)
 
@@ -688,7 +701,7 @@ class PText(Text):
                     cr.FONT_SLANT_ITALIC if self.italic else cr.FONT_SLANT_NORMAL,
                     cr.FONT_WEIGHT_BOLD if self.bold else cr.FONT_WEIGHT_NORMAL
                     )
-                context.set_font_size(64)  # Dummy value. Will be rescaled later
+                context.set_font_size(tempsize)  # Dummy value. Will be rescaled later
                 context.set_source_rgba(*self.color, self.alpha)
 
                 # Arbitrary position. Will be rescaled later.
