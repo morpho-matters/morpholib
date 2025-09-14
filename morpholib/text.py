@@ -724,8 +724,9 @@ class PText(Text):
     # Converts the text figure into an equivalent MultiSpline figure.
     # The `origin` attribute of the resulting MultiSpline will be set
     # as the position of the text figure.
-    def toSpline(self):
-        with self.tosvg() as source:
+    # Additional keyword inputs will be passed to the tosvg() method.
+    def toSpline(self, **kwargs):
+        with self.tosvg(**kwargs) as source:
             spline = morpho.shapes.MultiSpline.fromsvg(source,
                 align=self.align, boxHeight=self.height(),
                 tightbox=True
@@ -987,8 +988,9 @@ class MultiPTextBase(MultiTextBase):
     # The resulting MultiSpline will have its toplevel origin set to
     # the toplevel origin of the MultiPText figure.
     # All subsplines will have origin = 0.
-    def toSpline(self):
-        multisplines = [ptxt.toSpline().commitTransforms() for ptxt in self.figures]
+    # Additional keyword inputs will be passed to the tosvg() method.
+    def toSpline(self, **kwargs):
+        multisplines = [ptxt.toSpline(**kwargs).commitTransforms() for ptxt in self.figures]
         finalspline = morpho.shapes.MultiSpline(morpho.flattenList([multispline.figures for multispline in multisplines]))
         finalspline.origin = self.origin
         finalspline.rotation = self.rotation
@@ -1182,7 +1184,7 @@ class SpacePText(PText, SpaceText):
     # Converts the text figure into an equivalent SpaceSpline figure.
     # The `origin` attribute of the resulting Spline will be set
     # as the position of the text figure.
-    def toSpline(self):
+    def toSpline(self, **kwargs):
         raise NotImplementedError
 
         # Create equivalent 2D PText figure
@@ -1610,8 +1612,9 @@ class FancyMultiPText(FancyMultiText):
     # Converts the text figure into an equivalent MultiSpline figure.
     # The origin attribute of the MultiSpline will match the pos
     # attribute of the text figure.
-    def toSpline(self):
-        multispline = MultiPText(self.makeFrame(raw=True, ignoreBackground=True).figures).toSpline()
+    # Additional keyword inputs will be passed to the tosvg() method.
+    def toSpline(self, **kwargs):
+        multispline = MultiPText(self.makeFrame(raw=True, ignoreBackground=True).figures).toSpline(**kwargs)
         for spline in multispline.figures:
             spline.origin += multispline.origin - self.origin
             spline.commitTransforms()
