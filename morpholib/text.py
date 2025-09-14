@@ -671,10 +671,10 @@ class PText(Text):
     #       ...
     #
     # OPTIONAL KEYWORD-ONLY INPUTS (should rarely be needed)
-    # dim = Dimensions of the internal SVG surface. Default: 1024
+    # dim = Dimensions of the internal SVG surface. Default: 2048
     # tempsize = Temporary font size to use on the internal
     #       cairo SVG surface. Advise not going much lower
-    #       than 8. Default: 8
+    #       than 8. Default: 24
     # ----
     # The above options should rarely be needed, but if you notice
     # some of the converted text has been clipped, try increasing
@@ -682,7 +682,7 @@ class PText(Text):
     # if attempting to convert a very long string of text.
     # If the text characters themselves appear distorted or "pixelated"
     # post-conversion, try increasing `tempsize`.
-    def tosvg(self, *, dim=1024, tempsize=8):
+    def tosvg(self, *, dim=2048, tempsize=24):
         stream = io.BytesIO()
 
         try:
