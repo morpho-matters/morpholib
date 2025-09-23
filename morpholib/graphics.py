@@ -62,7 +62,7 @@ class Image(PreAlignableFigure):
         self.newSource(source)
 
         # Position in the complex plane
-        pos = morpho.Tweenable("pos", complex(0), tags=["complex"])
+        pos = morpho.Tweenable("pos", 0, tags=["complex", "position"])
         # align specifies where the centerpoint of the image is.
         # [0,0] means center, [-1,-1] is bottom-left, [1,1] is top-right.
         align = morpho.Tweenable(
