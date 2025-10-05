@@ -4326,6 +4326,12 @@ class Animation(object):
     # Export animation to file.
     # Can either be MP4, GIF, WEBP animation, or PNG/JPG sequence depending
     # on the file extension given in the filepath.
+    #
+    # Note that GIF and WEBP animations will loop by default, but looping can
+    # be disabled by including an infinite wait time at the end of the
+    # animation. See Animation.wait(). Technically, GIF animations will still
+    # loop even in this case, but the delay will be around 10 minutes.
+    #
     # Optional argument `scale` is a scale factor that scales the entire
     # animation window shape before exporting. Useful for downscaling an
     # animation while exporting test animations to speed up rendering.
