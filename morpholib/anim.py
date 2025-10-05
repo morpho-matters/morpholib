@@ -4337,7 +4337,7 @@ class Animation(object):
     # animation while exporting test animations to speed up rendering.
     # Note: scaling seems to be done at the final pixel level, so specifying
     # scale > 1 will not actually increase the resolution of your animation.
-    # Use Animation.rescale() instead to increase resolution.
+    # Use Animation.rescale() before exporting to increase resolution.
     #
     # OPTIONAL KEYWORD-ONLY INPUTS
     # imageOptions = Dict providing additional options passed to the
