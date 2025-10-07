@@ -1543,17 +1543,42 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
     # Optionally specify "segsteps" which is how many path steps to
     # use in a single bezier curve segment of the spline.
     # Defaults to 30 steps per segment.
-    #
-    # Note that this method currently ignores deadends. This may be
-    # resolved in a future version.
     def toPath(self, segsteps=30):
-        path = morpho.grid.line(0,1, steps=segsteps*(self.length()-1))
-
-        # Make path follow the spline
-        path = path.fimage(self.positionAt)
-
-        # Match other tweenables
+        # Initialize empty path and set all its attributes to those of
+        # the spline, except for deadends
+        path = morpho.grid.Path([])
         path._updateFrom(self, common=True, ignore="deadends")
+
+        # Given empty spline, return empty path
+        if self.length() == 0:
+            return path
+        # Given singleton spline, return singleton path
+        if self.length() == 1:
+            path.seq = [self.nodes()]
+            return path
+
+        # How much parameter space each segment takes up
+        segwidth = 1/(self.length()-1)
+
+        # Convert the spline into a path contiguous piece by continguous
+        # piece.
+        # `start` will represent the starting index of each continguous
+        # segment of the spline that needs to be converted into a path.
+        start = 0
+        # Final index is artifically appended to the deadends to ensure
+        # the final segment(s) gets converted
+        for deadend in sorted(self.deadends.union({self.length()-1})):
+            if start == deadend:
+                path.seq.append(self.node(start))
+            else:
+                path.seq.extend(morpho.grid.line(start*segwidth, deadend*segwidth, steps=segsteps*(deadend-start)).fimage(self.positionAt).seq)
+            path.deadends.add(len(path.seq)-1)
+            start = deadend + 1
+
+        # Remove final deadend if the original spline did not include
+        # the final node as a deadend.
+        if self.length() - 1 not in self.deadends:
+            path.deadends.remove(len(path.seq)-1)
 
         return path
 
