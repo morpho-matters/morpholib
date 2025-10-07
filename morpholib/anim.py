@@ -4606,6 +4606,7 @@ class Animation(object):
 
                     # Grab target surface from real animation and set it as source
                     # then paint it onto the secondary animation and export!
+                    anim2.clearContext()  # Necessary in case frame contains transparency
                     anim2.context.set_source_surface(self.context.get_target())
                     anim2.context.paint()
                     surfaceSave(anim2.context.get_target(), imgfile, options=imageOptions)
