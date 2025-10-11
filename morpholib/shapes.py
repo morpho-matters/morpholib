@@ -50,7 +50,7 @@ def handleSplineNodeInterp(tweenmethod):
 
         # If either self or other have no nodes, give up, throw error
         if len_self == 0 or len_other == 0:
-            raise ValueError("Can't interpolate between empty path and non-empty path!")
+            raise ValueError("Can't interpolate between empty spline and non-empty spline!")
 
         # If self has more nodes than other, artifically insert
         # nodes into a copy of other before tweening
