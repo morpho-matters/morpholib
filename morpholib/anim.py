@@ -1580,7 +1580,9 @@ class SpaceFrame(Frame):
         primlist = []
         for fig in self.figures:
             if fig.visible:
-                primlist.extend(fig.primitives(camera))
+                fig = applyFigureModifier(fig)
+                if fig.visible:
+                    primlist.extend(fig.primitives(camera))
 
         return primlist
 
