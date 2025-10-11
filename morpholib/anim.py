@@ -299,24 +299,6 @@ class Frame(BoundingBoxFigure):
 
         self.setName(**kwargs)
 
-        # Position of the frame in an animation's timeline.
-        # It is in units of "frames" where 0 is the first frame, etc.
-        # self.index = index
-
-        # How many frames should the frame persist in an animation
-        # if the frame is the final keyframe in a layer.
-        # If set to oo (infinity), then the final frame will
-        # never disappear in an animation.
-        # Maybe in the future delay will also play a role for
-        # intermediate keyframes, but for now, it's
-        # only taken into account if it's the final keyframe.
-        # self.delay = 0
-
-        # # Other (non-tweenable) attributes
-        # self.delay = 0  # number of frames to delay at keyframe
-
-        # self.defaultTween = Frame.tweenLinear
-
     @property
     def figures(self):
         return self._state["figures"].value
