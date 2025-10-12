@@ -126,6 +126,11 @@ def handleSubfigureTweening(tweenmethod):
 # future keyframes, as well as preserving a keyframe at the
 # original latest keyframe. All standard actions like
 # fadeIn/Out(), etc. follow this standard.
+#
+# Note that when applying subactions, the transitions of
+# subfigures are used, and the toplevel transition of the
+# Frame-like figure is ignored. This is the opposite behavior
+# from how regular tweening of subfigures works.
 class _SubactionSummoner(object):
     def __init__(self, actor):
         self.actor = actor
