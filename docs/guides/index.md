@@ -16,6 +16,7 @@ I recommend starting with these and following them pretty much in this order:
 
 ### Advanced
 - [Making Longer-Form Videos](https://morpho-matters.github.io/morpholib/guides/projects)
+- [Modifiers](https://morpho-matters.github.io/morpholib/guides/modifiers)
 
 ### Other guides
 - [Incorporating LaTeX](https://morpho-matters.github.io/morpholib/guides/latex)
