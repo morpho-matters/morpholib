@@ -94,7 +94,7 @@ mation = morpho.Animation(mainlayer)
 
 arrow = mainlayer.Actor(morpho.grid.Arrow(0, 3))
 arrow.newendkey(30).origin = -2-2j
-arrow.newendkey(60).rotation = tau
+arrow.newendkey(60).rotation = 2*pi
 
 mation.play()
 ```
@@ -111,7 +111,7 @@ point = mainlayer.Actor(morpho.grid.Point().set(
 
 arrow = mainlayer.Actor(morpho.grid.Arrow(0, 3))
 arrow.newendkey(30).origin = -2-2j
-arrow.newendkey(60).rotation = tau
+arrow.newendkey(60).rotation = 2*pi
 
 mation.play()
 ```
@@ -132,7 +132,7 @@ point = mainlayer.Actor(morpho.grid.Point().set(
 
 arrow = mainlayer.Actor(morpho.grid.Arrow(0, 3))
 arrow.newendkey(30).origin = -2-2j
-arrow.newendkey(60).rotation = tau
+arrow.newendkey(60).rotation = 2*pi
 
 # Change point's size and fill independently of
 # the arrow actor
@@ -155,7 +155,7 @@ point = mainlayer.Actor(morpho.grid.Point().set(
 
 arrow = mainlayer.Actor(morpho.grid.Arrow(0, 3))
 arrow.newendkey(30).origin = -2-2j
-arrow.newendkey(60).rotation = tau
+arrow.newendkey(60).rotation = 2*pi
 
 # Offset the point's position relative to the
 # arrow's center over time.
@@ -193,7 +193,7 @@ point = mainlayer.Actor(morpho.grid.Point().set(
 
 # Move first arrow around
 arrow.newendkey(30).origin = -2-2j
-arrow.newendkey(60).rotation = tau
+arrow.newendkey(60).rotation = 2*pi
 
 # Move second arrow around and change its color
 arrow2.newendkey(45).set(
