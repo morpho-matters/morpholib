@@ -421,7 +421,7 @@ square.newendkey().rotation = 2*pi
 
 mation.play()
 ```
-We'll now define a clock actor with its parameter value `t` initially set to 0. The idea will be `t=0` will correspond to focusing exclusively on the rotation square, and `t=1` will correspond to focusing exclusively on the moving point, and middle values interpolating between the two focuses.
+We'll now define a clock actor with its parameter value `t` initially set to 0. The idea will be `t=0` will correspond to focusing exclusively on the rotating square, and `t=1` will correspond to focusing exclusively on the moving point, and middle values interpolating between the two focuses.
 ```python
 # Create invisible clock actor initialized to parameter t=0
 clock = mainlayer.Actor(morpho.Skit(t=0))
@@ -512,7 +512,7 @@ mation.play()
 
 ## Referencing Modifier Effects Outside of Playback
 
-As stated earlier, modifiers only affect figures *at playback time* and even then only in a temporary way. Accessing a figure's state directly, outside of animation playback time, just gives you its state as if the modifier weren't there. However, there may be rare instances in which you *want* to access a figure's would-be modified state during an animation to help you construct the current animation. An example might be placing a text label at the location a puppet Point actor will eventually be at. Another use case is stopping an actor from being controlled by another actor at a certain point in the animation and resuming normal control over it.
+As stated earlier, modifiers only affect figures *at playback time* and even then only in a temporary way. Accessing a figure's state directly, outside of animation playback time, just gives you its state as if the modifier weren't there. However, there are sometimes instances in which you *want* to access a figure's would-be modified state during an animation to help you construct the current animation. An example might be placing a text label at the location a puppet Point actor will eventually be at. Another use case is stopping an actor from being controlled by another actor at a certain point in the animation and resuming normal control over it.
 
 There are two closely related figure methods that will let you access a figure's modified state *in advance* during animation construction time: `actualize()` and `actualized()`.
 
