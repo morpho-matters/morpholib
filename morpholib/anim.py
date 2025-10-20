@@ -765,9 +765,14 @@ class Frame(BoundingBoxFigure):
     def getName(self, name):
         return self.figures[self._names[name]]
 
-    # Returns the index of a given subfigure name.
-    def nameIndex(self, name):
-        return self._names[name]
+    # Returns the index position of a given subfigure or subfigure name
+    # in the `figures` list.
+    def index(self, subfig):
+        if isinstance(subfig, morpho.Figure):
+            return self.figures.index(subfig)
+        elif isinstance(subfig, str):
+            return self._names[subfig]
+        raise TypeError("`subfig` must be Figure or str type.")
 
     def __getattr__(self, name):
         # First try using the superclass's built-in getattr()
