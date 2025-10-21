@@ -2287,8 +2287,8 @@ class Actor(object):
     # Returns the current figure of the actor at the current time
     # index on the global timeline. Only possible if the actor's
     # owner is a Layer whose owner is an Animation object.
-    # Mainly for use in puppet Skits to extract the current figure
-    # state of the puppeteer actor at the current time index of
+    # Mainly for use in puppeting to extract the current figure
+    # state of the controlling actor at the current time index of
     # the animation.
     # Also note that if now() returns a keyfigure, it will be
     # copied before returned, so it is always safe to modify
