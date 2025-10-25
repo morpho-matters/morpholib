@@ -4428,8 +4428,9 @@ class Animation(object):
         Dir = os.sep.join(filepath.split(os.sep)[:-1])
 
         if extension.lower() in ("gif", "mp4", "webp"):
-            # Prepare to compile GIF by defining frameDelays.
-            # It describes the delay of each gif frame of animation.
+            # Prepare to compile animation by defining frameDelays.
+            # It describes the true delay of each frame of animation
+            # in units of seconds.
             # It is equal to 1/frameRate unless there's an animation delay.
 
             # Initialize frameDelays to just be based on the framerate
