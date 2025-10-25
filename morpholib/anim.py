@@ -4522,19 +4522,13 @@ class Animation(object):
                     if webpOptions["preprocessing"] < 100:
                         cmd.extend(["-near_lossless", str(round(webpOptions["preprocessing"]))])
 
-                    # Keep track of the position on the absolute timeline
-                    # and compute millisecond frame delays for WebP based on
-                    # differences between the cumulative absolute time elapsed
-                    # and the total milliseconds. This will prevent rounding
-                    # errors from compounding (in case that's an issue).
-                    cumulativeDelaySoFar = 0
-                    cumulativeMs = 0
-                    for n, delay in enumerate(frameDelays):
-                        # Calculate frame delay command
-                        cumulativeDelaySoFar += delay
-                        delayMs = round(1000*cumulativeDelaySoFar - cumulativeMs)
-                        cumulativeMs += delayMs
-                        cmd.extend(["-d", str(delayMs)])
+                    # Scale up frameDelays to be in milliseconds and round it
+                    # to the nearest millisecond stably to avoid drift in
+                    # the cumulative delays.
+                    msDelays = roundStable(1000*np.array(frameDelays)).tolist()
+                    for n, msDelay in enumerate(msDelays):
+                    # for n, delay in enumerate(frameDelays):
+                        cmd.extend(["-d", str(msDelay)])
 
                         # Input other per-frame options
                         if webpOptions["mixed"] or webpOptions["lossy"]:
