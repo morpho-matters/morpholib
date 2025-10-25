@@ -136,6 +136,29 @@ def roundOut(x):
 def roundIn(x):
     return _rounder(x, np.floor)
 
+# Rounds a sequence of numbers in such a way that their
+# cumulative sum sequence does not drift after rounding.
+# Useful when rounding a sequence of differences (such as
+# time durations) in a stable way that preserves its
+# cumulative sum sequence.
+#
+# Example: roundStable([1/3, 1/3, 1/3]) produces [0 1 0]
+# rather than [0 0 0] so that its cumulative sum sequence
+# matches that of rounding the cumulative sum sequence
+# of the original list: [1/3, 2/3, 1].
+#
+# The output is a numpy array but can be recast as a native
+# Python type by chaining the `.tolist()` method.
+#
+# Optionally an additional parameter `decimals` may be provided
+# to specify the number of decimal places to round to.
+# Default: 0 (round to the nearest int)
+def roundStable(nums, decimals=0):
+    result = np.diff(np.insert(np.round(np.cumsum(nums), decimals), 0, 0))
+    if decimals == 0:
+        result = result.astype(int)
+    return result
+
 # If a float is equal to an int, converts it into an int.
 def squeezeFloat(number):
     try:
