@@ -2313,7 +2313,9 @@ start and end may be removed in a later update!!
 # mask = Specify another layer object which will serve as the "mask" for this layer.
 #        The mask layer basically serves as a window or opening in which the target
 #        layer can appear thru. Only the parts of the target layer that overlap with
-#        opaque portions of the mask layer will appear.
+#        opaque portions of the mask layer will appear. Masking can be
+#        disabled by toggling the visibility of the mask layer or its
+#        camera actor.
 class Layer(object):
 
     def __init__(self, actors=None, view=(-5,5, -5,5), timeOffset=0, visible=True, start=-oo, end=oo):
