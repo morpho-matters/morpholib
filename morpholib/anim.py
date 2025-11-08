@@ -2316,6 +2316,12 @@ start and end may be removed in a later update!!
 #        opaque portions of the mask layer will appear. Masking can be
 #        disabled by toggling the visibility of the mask layer or its
 #        camera actor.
+# cloak = Boolean specifying whether the layer should be used as a cloak when
+#         masking. Normally when a layer is used as a mask, the opaque regions
+#         of the layer translate into what regions of the masked layer is made
+#         visible. If cloak=True, this inverts, and now opaque regions of this
+#         layer will HIDE the corresponding region of the masked layer.
+#         Default: False
 class Layer(object):
 
     def __init__(self, actors=None, view=(-5,5, -5,5), timeOffset=0, visible=True, start=-oo, end=oo):
@@ -2359,6 +2365,7 @@ class Layer(object):
         self.start = start
         self.end = end
         self.mask = None
+        self.cloak = False
         self.owner = None
 
         # Hidden attributes for rendering with masks.
@@ -2442,6 +2449,7 @@ class Layer(object):
                 end=self.end
                 )
             new.mask = self.mask
+        new.cloak = self.cloak
         return new
 
     # Appends the actor list of other to self in place. However, it ignores
@@ -2996,14 +3004,6 @@ class Layer(object):
                 for fig in figlist:
                     fig.draw(cam, ctx)
         else:  # Layer has a mask, so draw with masking
-            # # Extract surface's width and height
-            # surface = ctx.get_target()
-            # width = surface.get_width()
-            # height = surface.get_height()
-
-            # # Setup new context with a transparent target surface
-            # ctxPrimary = setupContext(width, height, flip=False)
-
             self._setupInternalSubcontexts(ctx)
 
             with cam._pushRotation(self._ctx1):  # Apply camera rotation
@@ -3011,17 +3011,21 @@ class Layer(object):
                 for fig in figlist:
                     fig.draw(cam, self._ctx1)
 
-            # # Setup another intermediate context for the mask layer
-            # # to be drawn on
-            # ctxMask = setupContext(width, height, flip=False)
-
             # Draw the mask layer on the secondary subcontext
             self.mask.draw(f+self.timeOffset-self.mask.timeOffset, self._ctx2)
 
             # Now draw the primary surface with the mask surface applied
             # down on the original context
             ctx.set_source_surface(self._ctx1.get_target())
-            ctx.mask_surface(self._ctx2.get_target())
+            if self.mask.cloak:
+                self._ctx1.set_source_surface(self._ctx2.get_target())
+                self._ctx1.set_operator(cairo.OPERATOR_DEST_OUT)
+                self._ctx1.paint()
+                self._ctx1.set_operator(cairo.OPERATOR_OVER)
+                ctx.paint()
+            else:
+                ctx.mask_surface(self._ctx2.get_target())
+
 
 
 # 3D version of the Layer class. See "Layer" for more info.
@@ -3162,14 +3166,6 @@ class SpaceLayer(Layer):
                     frame = Frame(primlist)
                     frame.draw(cam, ctx)
         else:  # There is a mask, so draw with masking!
-            # # Extract surface's width and height
-            # surface = ctx.get_target()
-            # width = surface.get_width()
-            # height = surface.get_height()
-
-            # # Setup new context with a transparent target surface
-            # ctxPrimary = setupContext(width, height, flip=False)
-
             self._setupInternalSubcontexts(ctx)
 
             # Draw all figures to this intermediate surface:
@@ -3183,17 +3179,20 @@ class SpaceLayer(Layer):
                     frame = Frame(primlist)
                     frame.draw(cam, self._ctx1)
 
-            # # Setup another intermediate context for the mask layer
-            # # to be drawn on
-            # ctxMask = setupContext(width, height, flip=False)
-
             # Draw the mask layer on the secondary subcontext
             self.mask.draw(f+self.timeOffset-self.mask.timeOffset, self._ctx2)
 
             # Now draw the primary surface with the mask surface applied
             # down on the original context
             ctx.set_source_surface(self._ctx1.get_target())
-            ctx.mask_surface(self._ctx2.get_target())
+            if self.mask.cloak:
+                self._ctx1.set_source_surface(self._ctx2.get_target())
+                self._ctx1.set_operator(cairo.OPERATOR_DEST_OUT)
+                self._ctx1.paint()
+                self._ctx1.set_operator(cairo.OPERATOR_OVER)
+                ctx.paint()
+            else:
+                ctx.mask_surface(self._ctx2.get_target())
 
 
 # Collects layers into a single animation and a unified timeline.
