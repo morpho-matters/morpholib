@@ -811,6 +811,10 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
             self._data = np.array([[point, inhandle, outhandle]], dtype=complex)
         else:
             self._data = np.insert(self.data, beforeIndex, [point,inhandle,outhandle], axis=0)
+
+        # Update deadends
+        self.deadends = set(i if i < beforeIndex else i+1 for i in self.deadends)
+
         return self
 
     # Adds a list of points to the spline instead of just one at a time.
@@ -833,14 +837,47 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
     # Deletes the node at the specified index. The dangling nodes on
     # either side will then be connected assuming they aren't prevented
     # by deadends.
-    # NOTE: Calling delNode() will NOT update the deadends attribute!
     def delNode(self, index):
         self._data = np.delete(self._data, index, axis=0)
+
+        # Update deadends
+        if index in self.deadends:
+            self.deadends.remove(index)
+        self.deadends = set(i if i < index else i-1 for i in self.deadends)
+
         return self
 
     # Deletes all nodes from the spline IN PLACE.
+    # Also clears out the deadends set
     def clearNodes(self):
         self._data = np.array([], dtype=complex).reshape(0,3)
+        self.deadends = set()
+        return self
+
+    # Removes isolated (and therefore invisible) nodes from the spline
+    # IN PLACE.
+    def squeeze(self):
+        try:
+            # Detect isolated nodes and delete them by finding
+            # consecutive values in the deadends set.
+            while True:
+                sortedDeadends = sorted(self.deadends)
+                diff = np.diff(sortedDeadends).tolist()
+                self.delNode(sortedDeadends[diff.index(1)+1])
+        except ValueError:
+            # ValueError is thrown once the diff array no longer
+            # contains a 1. This signals that there are no more
+            # consecutive deadends which means there are no more
+            # intermediate isolated nodes.
+            pass
+
+        # Handle the case of a deadend initial node and
+        # a deadstart final node.
+        while 0 in self.deadends:
+            self.delNode(0)
+        while self.length()-2 in self.deadends:
+            self.delNode(self.length()-1)
+
         return self
 
 
@@ -2308,6 +2345,10 @@ class SpaceSpline(Spline):
             self._data = np.array([[point, inhandle, outhandle]], dtype=float)
         else:
             self._data = np.insert(self.data, beforeIndex, [point,inhandle,outhandle], axis=0)
+
+        # Update deadends
+        self.deadends = set(i if i < beforeIndex else i+1 for i in self.deadends)
+
         return self
 
 
