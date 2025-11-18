@@ -1992,6 +1992,16 @@ class MultiSplineBase(morpho.grid.MultiPathBase):
         return len(self.figures) == len(other.figures) and \
             all(self_fig.matchesShape(other_fig) for self_fig, other_fig in zip(self.figures, other.figures))
 
+    # Removes subsplines IN PLACE whose node counts are less than 2
+    # (and are therefore non-drawable).
+    # Also squeezes the remaining subsplines to remove any isolated
+    # (and therefore invisible) nodes.
+    # See also: Spline.squeeze()
+    def squeeze(self, *args, **kwargs):
+        super().squeeze(*args, **kwargs)
+        self.all.squeeze()  # Squeeze individual splines
+        return self
+
 
     ### TWEEN METHODS ###
 
