@@ -635,8 +635,13 @@ class BackgroundBoxFigure(BoundingBoxFigure):
             origin=None, rotation=None, transform=None, *args,
             _alpha=None, **kwargs):
 
-        if self.backAlpha <= 0:
+        if _alpha is None:
+            _alpha = getattr(self, "alpha", 1)
+            # alpha = self.alpha if _alpha is None else _alpha
+
+        if self.backAlpha <= 0 or _alpha <= 0:
             # No need to attempt to draw invisible background box
+            # or a figure that is already toplevel invisible.
             return
 
         # Infer transformation attributes if not specified.
@@ -646,9 +651,6 @@ class BackgroundBoxFigure(BoundingBoxFigure):
             rotation = getattr(self, "rotation", 0)
         if transform is None:
             transform = getattr(self, "transform", I2)
-        if _alpha is None:
-            _alpha = getattr(self, "alpha", 1)
-            # alpha = self.alpha if _alpha is None else _alpha
 
         # Draw background box
         brect = morpho.grid.rect(padbox(self.box(*args, raw=True, **kwargs), self.backPad))
