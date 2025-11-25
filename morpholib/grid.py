@@ -3792,7 +3792,7 @@ def handlePolyVertexInterp(tweenmethod):
 # rotation = Polygon rotation about origin point (radians). Default: 0
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
 @Transformable2D
-class Polygon(BoundingBoxFigure):
+class Polygon(BackgroundBoxFigure, AlignableFigure):
     def __init__(self, vertices=None, width=3, color=(1,1,1), alphaEdge=1,
         fill=(1,0,0), alphaFill=1,
         alpha=1):
@@ -3927,6 +3927,8 @@ class Polygon(BoundingBoxFigure):
         return path
 
     def draw(self, camera, ctx):
+
+        self._drawBackgroundBox(camera, ctx, self.origin, self.rotation, self._transform)
 
         if len(self.vertices) < 2 or self.alpha == 0: return
 
