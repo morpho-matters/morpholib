@@ -166,6 +166,68 @@ def typecastViewCtx(method):
         return method(self, view, ctx, *args, **kwargs)
     return wrapper
 
+# Applies the transformation attributes of the given figure
+# based on the given camera to the given cairo context and
+# returns a SavePoint object, thus enabling context manager
+# syntax:
+#
+#   with pushTransforms(fig, camera, ctx):
+#       ...
+def pushTransforms(fig, camera, ctx):
+    savept = morpho.SavePoint(ctx)
+
+    a,b,c,d = camera.view
+
+    surface = ctx.get_target()
+    WIDTH = surface.get_width()
+    HEIGHT = surface.get_height()
+
+    scale_x = WIDTH/(b-a)
+    scale_y = HEIGHT/(d-c)
+
+    origin = getattr(fig, "_oripos", 0)
+    rotation = getattr(fig, "rotation", 0)
+    transform = getattr(fig, "transform", I2)
+
+    # Restore the original coordinate system
+    ctx.scale(scale_x, scale_y)
+    ctx.translate(-a, -c)
+
+    ctx.translate(*cparts(origin))
+    # Order is MATLAB-style: top-down, then left-right. So the matrix
+    # specified below is:
+    # [[xx  xy]
+    #  [yx  yy]]
+    # mat = cairo.Matrix(xx, yx, xy, yy)
+    ctx.transform(cairo.Matrix(*transform.T.reshape(-1).tolist()))
+    ctx.rotate(rotation)
+
+    # Transform the coordinate system of the context so that
+    # coordinates are in physical units instead of pixel, and the
+    # origin of physical space is located in the bottom-left corner.
+    ctx.translate(a,c)
+    ctx.scale(1/scale_x, 1/scale_y)
+
+    return savept
+
+
+# NOT IMPLEMENTED!
+# Decorator for draw methods that apply transformation attributes
+# to the drawn figure in post.
+#
+# This decorator was abandoned because non-physical attributes of
+# the drawn figure are affected by non-isometric transforms.
+# For example: strokeWeights will be scaled after a scaling transform
+# when they normally shouldn't.
+# Moral of the story: Transformations of the cairo context have to
+# be reset BEFORE stroking (or other non-physical draw effects).
+def implementTransforms(draw):
+    raise NotImplementedError
+    def wrapper(self, camera, ctx, *args, **kwargs):
+        with pushTransforms(self, camera, ctx):
+            draw(self, camera, ctx, *args, **kwargs)
+
+    return wrapper
 
 # Class decorator that adds the standard 2D transformation tweenables
 # origin, rotation, and transform, along with implementing
@@ -174,7 +236,12 @@ def typecastViewCtx(method):
 #
 # Note that this decorator only adds the tweenables and the
 # properties THEMSELVES. It does not automatically implement
-# drawing or otherwise handling these tweenables.
+# drawing or otherwise handling these tweenables. Implementing the
+# actual drawing of the transformation attributes must be done
+# manually in the draw() method.
+# (This is because transformation effects cannot be implemented in
+# post to an already drawn figure because doing so can modify the
+# non-physical attributes of the figure, such as `strokeWeight`.)
 #
 # Also auto-implements the actor actions `wiggle`, `growIn`, and
 # `shrinkOut` where applicable.
