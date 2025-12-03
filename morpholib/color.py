@@ -79,6 +79,7 @@ def parseHexColor(string, normalize=True):
         return tuple(X/255 for X in (R,G,B))
     else:
         return (R,G,B)
+parseHex = parseHexColor  # Alias
 
 # Converts an RGB triple (0-1, 0-1, 0-1) into a hex color string.
 # If optional argument `normalized` is set to False, the inputted
