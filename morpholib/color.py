@@ -52,10 +52,13 @@ def validHexColor(string):
             return False
     return True
 
-# Parses a hex color string into an RGB triple (0-1, 0-1, 0-1)
-# If optional argument normalize is set to False, the RGB triple returned
-# is the raw hex data in the range [0...255]: (0-255, 0-255, 0-255).
+# Parses a hex color string into an RGB triple (0-1, 0-1, 0-1).
+# If optional argument `normalize` is set to False, the RGB triple
+# returned is the raw hex data in the range [0...255]:
+# (0-255, 0-255, 0-255).
 # By default: normalize = True.
+#
+# For the inverse function, see: toHex()
 def parseHexColor(string, normalize=True):
     if isinstance(string, str):
         # if not validHexColor(string):
@@ -76,6 +79,20 @@ def parseHexColor(string, normalize=True):
         return tuple(X/255 for X in (R,G,B))
     else:
         return (R,G,B)
+
+# Converts an RGB triple (0-1, 0-1, 0-1) into a hex color string.
+# If optional argument `normalized` is set to False, the inputted
+# RGB triple is assumed to have values in the range [0...255].
+# By default: normalized = False.
+#
+# For the inverse function, see: parseHexColor()
+def toHex(color, normalized=True):
+    rgbArray = np.array(color)
+    if normalized:
+        rgbArray = 255*rgbArray
+    rgbArray = np.round(rgbArray).astype(int)
+    R,G,B = rgbArray.tolist()
+    return hex((256**2)*R + 256*G + B)[2:].rjust(6, "0")
 
 # Converts an array of RGBA values (N x 4) into an array
 # of ARGB ints with alpha premultiplied in.
