@@ -1,6 +1,7 @@
 
 import morpholib as morpho
 import morpholib.anim
+from morpholib.combo import FancyFrame
 from morpholib.tools.basics import *
 import morpholib.transitions
 
@@ -111,7 +112,7 @@ def flowStreamer3d(*args, **kwargs):
 # Mainly for internal use.
 # Variant of Frame class used to make the FlowField gadget
 # feel a bit like a regular Actor object.
-class _FlowFrame(morpho.Frame):
+class FlowFrameBase(morpho.Frame):
     # Advances all the streamers by the given cycle amount.
     # For example, myflow.advance(1) advances all the streamers
     # by one cycle.
@@ -120,6 +121,13 @@ class _FlowFrame(morpho.Frame):
             fig.start += dt
             fig.end += dt
         return self
+
+class FlowFrame(FlowFrameBase, FancyFrame):
+    pass
+
+class SpaceFlowFrame(FlowFrameBase, morpho.SpaceFrame):
+    pass
+
 
 # Generates a Gadget defining a field of flow streamers.
 #
@@ -143,6 +151,8 @@ class _FlowFrame(morpho.Frame):
 # Any additional inputs will be passed to flowStreamer() for the
 # construction of each individual streamer.
 class FlowField(morpho.Layer):
+    _frameType = FlowFrame
+
     def __init__(self, *args, **kwargs):
         super().__init__()
 
@@ -184,14 +194,14 @@ class FlowField(morpho.Layer):
     # Note that these may not all correspond to exactly the same
     # time coordinate!
     def last(self):
-        return _FlowFrame([streamer.last() for streamer in self.streamers])
+        return self._frameType([streamer.last() for streamer in self.streamers])
 
     # Returns a Frame-like object consisting of all the initial
     # keyfigures for each streamer.
     # Note that these may not all correspond to exactly the same
     # time coordinate!
     def first(self):
-        return _FlowFrame([streamer.first() for streamer in self.streamers])
+        return self._frameType([streamer.first() for streamer in self.streamers])
 
     def lastID(self):
         return max(streamer.lastID() for streamer in self.streamers)
@@ -211,7 +221,7 @@ class FlowField(morpho.Layer):
     # attributes can be modified en masse by calling .set()
     #   myflow.newkey(time).set(width=5, color=(1,0,0), ...)
     def newkey(self, f):
-        frame = _FlowFrame()
+        frame = self._frameType()
         for streamer in self.streamers:
             keyfig = streamer.newkey(f)
             frame.figures.append(keyfig)
@@ -226,7 +236,7 @@ class FlowField(morpho.Layer):
         if glo is not None:
             glob = glo
 
-        frame = _FlowFrame()
+        frame = self._frameType()
         if df is None:
             df = 0
             glob = True
@@ -239,6 +249,16 @@ class FlowField(morpho.Layer):
             keyfig = streamer.newkey(f)
             frame.figures.append(keyfig)
         return frame
+
+    # NOT IMPLEMENTED YET!
+    # (actually, I think it IS implemented, but it's untested, so
+    # therefore it is being treated as unimplemented.)
+    #
+    # Compresses (copies of) all the streamer actors into a single
+    # Frame Actor and returns it.
+    def toFilm(self):
+        raise NotImplementedError
+        return morpho.Actor.zip(self.actors, template=self._frameType())
 
     ### GADGET ACTIONS ###
 
@@ -271,8 +291,24 @@ class FlowField(morpho.Layer):
 
 # 3D version of FlowField class. See FlowField for more info.
 class FlowField3D(FlowField):
+    _frameType = SpaceFlowFrame
+
     @staticmethod
     def generateStreamers(*args, **kwargs):
         return FlowField.generateStreamers(*args, _3dmode=True, **kwargs)
 
 FlowField3d = FlowField3D
+
+# Same as FlowField() but returns a FlowFrame figure instead of a
+# FlowField gadget.
+# See also: FlowField3DFrame()
+def FlowFieldFrame(*args, **kwargs):
+    return FlowField(*args, **kwargs).last()
+
+# Same as FlowField() but returns a SpaceFlowFrame figure instead of a
+# FlowField3D gadget.
+# See also: FlowFieldFrame()
+def FlowField3DFrame(*args, **kwargs):
+    return FlowField3D(*args, **kwargs).last()
+
+FlowField3dFrame = FlowField3DFrame
