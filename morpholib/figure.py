@@ -2130,7 +2130,8 @@ class Actor(object):
 
         return self
 
-    # Combines all the given actors into a single Frame actor.
+    # Combines (copies of) all the given actors into a single Frame
+    # actor.
     # Optional keyword `stagger` can be specified to offset each
     # actor from the previous in the sequence by a certain number of
     # frames.
