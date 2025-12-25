@@ -492,6 +492,12 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
                 )
             spline.alphaFill = svgpath.fill.opacity
 
+        # Extract toplevel alpha
+        try:
+            spline.alpha = float(svgpath.values["attributes"]["opacity"])
+        except KeyError:
+            pass
+
         try:
             # Extract initial point
             initpt = next(svgpath.as_points())
