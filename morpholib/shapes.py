@@ -467,6 +467,14 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
             elems = list(svg.elements(lambda elem: isinstance(elem, se.Shape)))
             svgpath = elems[index]
 
+        spline = cls()
+
+        # Extract toplevel alpha
+        try:
+            spline.alpha = constrain(float(svgpath.values["attributes"]["opacity"]), 0, 1)
+        except KeyError:
+            pass
+
         # Convert path data into spline
         svgpath.reify()  # Commit all transforms
         if not isinstance(svgpath, se.Path):
@@ -475,7 +483,6 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
             svgpath.stroke = shape.stroke
             svgpath.fill = shape.fill
         svgpath.approximate_arcs_with_cubics(arcError)
-        spline = cls()
 
         # Assign style attributes
         if svgpath.stroke == None:  # don't use 'is None'
@@ -491,12 +498,6 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
                 svgpath.fill.red, svgpath.fill.green, svgpath.fill.blue
                 )
             spline.alphaFill = svgpath.fill.opacity
-
-        # Extract toplevel alpha
-        try:
-            spline.alpha = float(svgpath.values["attributes"]["opacity"])
-        except KeyError:
-            pass
 
         try:
             # Extract initial point
