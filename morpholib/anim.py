@@ -4222,9 +4222,14 @@ class Animation(object):
             )
 
     # Sets up the cairo context and prepares it for rendering to a pyglet window
-    # NOTE: A lot of this code is mirrored in morpho.base.setupContext().
+    # DEV NOTE: A lot of this code is mirrored in morpho.base.setupContext().
     # To reduce redundancy, consider calling that function in this one.
-    def setupContext(self, flip=True):
+    #
+    # Passing in optional kwarg `skipPygletSetup=True` skips setting
+    # up the `renderTexture` attribute. This is mainly for use in
+    # the export() method and may allow exporting higher resolution
+    # animations than would otherwise be possible.
+    def setupContext(self, flip=True, *, skipPygletSetup=False):
         # Prepare data object to allow cairo contexts to be rendered
         # on the pyglet window.
         # I owe some of this code to stuaxo of github.
@@ -4237,7 +4242,9 @@ class Animation(object):
         surface = cr.ImageSurface.create_for_data(self.renderData, cr.FORMAT_ARGB32,
             width, height, stride
             )
-        self.renderTexture = pg.image.Texture.create_for_size(pg.gl.GL_TEXTURE_2D, width, height, pg.gl.GL_RGBA)
+
+        if not skipPygletSetup:
+            self.renderTexture = pg.image.Texture.create_for_size(pg.gl.GL_TEXTURE_2D, width, height, pg.gl.GL_RGBA)
 
         # Setup cairo context
         self.context = cr.Context(surface)
@@ -4570,12 +4577,12 @@ class Animation(object):
                 anim2.background = self.background
                 anim2.alpha = self.alpha
 
-                anim2.setupContext(flip=False)
+                anim2.setupContext(flip=False, skipPygletSetup=True)
                 anim2.context.scale(scale, scale)
 
             # Prepare to "play" animation
             self.currentIndex = firstIndex
-            self.setupContext()
+            self.setupContext(skipPygletSetup=True)
             self.running = True
             while self.currentIndex <= finalIndex:
                 self.draw()
