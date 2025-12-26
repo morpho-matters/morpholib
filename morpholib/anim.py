@@ -3349,7 +3349,7 @@ class Animation(object):
 
         # Active animation variables
         self.active = False
-        self.running = True
+        self.running = False
         self.context = None
         self.window = None
         self.renderData = None
@@ -4900,6 +4900,8 @@ class Animation(object):
         self.running = False
         self.window = None
         self.context = None
+        self.renderData = None
+        self.renderTexture = None
         self.update = None
         self.paused = False
         self.currentIndex = 0
