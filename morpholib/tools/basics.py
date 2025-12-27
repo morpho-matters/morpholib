@@ -88,6 +88,15 @@ def constrain(x, low, high):
     return min(max(x, low), high)
 clamp = constrain  # Alternate name
 
+# Clamped linear interpolation.
+# Interpolated values will be clamped to `a` and `b` if the given
+# `t` value is outside the given `start` to `end` range.
+# Note that this function assumes start < end.
+#
+# See also: constrain(), morpho.lerp()
+def clerp(a, b, t, start=0, end=1):
+    return morpho.lerp(a, b, constrain(t, start, end), start, end)
+
 # Computes the mean of a vector-like thing.
 def mean(a):
     if len(a) == 0:
