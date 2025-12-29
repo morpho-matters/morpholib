@@ -15,8 +15,8 @@
 - Color gradients, both as fills and as color gradients along paths
 - Some primitive 3D animation capability
 - Preview animations along with the ability to locate positions on screen with a click
-- Export animations as MP4, GIF, and PNG sequences at arbitrary framerates and resolutions
-  - (**Note:** [FFmpeg](https://ffmpeg.org/) required to create MP4s, and [Gifsicle](https://www.lcdf.org/gifsicle/) required to make small size GIFs)
+- Export animations as MP4, WEBP, GIF, and PNG sequences at arbitrary framerates and resolutions
+  - **Note:** [FFmpeg](https://ffmpeg.org/) required to create MP4s, [Gifsicle](https://www.lcdf.org/gifsicle/) required to make small size GIFs, and [img2webp](https://developers.google.com/speed/webp/docs/img2webp) required to make WEBPs.
 
 ## Gallery and Documentation
 
@@ -36,9 +36,9 @@ Installation on other platforms has not been well-tested, unfortunately, and doe
 
 ### Softer requirements
 
-If you want to export animations as MP4s or small-sized GIFs, you will need to install [FFmpeg](https://ffmpeg.org/) for MP4 and/or [Gifsicle](https://www.lcdf.org/gifsicle/) for GIF. But if that doesn't matter to you (or if you just want to try out Morpho), you can still preview animations and export them as PNG sequences and large-sized GIFs just using the base installation of Morpho.
+If you want to export animations as MP4s, small-sized GIFs, or WEBPs, you will need to install [FFmpeg](https://ffmpeg.org/) for MP4, [Gifsicle](https://www.lcdf.org/gifsicle/) for GIF, and/or [img2webp](https://developers.google.com/speed/webp/docs/img2webp) for WEBP. But if that doesn't matter to you (or if you just want to try out Morpho), you can still preview animations and export them as PNG sequences and large-sized GIFs just using the base installation of Morpho.
 
-Please note that FFmpeg and Gifsicle will need to be added to your PATH environment variable for Morpho to be able to access them by default.
+Please note that FFmpeg, Gifsicle, and img2webp will need to be added to your PATH environment variable for Morpho to be able to access them by default.
 
 For Morpho to be able to parse LaTeX code, you must have a LaTeX distribution installed along with [dvisvgm](https://dvisvgm.de/). But if you're okay with not using Morpho's LaTeX features, this requirement is optional.
 
