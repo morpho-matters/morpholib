@@ -3424,7 +3424,8 @@ class Animation(object):
     def delays(self, value):
         self._delays = IntDict(value)
 
-    @property
+    # Returns the width/height aspect ratio of the animation's
+    # window shape.
     def aspectRatioWH(self):
         WIDTH, HEIGHT = self.windowShape
         return WIDTH/HEIGHT
