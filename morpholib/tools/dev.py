@@ -243,8 +243,8 @@ def implementTransforms(draw):
 # post to an already drawn figure because doing so can modify the
 # non-physical attributes of the figure, such as `strokeWeight`.)
 #
-# Also auto-implements the actor actions `wiggle`, `growIn`, and
-# `shrinkOut` where applicable.
+# Also auto-implements the actor actions `wiggle`, `popIn/Out`, and
+# `squishIn/Out` where applicable.
 #
 # Optionally, keyword parameters can be passed into the decorator
 # as follows:
@@ -324,6 +324,14 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
                 )
         cls.actions["shrinkOut"] = popOut
 
+        # Scales the actor into its current state from being
+        # completely squished along one axis.
+        #
+        # INPUTS
+        # duration = Duration of action (frames). Default: 30.
+        # along = Axis along which to perform squish. Specified as a
+        #       complex number. Example: 1 = x-axis, 1j = y-axis.
+        #       Default: 1.
         @cls.action
         def squishIn(actor, duration=30, along=1):
             along = along/abs(along)  # Normalize
@@ -337,6 +345,13 @@ def Transformable2D(cls=None, *, exclude=set(), usepos=False):
             actor.newendkey(duration)
             fig0.transform = transform @ fig0.transform
 
+        # Scales the actor into non-existence along a certain axis.
+        #
+        # INPUTS
+        # duration = Duration of action (frames). Default: 30.
+        # along = Axis along which to perform squish. Specified as a
+        #       complex number. Example: 1 = x-axis, 1j = y-axis.
+        #       Default: 1.
         @cls.action
         def squishOut(actor, duration=30, along=1):
             along = along/abs(along)  # Normalize
