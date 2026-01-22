@@ -937,6 +937,30 @@ def subtween(film, target, subduration=30, *,
 
     film.subaction(subactionfunc, select=select, substagger=substagger)
 
+# Plays each subfigure of the Frame one after the other like
+# a flipbook.
+#
+# An optional input `delays` can be set to a nonnegative number
+# or a list of nonnegative numbers to specify the delays between
+# adjacent frames in the animation. If there are more subfigures
+# than specified delays, the delays will cycle back to the
+# beginning of the list.
+@Frame.action
+def animate(actor, delays=1):
+    if not isinstance(delays, (list, tuple)):
+        delays = [delays]
+    figures = actor.last().figures[:]
+
+    # Repeat delays list enough times so that it covers all the
+    # subfigures we have
+    delays = delays*(math.ceil(len(figures) / len(delays)))
+    delays = delays[:len(figures)-1]
+    delays = roundStable(delays)
+
+    actor.last().figures = [figures[0]]
+    for n, delay in enumerate(delays, start=1):
+        actor.newendkey(delay, instant=True).figures = [figures[n]]
+
 
 # Blank frame used by the Animation class.
 blankFrame = Frame()
