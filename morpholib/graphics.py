@@ -22,6 +22,13 @@ I2 = np.identity(2)
 # Syntax: Image(source)
 # where "source" can be a string defining a filepath or can be another
 # Image figure (or a derivative figure) to use its internal image data.
+#
+# If inputting a filepath, an additional integer `frame` can be
+# passed in to select a specific frame from an animated image
+# file. Initial frame is frame=0 and negative frame values will
+# be interpreted cyclically like indices for python lists.
+# If unspecified, the intial frame is taken.
+#
 # Source can be changed after construction by using the newSource()
 # method.
 #
@@ -52,14 +59,14 @@ I2 = np.identity(2)
 #            Default: True (physical units)
 @Transformable2D(exclude="origin")
 class Image(PreAlignableFigure):
-    def __init__(self, source=None):
+    def __init__(self, source=None, frame=0):
 
         # morpho.Figure.__init__(self)
         super().__init__()
 
         self.NonTweenable("imageSurface", None)
 
-        self.newSource(source)
+        self.newSource(source, frame)
 
         # Position in the complex plane
         pos = morpho.Tweenable("pos", 0, tags=["complex", "position"])
@@ -204,12 +211,42 @@ class Image(PreAlignableFigure):
         self.scaleByWidth(view, windowShape)
         return self
 
+    # Given the filepath for an image file and a selector of
+    # frame indices, returns a list of cairo ImageSurface objects
+    # corresponding to the selected frames.
+    @staticmethod
+    def _createSurfacesFromFile(source, frame=0):
+        # This is based on user Marwan Alsabbagh's code on StackOverflow.
+        # https://stackoverflow.com/a/13457584
+        from PIL import Image as PIL_Image
+        from io import BytesIO
+        with PIL_Image.open(source) as img:
+            # Get list of selected indices using `frame` as the selector
+            selection = listselect(range(getattr(img, "n_frames", 1)), frame).values()
+            surfaces = []
+            for index in selection:
+                img.seek(index)
+                with BytesIO() as buffer:
+                    img.save(buffer, format="PNG")
+                    buffer.seek(0)
+                    surfaces.append(cr.ImageSurface.create_from_png(buffer))
+        return surfaces
+
     # Supply a new source to the image figure.
     # Aspect ratio and width and height will NOT be changed!
     # You need to call either scaleByWidth() or scaleByHeight()
     # after supplying a new source if you want to re-adjust them
     # so there is no distortion.
-    def newSource(self, source):
+    #
+    # If inputting a filepath, an additional integer `frame` can be
+    # passed in to select a specific frame from an animated image
+    # file. Initial frame is frame=0 and negative frame values will
+    # be interpreted cyclically like indices for python lists.
+    # If unspecified, the intial frame is taken.
+    def newSource(self, source, frame=0):
+        if not isinstance(frame, int):
+            raise TypeError("`frame` must be an integer.")
+
         if source is None:
             self.imageSurface = None
         elif isinstance(source, str):
@@ -217,14 +254,7 @@ class Image(PreAlignableFigure):
             if source.lower().endswith("png"):
                 self.imageSurface = cr.ImageSurface.create_from_png(source)
             else:
-                # This is based on user Marwan Alsabbagh's code on StackOverflow.
-                # https://stackoverflow.com/a/13457584
-                from PIL import Image as PIL_Image
-                from io import BytesIO
-                with PIL_Image.open(source) as img, BytesIO() as buffer:
-                    img.save(buffer, format="PNG")
-                    buffer.seek(0)
-                    self.imageSurface = cr.ImageSurface.create_from_png(buffer)
+                self.imageSurface = self._createSurfacesFromFile(source, frame)[0]
         elif isinstance(source, Image) or isinstance(source, MultiImageBase):
             self.imageSurface = source.imageSurface
         elif isinstance(source, cairo.ImageSurface):
