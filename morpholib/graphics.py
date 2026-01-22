@@ -254,7 +254,8 @@ class Image(PreAlignableFigure):
             if source.lower().endswith("png"):
                 self.imageSurface = cr.ImageSurface.create_from_png(source)
             else:
-                self.imageSurface = self._createSurfacesFromFile(source, frame)[0]
+                surfaces = self._createSurfacesFromFile(source, frame)
+                self.imageSurface = surfaces[0] if len(surfaces) > 0 else None
         elif isinstance(source, Image) or isinstance(source, MultiImageBase):
             self.imageSurface = source.imageSurface
         elif isinstance(source, cairo.ImageSurface):
@@ -263,7 +264,7 @@ class Image(PreAlignableFigure):
             raise TypeError("Unrecognized source for image!")
 
         # Save pixel width and height of the input image.
-        if source is None:  # Dummy values if source is None
+        if self.imageSurface is None:  # Dummy values if source is None
             self.imageWidth = 1
             self.imageHeight = 1
         else:
