@@ -820,16 +820,48 @@ selfmethods = ["rescaleAspectRatioWH", "scaleByWidth", "scaleByHeight",
 @morpho.MultiFigure._modifyMethods(selfmethods, Image, morpho.MultiFigure._returnOrigCaller)
 class MultiImageBase(morpho.MultiFigure):
 
-    def __init__(self, source=None):
+    def __init__(self, source=None, frame=0, *args, **kwargs):
         if source is None:
-            images = []
-        elif isinstance(source, list) or isinstance(source, tuple):
-            images = [(Image(item) if isinstance(item, str) else item) for item in source]
-        else:
-            images = [Image(source)]
+            source = []
+        elif not isinstance(source, (list, tuple)):
+            source = [source]
+
+        if isinstance(frame, int):
+            frame = [frame]
+
+        images = self._createImages(source, frame)
 
         # Create frame figure
         super().__init__(images)
+
+    # Helper method generates a list of Image figures corresponding
+    # to the given source list and frame selector.
+    # When a source is a filepath, the `frame` selector is used to
+    # extract the corresponding frames from the image file, one per
+    # Image figure.
+    #
+    # If the source is not a filepath, `frame` is ignored for that
+    # source.
+    #
+    # Given multiple sources and a `frame` selector, Image
+    # figures are returned depth-first, with the selected frames
+    # for the first file, followed by the second file and so on.
+    #
+    # Additional inputs are passed in to the Image() constructor
+    # for each constructed Image figure.
+    @staticmethod
+    def _createImages(source, frame, *args, **kwargs):
+        images = []
+        for item in source:
+            if isinstance(item, str):  # item is a filepath. Use frame.
+                surfaces = Image._createSurfacesFromFile(item, frame)
+                images.extend(Image(surface, *args, **kwargs) for surface in surfaces)
+            elif isinstance(item, Image):
+                images.append(item)
+            else:  # item is not a filepath. Ignore frame.
+                images.append(Image(item, *args, **kwargs))
+        return images
+
 
     @property
     def images(self):
@@ -880,6 +912,10 @@ class MultiImageBase(morpho.MultiFigure):
 #
 # Bottom line: It's just like Image except you can tween between different
 # underlying image files.
+#
+# A list of image sources can optionally be passed in to the constructor
+# as well as a `frame` selector to select specific frames from image
+# files that contain multiple frames.
 @TransformableFrame.modifyFadeActions
 class MultiImage(MultiImageBase, TransformableFrame, PreAlignableFigure):
     @property
