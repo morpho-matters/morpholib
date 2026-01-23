@@ -945,11 +945,15 @@ def subtween(film, target, subduration=30, *,
 # adjacent frames in the animation. Default: 1.
 # If there are more subfigures than specified delays, the delays
 # will cycle back to the beginning of the list.
+#
+# The animation can be set to loop a certain number of times
+# by passing in a positive integer into keyword `times`.
 @Frame.action
-def animate(actor, delays=1):
+def animate(actor, delays=1, *, times=1):
     if not isinstance(delays, (list, tuple)):
         delays = [delays]
-    figures = actor.last().figures[:]
+    figures = list(actor.last().figures)
+    figures = figures + [fig.copy() for n in range(times-1) for fig in figures]
 
     # Repeat delays list enough times so that it covers all the
     # subfigures we have
