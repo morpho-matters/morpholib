@@ -942,9 +942,9 @@ def subtween(film, target, subduration=30, *,
 #
 # An optional input `delays` can be set to a nonnegative number
 # or a list of nonnegative numbers to specify the delays between
-# adjacent frames in the animation. If there are more subfigures
-# than specified delays, the delays will cycle back to the
-# beginning of the list.
+# adjacent frames in the animation. Default: 1.
+# If there are more subfigures than specified delays, the delays
+# will cycle back to the beginning of the list.
 @Frame.action
 def animate(actor, delays=1):
     if not isinstance(delays, (list, tuple)):
