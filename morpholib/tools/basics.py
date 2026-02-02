@@ -166,6 +166,8 @@ def roundStable(nums, decimals=0):
     result = np.diff(np.insert(np.round(np.cumsum(nums), decimals), 0, 0))
     if decimals == 0:
         result = result.astype(int)
+    if not isinstance(nums, np.ndarray):
+        result = result.tolist()
     return result
 
 # If a float is equal to an int, converts it into an int.
