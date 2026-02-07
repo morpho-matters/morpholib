@@ -3256,10 +3256,13 @@ class SpaceLayer(Layer):
 #       The generated locator layer positions are passed into this
 #       function and the return value is printed to the console instead.
 #       Default: Identity (do nothing) function z |--> z
-# clickTime = Boolean if set to True, prints current frame index to console
-#             whenever animation is clicked to pause.
-#             Options: "frames", "seconds"
+# clickTime = Enables printing a timestamp to the console
+#             whenever the animation is clicked to pause.
 #             Note: This ignores animation delays.
+#             Possible values:
+#                 "none" - Disables click time (default)
+#                 "frames" - Prints frame index value on click
+#                 "seconds" - Prints time as seconds on click
 # clickCopy = Boolean if set to True and locaterLayer is set, then every click
 #             will copy the complex coordinates of the click to the
 #             clipboard.
