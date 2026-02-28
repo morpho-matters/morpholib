@@ -988,7 +988,7 @@ SpaceMultimage = SpaceMultImage = SpaceMultiImage  # Synonyms
 # alpha = Opacity. Default: 1 (opaque)
 # origin = Translation value (complex number). Default: 0.
 @Transformable2D
-class RasterMap(BackgroundBoxFigure):
+class RasterMap(PreAlignableFigure, BackgroundBoxFigure):
     def __init__(self, array=None, view=(0,1,0,1), alpha=1):
         if array is None:
             array = np.array([1,1,1]).reshape(1,1,3)
@@ -1010,6 +1010,28 @@ class RasterMap(BackgroundBoxFigure):
     def array(self, value):
         self._array = morpho.array(value)
         # self._updateSurface()
+
+    # Alignment property returns alignment pair (anchor_x, anchor_y)
+    # of the viewbox relative to its local origin point.
+    @property
+    def align(self):
+        a,b,c,d = self.view
+        return (morpho.lerp(-1, 1, 0, a, b), morpho.lerp(-1, 1, 0, c, d))
+
+    # Moves the viewbox so that it has the specified alignment
+    # relative to its local origin point.
+    @align.setter
+    def align(self, value):
+        old_anchor_x, old_anchor_y = self.align
+        new_anchor_x, new_anchor_y = value
+        a,b,c,d = self.view
+
+        dx = new_anchor_x - old_anchor_x
+        dy = new_anchor_y - old_anchor_y
+
+        dX, dY = (b-a)*dx/2, (d-c)*dy/2
+
+        self.view = [a-dX, b-dX, c-dY, d-dY]
 
     def _createSurface(self):
         colorLength = self._array.shape[2]
@@ -1066,10 +1088,24 @@ class RasterMap(BackgroundBoxFigure):
         img._updateFrom(self, common=True)
         return img
 
-    def box(self, *, raw=False):
-        if raw:
-            return self.view
-        return morpho.grid.rect(self.view).box(raw=False)
+    # Returns the bounding box (with possible padding) of the RasterMap.
+    # If keyword `raw` is set to True, it will ignore `origin`,
+    # `rotation`, and `transform`.
+    #
+    # See also: relbox()
+    def box(self, *args, **kwargs):
+        return self._boxFromRelbox(*args, **kwargs)
+
+    # Same as box(), but the coordinates are relative to the RasterMap's
+    # physical position.
+    def relbox(self, pad=0, *, raw=False):
+        a,b,c,d = self.view
+
+        if not raw and not(self.rotation == 0 and np.array_equal(self._transform, I2)):
+            transform = self._transform
+            return BoundingBoxFigure._transformedBox([a,b,c,d], 0, self.rotation, transform, pad)
+        else:
+            return [a-pad, b+pad, c-pad, d+pad]
 
     def draw(self, camera, ctx):
         img = self._createImage()
