@@ -317,9 +317,11 @@ class Image(PreAlignableFigure):
         self.align = [2*X/self.imageWidth-1, 2*Y/self.imageHeight-1]
 
     # Returns the bounding box (with possible padding) of the image.
-    # If keyword `raw` is set to True, it will ignore `origin`,
+    # If keyword `raw` is set to True, it will ignore `pos`,
     # `rotation`, `transform`, and `scale` attributes.
     # Also assumes the image has `physical` set to True.
+    #
+    # See also: relbox()
     def box(self, *args, **kwargs):
         return self._boxFromRelbox(*args, **kwargs)
 
