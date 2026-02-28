@@ -232,6 +232,53 @@ class Image(PreAlignableFigure):
                     surfaces.append(cr.ImageSurface.create_from_png(buffer))
         return surfaces
 
+    # Converts a pycairo surface of dimensions (m x n) to an (m x n x 4)
+    # numpy array of normalized RGBA pixels.
+    #
+    # Normalization can be suppressed by passing in optional keyword
+    # normalize=False whereby the array will be of ints in the range
+    # [0, 255].
+    @staticmethod
+    def _surfaceToArray(surface, *, normalize=True):
+        # Disclosure: function was partly written using Claude AI
+
+        # Get surface dimensions
+        width = surface.get_width()
+        height = surface.get_height()
+
+        # Get the raw pixel data
+        data = surface.get_data()
+
+        # Convert to numpy array and reshape
+        # Cairo uses ARGB format in little-endian (BGRA on most systems)
+        pixels = np.frombuffer(data, dtype=np.uint8).reshape((height, width, 4))
+
+        # Convert BGRA to RGBA by rotating channels
+        pixels = pixels[:, :, [2, 1, 0, 3]]
+
+        # Normalize pixel values to [0,1] range if requested.
+        if normalize:
+            pixels = pixels/255
+
+        return pixels
+
+    # Returns an equivalent RasterMap representation of the Image.
+    # All transformation attributes will also be transferred over.
+    def toRasterMap(self):
+        array = self._surfaceToArray(self.imageSurface)
+
+        # Remove alpha channel if alpha is constantly 1.
+        if np.all(array[:,:,3] == 1):
+            array = array[:,:,:3]
+
+        # Create and configure RasterMap
+        raster = RasterMap(array,
+            view=self.box(raw=True)
+            )
+        raster._updateFrom(self, common=True)
+        raster.origin = self.pos
+        return raster
+
     # Supply a new source to the image figure.
     # Aspect ratio and width and height will NOT be changed!
     # You need to call either scaleByWidth() or scaleByHeight()
