@@ -1664,6 +1664,8 @@ class Path(BackgroundBoxFigure, AlignableFigure):
                 ctx.restore()
                 self._drawStroke(ctx, RGBA_start)
                 with morpho.pushPhysicalCoords(view, ctx):
+                    # Handle possible other transformations
+                    morpho.applyTransforms(ctx, self.origin, self.rotation, self.transform)
                     self._drawFill(camera, ctx)
             else:
                 # Fill first, then draw stroke

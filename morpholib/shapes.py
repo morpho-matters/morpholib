@@ -1515,10 +1515,14 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
             # Draw stroke first, then fill
             self._drawStroke(ctx, rgba)
             with morpho.pushPhysicalCoords(camera.view, ctx):
+                # Handle possible other transformations
+                morpho.applyTransforms(ctx, self.origin, self.rotation, self.transform)
                 self._drawFill(camera, ctx)
         else:
             # Fill first, then draw stroke
             with morpho.pushPhysicalCoords(camera.view, ctx):
+                # Handle possible other transformations
+                morpho.applyTransforms(ctx, self.origin, self.rotation, self.transform)
                 self._drawFill(camera, ctx)
             self._drawStroke(ctx, rgba)
         ctx.new_path()  # Reset cairo path

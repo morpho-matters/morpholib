@@ -511,6 +511,9 @@ class SavePoint(object):
 # (which is default after calling setupContext()), changes the cairo
 # coordinate system temporarily into physical coordinates based
 # on the viewbox you provide.
+# Note that applyTransforms() should typically be called
+# immediately following calling this function to handle possible
+# additional transformations of a figure's coordinate space.
 #
 # Please note that this function implicitly calls ctx.save() so that
 # you can later revert back to the original pixel coordinate system that
