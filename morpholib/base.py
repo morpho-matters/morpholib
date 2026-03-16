@@ -702,7 +702,15 @@ def parconj(par, rotation=0, transform=I2, *, inverse=False):
 # Apply the values of the given transformation parameters to the
 # given cairo context. Generally should be used AFTER
 # pushPhysicalCoords() is called.
-def applyTransforms(ctx, origin=0, rotation=0, transform=I2):
+#
+# If optional kwarg `save=True`, ctx.save() is called and a
+# SavePoint object is returned, allowing applyTransforms() to be
+# called using `with` syntax:
+#   with applyTransforms(ctx, ..., save=True):
+#       ...
+def applyTransforms(ctx, origin=0, rotation=0, transform=I2, *, save=False):
+    savept = SavePoint(ctx) if save else None
+
     # Handle possible other transformations
     if origin != 0:
         ctx.translate(origin.real, origin.imag)
@@ -717,6 +725,8 @@ def applyTransforms(ctx, origin=0, rotation=0, transform=I2):
         ctx.transform(mat)
     if (rotation % tau) != 0:
         ctx.rotate(rotation)
+
+    return savept
 
 
 ### INTERNAL SPARE CAIRO CONTEXT ###
