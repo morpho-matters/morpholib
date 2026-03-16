@@ -2796,6 +2796,7 @@ Ellipse.action(wiggle)
 # strokeWeight = Border thickness (in pixels). Default: 3
 # color = Border color (RGB list). Default: [1,1,1] (white)
 # alpha = Opacity. Default: 1 (opaque)
+@Transformable2D(exclude="origin")
 class EllipticalArc(morpho.Figure):
 
     def __init__(self, pos=0, xradius=1, yradius=None, theta0=0, theta1=None,
@@ -2896,6 +2897,7 @@ class EllipticalArc(morpho.Figure):
             ctx.translate(X,Y)
             WIDTH = max(morpho.pixelWidth(self.xradius, view, ctx), 0.1)
             HEIGHT = max(morpho.pixelHeight(self.yradius, view, ctx), 0.1)
+            morpho.applyTransforms(ctx, 0, self.rotation, self._transform)
             ctx.scale(WIDTH, HEIGHT)
 
             theta0, theta1 = self.theta0, self.theta1
@@ -2985,6 +2987,7 @@ class Pie(EllipticalArc):
             ctx.translate(X,Y)
             WIDTH = max(morpho.pixelWidth(self.xradius, view, ctx), 0.1)
             HEIGHT = max(morpho.pixelHeight(self.yradius, view, ctx), 0.1)
+            morpho.applyTransforms(ctx, 0, self.rotation, self._transform)
             ctx.scale(WIDTH, HEIGHT)
 
             theta0, theta1 = self.theta0, self.theta1
