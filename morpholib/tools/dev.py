@@ -258,7 +258,10 @@ def implementTransforms(draw):
 # usepos = Boolean if set to True renames the `origin` tweenable to
 #       `pos` since some implementations use that name instead.
 #       Default: False
-def Transformable2D(cls=None, *, exclude=set(), usepos=False):
+def Transformable2D(cls=None, *, exclude=None, usepos=False):
+    if exclude is None:
+        exclude = set()
+
     # Case where additional arguments are passed in to
     # the decorator
     if cls is None:
