@@ -2892,25 +2892,24 @@ class EllipticalArc(morpho.Figure):
 
         X,Y = morpho.screenCoords(self.pos, view, ctx)
 
-        ctx.save()
-        ctx.translate(X,Y)
-        WIDTH = max(morpho.pixelWidth(self.xradius, view, ctx), 0.1)
-        HEIGHT = max(morpho.pixelHeight(self.yradius, view, ctx), 0.1)
-        ctx.scale(WIDTH, HEIGHT)
+        with morpho.SavePoint(ctx):
+            ctx.translate(X,Y)
+            WIDTH = max(morpho.pixelWidth(self.xradius, view, ctx), 0.1)
+            HEIGHT = max(morpho.pixelHeight(self.yradius, view, ctx), 0.1)
+            ctx.scale(WIDTH, HEIGHT)
 
-        theta0, theta1 = self.theta0, self.theta1
-        # If angular span is greater than tau,
-        # just draw a circle
-        if abs(theta1 - theta0) >= tau:
-            theta1 = theta0 + sgn(theta1-theta0)*tau
+            theta0, theta1 = self.theta0, self.theta1
+            # If angular span is greater than tau,
+            # just draw a circle
+            if abs(theta1 - theta0) >= tau:
+                theta1 = theta0 + sgn(theta1-theta0)*tau
 
-        Z0 = cmath.exp(theta0*1j)
-        ctx.move_to(Z0.real, Z0.imag)
-        if theta0 <= theta1:
-            ctx.arc(0,0, 1, theta0, theta1)
-        else:
-            ctx.arc_negative(0,0, 1, theta0, theta1)
-        ctx.restore()
+            Z0 = cmath.exp(theta0*1j)
+            ctx.move_to(Z0.real, Z0.imag)
+            if theta0 <= theta1:
+                ctx.arc(0,0, 1, theta0, theta1)
+            else:
+                ctx.arc_negative(0,0, 1, theta0, theta1)
 
         if self.strokeWeight < 0.5:  # Don't stroke if strokeWeight is too small
             ctx.new_path()
@@ -2982,30 +2981,29 @@ class Pie(EllipticalArc):
 
         X,Y = morpho.screenCoords(self.pos, view, ctx)
 
-        ctx.save()
-        ctx.translate(X,Y)
-        WIDTH = max(morpho.pixelWidth(self.xradius, view, ctx), 0.1)
-        HEIGHT = max(morpho.pixelHeight(self.yradius, view, ctx), 0.1)
-        ctx.scale(WIDTH, HEIGHT)
+        with morpho.SavePoint(ctx):
+            ctx.translate(X,Y)
+            WIDTH = max(morpho.pixelWidth(self.xradius, view, ctx), 0.1)
+            HEIGHT = max(morpho.pixelHeight(self.yradius, view, ctx), 0.1)
+            ctx.scale(WIDTH, HEIGHT)
 
-        theta0, theta1 = self.theta0, self.theta1
-        # If angular span is greater than tau,
-        # just draw a circle
-        if abs(theta1 - theta0) >= tau:
-            theta1 = theta0 + tau
-        elif theta1 < theta0:
-            theta0, theta1 = theta1, theta0
+            theta0, theta1 = self.theta0, self.theta1
+            # If angular span is greater than tau,
+            # just draw a circle
+            if abs(theta1 - theta0) >= tau:
+                theta1 = theta0 + tau
+            elif theta1 < theta0:
+                theta0, theta1 = theta1, theta0
 
-        Z0 = cmath.exp(theta0*1j)
-        Z1 = cmath.exp(theta1*1j)
-        W0 = self.innerFactor*Z0
-        W1 = self.innerFactor*Z1
-        ctx.move_to(Z0.real, Z0.imag)
-        ctx.arc(0,0, 1, theta0, theta1)
-        ctx.line_to(W1.real, W1.imag)
-        ctx.arc_negative(0,0, self.innerFactor, theta1, theta0)
-        ctx.close_path()
-        ctx.restore()
+            Z0 = cmath.exp(theta0*1j)
+            Z1 = cmath.exp(theta1*1j)
+            W0 = self.innerFactor*Z0
+            W1 = self.innerFactor*Z1
+            ctx.move_to(Z0.real, Z0.imag)
+            ctx.arc(0,0, 1, theta0, theta1)
+            ctx.line_to(W1.real, W1.imag)
+            ctx.arc_negative(0,0, self.innerFactor, theta1, theta0)
+            ctx.close_path()
 
         # Draw the fill
         ctx.set_source_rgba(*self.fill, self.alphaFill*self.alpha)
