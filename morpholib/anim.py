@@ -1170,8 +1170,8 @@ class MultiFigure(Frame):
     #     return StateStruct(tweenableNames, figures)
 
     # If attempted to access a non-existent attribute,
-    # check if it's an attribute of the first figure in
-    # the figure list and return that instead.
+    # check if it's an attribute with a common value of
+    # the subfigures in the figure list and return its value.
     def __getattr__(self, name):
         # First try using the superclass's built-in getattr()
         # which should grab any valid attribute returns in the
