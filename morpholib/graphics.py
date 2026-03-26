@@ -954,10 +954,10 @@ class MultiImageBase(morpho.MultiFigure):
 # is internally more like a subclass of Frame. Contains at attribute called
 # "images" which is a list of vanilla Image instances that should be drawn.
 # However, attempting to access or modify an attribute that is NOT a part of
-# MultiImage will cause it to attempt to access/modify the attribute as part of
-# the first figure inside the "images" list. This allows you to syntactically treat
-# MultiImage as if it is a single Image, because you will mostly just be modifying
-# the first image in the "images" list.
+# MultiImage will cause it to attempt to access/modify the attribute across
+# all the images inside the "images" list. This allows you to syntactically treat
+# MultiImage as if it is a single Image, because most of the attributes
+# will be the same among subimages.
 #
 # Bottom line: It's just like Image except you can tween between different
 # underlying image files.
