@@ -10,6 +10,7 @@ cr = cairo
 
 import morpholib as morpho
 import morpholib.transitions, morpholib.giffer
+from morpholib.actions import wiggle
 from morpholib.tools.basics import *
 from morpholib.tools.ktimer import tic, toc
 import morpholib.tools.dev
@@ -2141,6 +2142,8 @@ class Camera(BoundingBoxFigure):
             return 4*t*(1-t)*(midscale-1) + 1
 
         return cls.tweenZoomWithMultiplier(multiplierFunc)
+
+Camera.action(wiggle)
 
 # Alternate name for the Camera class for backward compatibility.
 View = Camera
