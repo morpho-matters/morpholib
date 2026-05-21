@@ -924,7 +924,14 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
     # You can optionally specify a non-zero tension value.
     #   spline.autosetHandles(tension=0.75)
     # By default, tension=1 for a standard Catmull-Rom spline.
-    def autosetHandles(self, a=None, b=None, /, *, tension=1, viaInhandles=False):
+    #
+    # If given optional keyword `close=True`, the spline will be closed
+    # in place and the handles will be set while taking the closure into
+    # account to produce a more seamless closed curve. Note that this
+    # option expects the initial spline to be unclosed, so you shouldn't
+    # pre-close the spline before using this option.
+    def autosetHandles(self, a=None, b=None, /, *,
+            tension=1, viaInhandles=False, close=False):
         if a is None:
             a = 0
             b = self.nodeCount()
@@ -945,14 +952,18 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
 
         nodeCount = self.nodeCount()
         for n in range(a, b):
-            prevIndex = max(0, n-1)
-            nextIndex = min(n+1, nodeCount-1)
+            prevIndex = max(0-close, n-1)
+            nextIndex = min(n+1, nodeCount-1+close)
             node = self.node(n)
-            prevNode = self.node(prevIndex)
-            nextNode = self.node(nextIndex)
+            prevNode = self.node(prevIndex % nodeCount)
+            nextNode = self.node(nextIndex % nodeCount)
             vector = (nextNode - prevNode)/(3*tension*(nextIndex-prevIndex))
             handleMethod(n, vector)
             autoMethod(n, oo)
+
+        if close:
+            self.close(straight=False)
+
         return self
 
     # Returns the interpolated position along the path corresponding to the
