@@ -2443,20 +2443,20 @@ class SpaceSpline(Spline):
         # Apply orient matrix transformation to all the vectors
         # along the final axis (axis 2)
         array = self._data
-        if not np.allclose(self.origin, 0):
-            # DON'T SIMPLIFY THIS LINE TO += !!!
-            # We do NOT want this operation performed in place here!
-            # It could end up modifying the original self._data!
-            array = array + self.origin
-        if not np.allclose(focus, 0):
-            array = array - focus  # Do NOT simplify this to -= !!!
-            array = np.tensordot(array, orient[:2,:], axes=((2),(1)))
-            array += focus[:2]  # In place operation here is fine cuz array was replaced via arithmetic above
-        else:
-            array = np.tensordot(array, orient[:2,:], axes=((2),(1)))
-        nan2inf(array)
-
         with np.errstate(all="ignore"):  # Suppress numpy warnings
+            if not np.allclose(self.origin, 0):
+                # DON'T SIMPLIFY THIS LINE TO += !!!
+                # We do NOT want this operation performed in place here!
+                # It could end up modifying the original self._data!
+                array = array + self.origin
+            if not np.allclose(focus, 0):
+                array = array - focus  # Do NOT simplify this to -= !!!
+                array = np.tensordot(array, orient[:2,:], axes=((2),(1)))
+                array += focus[:2]  # In place operation here is fine cuz array was replaced via arithmetic above
+            else:
+                array = np.tensordot(array, orient[:2,:], axes=((2),(1)))
+            nan2inf(array)
+
             array2d = array[:,:,0] + 1j*array[:,:,1]
         spline = Spline(data=array2d)
         spline._updateFrom(self, common=True, copy=False, ignore={"_data"}.union(morpho.METASETTINGS))
