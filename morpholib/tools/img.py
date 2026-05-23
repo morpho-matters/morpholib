@@ -16,9 +16,9 @@ def toPil(surface):
         pilMode = 'RGB'
         # Cairo has ARGB. Convert this to RGB for PIL which supports only RGB or
         # RGBA.
-        argbArray = numpy.fromstring( bytes(surface.get_data()), 'c' ).reshape( -1, 4 )
+        argbArray = numpy.frombuffer( bytes(surface.get_data()), 'c' ).reshape( -1, 4 )
         rgbArray = argbArray[ :, 2::-1 ]
-        pilData = rgbArray.reshape( -1 ).tostring()
+        pilData = rgbArray.reshape( -1 ).tobytes()
     else:
         raise ValueError( 'Unsupported cairo format: %d' % cairoFormat )
     with Image.frombuffer( pilMode,
