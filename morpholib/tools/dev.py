@@ -990,7 +990,7 @@ def overshootIn(actor, overshoot, attr, reverse=False):
         h = T - h
     if 0 < h < T:
         fig = actor.newkey(t1+h, seamless=False)
-        setattr(fig, attr, factor*getattr(fig, attr))
+        setattr(fig, attr, factor*getattr(actor.last(), attr))
 
 # Decorator generator that modifies an in/out actor action to support
 # overshooting.
