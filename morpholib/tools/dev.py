@@ -317,6 +317,7 @@ def Transformable2D(cls=None, *, exclude=None, usepos=False):
         cls.actions["growIn"] = popIn
 
         @cls.action
+        @enableOvershooting("transform", reverse=True)
         def popOut(actor, duration=30, atFrame=None):
             if atFrame is None:
                 atFrame = actor.lastID()
@@ -988,9 +989,12 @@ def overshootIn(actor, overshoot, attr, reverse=False):
     h = round(overshootCenter(factor, T))
     if reverse:
         h = T - h
+        value = factor*getattr(actor.key[-2], attr)
+    else:
+        value = factor*getattr(actor.last(), attr)
     if 0 < h < T:
         fig = actor.newkey(t1+h, seamless=False)
-        setattr(fig, attr, factor*getattr(actor.last(), attr))
+        setattr(fig, attr, value)
 
 # Decorator generator that modifies an in/out actor action to support
 # overshooting.

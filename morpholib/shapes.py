@@ -2781,6 +2781,7 @@ def popIn(ellipse, duration=30, atFrame=None):
 # Animates an Ellipse actor disappearing by shrinking
 # its radii to zero.
 @Ellipse.action
+@enableOvershooting("transform", reverse=True)
 def popOut(ellipse, duration=30, atFrame=None):
     if atFrame is None:
         atFrame = ellipse.lastID()
