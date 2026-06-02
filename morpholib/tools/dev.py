@@ -313,15 +313,6 @@ def Transformable2D(cls=None, *, exclude=None, usepos=False):
             fig1 = actor.newkey(atFrame).set(visible=True)
             fig0.visible = False
             fig2 = actor.newendkey(duration)
-            # overshootPopIn(actor, overshoot, "transform")
-            # if overshoot > 0:
-            #     # Compute keyframe for overshoot.
-            #     k = 1+overshoot
-            #     T = duration
-            #     h = round(overshootCenter(k, T))
-            #     if 0 < h < T:
-            #         fig2 = actor.newkey(atFrame+h, seamless=False)
-            #         fig2.transform = k*fig2.transform
             fig1.transform = np.array([[0,0],[0,0]])
         cls.actions["growIn"] = popIn
 
