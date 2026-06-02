@@ -304,7 +304,8 @@ def Transformable2D(cls=None, *, exclude=None, usepos=False):
         cls.transform = property(getter, setter)
 
         @cls.action
-        def popIn(actor, duration=30, atFrame=None):
+        @enableOvershooting("transform")
+        def popIn(actor, duration=30, atFrame=None, *, overshoot=0):
             if atFrame is None:
                 atFrame = actor.lastID()
 
@@ -312,6 +313,15 @@ def Transformable2D(cls=None, *, exclude=None, usepos=False):
             fig1 = actor.newkey(atFrame).set(visible=True)
             fig0.visible = False
             fig2 = actor.newendkey(duration)
+            # overshootPopIn(actor, overshoot, "transform")
+            # if overshoot > 0:
+            #     # Compute keyframe for overshoot.
+            #     k = 1+overshoot
+            #     T = duration
+            #     h = round(overshootCenter(k, T))
+            #     if 0 < h < T:
+            #         fig2 = actor.newkey(atFrame+h, seamless=False)
+            #         fig2.transform = k*fig2.transform
             fig1.transform = np.array([[0,0],[0,0]])
         cls.actions["growIn"] = popIn
 
@@ -965,3 +975,58 @@ def makesubcopies(lst, slots, number, itemfunc=lambda item: item):
         for n in range(copiesPerSlot+int(i < remainder)):
             lst.insert(index, itemfunc(item))
     return lst
+
+# Returns the intermediate time coordinate for an overshoot
+# calculation.
+#
+# Specifically, given a quadratic function q(t) satisfying
+#   q(0) = 0, q(span) = 1, and max(q) = peak,
+# returns the t-value of the vertex point between 0 and
+# `duration`.
+def overshootCenter(peak, duration=1):
+    k = peak
+    T = duration
+    return T*(k-math.sqrt(k*(k-1)))
+
+# Modifies an actor after popIn() has been called
+def overshootIn(actor, overshoot, attr, reverse=False):
+    factor = 1 + overshoot
+    t1 = actor.keyID[-2]
+    t2 = actor.keyID[-1]
+    T = t2 - t1
+    h = round(overshootCenter(factor, T))
+    if reverse:
+        h = T - h
+    if 0 < h < T:
+        fig = actor.newkey(t1+h, seamless=False)
+        setattr(fig, attr, factor*getattr(fig, attr))
+
+# Decorator generator that modifies an in/out actor action to support
+# overshooting.
+#
+# Syntax:
+#   @MyFigure.action
+#   @enableOvershooting("some_size_attribute")
+#   def myaction(actor, ...):
+#       ...
+#
+# where "some_size_attribute" represents the tweenable whose value
+# will be multiplied by the overshoot factor. Most commonly, this
+# will be "transform", but could be "size" or "width".
+#
+# After being applied, the actor action will gain the `overshoot`
+# keyword parameter which can be set to a positive value to indicate
+# how much bigger the actor should get before settling on its
+# final size. For example, overshoot=0.5 means the actor will get
+# 50% larger than its final size before settling on its final size.
+def enableOvershooting(attr, reverse=False):
+    if not isinstance(attr, str):
+        raise TypeError(f"`attr` must be string, not '{type(attr).__name__}'")
+    def decorator(action):
+        def wrapper(actor, *args, overshoot=0, **kwargs):
+            action(actor, *args, **kwargs)
+            if overshoot > 0:
+                overshootIn(actor, overshoot, attr, reverse=reverse)
+        wrapper.__name__ = action.__name__
+        return wrapper
+    return decorator
