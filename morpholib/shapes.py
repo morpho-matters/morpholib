@@ -125,6 +125,9 @@ def handleSplineNodeInterp(tweenmethod):
 #        of ints which are traversed cyclically and will alternatingly indicate
 #        number of pixels of visibility and invisibility.
 # dashOffset = Where along the dash pattern it will start. Default: 0
+# outlineWidth = Thickness of path outline (in pixels). Default: 0 (no outline)
+# outlineColor = Outline color (RGB vector-like). Default: [0,0,0] (black)
+# outlineAlpha = Outline opacity. Default: 1 (opaque)
 # origin = Translation value (complex number). Default: 0 (complex number).
 # rotation = Path rotation about origin point (radians). Default: 0
 # transform = Transformation matrix applied after all else. Default: np.eye(2)
@@ -170,6 +173,9 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
         self.Tweenable(name="width", value=width, tags=["size", "pixel"])
         self.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
         self.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
+        self.Tweenable("outlineWidth", 0, tags=["scalar", "pixel"])
+        self.Tweenable("outlineColor", [0,0,0], tags=["color"])
+        self.Tweenable("outlineAlpha", 1, tags=["scalar"])
 
         # Set of indices that represent where a path should terminate.
         self.Tweenable("deadends", set(), tags=["notween"])
@@ -1330,6 +1336,30 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
     _drawStroke = morpho.grid.Path._drawStroke
     _drawFill = morpho.grid.Path._drawFill
 
+    # For internal use.
+    # Helper method to draw the outline for a spline.
+    def _drawOutline(self, ctx):
+        # Save original values of attributes that will be
+        # temporarily modified.
+        oldWidth = self.width
+        oldColor = self.color
+        oldAlphaEdge = self.alphaEdge
+        try:
+            ctx.set_line_cap(cairo.LINE_CAP_SQUARE)
+            self.width = abs(self.width) + 2*self.outlineWidth
+            self.color = self.outlineColor
+            self.alphaEdge = self.alphaEdge * self.outlineAlpha
+
+            rgba = list(self.color)
+            rgba.append(self.alpha*self.alphaEdge)
+
+            self._drawStroke(ctx, rgba)
+        finally:
+            self.width = oldWidth
+            self.color = oldColor
+            self.alphaEdge = oldAlphaEdge
+            ctx.set_line_cap(cairo.LINE_CAP_BUTT)
+
     def draw(self, camera, ctx):
 
         self._drawBackgroundBox(camera, ctx, self.origin, self.rotation, self._transform)
@@ -1520,6 +1550,10 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
         if allowLoopClosures and z == latestDeadStart and not isbadnum(z):
             ctx.close_path()
 
+        # Handle outline
+        if self.outlineWidth > 0 and self.outlineAlpha > 0:
+            self._drawOutline(ctx)
+
         # Stroke and fill the path
         rgba = list(self.color) + [self.alpha*self.alphaEdge]
         if self.width < 0:
@@ -1607,6 +1641,10 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
         # the spline, except for deadends
         path = morpho.grid.Path([])
         path._updateFrom(self, common=True, ignore="deadends")
+
+        # Spline only supports "cap" outline method for now,
+        # so hard code it in to the resulting path
+        path.outlineMethod = "cap"
 
         # Given empty spline, return empty path
         if self.length() == 0:
