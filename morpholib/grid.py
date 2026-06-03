@@ -10,7 +10,7 @@ from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
     BackgroundBoxFigure, AlignableFigure, totalBox, shiftBox, \
     translateArrayUnderTransforms, handleBoxTypecasting, AmbiguousValueError, \
-    Transformable2D, enableOvershooting
+    Transformable2D
 
 from morpholib import object_hasattr
 
@@ -124,7 +124,7 @@ class Point(morpho.Figure):
             ctx.set_dash([])
 
 @Point.action
-@enableOvershooting("size")
+@morpho.actions.enableOvershooting("size")
 def growIn(point, duration=30, atFrame=None, *, overshoot=0):
     if atFrame is None:
         atFrame = point.lastID()
@@ -143,7 +143,7 @@ def popIn(point, *args, **kwargs):
     return Point.actions["growIn"](point, *args, **kwargs)
 
 @Point.action
-@enableOvershooting("size", reverse=True)
+@morpho.actions.enableOvershooting("size", reverse=True)
 def shrinkOut(point, duration=30, atFrame=None):
     if atFrame is None:
         atFrame = point.lastID()
@@ -1901,7 +1901,7 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
 # parameter can be passed in by keyword to specify the focus point
 # in terms of a location on the path's bounding box.
 @Path.action
-@enableOvershooting("transform")
+@morpho.actions.enableOvershooting("transform")
 def popIn(path, duration=30, atFrame=None, *, align=None, focus=0,
         overshoot=0):
     if atFrame is None:
@@ -1925,7 +1925,7 @@ def popIn(path, duration=30, atFrame=None, *, align=None, focus=0,
 # parameter can be passed in by keyword to specify the focus point
 # in terms of a location on the path's bounding box.
 @Path.action
-@enableOvershooting("transform", reverse=True)
+@morpho.actions.enableOvershooting("transform", reverse=True)
 def popOut(path, duration=30, atFrame=None, *, align=None, focus=0):
     if atFrame is None:
         atFrame = path.lastID()

@@ -4,6 +4,7 @@ animation actions.
 '''
 
 import morpholib as morpho
+import numpy as np
 from morpholib.tools.basics import aslist
 import math
 
@@ -346,3 +347,118 @@ action = MultiActionSummoner()
 # Usage example:
 # subaction.fadeIn(actorlist, 20, substagger=3, stagger=10)
 subaction = MultiSubactionSummoner()
+
+
+### HELPERS ###
+
+# Returns the intermediate time coordinate for an overshoot
+# calculation.
+#
+# Specifically, given a quadratic function q(t) satisfying
+#   q(0) = 0, q(span) = 1, and max(q) = peak,
+# returns the t-value of the vertex point between 0 and
+# `duration`.
+def _overshootCenter(peak, duration=1):
+    k = peak
+    T = duration
+    return T*(k-math.sqrt(k*(k-1)))
+
+# Modifies an actor after the action has been completed to
+# incorporate an overshoot via the action `overaction`
+def _applyOvershoot(actor, overshoot, overaction, reverse=False):
+    t1 = actor.keyID[-2]
+    t2 = actor.keyID[-1]
+    T = t2 - t1
+    h = round(_overshootCenter(1+overshoot, T))
+    if reverse:
+        h = T - h
+    if 0 < h < T:
+        # fig = actor.newkey(t1+h, seamless=False)
+        overaction(actor, h, overshoot)
+
+# Decorator generator that modifies an in/out actor action to support
+# overshooting.
+#
+# Syntax:
+#   @MyFigure.action
+#   @enableOvershooting(overaction)
+#   def myaction(actor, ...):
+#       ...
+#
+# where `overaction` can either be the name of a tweenable which will be
+# scaled as part of overshooting. Most commonly this will be
+# "transform", but could also be "size" or "width".
+# `overaction` can also be a function of the form
+#   overaction(actor, h, overshoot)
+# where `h` represents the number of frames after the actor's current
+# final frame in which to create an overshot keyframe,
+# and `overshoot` is the overshoot parameter (see below).
+# will be multiplied by the overshoot factor. Most commonly, this
+# will be "transform", but could be "size" or "width".
+#
+# After being applied, the actor action will gain the `overshoot`
+# keyword parameter which can be set to a positive value to indicate
+# how much bigger the actor should get before settling on its
+# final size. For example, overshoot=0.5 means the actor will get
+# 50% larger than its final size before settling on its final size.
+#
+# If optional keyword `reverse=True` is passed in, the location of
+# the overshot keyframe will be reflected, which will cause the
+# overshoot timing to be relative to the INITIAL keyframe of the
+# action rather than its FINAL keyframe (e.g. in a popOut action).
+def enableOvershooting(overaction, *, reverse=False):
+    if isinstance(overaction, str):
+        attr = overaction
+        overaction = scaleAttr(attr)
+    def decorator(action):
+        def wrapper(actor, *args, overshoot=0, **kwargs):
+            action(actor, *args, **kwargs)
+            if overshoot > 0:
+                _applyOvershoot(actor, overshoot, overaction, reverse=reverse)
+        wrapper.__name__ = action.__name__
+        return wrapper
+    return decorator
+
+# Returns the overshooting modifying function in which overshooting
+# is performed via scaling up a single attribute of a figure.
+# Enables the functionality in which enableOvershooting() can accept
+# an attribute name.
+def scaleAttr(attr):
+    def overaction(actor, h, overshoot):
+        t1 = actor.keyID[-2]
+
+        # The value on which the overshoot factor is multiplied
+        # is taken to be whichever value is largest in magnitude.
+        val1 = getattr(actor.key[-2], attr)
+        val2 = getattr(actor.key[-1], attr)
+        value = max(val1, val2, key=lambda v: np.linalg.norm(v))
+
+        midfig = actor.newkey(t1+h, seamless=False)
+        setattr(midfig, attr, (1+overshoot)*value)
+    return overaction
+
+# Enables overshooting for actor actions that involve translations,
+# such as move() and fadeIn/Out().
+def translationOvershootAct(actor, h, overshoot):
+    t1 = actor.keyID[-2]
+    fig1 = actor.key[-2]
+    fig2 = actor.key[-1]
+    midfig = actor.newkey(t1+h, seamless=False)
+
+    dz = fig2._oripos - fig1._oripos
+
+    midfig._oripos = fig1._oripos + (1+overshoot)*dz
+
+# Same as translationOvershootAct() but prioritizes accessing/modifying
+# the "pos" attribute over "origin"
+# i.e. it uses the hidden attribute "_posori" to handle translations
+# instead of `_oripos`.
+def translationOvershootAct2(actor, h, overshoot):
+    t1 = actor.keyID[-2]
+    fig1 = actor.key[-2]
+    fig2 = actor.key[-1]
+    midfig = actor.newkey(t1+h, seamless=False)
+
+    dz = fig2._posori - fig1._posori
+
+    midfig._posori = fig1._posori + (1+overshoot)*dz

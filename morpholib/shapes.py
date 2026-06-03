@@ -5,7 +5,7 @@ from morpholib.tools.basics import *
 from morpholib.tools.dev import drawOutOfBoundsStartEnd, BoundingBoxFigure, \
     BackgroundBoxFigure, AlignableFigure, totalBox, shiftBox, \
     translateArrayUnderTransforms, handleBoxTypecasting, typecastView, \
-    typecastWindowShape, findOwnerByType, Transformable2D, enableOvershooting
+    typecastWindowShape, findOwnerByType, Transformable2D
 from morpholib.matrix import mat
 from morpholib.anim import MultiFigure
 from morpholib.combo import TransformableFrame, FancyFrame
@@ -2803,7 +2803,7 @@ class Ellipse(morpho.Figure):
 # Animates an Ellipse actor appearing by growing its
 # radii from zero.
 @Ellipse.action
-@enableOvershooting("transform")
+@morpho.actions.enableOvershooting("transform")
 def popIn(ellipse, duration=30, atFrame=None):
     if atFrame is None:
         atFrame = ellipse.lastID()
@@ -2819,7 +2819,7 @@ def popIn(ellipse, duration=30, atFrame=None):
 # Animates an Ellipse actor disappearing by shrinking
 # its radii to zero.
 @Ellipse.action
-@enableOvershooting("transform", reverse=True)
+@morpho.actions.enableOvershooting("transform", reverse=True)
 def popOut(ellipse, duration=30, atFrame=None):
     if atFrame is None:
         atFrame = ellipse.lastID()
