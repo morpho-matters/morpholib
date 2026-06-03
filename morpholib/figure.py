@@ -252,6 +252,8 @@ class Figure(object):
     # Its purpose is to provide a unified way to get/set a
     # figure's "origin" transformation attribute even if the
     # figure uses `pos` for that purpose (e.g. Image)
+    #
+    # See also: `_posori`
     @property
     def _oripos(self):
         try:
@@ -270,6 +272,33 @@ class Figure(object):
             self.origin = value
         elif hasattr(self, "pos"):
             self.pos = value
+        else:
+            raise AttributeError("Figure possesses neither `origin` nor `pos` attribute.")
+
+    # `_posori` is a hidden property that accesses/sets a figure's
+    # `pos` attribute if it exists, otherwise tries to do so
+    # for its `origin` attribute. If neither exists, throws an
+    # AttributeError.
+    #
+    # See also: `_oripos`
+    @property
+    def _posori(self):
+        try:
+            return self.pos
+        except AttributeError:
+            pass
+
+        try:
+            return self.origin
+        except AttributeError:
+            raise AttributeError("Figure possesses neither `origin` nor `pos` attribute.")
+
+    @_posori.setter
+    def _posori(self, value):
+        if hasattr(self, "pos"):
+            self.pos = value
+        elif hasattr(self, "origin"):
+            self.origin = value
         else:
             raise AttributeError("Figure possesses neither `origin` nor `pos` attribute.")
 
@@ -1207,6 +1236,7 @@ class Figure(object):
 
 # Equivalent to morpho.actions.fadeIn(self)
 @Figure.action
+@morpho.actions.enableOvershooting(morpho.actions.translationOvershootAct)
 def fadeIn(self, *args, **kwargs):
     morpho.actions.fadeIn(self, *args, **kwargs)
 
@@ -1218,6 +1248,7 @@ def fadeIn(self, *args, **kwargs):
 
 # Equivalent to morpho.actions.fadeOut(self)
 @Figure.action
+@morpho.actions.enableOvershooting(morpho.actions.translationOvershootAct)
 def fadeOut(self, *args, **kwargs):
     morpho.actions.fadeOut(self, *args, **kwargs)
     return None
@@ -1248,6 +1279,7 @@ def blink(actor, duration=15, atFrame=None, *, times=1):
 # possesses either a `pos` or `origin` attribute.
 # If a figure possesses both, only `pos` will be used.
 @Figure.action
+@morpho.actions.enableOvershooting(morpho.actions.translationOvershootAct2)
 def move(actor, vector, duration=30):
     # if vector is None:
     #     raise ValueError("No movement vector given.")
