@@ -4183,6 +4183,10 @@ class Animation(object):
             if self.delays[time] == oo:
                 self.delays[time] = delay
 
+    # Sets animation `start` parameter to its current last frame.
+    def bookmark(self):
+        self.start = self.lastID()
+
     # Offsets the layers times by the given number of frames.
     # mation.offsetLayers(30)
     # Optionally, you can specify a single layer:
