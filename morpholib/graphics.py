@@ -869,7 +869,7 @@ selfmethods = ["rescaleAspectRatioWH", "scaleByWidth", "scaleByHeight",
 @morpho.MultiFigure._modifyMethods(selfmethods, Image, morpho.MultiFigure._returnOrigCaller)
 class MultiImageBase(morpho.MultiFigure):
 
-    def __init__(self, source=None, frame=0, *args, **kwargs):
+    def __init__(self, source=None, frame=0):
         if source is None:
             source = []
         elif not isinstance(source, (list, tuple)):
