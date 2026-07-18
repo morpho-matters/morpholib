@@ -2941,6 +2941,22 @@ class Layer(object):
                 raise MaskConfigurationError("Can't pretween this layer because the mask chain forms a loop.")
             self.mask.pretween()
 
+    # Generator yields all the layers (including self) in the layer's
+    # mask chain, assuming it doesn't form a loop.
+    def maskChain(self):
+        if self.maskChainFormsLoop():
+            raise MaskConfigurationError("The mask chain of the layers form a loop.")
+        currentLayer = self
+        while currentLayer is not None:
+            yield currentLayer
+            currentLayer = currentLayer.mask
+
+    # Generator yields all the layers in the mask chain EXCEPT for self.
+    def allMasks(self):
+        chain = self.maskChain()
+        next(chain)
+        yield from chain
+
     # Check if the chain of layer masks forms a loop.
     # Return boolean indicating result. True: loop exists; False: no loop.
     def maskChainFormsLoop(self):
@@ -4213,12 +4229,7 @@ class Animation(object):
     # masks) in the animation via a depth-first search.
     def allLayers(self):
         for layer in self.layers:
-            if layer.maskChainFormsLoop():
-                raise MaskConfigurationError("The mask chain of the layers form a loop.")
-            currentLayer = layer
-            while currentLayer is not None:
-                yield currentLayer
-                currentLayer = currentLayer.mask
+            yield from layer.maskChain()
 
     # Multiplies all the pixel values of all the tweenables of all
     # the keyfigures in the animation across all layers by the given
