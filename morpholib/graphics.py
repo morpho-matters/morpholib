@@ -6,7 +6,7 @@ import morpholib.grid
 from morpholib.actions import wiggle
 from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
-from morpholib.tools.dev import BoundingBoxFigure, \
+from morpholib.tools.dev import BoundingBoxFigure, makesubcopies, \
     BackgroundBoxFigure, PreAlignableFigure, Transformable2D
 
 import cairo
@@ -801,11 +801,11 @@ def Multi(imageMethod, mainMethod=morpho.Figure.tweenLinear, *, reverseMethod=No
         if diff > 0:
             # Temporarily extend the image list of other with copies of
             # other's subimages
+            subpool = other._parseSubpool()
             orig_figures = other.images
-            extension = []
-            for i in range(diff):
-                extension.append(other.images[i%len(other.images)].copy())
-            other.images = extension + other.images
+            other.images = other.images[:]
+            makesubcopies(other.figures, subpool, abs(diff))
+
             tw = wrapper(self, other, t)
             # Restore other to its original state
             other.images = orig_figures
@@ -813,11 +813,11 @@ def Multi(imageMethod, mainMethod=morpho.Figure.tweenLinear, *, reverseMethod=No
         elif diff < 0:
             # Temporarily extend the image list of self with copies of
             # self's subimages
+            subpool = self._parseSubpool()
             orig_figures = self.images
-            extension = []
-            for i in range(-diff):
-                extension.append(self.images[i%len(self.images)].copy())
-            self.images = extension + self.images
+            self.images = self.images[:]
+            makesubcopies(self.figures, subpool, abs(diff))
+
             tw = wrapper(self, other, t)
             # Restore self to its original state
             self.images = orig_figures

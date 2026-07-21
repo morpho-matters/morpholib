@@ -6,7 +6,7 @@ from morpholib.combo import TransformableFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import typecastViewCtx, typecastView, \
     typecastWindowShape, BoundingBoxFigure, BackgroundBoxFigure, \
-    PreAlignableFigure, AlignableFigure, Transformable2D
+    PreAlignableFigure, AlignableFigure, Transformable2D, makesubcopies
 
 import cairo
 cr = cairo
@@ -788,11 +788,11 @@ def Multi(imageMethod, mainMethod=morpho.Figure.tweenLinear, *, reverseMethod=No
         if diff > 0:
             # Temporarily extend the image list of other with copies of
             # other's subfigures
+            subpool = other._parseSubpool()
             orig_figures = other.figures
-            extension = []
-            for i in range(diff):
-                extension.append(other.figures[i%len(other.figures)].copy())
-            other.figures = extension + other.figures
+            other.figures = other.figures[:]
+            makesubcopies(other.figures, subpool, abs(diff))
+
             tw = wrapper(self, other, t)
             # Restore other to its original state
             other.figures = orig_figures
@@ -800,11 +800,11 @@ def Multi(imageMethod, mainMethod=morpho.Figure.tweenLinear, *, reverseMethod=No
         elif diff < 0:
             # Temporarily extend the image list of self with copies of
             # self's subfigures
+            subpool = self._parseSubpool()
             orig_figures = self.figures
-            extension = []
-            for i in range(-diff):
-                extension.append(self.figures[i%len(self.figures)].copy())
-            self.figures = extension + self.figures
+            self.figures = self.figures[:]
+            makesubcopies(self.figures, subpool, abs(diff))
+
             tw = wrapper(self, other, t)
             # Restore self to its original state
             self.figures = orig_figures
