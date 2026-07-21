@@ -4990,10 +4990,19 @@ def ellipse_old(z0, a, b, dTheta=5, phase=0, polar=False):
 # Return a generic polygon figure in the shape of the given box.
 # Box is specified as [xmin, xmax, ymin, ymax]
 #
-# If optional keyword input `relative` is set to True, the rect
-# will be centered using the `origin` attribute.
+# An optional `pad` value may also be inputted to pad the box
+# by a certain number of physical units.
+#
+# OPTIONAL KEYWORD-ONLY INPUTS
+# corner = Which corner should the animation start at?
+#          Values are given as diagonal compass directions:
+#          "NW", "SW", "SE", "NE". Default: "NW"
+# CCW = Boolean specifying draw direction being counter-clockwise or not.
+#       Default: True
+# relative = Boolean if set to True will center the rectangle using
+#            its `origin` attribute.
 @handleBoxTypecasting
-def rect(box, pad=0, *, relative=False):
+def rect(box, pad=0, *, corner="NW", CCW=True, relative=False):
     a,b,c,d = box
     a -= pad
     b += pad
@@ -5004,7 +5013,20 @@ def rect(box, pad=0, *, relative=False):
     NE = b + d*1j
     SE = b + c*1j
 
+    # Handle corner order
+    corner = corner.upper().strip()
+    cornerNames = ["NW", "SW", "SE", "NE"]
+    if corner not in cornerNames:
+        raise ValueError('`corner` must be "NW", "SW", "SE", or "NE".')
     corners = [NW, SW, SE, NE]
+
+    if not CCW:
+        corners = corners[::-1]
+        cornerNames = cornerNames[::-1]
+
+    i = cornerNames.index(corner)
+    corners = corners[i:] + corners[:i]
+
 
     # Initialize polygon
     poly = Polygon()
