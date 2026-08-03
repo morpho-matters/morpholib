@@ -3069,7 +3069,10 @@ class Axis(Track):
         if not np.array_equal(self._transform, I2):
             mat = morpho.matrix.Mat(self._transform)
             vector = mat*vector
-        unit = vector/abs(vector)
+        try:
+            unit = vector/abs(vector)
+        except ZeroDivisionError:
+            return  # Don't attempt to draw zero-length axis.
         u,v = unit.real, unit.imag
 
         # Compute the horizontal and vertical scale factors
