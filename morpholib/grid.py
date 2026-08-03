@@ -3058,7 +3058,7 @@ class Axis(Track):
             Track.draw(self, camera, ctx)
 
         # Compute the physical direction unit vector of the axis.
-        vector = self.seq[1] - self.seq[0]
+        vector = initvector = self.seq[1] - self.seq[0]
         # Don't draw a zero length axis.
         if vector == 0:
             return
@@ -3075,19 +3075,25 @@ class Axis(Track):
             return  # Don't attempt to draw zero-length axis.
         u,v = unit.real, unit.imag
 
+        # Transformation scale value records how much the initial axis
+        # gets scaled after being transformed by self.rotation and
+        # self.transform. It is eventually factored in to computing
+        # the pixel-to-physical scale factor used to convert tickGap
+        # and tickOffset.
+        Tscale = np.linalg.norm(vector/initvector)
+
         # Compute the horizontal and vertical scale factors
         # that convert physical width or height to pixel units.
         Sx = mo.pixelWidth(1, camera.view, ctx)
         Sy = mo.pixelHeight(1, camera.view, ctx)
 
-        # If the viewbox is (essentially) square with the window shape,
-        # don't use the fancy formula.
-        if abs(Sx-Sy)/max(Sx,Sy) < 1e-9:
+        # If transformation scales are trivial AND
+        # if the viewbox is (essentially) square with the window shape,
+        # then don't use the fancy formula.
+        if abs(Tscale-1) < 1e-9 and abs(Sx-Sy)/max(Sx,Sy) < 1e-9:
             scale = Sx
-            # self.tickGap = self.tickGap*Sx
         else:
-            scale = math.sqrt((Sx*u)**2 + (Sy*v)**2)
-            # self.tickGap = self.tickGap*math.sqrt((Sx*u)**2 + (Sy*v)**2)
+            scale = Tscale*math.sqrt((Sx*u)**2 + (Sy*v)**2)
 
         # Temporarily modify self.tickGap to the pixel value and use
         # Track.draw() to render it before reverting tickGap back to
