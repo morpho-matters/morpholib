@@ -949,6 +949,9 @@ def subtween(film, target, subduration=30, *,
 #
 # The animation can be set to loop a certain number of times
 # by passing in a positive integer into keyword `times`.
+# (Note that if the `delays` list repeats on a cycle that is
+# out of sync with the animation cycle, timings may differ
+# between the various repetitions of the animation.)
 @Frame.action
 def animate(actor, delays=1, *, times=1):
     if not isinstance(delays, (list, tuple)):
