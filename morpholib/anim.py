@@ -4428,11 +4428,14 @@ class Animation(object):
     #       significantly speed up exports with small loss to quality.
     #       Default: "png"
     # optimize = Boolean which if set to False will prevent the
-    # animation from being optimized. This will probably rarely be
-    # desired.
+    #       animation from being optimized. This will probably rarely
+    #       be desired.
+    # override = Boolean which if set to True will allow attempting
+    #       to export using an unsupported image format.
     def export(self, filepath, scale=1, *,
             imageOptions=dict(), webpOptions=dict(),
-            tempType="png", optimize=True):
+            tempType="png", optimize=True,
+            override=False):
 
         tempType = tempType.strip()
         # Check that the tempType is NOT gif.
@@ -4621,7 +4624,7 @@ class Animation(object):
                 print("Cleaning up temp directory...")
             print("DONE!")
 
-        elif extension.lower() in ("png", "jpg", "jpeg"):
+        elif override or extension.lower() in ("png", "jpg", "jpeg"):
             if scale != 1:
                 # Make a fake secondary animation which will house the scaled version
                 # of each frame.
@@ -4672,7 +4675,7 @@ class Animation(object):
 
         # Unrecognized type. Throw error
         else:
-            raise Exception("Unrecognized file type to export.")
+            raise Exception(f"Unrecognized file type '{extension.lower()}' to export.")
 
     # Plays the animation in a separate window or possibly fullscreen.
     #
