@@ -4525,7 +4525,7 @@ class Animation(object):
             print(f"Exporting temporary {tempType.upper()} sequence...")
             with TemporaryDirectory(exportSignature) as tempDir:
                 self.export(tempDir + os.sep + filename.replace("'", "_") + f".{tempType}", scale,
-                    imageOptions=imageOptions, optimize=optimize
+                    imageOptions=imageOptions, optimize=optimize, override=override
                     )
 
                 if extension.lower() == "gif":
