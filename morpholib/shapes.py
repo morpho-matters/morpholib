@@ -171,7 +171,7 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
         self.Tweenable(name="alphaFill", value=0, tags=["scalar"])
         self.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         self.Tweenable(name="width", value=width, tags=["size", "pixel"])
-        self.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
+        self.Tweenable("dash", [], tags=["dash", "scalar", "list", "pixel"])
         self.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
         self.Tweenable("outlineWidth", 0, tags=["scalar", "pixel"])
         self.Tweenable("outlineColor", [0,0,0], tags=["color"])
@@ -1737,7 +1737,6 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
 
     @morpho.tweenMethod
     @morpho.grid.handleDeadendInterp
-    @morpho.grid.handleDash
     @morpho.color.handleGradientFills(["fill"])
     @handleSplineNodeInterp
     def tweenLinear(self, other, t):
@@ -1751,7 +1750,6 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
 
     @morpho.tweenMethod
     @morpho.grid.handleDeadendInterp
-    @morpho.grid.handleDash
     @morpho.color.handleGradientFills(["fill"])
     @handleSplineNodeInterp
     def tweenSpiral(self, other, t):
@@ -1783,7 +1781,6 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
 
         @morpho.pivotTweenMethod(cls.tweenPivot, angle)  # Enable splitting
         @morpho.grid.handleDeadendInterp
-        @morpho.grid.handleDash
         @morpho.color.handleGradientFills(["fill"])
         @handleSplineNodeInterp
         def pivot(self, other, t):
@@ -2678,7 +2675,7 @@ class Ellipse(morpho.Figure):
         self.Tweenable("alphaEdge", alphaEdge, tags=["scalar"])
         self.Tweenable("alphaFill", alphaFill, tags=["scalar"])
         self.Tweenable("alpha", alpha, tags=["scalar"])
-        self.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
+        self.Tweenable("dash", [], tags=["dash", "scalar", "list", "pixel"])
         self.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
 
     @property
@@ -2871,7 +2868,7 @@ class EllipticalArc(morpho.Figure):
 
         self.extendState([pos, xradius, yradius, theta0, theta1, strokeWeight, color, alpha])
 
-        self.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
+        self.Tweenable("dash", [], tags=["dash", "scalar", "list", "pixel"])
         self.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
 
     @property

@@ -92,7 +92,7 @@ class Point(morpho.Figure):
         self.style = "circle"
         # size = diameter in pixels
         self.Tweenable("size", size, tags=["size", "pixel"])
-        self.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
+        self.Tweenable("dash", [], tags=["dash", "scalar", "list", "pixel"])
         self.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
 
 
@@ -412,23 +412,14 @@ def handlePathNodeInterp(tweenmethod):
             return tweenmethod(selfcopy, other, t, *args, **kwargs)
     return wrapper
 
-# Given an even-length dash pattern, returns a dash pattern
-# of the same length which is equivalent to an empty (i.e. solid) dash
-# pattern. Useful when tweening an empty dash with a non-empty dash.
-def equivSolidDash(dash):
-    if len(dash) % 2 == 1:
-        raise IndexError("Given dash pattern must be even-length.")
+# Legacy import of equivSolidDash
+from morpholib.figure import equivSolidDash
 
-    dash = np.array(dash, dtype=float)
-    a = dash.copy()
-
-    a[1::2] = 0
-    a[::2] += dash[1::2]
-
-    return a.tolist()
-
-
-# Decorator modifies a tween method of a Figure that possesses
+# OBSOLETE!!!
+# You can just include a "dash" tag in a tweenable to enable
+# dash tweening.
+#
+# Legacy decorator modifies a tween method of a Figure that possesses
 # a "dash" tweenable and enables it to handle tweening dashes
 # of different lengths.
 def handleDash(tweenmethod):
@@ -570,7 +561,7 @@ class Path(BackgroundBoxFigure, AlignableFigure):
         width = morpho.Tweenable(name="width", value=width, tags=["size", "pixel"])
         headSize = morpho.Tweenable("headSize", 0, tags=["scalar", "pixel"])
         tailSize = morpho.Tweenable("tailSize", 0, tags=["scalar", "pixel"])
-        dash = morpho.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
+        dash = morpho.Tweenable("dash", [], tags=["dash", "scalar", "list", "pixel"])
         dashOffset = morpho.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
         outlineWidth = morpho.Tweenable("outlineWidth", value=0, tags=["size", "pixel"])
         outlineColor = morpho.Tweenable("outlineColor", value=[0,0,0], tags=["color"])
@@ -1743,7 +1734,6 @@ class Path(BackgroundBoxFigure, AlignableFigure):
 
     @morpho.TweenMethod
     @handleDeadendInterp
-    @handleDash
     @morpho.color.handleGradients(["color"])
     @morpho.color.handleGradientFills(["fill"])
     @handlePathNodeInterp
@@ -1762,7 +1752,6 @@ class Path(BackgroundBoxFigure, AlignableFigure):
         pivot = handlePathNodeInterp(pivot)
         pivot = morpho.color.handleGradientFills(["fill"])(pivot)
         pivot = morpho.color.handleGradients(["color"])(pivot)
-        pivot = handleDash(pivot)
         pivot = handleDeadendInterp(pivot)
         # Enable splitting
         pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
@@ -1773,7 +1762,6 @@ class Path(BackgroundBoxFigure, AlignableFigure):
     # Returns an interpolated path between itself and another path.
     @morpho.TweenMethod
     @handleDeadendInterp
-    @handleDash
     @morpho.color.handleGradients(["color"])
     @morpho.color.handleGradientFills(["fill"])
     @handlePathNodeInterp
@@ -2899,7 +2887,6 @@ class SpacePath(Path):
     ### TWEEN METHODS ###
 
     @morpho.TweenMethod
-    @handleDash
     @morpho.color.handleGradients(["color"])
     @morpho.color.handleGradientFills(["fill"])
     @handlePathNodeInterp
@@ -2925,7 +2912,6 @@ class SpacePath(Path):
 
     # 3D spiral tween method
     @morpho.TweenMethod
-    @handleDash
     @morpho.color.handleGradients(["color"])
     @morpho.color.handleGradientFills(["fill"])
     @handlePathNodeInterp
@@ -3856,7 +3842,7 @@ class Polygon(BackgroundBoxFigure, AlignableFigure):
         alphaFill = morpho.Tweenable(name="alphaFill", value=alphaFill, tags=["scalar"])
         alpha = morpho.Tweenable(name="alpha", value=alpha, tags=["scalar"])
         width = morpho.Tweenable(name="width", value=width, tags=["size", "pixel"])
-        dash = morpho.Tweenable("dash", [], tags=["scalar", "list", "pixel"])
+        dash = morpho.Tweenable("dash", [], tags=["dash", "scalar", "list", "pixel"])
         dashOffset = morpho.Tweenable("dashOffset", 0, tags=["scalar", "pixel"])
 
         self.extendState([vertices, color, alphaEdge,
@@ -4030,14 +4016,12 @@ class Polygon(BackgroundBoxFigure, AlignableFigure):
     ### TWEEN METHODS ###
 
     @morpho.TweenMethod
-    @handleDash
     @morpho.color.handleGradientFills(["fill"])
     @handlePolyVertexInterp
     def tweenLinear(self, other, t, *args, **kwargs):
         return super().tweenLinear(other, t, *args, **kwargs)
 
     @morpho.TweenMethod
-    @handleDash
     @morpho.color.handleGradientFills(["fill"])
     @handlePolyVertexInterp
     def tweenSpiral(self, other, t):
@@ -4049,7 +4033,6 @@ class Polygon(BackgroundBoxFigure, AlignableFigure):
         # Apply necessary decorators
         pivot = handlePolyVertexInterp(pivot)
         pivot = morpho.color.handleGradientFills(["fill"])(pivot)
-        pivot = handleDash(pivot)
         # Enable splitting
         pivot = morpho.pivotTweenMethod(cls.tweenPivot, angle)(pivot)
 

@@ -683,7 +683,7 @@ class Figure(object):
 
         # Numerical tags this tween method acts on
         tags = {"linear", "scalar", "magnitude", "size", "color",
-            "complex", "integer", "nparray", "function"}
+            "complex", "integer", "nparray", "function", "dash"}
 
         # Figure copy is made as opposed to brand new figure
         # because this will ensure that tweenables that are
@@ -745,6 +745,10 @@ class Figure(object):
                 newfig._state[tweenable.name].value = type(A)(newB)
                 continue
 
+            # Handle tweening a dash pattern
+            elif "dash" in tweenable.tags:
+                tw = dashTween(A, B, t)
+
             # Handle python lists and tuples
             elif isinstance(A, list) or isinstance(A, tuple):
                 # a = tweenable.value
@@ -775,13 +779,6 @@ class Figure(object):
                     else:
                         tw = type(A)(tw)
                 else:
-                    # # Convert back into a list of python types
-                    # if "integer" in tweenable.tags:
-                    #     tw = morpho.matrix.roundlist(tw)
-                    # elif "complex" in tweenable.tags:
-                    #     tw = morpho.matrix.complexlist(tw)
-                    # else:
-                    #     tw = morpho.matrix.floatlist(tw)
                     tw = tw.tolist()
                     # Convert to tuple if originally a tuple.
                     if isinstance(A, tuple):
@@ -2596,3 +2593,62 @@ def object_hasattr(obj, name):
         # property exists and so we should return True.
         pass
     return True
+
+# Implements tweening between two dash patterns.
+# Mainly for use by the generic tweenLinear() tween method.
+def dashTween(selfdash, otherdash, t, *args, **kwargs):
+    m = len(selfdash)
+    n = len(otherdash)
+    # Both dashes are non-empty
+    if m > 0 and n > 0:
+        # Handle (easy) case that they have the same non-zero length
+        if m == n:
+            return listlerp(selfdash, otherdash, t, *args, **kwargs)
+
+        # Repeat each dash pattern until they have the same length
+        lcm = (m*n) // math.gcd(m,n)
+        selfdash = selfdash*(lcm//m)
+        otherdash = otherdash*(lcm//n)
+
+        return listlerp(selfdash, otherdash, t, *args, **kwargs)
+
+    # Only self is non-empty
+    elif m > 0:
+        # Make the dash length an equivalent even length dash
+        # if it's odd. This is necessary for equivSolidDash()
+        # to work.
+        if m % 2 == 1:
+            selfdash = selfdash*2
+        otherdash = equivSolidDash(selfdash)
+
+        return listlerp(selfdash, otherdash, t, *args, **kwargs)
+
+    # Only other is non-empty
+    elif n > 0:
+        # Make the dash length an equivalent even length dash
+        # if it's odd. This is necessary for equivSolidDash()
+        # to work.
+        if n % 2 == 1:
+            otherdash = otherdash*2
+        selfdash = equivSolidDash(otherdash)
+
+        return listlerp(selfdash, otherdash, t, *args, **kwargs)
+
+    # Both dashes are empty
+    else:
+        return []
+
+# Given an even-length dash pattern, returns a dash pattern
+# of the same length which is equivalent to an empty (i.e. solid) dash
+# pattern. Useful when tweening an empty dash with a non-empty dash.
+def equivSolidDash(dash):
+    if len(dash) % 2 == 1:
+        raise IndexError("Given dash pattern must be even-length.")
+
+    dash = np.array(dash, dtype=float)
+    a = dash.copy()
+
+    a[1::2] = 0
+    a[::2] += dash[1::2]
+
+    return a.tolist()
