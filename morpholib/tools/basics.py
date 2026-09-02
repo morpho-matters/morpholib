@@ -61,6 +61,13 @@ def isequal(a, b, /):
         except ValueError:
             return np.array_equal(a,b)
 
+# Lerps two python list-like objects (but NOT np.arrays).
+# Lists must have the same length.
+def listlerp(a, b, t, *args, **kwargs):
+    if a == b:
+        return list(a)
+    return morpho.lerp0(np.array(a), np.array(b), t, *args, **kwargs).tolist()
+
 # Conversion factors between degrees and radians.
 deg = tau/360
 rad = 1/deg
