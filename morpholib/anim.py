@@ -132,6 +132,11 @@ def handleSubfigureTweening(tweenmethod):
 # subfigures are used, and the toplevel transition of the
 # Frame-like figure is ignored. This is the opposite behavior
 # from how regular tweening of subfigures works.
+#
+# The final keyfigure of the modified actor is returned upon
+# completion, allowing for chaining into the .set() method
+# if desired:
+#   myactor.subaction.myaction(...).set(visible=False)
 class _SubactionSummoner(object):
     def __init__(self, actor):
         self.actor = actor
@@ -205,6 +210,8 @@ class _SubactionSummoner(object):
         zipped = morpho.Actor.zip(subactors, template=template)
         film.insert(zipped, atFrame=now)
 
+        return film.last()
+
     def __getattr__(self, name):
         action = getattr(morpho.action, name)
 
@@ -239,9 +246,10 @@ class _SubactionSummonerForMultiFigures(_SubactionSummoner):
         # tween methods, meaning subaction() won't work correctly.
         origTweenMethod = film.last().tweenMethod
         film.last().tweenMethod = Frame.tweenLinear
-        _SubactionSummoner.subaction(action, film, *args,
+        output = _SubactionSummoner.subaction(action, film, *args,
             substagger=substagger, select=select, **kwargs)
         film.last().tweenMethod = origTweenMethod
+        return output
 
 # Frame class. Groups figures together for simultaneous drawing.
 # Syntax: myframe = Frame(list_of_figures, **kwargs)
