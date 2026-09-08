@@ -457,7 +457,7 @@ class Spline(BackgroundBoxFigure, AlignableFigure):
     #       box of the source SVG path more tightly by skipping over
     #       Move and Close elements in the bounding box calculation.
     #       Setting it to False allows for isolated points (which are
-    #       normally invisible) to contribute the bounding box.
+    #       normally invisible) to contribute to the bounding box.
     #       Default: False
     # Any additional keyword arguments are set as attributes of
     # the returned figure.
