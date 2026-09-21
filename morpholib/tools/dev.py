@@ -922,10 +922,11 @@ def drawOutOfBoundsStartEnd(fig, camera, ctx):
 # slices of indices into an object whereby the python bracket
 # syntax works.
 class Slicer(object):
-    def __init__(self, getter=None, setter=None, deller=None):
+    def __init__(self, getter=None, setter=None, deller=None, caller=None):
         self.getter = getter
         self.setter = setter
         self.deller = deller
+        self.caller = caller
 
     def __getitem__(self, index):
         return self.getter(index)
@@ -935,6 +936,9 @@ class Slicer(object):
 
     def __delitem__(self, index):
         self.deller(index)
+
+    def __call__(self, *args, **kwargs):
+        return self.caller(*args, **kwargs)
 
 
 def translateArrayUnderTransforms(array, shift, rotator, transformer):
