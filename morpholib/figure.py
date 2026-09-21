@@ -1479,7 +1479,7 @@ class Actor(object):
             self.newkey(0, figure, seamless=False)
         # Else if supplied an actual figure subclass, assign it to
         # the figureType attribute.
-        elif issubclass(figure, Figure):
+        elif isinstance(figure, type) and issubclass(figure, Figure):
             self.figureType = figure
         # Otherwise, throw error.
         else:
