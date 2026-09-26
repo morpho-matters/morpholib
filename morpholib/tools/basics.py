@@ -290,6 +290,12 @@ def complex2vect(z):
     return (z.real, z.imag)
 cparts = complex2vect  # Alias
 
+# Complex cis function.
+# Returns cos(theta) + 1j*sin(theta)
+# Complex number of unit absolute value, with polar angle theta.
+def cis(theta):
+    return complex(math.cos(theta), math.sin(theta))
+
 # Given a sorted list of numbers a and value x,
 # returns the highest index i such that a[i] <= x.
 # If all the numbers in a are larger than x, it returns -1.
