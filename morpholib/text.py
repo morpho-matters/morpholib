@@ -1730,6 +1730,32 @@ def space(**kwargs):
 def underline(string):
     return string.replace("", "\u0332")[1:]
 
+# Takes a string and tokenizes it into individual words ready
+# to be passed in to the paragraph() function and its cousins.
+# Example usage:
+#   tokenize("hello world\nhow are you?")
+# returns
+#   [["hello", "world"], ["how", "are", "you?"]]
+# By default, splits happen at spaces and newlines, but this can
+# be changed by passing in different strings into `space` and
+# `newline` optional inputs.
+# Alternatively, splitting can be disabled for a particular
+# split type by passing in None to `space` and/or `newline`.
+# Example:
+#   tokenize("hello world\nhow are you?", space=None)
+# returns
+#   [["hello world"], ["how are you?"]]
+def tokenize(string, space=" ", newline="\n"):
+    smax = nmax = -1
+    if space is None:
+        space = " "
+        smax = 0
+    if newline is None:
+        newline = "\n"
+        nmax = 0
+    string = string.strip()
+    return [line.strip().split(space, maxsplit=smax) for line in string.split(newline, maxsplit=nmax)]
+
 # Takes a collection of Text figures and returns a FancyMultiText
 # figure that concatenates all the individual Text figures.
 #
