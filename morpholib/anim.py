@@ -15,7 +15,8 @@ from morpholib.tools.basics import *
 from morpholib.tools.ktimer import tic, toc
 import morpholib.tools.dev
 from morpholib.tools.dev import BoundingBoxFigure, makesubcopies, listselect, \
-    _SubAttributeManager, _InPlaceSubAttributeManager, AmbiguousValueError
+    _SubAttributeManager, _InPlaceSubAttributeManager, AmbiguousValueError, \
+    findOwnerByType
 from morpholib.tools.img import surfaceSave
 
 # Backward compatibility because these functions used to live in anim.py
@@ -889,6 +890,56 @@ class Frame(BoundingBoxFigure):
             if not fig.static:
                 fS.figures[i] = fig.fimage(func)
         return fS
+
+    # Labels all the subfigures of the frame with their corresponding
+    # index positions. Works by constructing a MultiText actor and
+    # affixing it to the layer that owns the calling frame.
+    #
+    # Intended to be used temporarily while creating an animation
+    # to assist in determining subfigure indices.
+    #
+    # OPTIONAL KEYWORD-ONLY INPUTS
+    # align = Alignment of the labels with respect to the subfigures
+    #       Default: (0,0) (center alignment)
+    # layer = Layer to affix the MultiText actor to.
+    #       Default: The layer that owns self.
+    # style = Dict containing keyword inputs that can be used to control
+    #       the style of the labels.
+    #       e.g. dict(size=30, color=[1,1,0])
+    #
+    # Note that this method returns the multitext FIGURE that was
+    # constructed, allowing you to override the default style settings
+    # of the labels using the syntax
+    #   myframe.labelSubfigures().all.set(...)
+    def labelSubfigures(self, *, align=(0,0), layer=None, style=dict()):
+        import morpholib.text
+
+        a,b = align
+        antialign = [-a, -b]
+
+        # Create a copy of self whose toplevel transforms are committed.
+        # Makes it easier to position the labels.
+        figlist = []
+        for n, fig in enumerate(self.figures):
+            text = morpho.text.Text(str(n),
+                size=18, color=[1,0,0], bold=True
+                ).set(backAlpha=1).set(**style)
+
+            # Attempt to use alignment functionality to place the label.
+            # If it fails, fall back to just using net position.
+            try:
+                text.set(pos=self.sub[n].anchorPoint(align), align=antialign)
+            except AttributeError:
+                text.set(pos=self.figures[n]._oripos+self.sub[n].origin)
+            figlist.append(text)
+        mtxt = morpho.text.MultiText(figlist)
+
+        # Attempt to infer layer if None is specified.
+        if layer is None:
+            layer = findOwnerByType(self, morpho.Layer)
+        layer.Actor(mtxt)
+
+        return mtxt
 
     ### TWEEN METHODS ###
 
