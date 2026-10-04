@@ -364,6 +364,33 @@ class Frame(BoundingBoxFigure):
     def subaction(actor):
         return _SubactionSummoner(actor)
 
+    # Align the origins of a subset of subfigures relative to the
+    # bounding box of the entire subset.
+    # Behaves the same as alignOrigin(), but takes an additional
+    # input `select` in which you can specify which subfigures to act
+    # on using the same syntax as sub[] and select[] use. By default
+    # it's all subfigures.
+    #
+    # To work reliably, each subfigure should be alignable
+    # (that is, an instance of AlignableFigure or PreAlignableFigure)
+    # such as Paths and Splines, but not figures whose
+    # sizes are pixel based like `Text`, and they should also possess
+    # the transformation attributes `origin`, `rotation`, `transform`.
+    #
+    # Any additional inputs supplied to this method are passed to
+    # the subfigures' boxCoords() method.
+    def subalignOrigin(self, align, select=sel[:], *args, **kwargs):
+        # Find anchor point
+        subframe = self._select(select, _asFrame=True)
+        # The above line is equivalent to sub[select] but it doesn't make
+        # an unnecessary copy!
+        anchor = subframe.anchorPoint(align, raw=True)
+        for fig in listselect(self.figures, select).values():
+            unrot = cmath.exp(-fig.rotation*1j) if fig.rotation != 0 else 1
+            untransform = morpho.matrix.Mat(np.linalg.inv(fig.transform)) if not np.array_equal(fig.transform, I2) else 1
+            fig.alignOrigin(fig.boxCoords(unrot*(untransform*(anchor-fig._oripos)), *args, raw=True, **kwargs), *args, **kwargs)
+        return self
+
     # Append the figure list of other to self in place.
     # Also adds in the named subfigures of other into self's registry,
     # but skips any duplicate names so that self's names are
