@@ -2218,7 +2218,7 @@ def paragraph3d(textarray, view, windowShape=None,
 
     # Create 2d paragraph
     if _use_paragraphPhys:
-        parag = paragraphPhys(textarray, 0, *args, **kwargs)
+        parag = paragraphPhys_old(textarray, 0, *args, **kwargs)
     else:
         parag = paragraph(textarray, view, windowShape, 0, *args, **kwargs)
 
