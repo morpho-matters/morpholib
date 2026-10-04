@@ -2,7 +2,7 @@ import io
 
 import morpholib as morpho
 import morpholib.anim, morpholib.grid, morpholib.shapes
-from morpholib.combo import TransformableFrame
+from morpholib.combo import TransformableFrame, FancyFrame
 from morpholib.tools.basics import *
 from morpholib.tools.dev import typecastViewCtx, typecastView, \
     typecastWindowShape, BoundingBoxFigure, BackgroundBoxFigure, \
@@ -1000,7 +1000,7 @@ class MultiPTextBase(MultiTextBase):
 # Physical version of the MultiText class.
 # See MultiText and PText for more info.
 @TransformableFrame.modifyFadeActions
-class MultiPText(MultiPTextBase, TransformableFrame):
+class MultiPText(MultiPTextBase, FancyFrame):
     def __init__(self, text="", pos=0, *args, **kwargs):
         super().__init__(text, *args, **kwargs)
         self.origin = pos
@@ -2121,7 +2121,7 @@ def paragraph(textarray, view, windowShape=None,
 # See paragraph() for more info.
 # Note that this function will auto-convert any non-physical
 # Text figures into PText figures on the fly.
-def paragraphPhys(textarray, *args, **kwargs):
+def paragraphPhys_old(textarray, *args, **kwargs):
     # Handle case that Frame figure is given
     if isinstance(textarray, morpho.Frame):
         textarray = textarray.figures
@@ -2148,6 +2148,62 @@ def paragraphPhys(textarray, *args, **kwargs):
                 row[n] = PText(fig)
 
     return paragraph(textarray, DUMMY, DUMMY, *args, **kwargs)
+
+# Creates a group of PText figures that look like a paragraph.
+#
+# INPUTS
+# textarray = List of lists of Text/PText figures or individual strings
+#             where each sublist represents a single row of the paragraph.
+#             Alternatively can be a single string containing newlines
+#             which will be split into individual default PText figures.
+# pos = Position of the text group (complex number). Default: 0
+# anchor_x = Overall horizontal position alignment parameter.
+#            -1 = left-aligned, 0 = center-aligned, 1 = right-aligned.
+#            Default: 0 (center-aligned)
+# anchor_y = Overall vertical position alignment parameter.
+#            -1 = bottom-aligned, 0 = center-aligned, 1 = top-aligned.
+#            Default: 0 (center-aligned)
+# alpha = Overall opacity of group. Default: 1 (opaque)
+# xgap = Physical separation between adjacent text figures in a row.
+#        Default: 0
+# ygap = Physical separation between adjacent rows in the paragraph.
+#        Default: 0
+# KEYWORD ONLY INPUTS
+# flush = Inter-row alignment.
+#         -1 = left-flush, 0 = center-flush, 1 = right-flush.
+#         Default: 0 (center-flush)
+# align = Specify both anchors at once as a tuple: (anchor_x, anchor_y)
+#         Overrides anchor_x and anchor_y if also specified.
+#         Default: None (use given anchor_x, anchor_y)
+# xbuf = Relative spacing between adjacent text figures, specified in
+#        units of "em's", i.e. number of "M" widths of the text.
+#        For variable-sized text in a row, the spacing between two
+#        adjacent text figures is done with "em" relative to the
+#        previous text figure.
+# ybuf = Relative spacing between adjacent rows of text figures,
+#        specified in units of "ex's", i.e. number of "x" heights of
+#        the text in the row. For variable height text in a row,
+#        the max is used.
+# gap = Alias for xgap. Exists to match the `gap` arg in group()
+#       Overrides xgap if specified.
+#       Default: None (ignore and just use given xgap value)
+# rotation = Rotation angle of entire paragraph about anchor point
+#            Default: 0 radians
+# transform = Transformation matrix of entire paragraph about
+#             anchor point. Default: identity
+# alphabet = String of characters to use to determine line height.
+#            Default: morpho.text.LINE_HEIGHT_ALPHABET constant,
+#            which by default is all 52 upper and lowercase glyphs
+#            in the English alphabet.
+# **kwargs = Any other keyword arguments will be applied to
+#            every component Text figure:
+#            txt.set(**kwargs) for each txt in the textarray
+def paragraphPhys(*args, **kwargs):
+    parag = paragraphPhys_old(*args, **kwargs)
+    mtxt = MultiPText()
+    mtxt._updateFrom(parag, common=True, copy=False)
+    mtxt.align = parag.align
+    return mtxt
 
 # 3D version of paragraph(). See paragraph() for more info.
 #
