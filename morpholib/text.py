@@ -1706,11 +1706,77 @@ def fadeOut(*args, **kwargs):
 # def rollback(*args, **kwargs):
 #     return morpho.Figure.actions["rollback"](*args, **kwargs)
 
-# Physical version of SpaceParagraph.
+# Special class used to render 3D physical paragraphs.
 # Mainly for internal use by paragraph3dPhys().
-# See SpaceParagraph and PText for more info.
-class SpaceParagraphPhys(SpaceParagraph):
-    _baseMultiFigure = FancyMultiPText
+class SpaceParagraphPhys(MultiPText, morpho.SpaceFrame):
+    _baseMultiFigure = MultiPText
+
+    def __init__(self, text="", *args, **kwargs):
+
+        if isinstance(text, MultiPText):
+            super().__init__()
+            self._updateFrom(text)
+        else:
+            super().__init__(text, *args, **kwargs)
+
+        # Redefine pos tweenable to be 3D.
+        self.Tweenable("_pos", morpho.matrix.array(self.origin), tags=["nparray", "fimage", "3d"])
+        self.Tweenable("_orient", np.identity(3), tags=["nparray", "orient"])
+
+        # Reset origin attribute because it has already been accounted for
+        # in setting the `_pos` tweenable and in SpaceParagraphs, `pos` and
+        # `origin` play different roles.
+        self.origin = 0
+
+    @property
+    def pos(self):
+        return self._pos
+
+    @pos.setter
+    def pos(self, value):
+        self._pos = morpho.matrix.array(value)
+
+    @property
+    def orient(self):
+        return self._orient
+
+    @orient.setter
+    def orient(self, value):
+        self._orient = morpho.matrix.array(value)
+
+    # box() method for SpaceParagraph is currently unimplemented.
+    def box(self, *args, **kwargs):
+        raise NotImplementedError("box() method is currently unimplemented for SpaceParagraph.")
+
+    def primitives(self, camera):
+        orient = camera.orient
+        focus = camera.focus
+
+        if np.allclose(focus, 0):
+            pos3d = orient @ self.pos
+        else:
+            pos3d = orient @ (self.pos - focus) + focus
+
+        # Create equivalent 2D FancyMultiText object
+        txt = self._baseMultiFigure()
+        txt._updateFrom(self, common=True)
+        txt.origin = txt.origin + (pos3d[0] + 1j*pos3d[1]).tolist()
+        txt.zdepth = pos3d[2]
+        txt._transform = (orient @ self.orient)[:2,:2] @ self._transform
+
+        return [txt]
+
+    def draw(self, camera, ctx):
+        # Use default SpaceFigure draw()
+        morpho.SpaceFigure.draw(self, camera, ctx)
+
+@SpaceParagraphPhys.action
+def fadeIn(*args, **kwargs):
+    return morpho.Figure.actions["fadeIn"](*args, **kwargs)
+
+@SpaceParagraphPhys.action
+def fadeOut(*args, **kwargs):
+    return morpho.Figure.actions["fadeOut"](*args, **kwargs)
 
 
 # Returns an invisible Text figure of a pair of periods.
@@ -2218,7 +2284,7 @@ def paragraph3d(textarray, view, windowShape=None,
 
     # Create 2d paragraph
     if _use_paragraphPhys:
-        parag = paragraphPhys_old(textarray, 0, *args, **kwargs)
+        parag = paragraphPhys(textarray, 0, *args, **kwargs)
     else:
         parag = paragraph(textarray, view, windowShape, 0, *args, **kwargs)
 
