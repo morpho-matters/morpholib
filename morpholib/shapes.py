@@ -2797,34 +2797,6 @@ class Ellipse(morpho.Figure):
             ctx.stroke()
             ctx.set_dash([])
 
-# Animates an Ellipse actor appearing by growing its
-# radii from zero.
-@Ellipse.action
-@morpho.actions.enableOvershooting("transform")
-def popIn(ellipse, duration=30, atFrame=None):
-    if atFrame is None:
-        atFrame = ellipse.lastID()
-
-    ellipse0 = ellipse.last()
-    ellipse0.visible = False
-    ellipse1 = ellipse.newkey(atFrame)
-    ellipse1.visible = True
-    ellipse.newendkey(duration)
-    ellipse1.radius = 0
-    ellipse1.set(strokeWeight=0)
-
-# Animates an Ellipse actor disappearing by shrinking
-# its radii to zero.
-@Ellipse.action
-@morpho.actions.enableOvershooting("transform", reverse=True)
-def popOut(ellipse, duration=30, atFrame=None):
-    if atFrame is None:
-        atFrame = ellipse.lastID()
-
-    ellipse.newkey(atFrame)
-    ellipse1 = ellipse.newendkey(duration)
-    ellipse1.set(radius=0, strokeWeight=0, visible=False)
-
 Ellipse.action(wiggle)
 
 
