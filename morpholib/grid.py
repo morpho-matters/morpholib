@@ -1889,8 +1889,7 @@ def shrinkOut(path, duration=30, atFrame=None, *, reverse=False):
 # parameter can be passed in by keyword to specify the focus point
 # in terms of a location on the path's bounding box.
 @Path.action
-@morpho.actions.enableOvershooting("transform")
-def popIn(path, duration=30, atFrame=None, *, align=None, focus=0,
+def popIn_old(path, duration=30, atFrame=None, *, align=None, focus=0,
         overshoot=0):
     if atFrame is None:
         atFrame = path.lastID()
@@ -1913,8 +1912,7 @@ def popIn(path, duration=30, atFrame=None, *, align=None, focus=0,
 # parameter can be passed in by keyword to specify the focus point
 # in terms of a location on the path's bounding box.
 @Path.action
-@morpho.actions.enableOvershooting("transform", reverse=True)
-def popOut(path, duration=30, atFrame=None, *, align=None, focus=0):
+def popOut_old(path, duration=30, atFrame=None, *, align=None, focus=0):
     if atFrame is None:
         atFrame = path.lastID()
 
