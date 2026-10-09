@@ -1070,85 +1070,12 @@ blankFrame.static = True
 # custom one, make sure to decorate it with
 # @handleSubfigureTweening.
 @Frame.action
-def fadeIn(film, duration=30, atFrame=None, jump=0, alpha=1, *, substagger=0, select=None):
-    lasttime = film.lastID()
-    if atFrame is None:
-        atFrame = lasttime
-
-    frame0 = film.last()
-    frame0.visible = True
-    finalframe = frame0.copy()
-    frame0.all.static = False
-
-    substagger = aslist(substagger)
-
-    if substagger == [0] and select is None:
-        # Do traditional fade in action. The traditional way exists
-        # since using the subaction feature on MultiFigures incurs
-        # some drawbacks that I would like to not have to deal with
-        # if substagger is 0.
-        frame1 = film.newkey(atFrame)
-        frame1.visible = True
-        frame2 = film.newendkey(duration)
-
-        for n,fig in enumerate(frame1.figures):
-            # fig.static = False
-            actor = morpho.Actor(fig)
-            actor.fadeIn(duration=duration, jump=jump)
-            frame1.figures[n] = actor.first()
-            frame2.figures[n] = actor.last()
-    else:
-        film.subaction.fadeIn(duration, atFrame, jump=jump, alpha=alpha, substagger=substagger, select=select)
-
-    # Hide lingering initial keyfigure if it exists.
-    if atFrame > lasttime:
-        frame0.visible = False
-
-    # Ensure final frame really is the original final frame,
-    # but with adjusted alpha
-    film.fin = finalframe
-    film.fin.select[select if select is not None else sel[:]].set(
-        alpha=alpha, visible=(alpha > 0)
-        )
+def fadeIn(film, *args, **kwargs):
+    film.subaction.fadeIn(*args, **kwargs)
 
 @Frame.action
-def fadeOut(film, duration=30, atFrame=None, jump=0, *, substagger=0, select=None):
-
-    substagger = aslist(substagger)
-
-    # Record of who was static so we can restore this later
-    staticRecord = [fig.static for fig in film.last().figures]
-    film.last().all.static = False
-    if substagger == [0] and select is None:
-        # Do traditional fade out action. The traditional way exists
-        # since using the subaction feature on MultiFigures incurs
-        # some drawbacks that I would like to not have to deal with
-        # if substagger is 0.
-        if atFrame is None:
-            atFrame = film.lastID()
-
-        frame0 = film.last()
-        frame1 = film.newkey(atFrame)
-        frame2 = film.newendkey(duration)
-        frame2.visible = False
-
-        for n,fig in enumerate(frame1.figures):
-            # fig.static = False
-            actor = morpho.Actor(fig)
-            actor.fadeOut(duration=duration, jump=jump)
-            frame1.figures[n] = actor.first()
-            frame2.figures[n] = actor.last()
-    else:
-        film.subaction.fadeOut(duration, atFrame, jump=jump, substagger=substagger, select=select)
-
-    if select is None or select == sel[:]:
-        film.last().visible = False
-
-    # Restore static attribute for subfigures that were originally
-    # static. This is helpful in case the user wants to use the
-    # Frame again after fade out is complete.
-    for fig, static in zip(film.last().figures, staticRecord):
-        fig.static = static
+def fadeOut(film, *args, **kwargs):
+    film.subaction.fadeOut(*args, **kwargs)
 
 @Frame.action
 def rollback(frame, duration=30, atFrame=None):
@@ -1525,34 +1452,6 @@ class MultiFigure(Frame):
         return modifiedMethod
 
 Multifigure = MultiFigure
-
-@MultiFigure.action
-def fadeIn(actor, duration=30, atFrame=None, jump=0, alpha=1, *,
-        substagger=0, select=None, **kwargs):
-
-    substagger = aslist(substagger)
-
-    actor.last().visible = True
-    finalkey = actor.last().copy()
-    if substagger != [0] or select is not None:
-        actor.last().tweenMethod = Frame.tweenLinear
-    Frame.actions["fadeIn"](actor, duration, atFrame, jump, alpha,
-        substagger=substagger, select=select, **kwargs)
-    actor.fin = finalkey
-    actor.fin.select[select if select is not None else sel[:]].set(
-        alpha=alpha, visible=(alpha > 0)
-        )
-
-@MultiFigure.action
-def fadeOut(actor, *args, substagger=0, select=None, **kwargs):
-
-    substagger = aslist(substagger)
-
-    origTweenMethod = actor.last().tweenMethod
-    if substagger != [0] or select is not None:
-        actor.last().tweenMethod = Frame.tweenLinear
-    Frame.actions["fadeOut"](actor, *args, substagger=substagger, select=select, **kwargs)
-    actor.last().tweenMethod = origTweenMethod
 
 # Like regular morphFrom(), except the source can optionally
 # be a list of actors/figures, in which case, the morph will
