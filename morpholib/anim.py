@@ -1070,12 +1070,18 @@ blankFrame.static = True
 # custom one, make sure to decorate it with
 # @handleSubfigureTweening.
 @Frame.action
-def fadeIn(film, *args, **kwargs):
+def fadeIn(film, *args, select=None, **kwargs):
+    if select is not None:
+        raise TypeError("Cannot use `select` option on toplevel fadeIn(). Use subaction.fadeIn() instead.")
+    film.last().visible = True
     film.subaction.fadeIn(*args, **kwargs)
 
 @Frame.action
-def fadeOut(film, *args, **kwargs):
+def fadeOut(film, *args, select=None, **kwargs):
+    if select is not None:
+        raise TypeError("Cannot use `select` option on toplevel fadeOut(). Use subaction.fadeIn() instead.")
     film.subaction.fadeOut(*args, **kwargs)
+    film.last().visible = False
 
 @Frame.action
 def rollback(frame, duration=30, atFrame=None):
