@@ -254,7 +254,8 @@ def implementTransforms(draw):
 # with these options:
 # exclude = List of names of transformation tweenables to exclude.
 #       Valid names are "origin", "rotation", and "transform"
-#       (case-sensitive). Can also be inputted as a single string.
+#       (case-sensitive). If only one, can also be inputted as a
+#       single string.
 # usepos = Boolean if set to True renames the `origin` tweenable to
 #       `pos` since some implementations use that name instead.
 #       Default: False
