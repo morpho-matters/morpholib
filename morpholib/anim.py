@@ -2031,6 +2031,21 @@ class Camera(BoundingBoxFigure):
     def physicalBox(self, box):
         raise NotImplementedError
 
+    # Assigns a modifier to the camera that syncs it to another camera
+    # actor. Specifically, `viewbox`, `rotation`, and (in the case of
+    # SpaceCameras) `orient` attributes are sync'd but no metasettings
+    # like `visible` or `static` are sync'd.
+    #
+    # If the camera has a pre-existing modifier, it will be incorporated
+    # into the new modifier, and will be called AFTER the sync'ing
+    # modifier is called.
+    def syncWith(self, actor):
+        oldmod = self.modifier if self.modifier is not None else lambda self: self
+        def syncmod(self):
+            self._updateFrom(actor.now(), ignore=morpho.METASETTINGS)
+            oldmod(self)
+        self.modifier = syncmod
+        return self
 
     # Rotates the coordinate system by the camera's rotation
     # value. Returns a SavePoint object that can be used with
