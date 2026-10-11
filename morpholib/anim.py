@@ -2047,7 +2047,8 @@ class Camera(BoundingBoxFigure):
             actor = actor.camera
         oldmod = self.modifier if self.modifier is not None else lambda self: self
         def syncmod(self):
-            self._updateFrom(actor.now(), ignore=morpho.METASETTINGS)
+            self._updateFrom(actor.now(), ignore=morpho.METASETTINGS,
+                common=True, copy=True)
             oldmod(self)
         self.modifier = syncmod
         return self
