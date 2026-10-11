@@ -2036,10 +2036,15 @@ class Camera(BoundingBoxFigure):
     # SpaceCameras) `orient` attributes are sync'd but no metasettings
     # like `visible` or `static` are sync'd.
     #
+    # Inputted camera actor can also be a Layer object, in which case
+    # the layer's camera actor will be used.
+    #
     # If the camera has a pre-existing modifier, it will be incorporated
     # into the new modifier, and will be called AFTER the sync'ing
     # modifier is called.
-    def syncWith(self, actor):
+    def syncWith(self, actor, /):
+        if isinstance(actor, Layer):
+            actor = actor.camera
         oldmod = self.modifier if self.modifier is not None else lambda self: self
         def syncmod(self):
             self._updateFrom(actor.now(), ignore=morpho.METASETTINGS)
