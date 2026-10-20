@@ -990,7 +990,7 @@ class MultiPTextBase(MultiTextBase):
     # All subsplines will have origin = 0.
     # Additional keyword inputs will be passed to the tosvg() method.
     def toSpline(self, **kwargs):
-        multisplines = [ptxt.toSpline(**kwargs).commitTransforms() for ptxt in self.figures]
+        multisplines = [ptxt.toSpline(**kwargs).commitTransforms() for ptxt in self.figures if not ptxt._isWhitespace]
         finalspline = morpho.shapes.MultiSpline(morpho.flattenList([multispline.figures for multispline in multisplines]))
         finalspline.origin = self.origin
         finalspline.rotation = self.rotation
