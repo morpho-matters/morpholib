@@ -810,10 +810,10 @@ class _SubAttributeManager(object):
         return commonValue if not isinstance(commonValue, (list, np.ndarray)) else commonValue.copy()
 
     def __setattr__(self, name, value):
-        # Handle ordinary attribute sets if self possesses
-        # the attribute.
-        if object_hasattr(self, name):
-            object.__setattr__(self, name, value)
+        # # Handle ordinary attribute sets if self possesses
+        # # the attribute.
+        # if object_hasattr(self, name):
+        #     object.__setattr__(self, name, value)
 
         # Set every attribute of the given objects
         objects = self._subattrman_objects
