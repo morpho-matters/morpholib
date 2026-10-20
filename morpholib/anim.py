@@ -1300,6 +1300,9 @@ class MultiFigure(Frame):
     # Sets all given keyword inputs as toplevel attributes if they
     # already exist as toplevel attributes. Any others are assigned
     # as attributes of the subfigures.
+    #
+    # Note that toplevel attributes will be set AFTER all toplevel
+    # attributes are set.
     def set(self, **kwargs):
         # Dictionary holds all attribute mappings that don't
         # correspond to toplevel attributes BUT DO correspond to
@@ -1312,8 +1315,8 @@ class MultiFigure(Frame):
                 if not object_hasattr(self, name) and name not in self._state \
                 and hasattr(fig0, name):
                     subset[name] = kwargs.pop(name)
-        morpho.Figure.set(self, **kwargs)
         self.all.set(**subset)
+        morpho.Figure.set(self, **kwargs)
         return self
 
 
