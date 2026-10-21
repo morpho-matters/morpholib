@@ -1353,6 +1353,16 @@ class MultiFigure(Frame):
                     subset[name] = kwargs.pop(name)
         self.all.set(**subset)
         morpho.Figure.set(self, **kwargs)
+
+        # NOTE TO FUTURE ME: I think it's best to keep this
+        # implementation rather than refactoring it into a version
+        # where the order of the kwargs is adhered to strictly.
+        # Using strict kwarg order causes unexpected behavior
+        # when realigning while also changing size in the same
+        # set() call, and would violate the convention that
+        # singleton Multifigures should behave indistinguishably
+        # from their actual single counterparts.
+
         return self
 
 
