@@ -466,6 +466,42 @@ class Frame(BoundingBoxFigure):
             self.figures.insert(beforeFigure, otherfig)
         return self
 
+    # Adds the given figure to the Frame.
+    # Similar to merge(), except it doesn't decompose the figure
+    # into its subfigures before merging, instead just adding
+    # the entire figure as a whole to the subfigure list.
+    # See also: merge()
+    #
+    # If given a list of figures, they will individually be
+    # added to the subfigure list in order.
+    #
+    # Optional argument `beforeFigure` can be set to either an
+    # index position value or a subfigure to specify where in
+    # the subfigure list the given figure(s) should be placed.
+    # Default: oo (infinity) meaning append to the end of the
+    #   subfigure list.
+    #
+    # Optional keyword input `cls` can be used to specify the
+    # intermediate Frame-like figure to use as part of the
+    # internal merge.
+    # Default: Frame
+    def add(self, other, *args, cls=None, **kwargs):
+        if cls is None:
+            cls = Frame
+
+        if isinstance(other, morpho.Figure):
+            # Make a singleton Frame figure out of `other`
+            # to be later passed into self.merge()
+            target = cls([other])
+        else:
+            # Assume other is some kind of iterable containing
+            # figures, and transform it into a list of
+            # singleton Frames to be passed into merge()
+            target = cls(list(other))
+
+        self.merge(target, *args, **kwargs)
+        return self
+
     @property
     def all(self):
         return _SubAttributeManager(self.figures, self)
