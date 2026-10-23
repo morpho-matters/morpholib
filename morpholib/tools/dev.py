@@ -306,7 +306,7 @@ def Transformable2D(cls=None, *, exclude=None, usepos=False):
 
         @cls.action
         @enableOvershooting("transform")
-        def popIn(actor, duration=30, atFrame=None, *, overshoot=0):
+        def popIn(actor, duration=30, atFrame=None):
             if atFrame is None:
                 atFrame = actor.lastID()
 
