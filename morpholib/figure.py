@@ -2127,7 +2127,7 @@ class Actor(object):
         # prevent the default behavior of newkey() to create a
         # default (i.e. blank) keyfigure if it occurs before
         # the earliest keyframe in the timeline.
-        mintime = min([self_firsttime, film_firsttime])
+        mintime = min(self_firsttime, film_firsttime)
         self.newkey(mintime, self.first().copy())
         film.newkey(mintime, film.first().copy())
 
@@ -2174,6 +2174,26 @@ class Actor(object):
 
         return self
 
+    # Mainly for internal use by Actor.zip().
+    # Recursively merge a list of films by bisecting the list
+    # and recursively merging the sublists. Provides a massive
+    # time save when merging a very large list of films.
+    @staticmethod
+    def _mergeFilms(films):
+        if len(films) == 0:
+            raise ValueError("Film list is empty.")
+        if len(films) == 1:
+            return films[0]
+        if len(films) == 2:
+            film1, film2 = films
+            film1._mergeFilm(film2)
+            return film1
+        p = len(films) // 2
+
+        film1 = Actor._mergeFilms(films[:p])
+        film2 = Actor._mergeFilms(films[p:])
+        return film1._mergeFilm(film2)
+
     # Combines (copies of) all the given actors into a single Frame
     # actor.
     # Optional keyword `stagger` can be specified to offset each
@@ -2215,9 +2235,8 @@ class Actor(object):
 
         # Combine all the individual singleton films into
         # a single film.
-        finalFilm = films[0]
-        for film in films[1:]:
-            finalFilm._mergeFilm(film)
+        finalFilm = Actor._mergeFilms(films)
+
         # Ensure state of the subfigures of the final keyframe exactly
         # matches the state of the final keys of the supplied actors.
         # Also ensure other settings of the final keyframe matches the
