@@ -130,7 +130,11 @@ clamp = constrain  # Alternate name
 #
 # See also: constrain(), morpho.lerp()
 def clerp(a, b, t, start=0, end=1):
-    return morpho.lerp(a, b, constrain(t, start, end), start, end)
+    if start <= end:
+        low, high = start, end
+    else:
+        low, high = end, start
+    return glerp(a, b, constrain(t, low, high), start, end)
 
 # Computes the mean of a vector-like thing.
 def mean(a):
