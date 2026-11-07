@@ -4,6 +4,7 @@ import math, cmath
 import numpy as np
 from bisect import bisect_right, bisect_left
 from collections.abc import Iterable
+from numbers import Number
 
 ### CONSTANTS ###
 pi = math.pi
@@ -67,6 +68,33 @@ def listlerp(a, b, t, *args, **kwargs):
     if a == b:
         return list(a)
     return morpho.lerp0(np.array(a), np.array(b), t, *args, **kwargs).tolist()
+
+# General purpose linear interpolation.
+#
+# glerp(a, b, t, start, end) returns the linear interpolation of
+# `a` to `b` with interpolation parameter `t` in the range [0,1].
+# Optionally `start` and `end` may be inputted to change the
+# parameter domain to [start, end].
+#
+# Works similar to morpho.lerp1() but can handle most data types,
+# such as built-in number types, as well as np.arrays.
+#
+# Sequence-type outputs will be np.array or python list depending
+# on the type of the first input. If the first input is not an
+# np.array, the output will be converted into a basic python type.
+def glerp(a, b, t, start=0, end=1):
+    array_a = a if isinstance(a, (Number, np.ndarray)) else np.array(a)
+    array_b = b if isinstance(b, (Number, np.ndarray)) else np.array(b)
+    tw = morpho.lerp1(array_a, array_b, t, start, end)
+
+    # Convert output into basic python type if `a` was not an np.array
+    if isinstance(a, np.ndarray):
+        return tw
+    else:
+        try:
+            return tw.tolist()
+        except AttributeError:
+            return tw
 
 # Conversion factors between degrees and radians.
 deg = tau/360
